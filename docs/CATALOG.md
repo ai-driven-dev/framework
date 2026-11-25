@@ -205,8 +205,7 @@ Runs synchronous feature delivery, optional async issue automation, and the prod
 
 | Event | Runs |
 | --- | --- |
-| `SessionStart` | `hooks/session-start.cjs` · `hooks/catch-up.cjs` |
-| `UserPromptSubmit` | `hooks/prompt-gate.cjs` |
+| `SessionStart` | `hooks/task.cjs` · `hooks/ledger.cjs` |
 
 <!--extras-aidd-telemetry:end-->
 

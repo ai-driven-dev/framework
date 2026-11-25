@@ -1,0 +1,13 @@
+language js
+
+// A port is a contract, not an implementation: a runtime declaration in `*.port.ts` is a
+// second place for behavior to live. Types, interfaces and `import type` are the whole file.
+or {
+  JsClassDeclaration(),
+  TsEnumDeclaration(),
+  JsFunctionDeclaration(),
+  `const $name = $value`,
+  `let $name = $value`
+} as $declaration where {
+  register_diagnostic(span=$declaration, message="a port declares types only: move this runtime declaration to an adapter, a model or a test kit", severity="error")
+}

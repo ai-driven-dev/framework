@@ -77,23 +77,22 @@ flowchart LR
 
 ## Hooks
 
-The contract for the framework's own hooks, not for a hook a user generates with `aidd-context:08-hook-generate`. `aidd-context`, `aidd-dev` and `aidd-pm` follow it; `aidd-ui` adopts it in its own change. `aidd-telemetry` stays outside.
-
-A hook checks mechanical rules only; a rule that needs judgment belongs to the skill's check and to CI.
+The contract for the framework's own hooks, not for a hook a user generates with `aidd-context:08-hook-generate`. `aidd-context`, `aidd-dev`, `aidd-pm` and `aidd-telemetry` follow it; `aidd-ui` adopts it in its own change.
 
 ### Levels and moments
 
 | Level | Effect | Mechanism | When |
 | --- | --- | --- | --- |
-| 0. None | no hook | | the check needs judgment |
+| 0. Silent | the hook runs, nothing is sent | exit 0, no output | it only keeps a state true, such as the memory sync |
 | 1. Inform | the model reads the finding and decides | `additionalContext` | the rule is certain but a deviation can be legitimate, or it has a false positive on real data |
 | 2. Require | the model fixes before going on | `decision: "block"` with `reason` | the rule is certain, has no false positive on real data, and the fix is local |
-| 3. Refuse | the write does not happen | the host's deny, through `refuse(reason)` | the file on disk declares itself frozen, such as a spec whose status is `locked`; never judged on the written content, whose `Edit` fragment would block drafts |
+| 3. Refuse | the write does not happen | the host's deny, through `refuse(reason)` | the file on disk declares itself frozen, such as a spec whose status is `locked`; never judged on the written content, whose `Edit` fragment would block drafts. Inert on every host: no adapter reports the moment before a tool yet |
+
+A check that needs judgment gets no hook: the skill's check and CI hold it.
 
 | Moment | Event | For |
 | --- | --- | --- |
-| Session start | SessionStart | keeping a generated state true, silently |
-| Prompt sent | UserPromptSubmit | holding a prompt until the work has a declared task (`aidd-telemetry`) |
+| Session start | SessionStart | keeping a generated state true silently, or informing the person once, never the model (`aidd-telemetry` task reminder); the model only after a compaction |
 | Before the write | PreToolUse | refusing a write to a frozen file |
 | After the write | PostToolUse | an artifact final in one write: a memory file, a frontmatter |
 | Turn end | Stop, once per turn | an artifact final after several writes; asks once to fix the errors on the lines the turn changed |
@@ -104,27 +103,27 @@ A hook checks mechanical rules only; a rule that needs judgment belongs to the s
 | Rule | A hook must | Never | Implemented by |
 | --- | --- | --- | --- |
 | Owner scope | check the paths its plugin owns: `aidd-context` also the `aidd_docs/` layout, `aidd-dev` and `aidd-pm` the artifacts their contracts name | read anything else first | |
-| Neutral interface | read and answer through `hooks/lib/host.cjs`, calls below | read a host's payload | `scripts/check/engine/sync.cjs`, from `cli/assets/hooks-runtime/host-claude.cjs` |
+| Neutral interface | read and answer through `hooks/lib/host.cjs`, calls below | read a host's payload, except `event.raw`'s `session_id` and `transcript_path`, read by `aidd-telemetry` alone to tell Claude Code transcripts from Codex ones | `scripts/check/engine/sync.cjs` writes it from `cli/assets/hooks-runtime/host-claude.cjs`; the CLI places each host's own adapter from that folder at build time (`host-bridge.cjs` for OpenCode and Kilo) |
 | Shared rules | take common checks from `hooks/lib/common-rules.cjs` | edit one copy alone | the `hook-rule-copies` check of `scripts/check/run.cjs` |
 | Findings only | report the errors on the lines of `written` not in `replaced`, as a multiset, then warnings, capped at 10 | report a standing error, a missing file, or anything when clean | |
 | Unknown lines | group errors by file or `<folder>/*` and inform: a shell write, an edit without `written`, a removal, a whole-file write without `replaced` | require | |
 | Message format | open with `<plugin>: <n> errors, <m> warnings`, then one `<file>[:<line>] <rule> ["<excerpt>"] => <fix>` per finding | | |
-| One entry per concern | run as `node ${CLAUDE_PLUGIN_ROOT}/hooks/<concern>.cjs <goal>` | add a second Stop entry: the OpenCode and Kilo bridges silence it | `memory.cjs` (`load`, `sync`, carrying the `artifacts.cjs` findings at Stop); `artifacts.cjs` (`start`, `mark`, `check`), generated from `scripts/check/engine/hook.cjs` |
-| Node built-ins | use CommonJS and built-ins; a child process (git included) or a network call only when no built-in can, read-only, scoped, measured under the timeout on a large repository | add a dependency | |
-| Bounded | declare a 5 s timeout; exit 0 on garbage, empty stdin or an unknown event | answer after an internal failure | |
+| One entry per concern | run as `node ${CLAUDE_PLUGIN_ROOT}/hooks/<concern>.cjs <goal>` | add a second Stop entry: the OpenCode and Kilo bridge silences it | `memory.cjs` (`load`, `sync`, carrying the `artifacts.cjs` findings at Stop); `artifacts.cjs` (`start`, `mark`, `check`), generated from `scripts/check/engine/hook.cjs`; `aidd-telemetry`: `task.cjs remind`, `ledger.cjs ingest` |
+| Node built-ins | use CommonJS and built-ins; a child process (git included) or a network call only when no built-in can, read-only, scoped, measured under the timeout on a large repository; detached when its work outlasts the bound | add a dependency | `aidd-telemetry`: the reminder spawns git, which no built-in reads (0.05 s on 4 000 commits); the ingest runs `aidd telemetry ingest` detached and writes the ledger, since transcripts must be read before the host deletes them |
+| Bounded | declare a 5 s timeout and return within it; exit 0 on garbage, empty stdin or an unknown event | answer after an internal failure, or let a detached child hold the answer | |
 | Turn state | keep its own per-session state; tell an error new in another file once per turn | keep state in the shared library | `artifacts.cjs`: a mark of this turn's artifacts and a reference time finding shell writes by mtime, in the temp folder; a `"shell": false` contract keeps only files a command names. `aidd-context`: a bank snapshot, checked at Stop for lines written, lines lost and sync |
 | Status message | carry a short `statusMessage` naming plugin and action (`AIDD Context: sync project memory`) | | Codex shows it when asking for trust |
 
 | Call of `hooks/lib/host.cjs` | Does |
 | --- | --- |
 | `readEvent()` | gives the event and its `files`, each with `path`, `written` and `replaced`, the last two absent where the host gives none; a file may be deleted: tolerate `ENOENT` |
-| `answer({ level, text, person })` | informs or requires |
+| `answer({ level, text, person })` | informs or requires; with no `text`, shows only `person`, at any event |
 | `continueTurn(text, person)` | asks once at the turn end |
 | `refuse(reason)` | denies the tool call about to run; does nothing on any other event or adapter |
-| `person` argument | shown to the person by hosts that can, ignored elsewhere |
+| `person` argument | for the person, never the model: Claude Code and Codex show it as `systemMessage`; beside a `text`, only Claude Code's `continueTurn` at Stop; the other hosts ignore it |
 
 ### What the CLI carries
 
-One descriptor and one host adapter per tool, placed at build time, and one merge engine: [CLI architecture bank](../cli/aidd_docs/memory/architecture.md).
+One descriptor and one host adapter per tool, placed at build time, and one merge engine: [CLI architecture memory](../aidd_docs/memory/internal/cli/architecture.md). What each host honours: [Compatibility](COMPATIBILITY.md).
 
 More: [Maintainers guide](MAINTAINERS.md), [CLI architecture](../cli/ARCHITECTURE.md).

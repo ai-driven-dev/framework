@@ -1,0 +1,12 @@
+language js
+
+// A use case receiving its tools as a profile array re-implements the catalog's lookup by id.
+// Only the tools context and presentation may type a profile list.
+or {
+  `Array<$item>`,
+  `ReadonlyArray<$item>`,
+  TsArrayType(element_type=$item)
+} where {
+  $item <: r"(?:Ai|Ide)?ToolProfile",
+  register_diagnostic(span=$item, message="take the ToolCatalog and ask it for the tool by id, not a list of profiles", severity="error")
+}

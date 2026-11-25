@@ -1,12 +1,13 @@
 import { mkdir, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import { UnreadableMarketplaceRegistryError } from "../../../kernel/errors.js";
-import { AIDD_DIR, AIDD_MARKETPLACES_FILENAME } from "../../../kernel/paths.js";
-import type { MarketplaceScope } from "../../../kernel/scope.js";
-import { atomicWriteFile } from "../../../runtime/filesystem/atomic-write.js";
-import { userConfigDir } from "../../../runtime/user-config-dir.js";
+import { AIDD_DIR, AIDD_MARKETPLACES_FILENAME } from "../../../shared/domain/layout/aidd-layout.js";
+import { whenAbsent } from "../../../shared/domain/reading/json-file.js";
+import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
+import type { Scope } from "../../../shared/domain/scope.js";
+import type { AtomicWrite } from "../../../shared/ports/file-writer.js";
+import { UnreadableMarketplaceRegistryError } from "../contract/distribution.error.js";
 import { Marketplace, type MarketplaceData } from "../domain/marketplace.js";
-import type { MarketplaceRegistry } from "../domain/ports/marketplace-registry.js";
+import type { MarketplaceKey, MarketplaceRegistry } from "../ports/marketplace-registry.js";
 
 const SCHEMA_VERSION = 1;
 
@@ -32,12 +33,17 @@ function registryEntries(raw: string, path: string): MarketplaceData[] {
   } catch (error) {
     unreadable(path, error instanceof Error ? error.message : "it is not valid JSON");
   }
-  const entries = (parsed as Partial<RegistryFile> | null)?.marketplaces;
+  const entries = asPlainObject(parsed)?.marketplaces;
   if (!Array.isArray(entries)) unreadable(path, "it carries no `marketplaces` list");
-  return entries;
+  return entries as MarketplaceData[];
 }
 
 export class MarketplaceRegistryAdapter implements MarketplaceRegistry {
+  constructor(
+    private readonly userConfigDir: () => string,
+    private readonly writeFileAtomically: AtomicWrite
+  ) {}
+
   async list(projectRoot: string): Promise<readonly Marketplace[]> {
     const project = await this.read(this.projectPath(projectRoot), "project");
     const user = await this.read(this.userPath(), "user");
@@ -47,45 +53,45 @@ export class MarketplaceRegistryAdapter implements MarketplaceRegistry {
   }
 
   async save(projectRoot: string, marketplace: Marketplace): Promise<void> {
-    const path = this.pathFor(projectRoot, marketplace.scope);
-    const entries = await this.read(path, marketplace.scope);
-    const filtered = entries.filter((m) => m.name !== marketplace.name);
-    filtered.push(marketplace);
-    await this.write(path, filtered);
+    await this.rewrite(projectRoot, marketplace.scope, (entries) => [
+      ...entries.filter((m) => m.name !== marketplace.name),
+      marketplace,
+    ]);
   }
 
-  async delete(projectRoot: string, name: string, scope: MarketplaceScope): Promise<void> {
-    const path = this.pathFor(projectRoot, scope);
-    const entries = await this.read(path, scope);
-    const filtered = entries.filter((m) => m.name !== name);
-    await this.write(path, filtered);
+  async delete(projectRoot: string, name: string, scope: Scope): Promise<void> {
+    await this.rewrite(projectRoot, scope, (entries) => entries.filter((m) => m.name !== name));
   }
 
-  async updateLastFetched(
+  async updateLastFetched(projectRoot: string, key: MarketplaceKey, when: string): Promise<void> {
+    await this.update(projectRoot, key, (m) => m.withLastFetched(when));
+  }
+
+  async updateVersion(projectRoot: string, key: MarketplaceKey, version: string): Promise<void> {
+    await this.update(projectRoot, key, (m) => m.withVersion(version));
+  }
+
+  private async update(
     projectRoot: string,
-    name: string,
-    scope: MarketplaceScope,
-    when: string
+    key: MarketplaceKey,
+    change: (marketplace: Marketplace) => Marketplace
+  ): Promise<void> {
+    await this.rewrite(projectRoot, key.scope, (entries) =>
+      entries.map((m) => (m.name === key.name ? change(m) : m))
+    );
+  }
+
+  /** The scope's registry file, rewritten with what `edit` makes of the entries it holds. */
+  private async rewrite(
+    projectRoot: string,
+    scope: Scope,
+    edit: (entries: Marketplace[]) => Marketplace[]
   ): Promise<void> {
     const path = this.pathFor(projectRoot, scope);
-    const entries = await this.read(path, scope);
-    const updated = entries.map((m) => (m.name === name ? m.withLastFetched(when) : m));
-    await this.write(path, updated);
+    await this.write(path, edit(await this.read(path, scope)));
   }
 
-  async updateVersion(
-    projectRoot: string,
-    name: string,
-    scope: MarketplaceScope,
-    version: string
-  ): Promise<void> {
-    const path = this.pathFor(projectRoot, scope);
-    const entries = await this.read(path, scope);
-    const updated = entries.map((m) => (m.name === name ? m.withVersion(version) : m));
-    await this.write(path, updated);
-  }
-
-  private pathFor(projectRoot: string, scope: MarketplaceScope): string {
+  private pathFor(projectRoot: string, scope: Scope): string {
     return scope === "project" ? this.projectPath(projectRoot) : this.userPath();
   }
 
@@ -94,16 +100,17 @@ export class MarketplaceRegistryAdapter implements MarketplaceRegistry {
   }
 
   private userPath(): string {
-    return join(userConfigDir(), AIDD_MARKETPLACES_FILENAME);
+    return join(this.userConfigDir(), AIDD_MARKETPLACES_FILENAME);
   }
 
-  private async read(path: string, scope: MarketplaceScope): Promise<Marketplace[]> {
-    let raw: string;
+  private async read(path: string, scope: Scope): Promise<Marketplace[]> {
+    let raw: string | undefined;
     try {
-      raw = await readFile(path, "utf-8");
-    } catch {
-      return [];
+      raw = await whenAbsent(() => readFile(path, "utf-8"), undefined);
+    } catch (error) {
+      unreadable(path, error instanceof Error ? error.message : String(error));
     }
+    if (raw === undefined) return [];
     return registryEntries(raw, path).map((m) => Marketplace.fromJSON({ ...m, scope }));
   }
 
@@ -113,6 +120,6 @@ export class MarketplaceRegistryAdapter implements MarketplaceRegistry {
       version: SCHEMA_VERSION,
       marketplaces: entries.map((m) => m.toJSON()),
     };
-    await atomicWriteFile(path, JSON.stringify(file, null, 2));
+    await this.writeFileAtomically(path, JSON.stringify(file, null, 2));
   }
 }

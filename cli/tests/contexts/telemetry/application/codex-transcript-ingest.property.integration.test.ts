@@ -4,31 +4,25 @@ import { join } from "node:path";
 import * as zlib from "node:zlib";
 import * as fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { DirectoryResolver } from "../../../../src/contexts/telemetry/application/directory-resolver.js";
 import {
-  type IngestResult,
-  IngestUsageUseCase,
-} from "../../../../src/contexts/telemetry/application/ingest-usage-use-case.js";
-import { ReadUsageUseCase } from "../../../../src/contexts/telemetry/application/read-usage-use-case.js";
-import { SnapshotBindingsUseCase } from "../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
-import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/domain/formats/claude-transcript-usage.js";
-import { codexUsageReader } from "../../../../src/contexts/telemetry/domain/formats/codex-transcript-usage.js";
-import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/claude-transcript-source-adapter.js";
-import { CodexTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/transcripts/codex-transcript-source-adapter.js";
-import { UsageLedgerAdapter } from "../../../../src/contexts/telemetry/infrastructure/usage-ledger-adapter.js";
-import { PrivateStorageAdapter } from "../../../../src/runtime/filesystem/private-storage-adapter.js";
-import {
-  ALREADY_MIGRATED,
-  cloneOf,
-  FakeBindings,
-  FakeConsents,
-  FakeLocator,
-  grantedBy,
-  InMemoryBindingsLock,
-  InMemoryConsentHistory,
-  InMemoryResolutions,
-  InMemorySnapshots,
-} from "../../../helpers/ports/in-memory-telemetry.js";
+  IngestUsage,
+  type IngestUsageResult,
+} from "../../../../src/contexts/telemetry/application/ingest-usage.use-case.js";
+import { ReadUsage } from "../../../../src/contexts/telemetry/application/read-usage.use-case.js";
+import { SnapshotBindings } from "../../../../src/contexts/telemetry/application/snapshot-bindings.use-case.js";
+import { ClaudeUsageSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-usage-source-adapter.js";
+import { CodexUsageSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/codex/codex-usage-source-adapter.js";
+import { machinePrivateStorage } from "../../../shared/testing/machine-private-storage.builder.js";
+import { cloneOf, grantedBy } from "../testing/clone.builder.js";
+import { directoryResolverOf } from "../testing/directory-resolver.builder.js";
+import { FakeBindings } from "../testing/fake-bindings.fake.js";
+import { FakeConsents } from "../testing/fake-consents.fake.js";
+import { FakeLocator } from "../testing/fake-locator.fake.js";
+import { InMemoryBindingsLock } from "../testing/in-memory-bindings-lock.fake.js";
+import { InMemoryConsentHistory } from "../testing/in-memory-consent-history.fake.js";
+import { InMemoryResolutions } from "../testing/in-memory-resolutions.fake.js";
+import { InMemorySnapshots } from "../testing/in-memory-snapshots.fake.js";
+import { ledgerOver } from "../testing/ledger-adapters.builder.js";
 
 let root: string;
 let runs = 0;
@@ -49,7 +43,7 @@ const PLACES = ["/work/in", "/work/out", "/work/none", undefined] as const;
 function machine(sessions: string, projects?: string) {
   runs += 1;
   const dir = join(root, `ledger-${runs}`);
-  const ledger = new UsageLedgerAdapter(dir, new PrivateStorageAdapter());
+  const ledger = ledgerOver(dir, machinePrivateStorage());
   const locator = new FakeLocator();
   const consents = new FakeConsents();
   const history = new InMemoryConsentHistory();
@@ -69,32 +63,30 @@ function machine(sessions: string, projects?: string) {
     }
   }
   locator.directories.set("/work/none", { status: "outside-repository" });
-  const ingest = new IngestUsageUseCase(
-    [
-      new ReadUsageUseCase(new CodexTranscriptSourceAdapter([sessions]), codexUsageReader),
-      ...(projects === undefined
-        ? []
-        : [
-            new ReadUsageUseCase(
-              new ClaudeTranscriptSourceAdapter(projects),
-              () => readClaudeUsageLine
-            ),
-          ]),
+  const ingest = new IngestUsage({
+    readers: [
+      new ReadUsage(new CodexUsageSourceAdapter({ roots: [sessions] })),
+      ...(projects === undefined ? [] : [new ReadUsage(new ClaudeUsageSourceAdapter(projects))]),
     ],
     ledger,
-    new DirectoryResolver(locator, consents, new InMemoryResolutions(), history, {
-      caseInsensitiveFileSystem: false,
+    directories: directoryResolverOf({
+      locator,
+      consentSource: consents,
+      store: new InMemoryResolutions(),
+      history: history,
+      environment: {
+        caseInsensitiveFileSystem: false,
+        now: () => NOW,
+      },
+    }),
+    snapshots: new SnapshotBindings({
+      source: new FakeBindings(),
+      store: new InMemorySnapshots(),
+      lock: new InMemoryBindingsLock(),
       now: () => NOW,
     }),
-    new SnapshotBindingsUseCase(
-      new FakeBindings(),
-      new InMemorySnapshots(),
-      new InMemoryBindingsLock(),
-      () => NOW
-    ),
-    { refusedByEnvironment: false },
-    ALREADY_MIGRATED
-  );
+    options: { environment: { get: () => undefined } },
+  });
   return { dir, ingest };
 }
 
@@ -110,13 +102,16 @@ async function bytes(dir: string): Promise<Record<string, string>> {
 }
 
 /** What runs say that adds up across them. */
-function counts(results: readonly IngestResult[]) {
+function counts(results: readonly IngestUsageResult[]) {
   return {
     unrecognised: results.reduce((all, r) => all + r.unrecognised, 0),
     notStored: Object.fromEntries(
       Object.keys(results[0]?.notStored ?? {}).map((reason) => [
         reason,
-        results.reduce((all, r) => all + r.notStored[reason as keyof IngestResult["notStored"]], 0),
+        results.reduce(
+          (all, r) => all + (Object.entries(r.notStored).find(([key]) => key === reason)?.[1] ?? 0),
+          0
+        ),
       ])
     ),
   };
@@ -202,7 +197,7 @@ describe("ingesting a Codex session file as it grows (P1)", () => {
         await mkdir(sessions, { recursive: true });
         const path = join(sessions, "rollout-a.jsonl");
         const growing = machine(sessions);
-        const results: IngestResult[] = [];
+        const results: IngestUsageResult[] = [];
         for (const cut of [...cuts, content.length]) {
           await writeFile(path, content.subarray(0, cut));
           results.push(await growing.ingest.execute());

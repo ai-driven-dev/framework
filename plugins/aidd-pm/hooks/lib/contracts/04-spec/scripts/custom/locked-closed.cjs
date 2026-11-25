@@ -1,5 +1,5 @@
 "use strict";
-// A locked spec has resolved every open question: its Open Questions section holds only `None`.
+// A locked spec has resolved every open question: it holds no Open Questions section.
 const { sectionOf } = require("../../../lib/markdown.cjs");
 
 module.exports = function lockedClosed(ctx) {
@@ -7,6 +7,6 @@ module.exports = function lockedClosed(ctx) {
   const section = sectionOf(ctx.prose);
   return ctx.prose
     .map((line, index) => ({ line: index + 1, text: line.trim(), section: section[index] }))
-    .filter(({ text, section }) => section === "Open Questions" && text && text !== "None" && !text.startsWith("## "))
+    .filter(({ text, section }) => section === "Open Questions" && text && !text.startsWith("## "))
     .map(({ line }) => ({ line, offending: ctx.lines[line - 1] }));
 };

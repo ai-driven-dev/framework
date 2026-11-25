@@ -4,26 +4,23 @@
     "SessionStart": [
       {
         "type": "command",
-        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvc2Vzc2lvbi1zdGFydC5janM=",
-        "timeout": 10
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvdGFzay5janMgcmVtaW5k",
+        "timeout": 5
       },
       {
         "type": "command",
-        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvY2F0Y2gtdXAuY2pz",
-        "timeout": 120
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvbGVkZ2VyLmNqcyBpbmdlc3Q=",
+        "timeout": 5
       }
     ]
   }
 }
 
 
-## project/.agents/hooks/aidd-telemetry/catch-up.cjs
+## project/.agents/hooks/aidd-telemetry/ledger.cjs
 script, identical to the plugin source
 
 ## project/.agents/hooks/aidd-telemetry/lib/aidd.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-telemetry/lib/binding.cjs
 script, identical to the plugin source
 
 ## project/.agents/hooks/aidd-telemetry/lib/claude-only.cjs
@@ -38,22 +35,13 @@ script, identical to the plugin source
 ## project/.agents/hooks/aidd-telemetry/lib/context.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/declaration.cjs
-script, identical to the plugin source
-
 ## project/.agents/hooks/aidd-telemetry/lib/git.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/hook-io.cjs
-script, identical to the plugin source
+## project/.agents/hooks/aidd-telemetry/lib/host.cjs
+script, identical to the host adapter host-antigravity.cjs
 
 ## project/.agents/hooks/aidd-telemetry/lib/jsonl.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-telemetry/lib/lookup.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-telemetry/lib/presence.cjs
 script, identical to the plugin source
 
 ## project/.agents/hooks/aidd-telemetry/lib/telemetry-dir.cjs
@@ -62,10 +50,7 @@ script, identical to the plugin source
 ## project/.agents/hooks/aidd-telemetry/lib/tool.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/prompt-gate.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-telemetry/session-start.cjs
+## project/.agents/hooks/aidd-telemetry/task.cjs
 script, identical to the plugin source
 
 # recorded
@@ -74,13 +59,13 @@ project antigravity aidd-telemetry scope=project: 0 hook files
   "entries": [
     {
       "event": "SessionStart",
-      "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvc2Vzc2lvbi1zdGFydC5janM=",
-      "digest": "4100c41de2bcea80a0e3fed5d428c845"
+      "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvdGFzay5janMgcmVtaW5k",
+      "digest": "5e60162c8b700e1fd193560ca37c08c4"
     },
     {
       "event": "SessionStart",
-      "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvY2F0Y2gtdXAuY2pz",
-      "digest": "4216d59d18b66a867925fe452de01eb5"
+      "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvbGVkZ2VyLmNqcyBpbmdlc3Q=",
+      "digest": "20c76cc282a30daaca8620b667b1e707"
     }
   ],
   "scripts": {}

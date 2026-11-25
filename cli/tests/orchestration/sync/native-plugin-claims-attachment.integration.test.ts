@@ -1,0 +1,337 @@
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { recordsOf } from "../../../src/composition/contexts/installation.js";
+import { pluginMaterializerOf } from "../../../src/composition/orchestration/built-placement.js";
+import { homeDirResolver } from "../../../src/composition/user-config-dir.js";
+import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import { PluginDistributionReaderAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-distribution-reader-adapter.js";
+import { RefreshHostPlugin } from "../../../src/contexts/host-registration/application/refresh-host-plugin.use-case.js";
+import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
+import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.use-case.js";
+import { isStrictlyWithin } from "../../../src/shared/domain/paths.model.js";
+import { buildMachinePluginUpdate } from "../../contexts/installation/testing/build-update-plugin.builder.js";
+import { fakeBuiltDeps } from "../../contexts/installation/testing/fake-build-sources.fake.js";
+import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
+import {
+  pluginRemover,
+  userPluginRemover,
+} from "../../contexts/installation/testing/plugin-remover.builder.js";
+import { userScopeFileGuard } from "../../contexts/installation/testing/user-scope-file-guard.fake.js";
+import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
+import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
+import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
+import { FixturePluginFetcher } from "../../shared/testing/fixture-plugin-fetcher.fake.js";
+import { hostWithdrawal } from "../../shared/testing/host-withdrawal.builder.js";
+import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
+import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
+import { loadDistributionOf } from "../../shared/testing/load-distribution.builder.js";
+import { manifestProbesOf } from "../../shared/testing/manifest-probes-of.builder.js";
+import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
+import { saying } from "../../shared/testing/saying.builder.js";
+import {
+  SYNTHETIC_LISTED_CATALOGUE,
+  SYNTHETIC_LISTED_TOOL,
+  SYNTHETIC_PROVEN_CATALOGUE,
+  SYNTHETIC_PROVEN_TOOL,
+  syntheticSyncCatalog,
+} from "../../shared/testing/synthetic-native-tool.builder.js";
+import { effectiveListSources } from "../testing/effective-list-sources.builder.js";
+import { userMarketplaceRemover } from "../testing/user-marketplace-remover.builder.js";
+
+for (const [toolId, catalogPath] of [
+  [SYNTHETIC_LISTED_TOOL, SYNTHETIC_LISTED_CATALOGUE],
+  [SYNTHETIC_PROVEN_TOOL, SYNTHETIC_PROVEN_CATALOGUE],
+] as const) {
+  describe(`${toolId} machine plugin claims`, () => {
+    it("attaches B to AIDD's exact host ref without re-enabling it, but never claims a foreign ref", async () => {
+      const alias = "local-alias";
+      const hostName = "real-catalog";
+      const ref = `test-plugin@${hostName}`;
+      const builtDir = `/built/${toolId}`;
+      const registry = new InMemoryMarketplaceRegistry();
+      await registry.save(
+        "/A",
+        Marketplace.create({
+          name: alias,
+          source: { kind: "local", path: "/src" },
+          scope: "user",
+          addedAt: "2026-01-01T00:00:00Z",
+        })
+      );
+      const project = () => {
+        const manifest = aManifest()
+          .withTool(toolId, [])
+          .withPlugin(
+            toolId,
+            RecordedPlugin.fromMetadata({
+              name: "test-plugin",
+              version: "1.0.0",
+              source: { kind: "local", path: "/src" },
+              strict: false,
+              scope: "project",
+              marketplace: alias,
+            })
+          )
+          .build();
+        return new InMemoryManifestRepository(manifest);
+      };
+      const a = project();
+      const b = project();
+      const foreign = project();
+      const machine = Manifest.create();
+      machine.addTool(toolId, "1.0.0", []);
+      const user = new InMemoryManifestRepository(machine);
+      user.records.set(toolId, {
+        binary: toolId,
+        marketplaces: [
+          {
+            alias,
+            hostName,
+            provenance: {
+              kind: "effective-list",
+              root: builtDir,
+              sourceType: "local",
+              source: builtDir,
+            },
+          },
+        ],
+        pluginRefs: [],
+        pluginClaims: [],
+      });
+      const activator = new FakeHostActions({ available: true });
+      const sources = effectiveListSources(toolId, hostName, builtDir);
+      let enabled = false;
+      const hostReader: HostPluginRegistry = {
+        read: async () => ({
+          location: "/host/registry",
+          refs: new Map(enabled ? [[ref, { enabled: true, scope: "user" as const }]] : []),
+        }),
+      };
+      const syncOf = (manifestRepo: InMemoryManifestRepository) =>
+        marketplaceSync({
+          tools: syntheticSyncCatalog(),
+          fs: new InMemoryFileAdapter(
+            {
+              [`${builtDir}/${catalogPath}`]: JSON.stringify({
+                name: hostName,
+                version: "1.0.0",
+                plugins: [],
+              }),
+            },
+            ["/A", "/B"]
+          ),
+          manifestRepo,
+          marketplaceRegistry: registry,
+          logger: new CapturingLogger(),
+          activators: new Map([[toolId, activator]]),
+          ensureBuilt: fakeEnsureBuiltMarketplace(() => builtDir),
+          userCacheRoot: () => "/built",
+          hostPluginRegistries: new Map([[toolId, hostReader]]),
+          userManifestRepo: user,
+          nativeSources: sources,
+        });
+      await syncOf(a).execute({
+        projectRoot: "/A",
+        toolIds: [toolId],
+      });
+      enabled = true;
+      await syncOf(b).execute({
+        projectRoot: "/B",
+        toolIds: [toolId],
+      });
+      expect(activator.enabledPlugins).toEqual([ref]);
+      expect(b.records.get(toolId)?.pluginRefs).toContain(ref);
+      expect(user.records.get(toolId)?.pluginClaims).toEqual([{ ref, dependents: ["/A", "/B"] }]);
+      const updateFs = new InMemoryFileAdapter({}, ["/A", "/B"]);
+      const update = new UpdateUserPlugin(
+        buildMachinePluginUpdate(
+          {
+            repo: user,
+            materializer: pluginMaterializerOf({
+              fs: updateFs,
+              loadDistribution: loadDistributionOf(
+                new FixturePluginFetcher(),
+                new PluginDistributionReaderAdapter(
+                  updateFs,
+                  manifestProbesOf(syntheticSyncCatalog())
+                )
+              ),
+              guard: userScopeFileGuard,
+              builtDeps: fakeBuiltDeps(),
+            }),
+            logger: new CapturingLogger(),
+          },
+          syntheticSyncCatalog()
+        ),
+        new RefreshHostPlugin(
+          new Map([[toolId, activator]]),
+          new Map([[toolId, hostReader]]),
+          sources
+        ),
+        isStrictlyWithin,
+        recordsOf(user)
+      );
+      if (toolId === SYNTHETIC_PROVEN_TOOL) {
+        expect(
+          await update.execute({
+            pluginNames: ["test-plugin"],
+            toolIds: [toolId],
+            projectRoot: "/A",
+            scope: "user",
+          })
+        ).toEqual([ref]);
+        expect(activator.updatedPlugins).toEqual([ref]);
+        const failed = new FakeHostActions({ available: true, failOnUpdate: [ref] });
+        const failingUpdate = new UpdateUserPlugin(
+          buildMachinePluginUpdate(
+            {
+              repo: user,
+              materializer: pluginMaterializerOf({
+                fs: updateFs,
+                loadDistribution: loadDistributionOf(
+                  new FixturePluginFetcher(),
+                  new PluginDistributionReaderAdapter(
+                    updateFs,
+                    manifestProbesOf(syntheticSyncCatalog())
+                  )
+                ),
+                guard: userScopeFileGuard,
+                builtDeps: fakeBuiltDeps(),
+              }),
+              logger: new CapturingLogger(),
+            },
+            syntheticSyncCatalog()
+          ),
+          new RefreshHostPlugin(
+            new Map([[toolId, failed]]),
+            new Map([[toolId, hostReader]]),
+            sources
+          ),
+          isStrictlyWithin,
+          recordsOf(user)
+        );
+        await expect(
+          failingUpdate.execute({
+            pluginNames: ["test-plugin"],
+            toolIds: [toolId],
+            projectRoot: "/A",
+            scope: "user",
+          })
+        ).rejects.toThrow(
+          expect.objectContaining({ detail: expect.stringMatching(/plugin update.*failed/) })
+        );
+        expect(user.records.get(toolId)?.pluginClaims).toEqual([{ ref, dependents: ["/A", "/B"] }]);
+      } else {
+        await expect(
+          update.execute({
+            pluginNames: ["test-plugin"],
+            toolIds: [toolId],
+            projectRoot: "/A",
+            scope: "user",
+          })
+        ).rejects.toThrow(/does not support targeted.*update/);
+        expect(activator.updatedPlugins).toEqual([]);
+      }
+      const removeMarketplace = userMarketplaceRemover(
+        syntheticSyncCatalog(),
+        new InMemoryFileAdapter({}, ["/A", "/B"]),
+        user,
+        registry,
+        hostWithdrawal(new Map([[toolId, activator]]), new Map([[toolId, hostReader]]), sources)
+      );
+      await expect(
+        removeMarketplace.execute({
+          name: alias,
+          projectRoot: "/A",
+          autoConfirm: true,
+          scope: "user",
+        })
+      ).rejects.toThrow(saying(/active projects/));
+
+      const foreignUser = new InMemoryManifestRepository(Manifest.create());
+      const foreignUseCase = marketplaceSync({
+        tools: syntheticSyncCatalog(),
+        fs: new InMemoryFileAdapter(
+          {
+            [`${builtDir}/${catalogPath}`]: JSON.stringify({
+              name: hostName,
+              version: "1.0.0",
+              plugins: [],
+            }),
+          },
+          ["/A", "/B", "/foreign"]
+        ),
+        manifestRepo: foreign,
+        marketplaceRegistry: registry,
+        logger: new CapturingLogger(),
+        activators: new Map([[toolId, new FakeHostActions({ available: true })]]),
+        ensureBuilt: fakeEnsureBuiltMarketplace(() => builtDir),
+        userCacheRoot: () => "/built",
+        hostPluginRegistries: new Map([[toolId, hostReader]]),
+        userManifestRepo: foreignUser,
+        nativeSources: sources,
+      });
+      await foreignUseCase.execute({
+        projectRoot: "/foreign",
+        toolIds: [toolId],
+      });
+      expect(foreign.records.get(toolId)?.pluginRefs).toEqual([]);
+      expect(foreignUser.records.get(toolId)?.pluginClaims ?? []).toEqual([]);
+      const removeFs = new InMemoryFileAdapter({}, ["/A", "/B"]);
+      const cacheRoot = syntheticSyncCatalog()
+        .aiProfile(toolId)
+        .nativeActivation()
+        ?.pluginCacheRoot(homeDirResolver()());
+      const cachedBytes =
+        cacheRoot === undefined ? undefined : join(cacheRoot, hostName, "test-plugin", "skill.md");
+      if (cachedBytes !== undefined)
+        removeFs.setFile(cachedBytes, "B still uses this cached plugin");
+      const removing = (repo: InMemoryManifestRepository) => ({
+        fs: removeFs,
+        manifestRepo: repo,
+        activators: new Map([[toolId, activator]]),
+        hostPluginRegistries: new Map([[toolId, hostReader]]),
+        marketplaceRegistry: registry,
+        userManifestRepo: user,
+        nativeMarketplaceSources: sources,
+        tools: syntheticSyncCatalog(),
+      });
+      const remove = (repo: InMemoryManifestRepository) => pluginRemover(removing(repo));
+      await remove(a).execute({
+        pluginName: "test-plugin",
+        toolIds: [toolId],
+        projectRoot: "/A",
+      });
+      expect(activator.uninstalledPlugins).toEqual([]);
+      if (cachedBytes !== undefined)
+        expect(removeFs.getFile(cachedBytes)).toBe("B still uses this cached plugin");
+      expect(user.records.get(toolId)?.pluginClaims).toEqual([{ ref, dependents: ["/B"] }]);
+      await remove(b).execute({
+        pluginName: "test-plugin",
+        toolIds: [toolId],
+        projectRoot: "/B",
+      });
+      expect(activator.uninstalledPlugins).toEqual([]);
+      expect(user.records.get(toolId)?.pluginClaims).toEqual([{ ref, dependents: [] }]);
+      await userPluginRemover(removing(a)).execute({
+        pluginName: "test-plugin",
+        toolIds: [toolId],
+        projectRoot: "/A",
+      });
+      expect(activator.uninstalledPlugins).toEqual([ref]);
+      expect(user.records.get(toolId)?.pluginClaims).toEqual([]);
+      enabled = false;
+      await removeMarketplace.execute({
+        name: alias,
+        projectRoot: "/A",
+        autoConfirm: true,
+        scope: "user",
+      });
+      expect(activator.removedMarketplaces).toEqual([hostName]);
+      expect((await registry.list("/A")).find((entry) => entry.name === alias)).toBeUndefined();
+    });
+  });
+}

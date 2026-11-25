@@ -1,0 +1,151 @@
+import { chmod, mkdir, mkdtemp, readFile, rename, rm, symlink, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("node:fs/promises", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:fs/promises")>();
+  return { ...actual, rename: vi.fn(actual.rename) };
+});
+
+import { FileAdapter } from "../../../src/shared/infrastructure/file-adapter.js";
+import { CapturingLogger } from "../testing/capturing-logger.fake.js";
+
+// What the file port contract cannot observe stays here: the rename step, the stop at a
+// directory the filesystem refuses to remove, and what the adapter tells its logger.
+describe("working with files on disk", () => {
+  let tempDir: string;
+  let fs: FileAdapter;
+
+  beforeEach(async () => {
+    tempDir = await mkdtemp(join(tmpdir(), "aidd-fs-adapter-"));
+    fs = new FileAdapter();
+  });
+
+  afterEach(async () => {
+    await rm(tempDir, { recursive: true, force: true });
+  });
+
+  describe("writing a file", () => {
+    // A crash mid-write must never leave a truncated file at `path`, and two concurrent `aidd
+    // setup` runs both write `references.json`: `rename` is the one POSIX-atomic step.
+    it("writes through a temporary file and renames it into place", async () => {
+      const path = join(tempDir, "atomic.txt");
+      await writeFile(path, "old content", "utf-8");
+      vi.mocked(rename).mockClear();
+
+      await fs.writeFile(path, "new content");
+
+      expect(rename).toHaveBeenCalledTimes(1);
+      const [renamedFrom, renamedTo] = vi.mocked(rename).mock.calls[0] ?? [];
+      expect(renamedTo).toBe(path);
+      expect(renamedFrom).not.toBe(path);
+      expect(await readFile(path, "utf-8")).toBe("new content");
+    });
+  });
+});
+
+describe("FileAdapter, at the edges", () => {
+  let tempDir: string;
+  let logger: CapturingLogger;
+  let fs: FileAdapter;
+
+  beforeEach(async () => {
+    tempDir = await mkdtemp(join(tmpdir(), "aidd-fs-edges-"));
+    logger = new CapturingLogger();
+    fs = new FileAdapter(logger);
+  });
+
+  afterEach(async () => {
+    await rm(tempDir, { recursive: true, force: true });
+  });
+
+  describe("listing files under a directory", () => {
+    it("skips a symlink and says which one", async () => {
+      await writeFile(join(tempDir, "real.txt"), "");
+      await symlink(join(tempDir, "real.txt"), join(tempDir, "link.txt"));
+
+      expect(await fs.listFilesRecursive(tempDir)).toStrictEqual([join(tempDir, "real.txt")]);
+      expect(logger.warnMessages).toStrictEqual([`Skipping symlink: ${join(tempDir, "link.txt")}`]);
+    });
+  });
+
+  describe("listing a tree with a directory it cannot read", () => {
+    // Only an absent directory lists as empty. A directory that is there but refused must fail the
+    // walk, or install, build and translate copy a partial tree and exit 0.
+    it.runIf(process.platform !== "win32" && process.getuid?.() !== 0)(
+      "fails instead of skipping a directory it is denied",
+      async () => {
+        const denied = join(tempDir, "denied");
+        await mkdir(denied);
+        await writeFile(join(denied, "hidden.txt"), "");
+        await writeFile(join(tempDir, "seen.txt"), "");
+        await chmod(denied, 0o000);
+        try {
+          await expect(fs.listFilesRecursive(tempDir)).rejects.toThrow(/EACCES/);
+        } finally {
+          await chmod(denied, 0o700);
+        }
+      }
+    );
+  });
+
+  describe("listFilesRecursive(), with no logger", () => {
+    it("still skips the symlink, silently", async () => {
+      await writeFile(join(tempDir, "real.txt"), "");
+      await symlink(join(tempDir, "real.txt"), join(tempDir, "link.txt"));
+
+      expect(await new FileAdapter().listFilesRecursive(tempDir)).toStrictEqual([
+        join(tempDir, "real.txt"),
+      ]);
+    });
+  });
+
+  describe("listing a directory", () => {
+    it("says which symlink it skipped", async () => {
+      await writeFile(join(tempDir, "real.txt"), "");
+      await symlink(join(tempDir, "real.txt"), join(tempDir, "link.txt"));
+
+      await fs.listDirectory(tempDir);
+
+      expect(logger.warnMessages).toStrictEqual([`Skipping symlink: ${join(tempDir, "link.txt")}`]);
+    });
+  });
+
+  describe("deleting empty directories", () => {
+    // A read-only directory blocks removal on POSIX alone, and never for root.
+    it.skipIf(process.platform === "win32" || process.getuid?.() === 0)(
+      "stops at a directory it cannot remove",
+      async () => {
+        const locked = join(tempDir, "locked");
+        const inner = join(locked, "inner");
+        await mkdir(inner, { recursive: true });
+        await chmod(locked, 0o555);
+        try {
+          await fs.deleteEmptyDirectories(inner);
+          expect(await fs.fileExists(inner)).toBe(true);
+        } finally {
+          await chmod(locked, 0o755);
+        }
+      }
+    );
+  });
+
+  describe("checking whether a file is executable", () => {
+    it.skipIf(process.platform === "win32")(
+      "tells a file its owner may run from one it may not, and from one that is absent",
+      async () => {
+        const runnable = join(tempDir, "runnable");
+        const plain = join(tempDir, "plain");
+        await writeFile(runnable, "#!/bin/sh\n");
+        await writeFile(plain, "#!/bin/sh\n");
+        await chmod(runnable, 0o755);
+        await chmod(plain, 0o644);
+
+        expect(await fs.isExecutable(runnable)).toBe(true);
+        expect(await fs.isExecutable(plain)).toBe(false);
+        expect(await fs.isExecutable(join(tempDir, "absent"))).toBe(false);
+      }
+    );
+  });
+});

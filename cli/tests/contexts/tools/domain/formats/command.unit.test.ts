@@ -1,18 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
+  aiddCommandsUnder,
   buildAiddCommandFilePath,
   convertCommandFrontmatter,
   convertCommandFrontmatterNoHint,
-  stripToolSuffix,
+  phasedCommandPath,
+  phasedCommandsDir,
+  phasedCommandsLink,
+  phasedCommandsUnder,
 } from "../../../../../src/contexts/tools/domain/formats/command.js";
 
-describe("stripToolSuffix", () => {
-  it("strips the suffix off the last segment of a deeply nested path only", () => {
-    expect(stripToolSuffix(".claude.md", "a/b/c.claude.md")).toBe("a/b/c.md");
-  });
-});
-
-describe("convertCommandFrontmatter", () => {
+describe("converting a command's frontmatter", () => {
   it("namespaces the name under the phase its directory is numbered with", () => {
     expect(
       convertCommandFrontmatter({ name: "plan", description: "d" }, "01-plan/plan.md")
@@ -55,7 +53,7 @@ describe("convertCommandFrontmatter", () => {
   });
 });
 
-describe("buildAiddCommandFilePath", () => {
+describe("filing a command", () => {
   it("files a command under its numbered phase", () => {
     expect(buildAiddCommandFilePath(".claude/", "01-plan/plan.md")).toBe(
       ".claude/commands/aidd/01/plan.md"
@@ -80,5 +78,51 @@ describe("buildAiddCommandFilePath", () => {
 
   it("files a bare file name directly under the aidd namespace", () => {
     expect(buildAiddCommandFilePath(".claude/", "plan.md")).toBe(".claude/commands/aidd/plan.md");
+  });
+});
+
+describe("buildAiddCommandFilePath without a directory", () => {
+  it("does not read the leading digits of a bare file name as a phase", () => {
+    expect(buildAiddCommandFilePath(".claude/", "12-plan.md")).toBe(
+      ".claude/commands/aidd/12-plan.md"
+    );
+  });
+});
+
+describe("placing a command under the phase its directory is numbered with", () => {
+  it.each<[string, string | undefined]>([
+    ["04_code/implement.md", ".claude/commands/aidd/04/implement.md"],
+    ["02_context/create_user_stories.md", ".claude/commands/aidd/02/create_user_stories.md"],
+    ["4/implement.md", ".claude/commands/aidd/4/implement.md"],
+    ["01-notes.md", undefined],
+    ["v04/notes.md", undefined],
+  ])("places %s at %s", (fileName, path) => {
+    expect(phasedCommandPath(".claude/", fileName)).toBe(path);
+  });
+
+  it("names the directory of one phase's commands", () => {
+    expect(phasedCommandsDir(".claude/", "04")).toBe(".claude/commands/aidd/04/");
+  });
+});
+
+describe("a command path declared by its directory", () => {
+  it("lands a numbered command in its phase folder and any other flat", () => {
+    const under = aiddCommandsUnder(".cursor/");
+    expect([under("01-plan/plan.md"), under("plan.md")]).toStrictEqual([
+      ".cursor/commands/aidd/01/plan.md",
+      ".cursor/commands/aidd/plan.md",
+    ]);
+  });
+
+  it("puts an unnumbered command where the fallback puts it", () => {
+    const under = phasedCommandsUnder(".claude/", (fileName) => `.claude/commands/${fileName}`);
+    expect([under("01-plan/plan.md"), under("notes.md")]).toStrictEqual([
+      ".claude/commands/aidd/01/plan.md",
+      ".claude/commands/notes.md",
+    ]);
+  });
+
+  it("rewrites a link to a numbered folder into its phase folder", () => {
+    expect(phasedCommandsLink(".claude/")("x", "@", "04")).toBe("@.claude/commands/aidd/04/");
   });
 });

@@ -235,13 +235,10 @@ script, identical to the plugin source
 ## project/.kilo/hooks/aidd-context/memory.cjs
 script, identical to the plugin source
 
-## project/.kilo/hooks/aidd-telemetry/catch-up.cjs
+## project/.kilo/hooks/aidd-telemetry/ledger.cjs
 script, identical to the plugin source
 
 ## project/.kilo/hooks/aidd-telemetry/lib/aidd.cjs
-script, identical to the plugin source
-
-## project/.kilo/hooks/aidd-telemetry/lib/binding.cjs
 script, identical to the plugin source
 
 ## project/.kilo/hooks/aidd-telemetry/lib/claude-only.cjs
@@ -256,22 +253,13 @@ script, identical to the plugin source
 ## project/.kilo/hooks/aidd-telemetry/lib/context.cjs
 script, identical to the plugin source
 
-## project/.kilo/hooks/aidd-telemetry/lib/declaration.cjs
-script, identical to the plugin source
-
 ## project/.kilo/hooks/aidd-telemetry/lib/git.cjs
 script, identical to the plugin source
 
-## project/.kilo/hooks/aidd-telemetry/lib/hook-io.cjs
-script, identical to the plugin source
+## project/.kilo/hooks/aidd-telemetry/lib/host.cjs
+script, identical to the host adapter for kilo
 
 ## project/.kilo/hooks/aidd-telemetry/lib/jsonl.cjs
-script, identical to the plugin source
-
-## project/.kilo/hooks/aidd-telemetry/lib/lookup.cjs
-script, identical to the plugin source
-
-## project/.kilo/hooks/aidd-telemetry/lib/presence.cjs
 script, identical to the plugin source
 
 ## project/.kilo/hooks/aidd-telemetry/lib/telemetry-dir.cjs
@@ -280,10 +268,7 @@ script, identical to the plugin source
 ## project/.kilo/hooks/aidd-telemetry/lib/tool.cjs
 script, identical to the plugin source
 
-## project/.kilo/hooks/aidd-telemetry/prompt-gate.cjs
-script, identical to the plugin source
-
-## project/.kilo/hooks/aidd-telemetry/session-start.cjs
+## project/.kilo/hooks/aidd-telemetry/task.cjs
 script, identical to the plugin source
 
 ## project/.kilo/kilo.jsonc
@@ -402,6 +387,8 @@ function sessionStartCallsFor(event, directory) {
   }));
 }
 
+const FOLLOW_UP = { aidd: "stop-follow-up" };
+
 const AiddContextKiloHooks = async ({ directory, client }) => {
   const sessions = new Map();
   return {
@@ -422,15 +409,18 @@ const AiddContextKiloHooks = async ({ directory, client }) => {
         session.idle = false;
       } else if (event?.type === "session.idle" && !session.idle) {
         session.idle = true;
+        // Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
         for (const hook of STOP) {
           const payload = { hook_event_name: "Stop", session_id: id, cwd: session.directory, stop_hook_active: session.continued };
           const reason = await stopReasonOf(hook.script, hook.args, payload, session.directory);
           session.continued = reason !== "";
           // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
+          // Kilo 7.8.27's `run` waits for the queue to drain, so the follow-up lands there too; awaiting
+          // it from `dispose` fails with an UnknownError. 7.7.5 lost it in `run`.
           if (reason) {
             client.session
-              .promptAsync({ path: { id }, body: { parts: [{ type: "text", text: reason }] } })
-              .catch(() => {});
+              .promptAsync({ path: { id }, body: { parts: [{ type: "text", text: reason, metadata: FOLLOW_UP }] } })
+              .catch((error) => reportHookFailure(hook.script, "follow-up not delivered: " + String(error)));
           }
         }
       }
@@ -440,6 +430,13 @@ const AiddContextKiloHooks = async ({ directory, client }) => {
     } catch (error) {
       console.warn("[aidd] Kilo hook dispatch failed: " + String(error));
     }
+  },
+  // A user's message starts a new turn. Kilo hands every plugin every message, so a follow-up,
+  // this bridge's or another plugin's, is recognised by its mark and is not one.
+  "chat.message": async (input, output) => {
+    const session = sessions.get(input?.sessionID);
+    if (!session) return;
+    if (!output?.parts?.some((part) => part?.metadata?.aidd === FOLLOW_UP.aidd)) session.continued = false;
   },
   "tool.execute.after": async (call, output) => {
     try {
@@ -470,7 +467,7 @@ import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const HOOKS_DIR = fileURLToPath(new URL("../hooks/aidd-telemetry/", import.meta.url));
-const SESSION_START = [{"script":"session-start.cjs","args":[]},{"script":"catch-up.cjs","args":[]}];
+const SESSION_START = [{"script":"task.cjs","args":["remind"]},{"script":"ledger.cjs","args":["ingest"]}];
 const STOP = [];
 const POST_TOOL_USE = [];
 
@@ -575,6 +572,8 @@ function sessionStartCallsFor(event, directory) {
   }));
 }
 
+const FOLLOW_UP = { aidd: "stop-follow-up" };
+
 const AiddTelemetryKiloHooks = async ({ directory, client }) => {
   const sessions = new Map();
   return {
@@ -595,15 +594,18 @@ const AiddTelemetryKiloHooks = async ({ directory, client }) => {
         session.idle = false;
       } else if (event?.type === "session.idle" && !session.idle) {
         session.idle = true;
+        // Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
         for (const hook of STOP) {
           const payload = { hook_event_name: "Stop", session_id: id, cwd: session.directory, stop_hook_active: session.continued };
           const reason = await stopReasonOf(hook.script, hook.args, payload, session.directory);
           session.continued = reason !== "";
           // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
+          // Kilo 7.8.27's `run` waits for the queue to drain, so the follow-up lands there too; awaiting
+          // it from `dispose` fails with an UnknownError. 7.7.5 lost it in `run`.
           if (reason) {
             client.session
-              .promptAsync({ path: { id }, body: { parts: [{ type: "text", text: reason }] } })
-              .catch(() => {});
+              .promptAsync({ path: { id }, body: { parts: [{ type: "text", text: reason, metadata: FOLLOW_UP }] } })
+              .catch((error) => reportHookFailure(hook.script, "follow-up not delivered: " + String(error)));
           }
         }
       }
@@ -613,6 +615,13 @@ const AiddTelemetryKiloHooks = async ({ directory, client }) => {
     } catch (error) {
       console.warn("[aidd] Kilo hook dispatch failed: " + String(error));
     }
+  },
+  // A user's message starts a new turn. Kilo hands every plugin every message, so a follow-up,
+  // this bridge's or another plugin's, is recognised by its mark and is not one.
+  "chat.message": async (input, output) => {
+    const session = sessions.get(input?.sessionID);
+    if (!session) return;
+    if (!output?.parts?.some((part) => part?.metadata?.aidd === FOLLOW_UP.aidd)) session.continued = false;
   },
   "tool.execute.after": async (call, output) => {
     try {
@@ -660,24 +669,19 @@ project kilo aidd-context scope=project: 19 hook files
   .kilo/plugin/aidd-context-hooks.js
   projectHooks null
   dependents []
-project kilo aidd-telemetry scope=project: 18 hook files
-  .kilo/hooks/aidd-telemetry/catch-up.cjs
+project kilo aidd-telemetry scope=project: 13 hook files
+  .kilo/hooks/aidd-telemetry/ledger.cjs
   .kilo/hooks/aidd-telemetry/lib/aidd.cjs
-  .kilo/hooks/aidd-telemetry/lib/binding.cjs
   .kilo/hooks/aidd-telemetry/lib/claude-only.cjs
   .kilo/hooks/aidd-telemetry/lib/codex-session-file.cjs
   .kilo/hooks/aidd-telemetry/lib/consent.cjs
   .kilo/hooks/aidd-telemetry/lib/context.cjs
-  .kilo/hooks/aidd-telemetry/lib/declaration.cjs
   .kilo/hooks/aidd-telemetry/lib/git.cjs
-  .kilo/hooks/aidd-telemetry/lib/hook-io.cjs
+  .kilo/hooks/aidd-telemetry/lib/host.cjs
   .kilo/hooks/aidd-telemetry/lib/jsonl.cjs
-  .kilo/hooks/aidd-telemetry/lib/lookup.cjs
-  .kilo/hooks/aidd-telemetry/lib/presence.cjs
   .kilo/hooks/aidd-telemetry/lib/telemetry-dir.cjs
   .kilo/hooks/aidd-telemetry/lib/tool.cjs
-  .kilo/hooks/aidd-telemetry/prompt-gate.cjs
-  .kilo/hooks/aidd-telemetry/session-start.cjs
+  .kilo/hooks/aidd-telemetry/task.cjs
   .kilo/plugin/aidd-telemetry-hooks.js
   projectHooks null
   dependents []

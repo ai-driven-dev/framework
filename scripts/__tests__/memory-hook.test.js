@@ -84,7 +84,7 @@ const STOP = { claude: "claude-Stop.json", codex: "codex-Stop.json", copilot: "c
 const PAYLOAD_HOSTS = Object.keys(SESSION_START);
 
 // OpenCode and Kilo send no stdin: their bridge runs the hook with a payload built from the
-// plugin's arguments (`opencode-hooks-bridge.ts`, read by the CLI's `hooks-runtime-bridges.integration.test.ts`).
+// plugin's arguments (`opencode-hooks-bridge.model.ts`, read by the CLI's `hooks-runtime-bridges.integration.test.ts`).
 function sessionStartPayload(host, root) {
   if (BRIDGED.has(host)) return { hook_event_name: "SessionStart", session_id: null, cwd: root };
   return captured(SESSION_START[host], 0, root);

@@ -1,0 +1,211 @@
+import { describe, expect, it } from "vitest";
+import { LoadConsentLog } from "../../../../src/contexts/telemetry/application/consent/load-consent-log.use-case.js";
+import { ReadCurrentBranch } from "../../../../src/contexts/telemetry/application/declaration/read-current-branch.use-case.js";
+import { FindConsentedRepository } from "../../../../src/contexts/telemetry/application/find-consented-repository.use-case.js";
+import {
+  currentBindingOf,
+  ReadTelemetryStatus,
+} from "../../../../src/contexts/telemetry/application/read-telemetry-status.use-case.js";
+import type { LocatedDirectory } from "../../../../src/contexts/telemetry/domain/resolution/located-directory.js";
+import { cloneOf, grantedBy } from "../testing/clone.builder.js";
+import { FakeBindings } from "../testing/fake-bindings.fake.js";
+import { FakeBranchStore } from "../testing/fake-branch-store.fake.js";
+import { FakeConsents } from "../testing/fake-consents.fake.js";
+import { FakeLocator } from "../testing/fake-locator.fake.js";
+import { InMemoryConsentHistory } from "../testing/in-memory-consent-history.fake.js";
+import { InMemoryIdentity } from "../testing/in-memory-identity.fake.js";
+import { InMemorySessions } from "../testing/in-memory-sessions.fake.js";
+
+const CWD = "/work/repo";
+const REPOSITORY: LocatedDirectory = {
+  status: "repository",
+  root: CWD,
+  mainRoot: CWD,
+  clone: cloneOf(`${CWD}/.git`),
+  remote: "git@github.com:acme/widgets.git",
+  rootCommit: "abc",
+};
+
+function setup(
+  sessionId: string | null = "sess-1234567890",
+  environment = { get: (): string | undefined => undefined }
+) {
+  const locator = new FakeLocator();
+  locator.directories.set(CWD, REPOSITORY);
+  const consents = new FakeConsents();
+  consents.values.set(CWD, grantedBy(cloneOf(`${CWD}/.git`)));
+  const history = new InMemoryConsentHistory();
+  history.consented(cloneOf(`${CWD}/.git`));
+  const sessions = new InMemorySessions();
+  const branches = new FakeBranchStore();
+  const source = new FakeBindings();
+  const identities = new InMemoryIdentity();
+  const now = () => new Date("2026-10-09T12:00:00.000Z");
+  const useCase = new ReadTelemetryStatus({
+    repositories: new FindConsentedRepository(
+      locator,
+      consents,
+      new LoadConsentLog(history),
+      environment
+    ),
+    bindingOf: currentBindingOf({ sessions, sessionId, now }),
+    branches: new ReadCurrentBranch(branches, source),
+    sessionId,
+    identities,
+  });
+  return { useCase, locator, consents, history, sessions, branches, source, identities };
+}
+
+const branchBinding = {
+  branch: "feat/x",
+  task: "on-branch",
+  ticket: null,
+  declared_at: "2026-10-09T09:00:00.000Z",
+  none: false,
+};
+
+describe("showing what the work is bound to", () => {
+  it("names the person the measurement names, or nobody", async () => {
+    const { useCase, identities } = setup();
+    expect(await useCase.execute({ cwd: CWD })).toMatchObject({ status: "shown", personId: null });
+    identities.personId = "Ada Example";
+    expect(await useCase.execute({ cwd: CWD })).toMatchObject({ personId: "Ada Example" });
+  });
+
+  it("says since when the clone is measured: the start of the interval its key names", async () => {
+    const { useCase } = setup();
+    expect(await useCase.execute({ cwd: CWD })).toMatchObject({
+      status: "shown",
+      since: "2026-01-01T00:00:00.000Z",
+    });
+  });
+
+  it("is the session's declaration before the branch's", async () => {
+    const { useCase, sessions, source } = setup();
+    source.bindingsByRoot.set(CWD, [branchBinding]);
+    sessions.lines.push({
+      session_id: "sess-1234567890",
+      task: "in-session",
+      ticket: null,
+      none: false,
+      declared_at: "2026-10-09T11:00:00.000Z",
+      by: "command",
+    });
+    expect(await useCase.execute({ cwd: CWD })).toMatchObject({
+      status: "shown",
+      branch: "feat/x",
+      role: "working",
+      binding: { source: "session-declared", task: "in-session" },
+    });
+  });
+
+  it("is the branch's declaration for the branch being worked on, not another's", async () => {
+    const { useCase, source } = setup();
+    source.bindingsByRoot.set(CWD, [
+      { ...branchBinding, branch: "other", task: "elsewhere" },
+      branchBinding,
+    ]);
+    expect(await useCase.execute({ cwd: CWD })).toMatchObject({
+      binding: { source: "branch", task: "on-branch" },
+    });
+  });
+
+  it("reads the carries of a session", async () => {
+    const { useCase, sessions } = setup();
+    sessions.lines.push({
+      session_id: "earlier",
+      task: "carried-task",
+      ticket: null,
+      none: false,
+      declared_at: "2026-10-09T09:00:00.000Z",
+      by: "command",
+    });
+    sessions.carried.push({
+      session_id: "sess-1234567890",
+      from: "earlier",
+      at: "2026-10-09T10:00:00.000Z",
+    });
+    expect(await useCase.execute({ cwd: CWD })).toMatchObject({
+      binding: { source: "session-carried", task: "carried-task", carriedFrom: "earlier" },
+    });
+  });
+
+  it("never reads the branch's declaration on the default branch or a detached head", async () => {
+    const { useCase, branches, source } = setup();
+    source.bindingsByRoot.set(CWD, [{ ...branchBinding, branch: "main" }]);
+    branches.heads_ = { head: "refs/heads/main", originHead: "refs/remotes/origin/main" };
+    expect(await useCase.execute({ cwd: CWD })).toMatchObject({
+      role: "default",
+      binding: { state: "unbound" },
+    });
+    branches.heads_ = { head: null, originHead: null };
+    expect(await useCase.execute({ cwd: CWD })).toMatchObject({
+      role: "detached",
+      binding: { state: "unbound" },
+    });
+  });
+
+  it("is unbound when nothing is declared", async () => {
+    expect(await setup(null).useCase.execute({ cwd: CWD })).toMatchObject({
+      status: "shown",
+      sessionId: null,
+      binding: { state: "unbound" },
+    });
+  });
+
+  it("refuses like a declaration does", async () => {
+    const optedOut = setup();
+    optedOut.consents.values.set(CWD, "{}");
+    expect(await optedOut.useCase.execute({ cwd: CWD })).toEqual({
+      status: "refused",
+      reason: "no-consent",
+    });
+    expect(await setup("s", { get: () => "0" }).useCase.execute({ cwd: CWD })).toEqual({
+      status: "refused",
+      reason: "environment",
+    });
+  });
+
+  it("says a clone turned off was turned off", async () => {
+    const off = setup();
+    off.consents.values.set(CWD, "off");
+    expect(await off.useCase.execute({ cwd: CWD })).toEqual({
+      status: "refused",
+      reason: "turned-off",
+    });
+  });
+
+  it("says a clone turned off cannot be read, not to run on, when on would refuse", async () => {
+    const damaged = setup();
+    damaged.consents.values.set(CWD, "off");
+    damaged.history.damaged = true;
+    expect(await damaged.useCase.execute({ cwd: CWD })).toEqual({
+      status: "refused",
+      reason: "unreadable-consent",
+    });
+    const unidentified = setup();
+    unidentified.consents.values.set(CWD, "off");
+    unidentified.locator.directories.set(CWD, { ...REPOSITORY, clone: null });
+    expect(await unidentified.useCase.execute({ cwd: CWD })).toEqual({
+      status: "refused",
+      reason: "unreadable-consent",
+    });
+  });
+
+  it("never says a clone with no key, or a key that grants nothing, was turned off", async () => {
+    const never = setup();
+    never.consents.values.delete(CWD);
+    expect(await never.useCase.execute({ cwd: CWD })).toEqual({
+      status: "refused",
+      reason: "no-consent",
+    });
+    for (const key of ["2", "true", "{}", "OFF"]) {
+      const other = setup();
+      other.consents.values.set(CWD, key);
+      expect(await other.useCase.execute({ cwd: CWD })).toEqual({
+        status: "refused",
+        reason: "no-consent",
+      });
+    }
+  });
+});
