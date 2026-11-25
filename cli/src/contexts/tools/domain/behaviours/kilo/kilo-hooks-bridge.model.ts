@@ -5,7 +5,8 @@
  * session.idle through its event hook; a SessionStart answer reaches the model through
  * experimental.chat.system.transform; PostToolUse runs from tool.execute.after, which waits
  * for the script and appends its exit-2 stderr to the tool's output for the model to read; an
- * answer the script marks required is also queued as the session's next prompt.
+ * answer the script marks required is also queued as the session's next prompt, which supersedes
+ * what is left of the turn it interrupts.
  * Matchers ignore case, since Kilo names its tools in lowercase.
  */
 
@@ -82,7 +83,7 @@ function sessionStartCallsFor(event, directory) {
   }));
 }
 
-const FOLLOW_UP = { aidd: "stop-follow-up" };
+const BRIDGE_PROMPT = { aidd: "bridge-prompt" };
 
 const ${parts.identifier} = async ({ directory, client }) => {
   const sessions = new Map();
@@ -114,7 +115,7 @@ const ${parts.identifier} = async ({ directory, client }) => {
           // it from \`dispose\` fails with an UnknownError. 7.7.5 lost it in \`run\`.
           if (reason) {
             client.session
-              .promptAsync({ path: { id }, body: { parts: [{ type: "text", text: reason, metadata: FOLLOW_UP }] } })
+              .promptAsync({ path: { id }, body: { parts: [{ type: "text", text: reason, metadata: BRIDGE_PROMPT }] } })
               .catch((error) => reportHookFailure(hook.script, "follow-up not delivered: " + String(error)));
           }
         }
@@ -134,30 +135,26 @@ const ${parts.identifier} = async ({ directory, client }) => {
     const context = await sessions.get(input?.sessionID)?.context;
     if (context) output.system.push(context);
   },
-  // A user's message starts a new turn. Kilo hands every plugin every message, so a follow-up,
-  // this bridge's or another plugin's, is recognised by its mark and is not one.
+  // A user's message starts a new turn. Kilo hands every plugin every message, so a prompt a
+  // bridge sent (a Stop continuation or a queued finding), this one's or another plugin's, is
+  // recognised by its mark and is not one.
   "chat.message": async (input, output) => {
     const session = sessions.get(input?.sessionID);
     if (!session) return;
-    if (!output?.parts?.some((part) => part?.metadata?.aidd === FOLLOW_UP.aidd)) session.continued = false;
+    if (!output?.parts?.some((part) => part?.metadata?.aidd === BRIDGE_PROMPT.aidd)) session.continued = false;
   },
   "tool.execute.after": async (call, output) => {
     try {
       const tool = String(call?.tool ?? "");
-      const cwd = sessions.get(call?.sessionID)?.directory ?? directory;
+      const sessionId = call?.sessionID;
+      const cwd = sessions.get(sessionId)?.directory ?? directory;
       // Kilo names the written file filePath; the scripts read Claude Code's file_path.
       const args = call?.args;
       ${parts.toolInput}
       for (const hook of POST_TOOL_USE.filter(hook => !hook.matcher || hook.matcher.split("|").some(name => name.toLowerCase() === tool.toLowerCase()))) {
-        const { text: answer, required } = await answerOf(hook.script, hook.args, { hook_event_name: "PostToolUse", session_id: call?.sessionID ?? null, cwd, tool_name: tool, tool_input: toolInput }, cwd);
+        const { text: answer, required } = await answerOf(hook.script, hook.args, { hook_event_name: "PostToolUse", session_id: sessionId ?? null, cwd, tool_name: tool, tool_input: toolInput }, cwd);
         ${parts.appendAnswer}
-        // A required finding is also the session's next prompt, which the model takes up after this
-        // step. Not awaited: the host's prompt call returns at once and must not hold the tool.
-        if (answer && required) {
-          client.session
-            .promptAsync({ path: { id: call?.sessionID }, body: { parts: [{ type: "text", text: answer, metadata: FOLLOW_UP }] } })
-            .catch((error) => reportHookFailure(hook.script, "finding not queued: " + String(error)));
-        }
+${parts.queueRequired(8, { client: "client", session: "sessionId", mark: "BRIDGE_PROMPT" })}
       }
     } catch (error) {
       console.warn("[aidd] Kilo hook dispatch failed: " + String(error));

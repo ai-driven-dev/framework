@@ -18,6 +18,8 @@
  *   V2's adapter calls the same hook from a successful tool call, without that answer. An answer
  *   the script marks required is also queued as the session's next prompt through V1's
  *   `promptAsync`; V2's adapter has no such method, so a V2 host only gets the appended answer.
+ *   The queued prompt supersedes what is left of the turn it interrupts: the model took it up
+ *   and dropped the original request's last step.
  *
  * A `matcher` on a `PostToolUse` group filters by tool name, exact or pipe-separated
  * alternation, ignoring case: OpenCode names its tools in lowercase. Absent, every tool matches.
@@ -124,8 +126,6 @@ function postToolUseCallsFor(call, directory) {
   }));
 }
 
-const FOLLOW_UP = { aidd: "stop-follow-up" };
-
 // Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
 // Module-level: the host creates the plugin again, and a fresh set would forget a continuation.
 const continued = new Set();
@@ -196,13 +196,7 @@ export const ${parts.identifier} = async (input) => {
         for (const hook of postToolUseCallsFor(call, input.directory)) {
           const { text: answer, required } = await answerOf(hook.script, hook.args, hook.payload, input.directory);
           ${parts.appendAnswer}
-          // A required finding is also the session's next prompt, which the model takes up after this
-          // step. Not awaited: the host's prompt call returns at once and must not hold the tool.
-          if (answer && required) {
-            input.client.session
-              .promptAsync({ path: { id: call.sessionID }, body: { parts: [{ type: "text", text: answer, metadata: FOLLOW_UP }] } })
-              .catch((error) => reportHookFailure(hook.script, "finding not queued: " + String(error)));
-          }
+${parts.queueRequired(10, { client: "input.client", session: "call.sessionID" })}
         }
       } catch {
         // Silent on purpose - see above.

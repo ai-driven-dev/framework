@@ -113,6 +113,22 @@ const STOP_REASON_SOURCE = 'output?.decision === "block" ? String(output.reason 
 // Written as a split literal to avoid biome's noTemplateCurlyInString warning.
 const APPEND_ANSWER_SOURCE = `if (answer) output.output = \`$${"{"}output.output ?? ""}\\n\\n$${"{"}answer}\`;`;
 
+/** A required PostToolUse answer queued as the session's next prompt, which the model takes up
+ * after the current step. Not awaited, so the host's prompt call never holds the tool; a refusal
+ * is reported, never thrown. `mark` is the host's metadata for a prompt the bridge sent itself. */
+function queueRequiredSource(
+  indent: number,
+  { client, session, mark }: { client: string; session: string; mark?: string }
+): string {
+  const meta = mark === undefined ? "" : `, metadata: ${mark}`;
+  const send = `{ path: { id: ${session} }, body: { parts: [{ type: "text", text: answer${meta} }] } }`;
+  const lines = ["if (answer && required) {", `  ${client}.session.promptAsync(${send})`];
+  lines.push(
+    '    .catch((error) => reportHookFailure(hook.script, "finding not queued: " + String(error)));'
+  );
+  return padded([...lines, "}"], indent);
+}
+
 /** What a host's module template composes its generated module from: the pieces every bridge
  * writes the same way. What the host writes itself is its event table, its export descriptor and
  * how it reports a failed script. */
@@ -129,6 +145,7 @@ export interface BridgeParts {
   readonly stopReason: string;
   readonly appendAnswer: string;
   spawnHook(indent: number, stdio: string): string;
+  queueRequired(indent: number, target: { client: string; session: string; mark?: string }): string;
   feedStdin(indent: number): string;
 }
 
@@ -152,6 +169,7 @@ export function generateBridge<R>(
     stopReason: STOP_REASON_SOURCE,
     appendAnswer: APPEND_ANSWER_SOURCE,
     spawnHook: spawnHookSource,
+    queueRequired: queueRequiredSource,
     feedStdin: feedStdinSource,
   });
 }

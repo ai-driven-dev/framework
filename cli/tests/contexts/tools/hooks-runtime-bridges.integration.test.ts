@@ -213,13 +213,13 @@ function patched(project: string) {
 
 const CONTINUED = [{ path: { id: SESSION }, body: { parts: [{ type: "text", text: "go on" }] } }];
 
-/** A required finding is queued as the session's next prompt, marked as the bridge's own. */
-const REQUIRED = [
-  {
-    path: { id: SESSION },
-    body: { parts: [{ type: "text", text: "finding", metadata: { aidd: "stop-follow-up" } }] },
-  },
+/** A required finding is queued as the session's next prompt. Kilo marks it as the bridge's own,
+ * so its message hook does not read it as a user's turn; OpenCode has no reader for a mark. */
+const required = (part: Record<string, unknown>) => [
+  { path: { id: SESSION }, body: { parts: [{ type: "text", text: "finding", ...part }] } },
 ];
+const OPENCODE_REQUIRED = required({});
+const KILO_REQUIRED = required({ metadata: { aidd: "bridge-prompt" } });
 
 function opencodeBridge(): string {
   const bridge = generateOpencodeHooksBridge(HOOKS_JSON, "aidd-sample");
@@ -385,7 +385,7 @@ describe("OpenCode, through its bridge", () => {
     const { plugin, prompts } = await start(ws, { directory: ws.project });
     await plugin["tool.execute.after"](write.call, write.output);
 
-    expect(prompts).toStrictEqual(REQUIRED);
+    expect(prompts).toStrictEqual(OPENCODE_REQUIRED);
     expect(write.output.output).toBe("Wrote file successfully.\n\nfinding");
   });
 
@@ -406,11 +406,11 @@ describe("OpenCode, through its bridge", () => {
     const write = await toolCall("opencode", 0, ws.project);
     const { plugin } = await start(ws, { directory: ws.project }, new Error("refused"));
     await plugin["tool.execute.after"](write.call, write.output);
-    await new Promise((resolve) => setTimeout(resolve, 20));
-
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringMatching(
-        /^\[aidd\] OpenCode hook .*record\.cjs failed: .*finding not queued.*refused/
+    await vi.waitFor(() =>
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringMatching(
+          /^\[aidd\] OpenCode hook .*record\.cjs failed: .*finding not queued.*refused/
+        )
       )
     );
     expect(write.output.output).toBe("Wrote file successfully.\n\nfinding");
@@ -571,7 +571,7 @@ describe("Kilo, through its bridge", () => {
     const { plugin, prompts } = await start(ws, { directory: ws.project });
     await plugin["tool.execute.after"](write.call, write.output);
 
-    expect(prompts).toStrictEqual(REQUIRED);
+    expect(prompts).toStrictEqual(KILO_REQUIRED);
     expect(write.output.output).toBe("Wrote file successfully.\n\nfinding");
   });
 
@@ -592,11 +592,11 @@ describe("Kilo, through its bridge", () => {
     const write = await toolCall("kilo", 0, ws.project);
     const { plugin } = await start(ws, { directory: ws.project }, new Error("refused"));
     await plugin["tool.execute.after"](write.call, write.output);
-    await new Promise((resolve) => setTimeout(resolve, 20));
-
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringMatching(
-        /^\[aidd\] Kilo hook .*record\.cjs failed: .*finding not queued.*refused/
+    await vi.waitFor(() =>
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringMatching(
+          /^\[aidd\] Kilo hook .*record\.cjs failed: .*finding not queued.*refused/
+        )
       )
     );
     expect(write.output.output).toBe("Wrote file successfully.\n\nfinding");
