@@ -60,6 +60,8 @@ export const CATALOG: MessagesOf<CatalogOwners> = {
     `MCP server "${error.serverName}" must have either a "command" or "url" field`,
   "mcp-server-edited": (error) =>
     `OpenCode MCP server '${error.serverName}' was edited after install; removal refused.`,
+  "toml-parse": (error) =>
+    `Cannot parse the existing TOML config: ${error.reason}; left untouched.`,
   "unproven-mcp-server-digest": (error) =>
     `OpenCode MCP server '${error.serverName}' has an unproven install digest; removal refused.`,
   "invalid-tool-profile": (error) =>
