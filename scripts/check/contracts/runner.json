@@ -1,0 +1,21 @@
+{
+  "kind": "runner",
+  "unit": "folder",
+  "targets": "plugins/*/skills/*",
+  "marker": "SKILL.md",
+  "rules": {
+    "RUNNER-01": {
+      "op": "forbidden",
+      "in": "**/*.md",
+      "notIn": [
+        "references/recipe-contract.md",
+        "references/interface-browser-playwright-cli.md",
+        "actions/02-prerequisites.md"
+      ],
+      "scope": "nofence",
+      "regex": "\\bnpx\\b",
+      "why": "a project may use npx, pnpm dlx or bunx, and its lockfile says which; recipe-contract.md defines the placeholder. The two aidd-qa files still hardcode the runner and await a follow-up that resolves it. Only prose and inline code are read, not fenced blocks",
+      "fix": "write <runner> for the project's package runner instead of a literal one"
+    }
+  }
+}
