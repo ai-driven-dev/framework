@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { applyPlan } from "../../../../../src/contexts/translate/domain/rules/component-pipeline.js";
 import {
+  ruleFilePlan,
   ruleScope,
-  scopeStated,
 } from "../../../../../src/contexts/translate/domain/rules/rule-scope.js";
+import { flatArtifactLayout } from "../../../../../src/shared/domain/materialization/flat-paths.js";
 
 describe("the scope a rule declares", () => {
   it("reads the globs of its paths, none when it declares no list", () => {
@@ -17,22 +18,32 @@ describe("the scope a rule declares", () => {
 });
 
 describe("stating a rule's scope in its body", () => {
-  const plan = (content: string) => ({ source: "rules/a.md", path: "out/a.md", content });
+  const noFrontmatter = flatArtifactLayout(".tool/", {
+    skills: "nested",
+    agent: { ext: ".md" },
+    rules: "top-level-no-frontmatter",
+  });
+  const placed = (content: string) =>
+    applyPlan(
+      ruleFilePlan({ source: "rules/a.md", path: "out/a.md", content }, content, noFrontmatter)
+    ).content;
 
   it("drops the frontmatter and opens the body with the globs it applied to", () => {
-    const stated = scopeStated(plan("---\ndescription: x\npaths: [a]\n---\nBody\n"), [
-      "src/*.ts",
-      "lib/*.ts",
-    ]);
-
-    expect(applyPlan(stated).content).toBe(
+    expect(placed('---\ndescription: x\npaths: ["src/*.ts", "lib/*.ts"]\n---\nBody\n')).toBe(
       "Applies to files matching `src/*.ts`, `lib/*.ts`.\n\nBody\n"
     );
   });
 
   it("opens a rule that applies everywhere with its body alone", () => {
-    expect(applyPlan(scopeStated(plan("---\ndescription: x\n---\nBody\n"), [])).content).toBe(
-      "Body\n"
-    );
+    expect(placed("---\ndescription: x\n---\nBody\n")).toBe("Body\n");
+  });
+});
+
+describe("a rule's plan for a tool that keeps rule frontmatter", () => {
+  it("carries the rule as shipped", () => {
+    const nested = flatArtifactLayout(".tool/", { skills: "nested", agent: { ext: ".md" } });
+    const base = { source: "rules/a.md", path: "out/a.md", content: "---\npaths: [a]\n---\nB\n" };
+
+    expect(ruleFilePlan(base, base.content, nested)).toBe(base);
   });
 });

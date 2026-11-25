@@ -67,19 +67,3 @@ test("a hand-edited row is overwritten rather than kept", () => {
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
-
-test("a rules column reads as what a build carries, not what an install delivers", () => {
-  const root = scratchTree();
-  try {
-    const record = path.join(root, "cli/tests/golden/snapshots/tool-support/surface.json");
-    const tools = JSON.parse(fs.readFileSync(record, "utf8"));
-    tools[0].builds.flat.rules = "yes";
-    fs.writeFileSync(record, JSON.stringify(tools));
-
-    run(["--root", root]);
-
-    assert.match(fs.readFileSync(path.join(root, "docs/COMPATIBILITY.md"), "utf8"), /\| Rules in a build \|/);
-  } finally {
-    fs.rmSync(root, { recursive: true, force: true });
-  }
-});

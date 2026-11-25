@@ -13,11 +13,11 @@ import { basename, isProse } from "../plugin-paths.js";
 import type { ComponentPlan } from "../rules/component-pipeline.js";
 import { flatHookPlans } from "../rules/hook-plans.js";
 import { chainLinks, toolLinks } from "../rules/links.js";
-import { scopeStated } from "../rules/rule-scope.js";
+import { ruleFilePlan } from "../rules/rule-scope.js";
 import type { TranslatedAiTool, TranslatedFlatPlugin } from "../translate-profile.js";
 import { flatAgentPlan, flatSkillLinks } from "./build-flat.js";
 import { namedByFolder } from "./build-shared.js";
-import { prefixCommandName, ruleScopesOf } from "./install-flat-rules.js";
+import { prefixCommandName } from "./install-flat-rules.js";
 
 type FlatSection = "agents" | "rules" | "skills";
 
@@ -43,7 +43,6 @@ export function flatInstallPlan(
   const { namespacePrefix } = plugins.flatLayout();
   const commands = tool.markdownSection("commands") === null ? [] : dist.components.commands;
   const hooksArtifact = flatHooksArtifact(tool);
-  const scopes = ruleScopesOf(dist, plugins);
   const hooks = flatHookPlans(dist, {
     place: (relativePath) =>
       hooksArtifact === null ? null : artifactPath(hooksArtifact, pluginName, relativePath),
@@ -57,8 +56,10 @@ export function flatInstallPlan(
     ...FLAT_SECTIONS.flatMap((section) =>
       dist.components[section].flatMap((file) => {
         const plan = sectionPlan(file, section, at);
-        const paths = scopes.get(file);
-        return plan === null ? [] : [paths === undefined ? plan : scopeStated(plan, paths)];
+        if (plan === null) return [];
+        return [
+          section === "rules" ? ruleFilePlan(plan, file.content, plugins.flatLayout()) : plan,
+        ];
       })
     ),
     ...hooks,

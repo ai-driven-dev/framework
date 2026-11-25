@@ -4,7 +4,7 @@ What each AI tool receives from the framework.
 
 <!--support:start-->
 
-| Tool | Directory | Marketplace | Flat files | Skills | Agents | MCP | Hooks | Rules in a build |
+| Tool | Directory | Marketplace | Flat files | Skills | Agents | MCP | Hooks | Rules |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Claude Code | `.claude/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
 | Cursor | `.cursor/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
