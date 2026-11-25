@@ -1,6 +1,7 @@
 import type { EachTranscriptLine } from "../../../../src/contexts/telemetry/domain/transcript/line-splitter.js";
 import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
 import type {
+  TranscriptListing,
   TranscriptRead,
   TranscriptRequest,
   UsageSource,
@@ -17,14 +18,29 @@ export class InMemoryTranscripts implements UsageSource {
   /** Reads lines as Claude does unless a test gives this source another format. */
   decode: UsageSource["decode"] = readClaudeUsageLine;
 
-  async list(): Promise<readonly string[]> {
-    return [...this.files.keys()].sort();
+  /** Files that cannot be read, and why. */
+  readonly unreadable = new Map<string, string>();
+  /** Places that cannot be listed, and why. */
+  readonly unlistable: string[] = [];
+
+  async list(): Promise<TranscriptListing> {
+    return { paths: [...this.files.keys()].sort(), unreadable: this.unlistable };
   }
 
-  async read(
+  private failure(path: string): TranscriptRead | undefined {
+    const unreadable = this.unreadable.get(path);
+    if (unreadable === undefined) return undefined;
+    return { position: null, restarted: false, skipped: false, modifiedAt: null, unreadable };
+  }
+
+  async read(request: TranscriptRequest, each: EachTranscriptLine): Promise<TranscriptRead> {
+    return this.failure(request.path) ?? this.readLines(request, each);
+  }
+
+  private readLines(
     { path, since, writtenFrom }: TranscriptRequest,
     each: EachTranscriptLine
-  ): Promise<TranscriptRead> {
+  ): TranscriptRead {
     const all = this.files.get(path) ?? [];
     const modified = this.modified.get(path);
     const modifiedAt = modified === undefined ? null : Date.parse(modified);

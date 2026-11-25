@@ -55,6 +55,7 @@ const reported: ReportedFigures = {
     },
     consentLogDamaged: false,
     oldestTranscriptAt: "2026-09-20T08:00:00.000Z",
+    unreadable: [],
     skippedLedgerLines: 6,
   },
 };
@@ -104,6 +105,14 @@ describe("the JSON envelope of a report", () => {
     });
   });
 
+  it("names the sources that could not be read, apart from zero consumption", () => {
+    const envelope = reportEnvelopeOf({
+      ...reported,
+      run: { ...reported.run, unreadable: ["/t/a.jsonl: EACCES"] },
+    });
+    expect(envelope.run.unreadable_sources).toEqual(["/t/a.jsonl: EACCES"]);
+  });
+
   it("puts what the read that printed it found apart, last, so the rest is the figures", () => {
     const envelope = reportEnvelopeOf(reported);
     expect(Object.keys(envelope)).toEqual([
@@ -122,6 +131,7 @@ describe("the JSON envelope of a report", () => {
       not_stored: reported.run.notStored,
       consent_log_damaged: false,
       oldest_transcript_at: "2026-09-20T08:00:00.000Z",
+      unreadable_sources: [],
       skipped_ledger_lines: 6,
     });
   });

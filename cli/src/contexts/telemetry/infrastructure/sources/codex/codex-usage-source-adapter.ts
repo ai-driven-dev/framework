@@ -10,6 +10,7 @@ import { LineSplitter } from "../../../domain/transcript/line-splitter.js";
 import type { TranscriptPosition } from "../../../domain/transcript-position.js";
 import type {
   LineUsage,
+  TranscriptListing,
   TranscriptRead,
   TranscriptRequest,
   UsageSource,
@@ -59,7 +60,7 @@ export class CodexUsageSourceAdapter implements UsageSource {
     this.blockBytes = options.blockBytes ?? 1 << 20;
   }
 
-  list(): Promise<readonly string[]> {
+  list(): Promise<TranscriptListing> {
     return listTranscripts(this.roots, SESSION_FILE);
   }
 

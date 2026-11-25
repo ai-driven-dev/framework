@@ -46,7 +46,7 @@ export function count(n: number, one: string, many: string): string {
 export function leftOutLines(
   left: Pick<
     IngestUsageResult,
-    "unrecognised" | "notStored" | "consentLogDamaged" | "skippedLedgerLines"
+    "unrecognised" | "notStored" | "consentLogDamaged" | "skippedLedgerLines" | "unreadable"
   >
 ): { readonly warn: boolean; readonly text: string }[] {
   const lines = [];
@@ -55,6 +55,9 @@ export function leftOutLines(
       warn: true,
       text: `${count(left.unrecognised, "shape", "shapes")} ${UNRECOGNISED_WORDS}`,
     });
+  }
+  for (const source of left.unreadable) {
+    lines.push({ warn: true, text: `Source not read, retried by the next read: ${source}` });
   }
   for (const [reason, n] of Object.entries(left.notStored)) {
     if (n > 0 && isNotStoredReason(reason)) {

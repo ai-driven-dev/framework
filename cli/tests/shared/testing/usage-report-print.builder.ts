@@ -49,6 +49,7 @@ export const COVERAGE: Coverage = {
   notStored: NOT_STORED,
   consentLogDamaged: false,
   oldestTranscriptAt: "2026-09-20T08:00:00.000Z",
+  unreadable: [],
   skippedLedgerLines: 0,
   leftOut: { undated: 0, unrecognised: 0, requestless: 0 },
 };

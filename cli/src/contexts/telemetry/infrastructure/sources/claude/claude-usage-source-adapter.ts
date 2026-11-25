@@ -1,6 +1,7 @@
 import type { EachTranscriptLine } from "../../../domain/transcript/line-splitter.js";
 import type {
   LineUsage,
+  TranscriptListing,
   TranscriptRead,
   TranscriptRequest,
   UsageSource,
@@ -25,7 +26,7 @@ export class ClaudeUsageSourceAdapter implements UsageSource {
     private readonly blockBytes = 1 << 20
   ) {}
 
-  list(): Promise<readonly string[]> {
+  list(): Promise<TranscriptListing> {
     return listTranscripts([this.projectsRoot], TRANSCRIPT_NAME);
   }
 

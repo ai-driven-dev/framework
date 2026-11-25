@@ -1,6 +1,7 @@
 import { appendFileSync, renameSync, rmSync, truncateSync, writeFileSync } from "node:fs";
 import {
   appendFile,
+  chmod,
   cp,
   mkdir,
   mkdtemp,
@@ -64,7 +65,7 @@ async function spyOnReads() {
 describe("listing the transcripts under the projects root", () => {
   it("finds main, resumed, sub-agent and set-aside transcripts", async () => {
     await cp(FIXTURES, projects, { recursive: true });
-    const found = (await adapter.list()).map((path) =>
+    const found = (await adapter.list()).paths.map((path) =>
       relative(projects, path).replaceAll("\\", "/")
     );
     expect(found).toEqual([
@@ -79,31 +80,53 @@ describe("listing the transcripts under the projects root", () => {
     const deep = join(projects, "p", "s", "subagents", "workflows", "w");
     await mkdir(deep, { recursive: true });
     await writeFile(join(deep, "agent-y.jsonl"), "");
-    expect(await adapter.list()).toEqual([join(deep, "agent-y.jsonl")]);
+    expect((await adapter.list()).paths).toEqual([join(deep, "agent-y.jsonl")]);
   });
 
   it("finds a set-aside whatever its suffix", async () => {
     await mkdir(join(projects, "p"), { recursive: true });
     await writeFile(join(projects, "p", "s.jsonl.superseded-20261001T0102"), "");
-    expect(await adapter.list()).toHaveLength(1);
+    expect((await adapter.list()).paths).toHaveLength(1);
   });
 
-  it("fails on a projects root it cannot list, instead of reading it as empty", async () => {
+  it("names a projects root it cannot list, instead of reading it as empty", async () => {
     const file = join(root, "not-a-directory");
     await writeFile(file, "x");
-    await expect(new ClaudeUsageSourceAdapter(file).list()).rejects.toThrow();
+    expect(await new ClaudeUsageSourceAdapter(file).list()).toEqual({
+      paths: [],
+      unreadable: [`${file}: ENOTDIR`],
+    });
   });
+
+  it.skipIf(process.platform === "win32" || process.getuid?.() === 0)(
+    "names a subdirectory it cannot list and still lists the others",
+    async () => {
+      const locked = join(projects, "locked");
+      await mkdir(join(projects, "p"), { recursive: true });
+      await mkdir(locked);
+      await writeFile(join(projects, "p", "s.jsonl"), "");
+      await chmod(locked, 0o000);
+      try {
+        expect(await adapter.list()).toEqual({
+          paths: [join(projects, "p", "s.jsonl")],
+          unreadable: [`${locked}: EACCES`],
+        });
+      } finally {
+        await chmod(locked, 0o755);
+      }
+    }
+  );
 
   it("ignores files that are not transcripts", async () => {
     await mkdir(join(projects, "p"), { recursive: true });
     await writeFile(join(projects, "p", "notes.txt"), "x");
     await writeFile(join(projects, "p", "s.jsonl.bak"), "x");
-    expect(await adapter.list()).toEqual([]);
+    expect((await adapter.list()).paths).toEqual([]);
   });
 
   it("lists nothing when the projects root does not exist yet", async () => {
     const absent = new ClaudeUsageSourceAdapter(join(root, "never"));
-    expect(await absent.list()).toEqual([]);
+    expect(await absent.list()).toEqual({ paths: [], unreadable: [] });
   });
 });
 
@@ -189,8 +212,10 @@ describe("reading a transcript from a byte offset", () => {
     });
   });
 
-  it("fails on a transcript it cannot read, instead of reading it as empty", async () => {
-    await expect(readLines(adapter, projects, null, EVERYTHING)).rejects.toThrow(/is not a file/);
+  it("names a transcript it cannot read and keeps its position, instead of reading it as empty", async () => {
+    const read = await adapter.read({ path: projects, since: null, writtenFrom: 0 }, () => {});
+    expect(read.position).toBeNull();
+    expect(read.unreadable).toBe(`${projects}: ${projects} is not a file`);
   });
 
   it("reads nothing from a file that vanished", async () => {
