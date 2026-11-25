@@ -683,6 +683,17 @@ describe("aidd-ui showcase", () => {
       assert.deepEqual([usage.status, usage.stderr], [2, "usage: node aidd-ui.cjs showcase [--lang <code>] [--root <dir>]\n"]);
     });
 
+    it("refuses a record whose id names a folder, writing nothing outside the showcase and leaving the last one whole", () => {
+      written();
+      const before = read(`${SHOWCASE}/index.html`);
+      edit(tmp, `${UI}/screens/home.md`, "id: home\n", "id: ../../escaped\n");
+      const refused = written();
+      assert.equal(refused.code, 2);
+      assert.match(refused.err, /escaped/);
+      assert.ok(!fs.existsSync(path.join(tmp, "aidd_docs/escaped.html")));
+      assert.equal(read(`${SHOWCASE}/index.html`), before);
+    });
+
     it("holds no script that reaches out: no request, and no storage but the browser's own local one", () => {
       for (const [name, html] of Object.entries(pagesOf())) {
         for (const reaching of ["http://", "https://", "fetch(", "XMLHttpRequest", "WebSocket", "sendBeacon", "sessionStorage", "indexedDB", "document.cookie"]) assert.ok(!html.includes(reaching), `${name} ${reaching}`);

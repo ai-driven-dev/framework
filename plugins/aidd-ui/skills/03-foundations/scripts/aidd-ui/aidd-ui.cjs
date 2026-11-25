@@ -223,6 +223,8 @@ function writeShowcase(args) {
     const sets = drafts.setsOf(root);
     const pages = showcaseOf({ project, tokens: fs.existsSync(stylesheet) ? fs.readFileSync(stylesheet, "utf8") : null, captures: capturesOf(root), lang, sets });
     const dir = path.join(root, UI_DIR, SHOWCASE_DIR);
+    const leaving = Object.keys(pages).filter((name) => path.basename(name) !== name);
+    if (leaving.length) throw new Refusal(`${leaving.join(", ")} would be written outside ${SHOWCASE_DIR}/: make each record's id its file name (validate names it), then run showcase`);
     fs.rmSync(dir, { recursive: true, force: true });
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, ".gitignore"), "*\n");
