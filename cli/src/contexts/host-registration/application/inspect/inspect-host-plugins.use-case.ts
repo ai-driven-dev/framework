@@ -3,11 +3,11 @@ import type {
   InspectedHost,
   InspectHostRegistrationRequest,
 } from "../../contract/inspect-host-registration-request.js";
-import type { HostRegistrationFinding } from "../../contract/inspect-host-registration-result.js";
 import type { NativeHostCatalog } from "../../contract/native-registration-spec.js";
 import { answeredRegistry } from "../../domain/reading/host-registration-answers.js";
 import type { HostPluginRegistry } from "../../ports/host-plugin-registry.js";
 import { pluginFinding } from "./host-registration-findings.js";
+import type { HostRegistrationFinding } from "./inspect-host-registration-result.js";
 
 /** Asks each host's plugin registry whether it carries the plugins aidd asked it to register.
  * `pluginRegistries` holds one reader per tool whose own CLI activates plugins. */

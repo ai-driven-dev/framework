@@ -160,7 +160,7 @@
       "flat": {
         "skills": "yes",
         "agents": "yes",
-        "mcp": "no",
+        "mcp": "yes",
         "hooks": "yes",
         "rules": "no",
         "commands": "no"

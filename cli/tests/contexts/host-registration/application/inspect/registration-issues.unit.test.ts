@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { registrationIssueOf } from "../../../src/orchestration/doctor/registration-issues.js";
-import { SYNTHETIC_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
+import {
+  registrationIssueOf,
+  staleDeclarationIssue,
+  undeclaredMarketplaceIssue,
+  unparseableSettingsIssue,
+} from "../../../../../src/contexts/host-registration/application/inspect/registration-issues.js";
+import { SYNTHETIC_TOOL } from "../../../../shared/testing/synthetic-tool-id.builder.js";
 
 const tool = SYNTHETIC_TOOL;
 const found = {
@@ -75,5 +80,29 @@ describe("registration issues", () => {
     expect(issues[0].message).toContain("newer aidd-framework build, 2");
     expect(issues[1].message).toContain("another project's");
     expect(issues[2].message).toContain("this project's own");
+  });
+
+  it("words a settings file that cannot be read as a warning that asks for a hand repair", () => {
+    expect(unparseableSettingsIssue({ tool, file: "f.json", reason: "bad" })).toStrictEqual({
+      severity: "warning",
+      message: `${tool}: f.json cannot be parsed (bad)`,
+      fix: { code: "repair-settings-file", file: "f.json" },
+    });
+  });
+
+  it("words a marketplace the settings no longer declare as a warning that asks for a refresh", () => {
+    expect(undeclaredMarketplaceIssue({ tool, name: "m", file: "f.json" })).toStrictEqual({
+      severity: "warning",
+      message: `${tool} no longer declares marketplace 'm'`,
+      fix: { code: "refresh-marketplace", file: "f.json" },
+    });
+  });
+
+  it("words a declaration the project no longer registers as a warning that asks for its removal", () => {
+    expect(staleDeclarationIssue({ tool, name: "m", file: "f.json" })).toStrictEqual({
+      severity: "warning",
+      message: `${tool} still declares marketplace 'm', which this project no longer registers`,
+      fix: { code: "remove-stale-declaration", name: "m", file: "f.json" },
+    });
   });
 });
