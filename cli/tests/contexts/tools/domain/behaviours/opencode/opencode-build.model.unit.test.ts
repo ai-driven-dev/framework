@@ -90,6 +90,27 @@ describe("building OpenCode's flat contract", () => {
     expect(files.map((f) => f.path)).toStrictEqual(["opencode.json"]);
   });
 
+  it("places a plugin's rule under the rules folder, in its plugin's own folder", () => {
+    const { artifacts } = present(opencode.buildContracts.flat)();
+
+    expect(
+      artifactPath(supported(present(artifacts.rules)), "aidd-dev", "rules/01-standards/naming.md")
+    ).toBe(".opencode/rules/aidd-dev/01-standards/naming.md");
+  });
+
+  it("keeps the entries a person lists in instructions, after the bundled ones, once", () => {
+    const base = JSON.stringify({ instructions: [".opencode/rules/**/*.md"] });
+    const existing = { "opencode.json": JSON.stringify({ instructions: ["mine.md"] }) };
+    const [config] = emit({ base, existing });
+    const [again] = emit({ base, existing: { "opencode.json": config?.content ?? "" } });
+
+    expect(JSON.parse(config?.content ?? "").instructions).toEqual([
+      "mine.md",
+      ".opencode/rules/**/*.md",
+    ]);
+    expect(again?.content).toBe(config?.content);
+  });
+
   it("refuses an event adapter that is not source text", () => {
     expect(() =>
       emit({

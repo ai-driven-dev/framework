@@ -72,7 +72,8 @@ export function buildTypedMcpFlatConfig({
     const existingValues = arrayEntries(full[key]);
     const baseValues = arrayEntries(base[key]);
     const generated = baseValues.filter((value) => !existingValues.includes(value));
-    result[key] = [...existingValues, ...generated];
+    const listed = [...existingValues, ...generated];
+    if (listed.length > 0) result[key] = listed;
   }
   delete result.mcp;
   if (Object.keys(mergedMcp).length > 0) result.mcp = mergedMcp;

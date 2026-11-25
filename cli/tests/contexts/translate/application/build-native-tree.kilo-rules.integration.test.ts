@@ -10,7 +10,7 @@ import { buildTree } from "../testing/build-tree.builder.js";
 import { makeValidator } from "../testing/flat-writer-world.builder.js";
 
 const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
-const OUT = resolve("/tmp/aidd-kilo-rules-test").replaceAll("\\", "/");
+const OUT = resolve("/tmp/aidd-flat-rules-test").replaceAll("\\", "/");
 const RULE = `${OUT}/.kilo/rules/aidd-test-01-standards-naming.md`;
 const CONFIG = `${OUT}/.kilo/kilo.jsonc`;
 
@@ -39,6 +39,17 @@ async function buildKilo(target: typeof TOOL.kilo | typeof TOOL.opencode = TOOL.
   return { fs, logger };
 }
 
+describe("a flat build of the rules of a plugin for OpenCode", () => {
+  it("writes the rule in its plugin's folder, as shipped, and does not warn it skipped it", async () => {
+    const { fs, logger } = await buildKilo(TOOL.opencode);
+
+    expect(fs.getFile(`${OUT}/.opencode/rules/aidd-test/01-standards/naming.md`)).toContain(
+      "paths:"
+    );
+    expect(logger.warnMessages.filter((line) => line.includes("rules/"))).toEqual([]);
+  });
+});
+
 describe("a flat build of the rules of a plugin", () => {
   let kilo: Awaited<ReturnType<typeof buildKilo>>;
   beforeAll(async () => {
@@ -63,7 +74,7 @@ describe("a flat build of the rules of a plugin", () => {
   });
 
   it("still warns, for a tool that carries no rules, that it skipped them", async () => {
-    const { logger } = await buildKilo(TOOL.opencode);
+    const { logger } = await buildKilo(TOOL.kimi);
 
     expect(logger.warnMessages).toContain(
       "Skipping rules/ in plugin 'aidd-test' (out of scope for MVP1)."
