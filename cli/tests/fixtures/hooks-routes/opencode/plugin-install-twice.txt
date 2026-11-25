@@ -591,10 +591,15 @@ async function addPromptContext(input, output, directory) {
 }
 
 const sessions = new Map();
+const childSessions = new Set();
 
 function runSessionStart(event, fallbackDirectory) {
   const named = event?.properties?.sessionID;
-  if (typeof named !== "string" || sessions.has(named)) return;
+  if (typeof named !== "string" || sessions.has(named) || childSessions.has(named)) return;
+  if (typeof event.properties.info?.parentID === "string") {
+    childSessions.add(named);
+    return;
+  }
   const directory = event.properties.info?.directory ?? fallbackDirectory;
   const answers = SESSION_START.map((hook) =>
     answerOf(hook.script, hook.args, { hook_event_name: "SessionStart", session_id: named, cwd: directory }, directory)
@@ -665,7 +670,7 @@ function bridgeHooks({ directory, client, followUp, show, track }) {
     event: async ({ event }) => {
       runSessionStart(event, directory);
       const sessionId = event?.properties?.sessionID;
-      if (typeof sessionId !== "string" || event.type !== "session.idle") return;
+      if (typeof sessionId !== "string" || event.type !== "session.idle" || childSessions.has(sessionId)) return;
       const stopping = runStop(sessionId, folderOf(sessionId), { client, method: followUp, show });
       track?.(stopping.then((sends) => Promise.all(sends)));
       await stopping;
@@ -958,10 +963,15 @@ async function addPromptContext(input, output, directory) {
 }
 
 const sessions = new Map();
+const childSessions = new Set();
 
 function runSessionStart(event, fallbackDirectory) {
   const named = event?.properties?.sessionID;
-  if (typeof named !== "string" || sessions.has(named)) return;
+  if (typeof named !== "string" || sessions.has(named) || childSessions.has(named)) return;
+  if (typeof event.properties.info?.parentID === "string") {
+    childSessions.add(named);
+    return;
+  }
   const directory = event.properties.info?.directory ?? fallbackDirectory;
   const answers = SESSION_START.map((hook) =>
     answerOf(hook.script, hook.args, { hook_event_name: "SessionStart", session_id: named, cwd: directory }, directory)
@@ -1032,7 +1042,7 @@ function bridgeHooks({ directory, client, followUp, show, track }) {
     event: async ({ event }) => {
       runSessionStart(event, directory);
       const sessionId = event?.properties?.sessionID;
-      if (typeof sessionId !== "string" || event.type !== "session.idle") return;
+      if (typeof sessionId !== "string" || event.type !== "session.idle" || childSessions.has(sessionId)) return;
       const stopping = runStop(sessionId, folderOf(sessionId), { client, method: followUp, show });
       track?.(stopping.then((sends) => Promise.all(sends)));
       await stopping;

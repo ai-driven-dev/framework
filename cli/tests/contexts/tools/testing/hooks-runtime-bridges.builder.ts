@@ -93,6 +93,19 @@ export async function capturedPayloads<T = unknown>(
   return capturedSamples<T>(captureFile(host, hook), project).map((sample) => sample.payload);
 }
 
+/** What `host` handed each hook in the captured `run`, by hook: `of(hook)` is that hook's sample. */
+export function capturedRunOf<T = unknown>(
+  host: string,
+  run: string,
+  project: string
+): (hook: string) => T {
+  return (hook) => {
+    const found = capturedSamples<T>(captureFile(host, hook), project).find((s) => s.run === run);
+    if (found === undefined) throw new Error(`${captureFile(host, hook)} has no ${run} sample`);
+    return found.payload;
+  };
+}
+
 export async function workspace(host: BridgedHostId, bridge: string): Promise<Workspace> {
   const { dir, module } = await placeBridge({
     prefix: "aidd-hooks-runtime-bridge-",

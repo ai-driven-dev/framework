@@ -15,7 +15,8 @@ the event spelled as the host spells it. Read by the CLI converter tests and the
   a session token at SessionStart in the key the host's adapter prints, to learn whether the model
   reads it; `continue`, Cursor's `followup_message` once at the first `stop`; `follow-up`,
   OpenCode's and Kilo's `chat.message` for a message a bridge sent itself at Stop, carrying the mark
-  that tells it from the user's own; `person`, a message a plugin asked the host to show the person.
+  that tells it from the user's own; `person`, a message a plugin asked the host to show the person;
+  `child`, a subagent's child session, which names its parent.
 - `hookAnswer` is what the logging hook printed for that call, `null` when it printed nothing:
   JSON on most hosts, the bare text on Kiro, which hands a hook's output to the model as printed.
 
@@ -37,7 +38,7 @@ for it (`event`), read from the server's event stream.
 ## Scrubbing
 
 Home and project paths are `/Users/user` and `/Users/user/project`, every session id is the one
-fake id `00000000-0000-4000-8000-000000000000`, the account email is `user@example.com`, and
+fake id `00000000-0000-4000-8000-000000000000`, a child session's `00000000-0000-4000-8000-000000000001`, the account email is `user@example.com`, and
 timestamps, dates and dated session-file names are fixed to the epoch. Nothing else is altered.
 
 ## Established

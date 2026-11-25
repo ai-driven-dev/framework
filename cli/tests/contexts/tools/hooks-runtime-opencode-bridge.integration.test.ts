@@ -9,6 +9,7 @@ import {
   bridgeOf,
   CONTINUED,
   capturedPayloads,
+  capturedRunOf,
   cleanWorkspaces,
   recorded,
   start,
@@ -30,6 +31,20 @@ describe("OpenCode, through its bridge", () => {
     expect(await recorded(ws, 1)).toMatchObject([
       { host: "opencode", event: "SessionStart", sessionId: SESSION, cwd: ws.project },
     ]);
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    expect(await recorded(ws, 1)).toHaveLength(1);
+  });
+
+  it("runs neither SessionStart nor Stop for a subagent's child session", async () => {
+    const ws = await workspace("opencode", bridgeOf("opencode"));
+    const child = capturedRunOf("opencode", "child", ws.project);
+    const [created] = await capturedPayloads("opencode", "session.created", ws.project);
+    const { plugin } = await start(ws, { directory: ws.project });
+    await plugin.event({ event: child("session.created") });
+    await plugin.event({ event: child("session.idle") });
+    await plugin.event({ event: created });
+
+    expect((await recorded(ws, 1)).map((call) => call.sessionId)).toStrictEqual([SESSION]);
     await new Promise((resolve) => setTimeout(resolve, 200));
     expect(await recorded(ws, 1)).toHaveLength(1);
   });

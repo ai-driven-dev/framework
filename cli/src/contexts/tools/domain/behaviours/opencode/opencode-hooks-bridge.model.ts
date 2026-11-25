@@ -9,8 +9,8 @@
  *
  * - `SessionStart` on the first event naming a session; its answer through
  *   `experimental.chat.system.transform`, which also runs for the session's title call, not told
- *   apart. A subagent's child session emits its own `session.created` and `session.idle`
- *   (observed on 1.19.3), so SessionStart and Stop run for it too.
+ *   apart. A subagent's child session emits its own `session.created`, naming its parent, and
+ *   `session.idle` (observed on 1.19.3): SessionStart and Stop skip it.
  * - `Stop` on `session.idle`. The follow-up goes through `session.prompt`, which resolves once its
  *   turn ran: `opencode run` exits once the session is idle, so `dispose` waits for it.
  * - `PostToolUse` on `tool.execute.after`. A required finding is queued through `promptAsync`; on

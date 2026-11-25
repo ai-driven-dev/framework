@@ -139,12 +139,20 @@ async function addPromptContext(input, output, directory) {
  * Limit: a SessionStart script that exits 2 has its stderr added to the system prompt, where
  * Claude Code shows it to the person only.
  * Limit: a session's entry is never cleared. No captured payload shows a session's deletion, so
- * none is read; the entry stays in memory, session ids being unique. */
+ * none is read; the entry stays in memory, session ids being unique.
+ *
+ * A subagent's child session is created naming its parent (observed on OpenCode 1.19.3): it is
+ * the parent's work, not a session of its own, so it runs neither SessionStart nor Stop. */
 export const SESSION_START_SOURCE = `const sessions = new Map();
+const childSessions = new Set();
 
 function runSessionStart(event, fallbackDirectory) {
   const named = event?.properties?.sessionID;
-  if (typeof named !== "string" || sessions.has(named)) return;
+  if (typeof named !== "string" || sessions.has(named) || childSessions.has(named)) return;
+  if (typeof event.properties.info?.parentID === "string") {
+    childSessions.add(named);
+    return;
+  }
   const directory = event.properties.info?.directory ?? fallbackDirectory;
   const answers = SESSION_START.map((hook) =>
     answerOf(hook.script, hook.args, { hook_event_name: "SessionStart", session_id: named, cwd: directory }, directory)
@@ -239,7 +247,7 @@ export const BRIDGE_HOOKS_SOURCE = `function bridgeHooks({ directory, client, fo
     event: async ({ event }) => {
       runSessionStart(event, directory);
       const sessionId = event?.properties?.sessionID;
-      if (typeof sessionId !== "string" || event.type !== "session.idle") return;
+      if (typeof sessionId !== "string" || event.type !== "session.idle" || childSessions.has(sessionId)) return;
       const stopping = runStop(sessionId, folderOf(sessionId), { client, method: followUp, show });
       track?.(stopping.then((sends) => Promise.all(sends)));
       await stopping;
