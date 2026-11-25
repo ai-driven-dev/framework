@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  AgentPluginActivationError,
   AmbiguousPluginMatchError,
   InteractiveOnlyError,
   NoMarketplacesRegisteredError,
@@ -140,5 +141,21 @@ describe("when a user-scope run is given a filter", () => {
     expect(new UserScopeFilterUnsupportedError("--plugin", "sync").code).toBe(
       "user-scope-filter-unsupported"
     );
+  });
+});
+
+describe("when a native activation fails", () => {
+  it("carries its data and says nothing itself", () => {
+    const failures = [{ scope: "claude", error: "x" }];
+    const error = new AgentPluginActivationError(failures);
+    expect({ name: error.name, errors: error.errors, message: error.message }).toStrictEqual({
+      name: "AgentPluginActivationError",
+      errors: failures,
+      message: "",
+    });
+  });
+
+  it("carries its stable code", () => {
+    expect(new AgentPluginActivationError([]).code).toBe("agent-plugin-activation");
   });
 });
