@@ -122,8 +122,13 @@ export async function workspace(
   return { dir, project, record, host, module };
 }
 
+const RECORD_TIMEOUT_MS = 10_000;
+
 export async function recorded(ws: Workspace, count: number): Promise<readonly Recorded[]> {
-  for (let attempt = 0; attempt < 100; attempt++) {
+  // A deadline, not an attempt count: each read and each hook process takes as long as a loaded
+  // machine makes it.
+  const deadline = Date.now() + RECORD_TIMEOUT_MS;
+  while (Date.now() < deadline) {
     const lines = await jsonLines<Recorded>(ws.record);
     if (lines.length >= count) return lines;
     await new Promise((resolve) => setTimeout(resolve, 20));
