@@ -154,7 +154,7 @@ export function describeDoctorFix(fix: string | DoctorFix): string {
     case "refresh-marketplace":
       return `Run \`aidd marketplace refresh\` to write it back to ${fix.file}.`;
     case "repair-settings-file":
-      return `Repair the JSON in ${fix.file} by hand, or delete it and run \`aidd marketplace refresh\` to write it back.`;
+      return `Repair the JSON in ${fix.file} by hand, then run \`aidd marketplace refresh\`.`;
     case "remove-stale-declaration":
       return `Remove the \`${fix.name}\` entry from ${fix.file}, or run \`aidd marketplace refresh\` if the project registers it again.`;
   }

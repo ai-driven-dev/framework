@@ -340,7 +340,7 @@ describe("the words of what a person does about a doctor issue", () => {
     ],
     [
       { code: "repair-settings-file", file: "f.json" },
-      "Repair the JSON in f.json by hand, or delete it and run `aidd marketplace refresh` to write it back.",
+      "Repair the JSON in f.json by hand, then run `aidd marketplace refresh`.",
     ],
     ["a sentence naming no command", "a sentence naming no command"],
   ];
