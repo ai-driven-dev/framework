@@ -77,7 +77,12 @@ describe("spec contract", () => {
 
   it("SPEC-02 refuses a locked spec that still holds an Open Questions section", () => {
     refusedOnlyBy(GOOD.replace("status: draft", "status: locked"), "SPEC-02");
-    refusedOnlyBy(GOOD.replace("status: draft", "status: locked").replace("- TBD: should the export include deleted items?", "None"), "SPEC-02");
+  });
+
+  it("SPEC-03 refuses an open question not written as a TBD item", () => {
+    for (const line of ["- should the export include deleted items?", "None", "- None", "- TBD:", "TBD: should the export include deleted items?"]) {
+      refusedOnlyBy(GOOD.replace("- TBD: should the export include deleted items?", line), "SPEC-03");
+    }
   });
 
   it("SPEC-01 refuses a status missing or other than draft or locked", () => {

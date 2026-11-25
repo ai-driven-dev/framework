@@ -5,6 +5,7 @@
   "scope": ["aidd_docs/tasks/**/spec.md"],
   "rules": {
     "SPEC-01": { "op": "template", "in": "spec.md", "template": "../assets/spec-template.md", "optional": ["Open Questions", "Stakeholders", "Context"], "values": { "status": ["draft", "locked"] }, "why": "whoever plans from the spec finds its status, target, constraints, non-goals, done-when and open questions", "fix": "follow spec-template.md" },
-    "SPEC-02": { "op": "custom", "in": "spec.md", "check": "locked-closed", "why": "a locked spec is a contract, so nothing in it is still open", "fix": "resolve each question and drop the section, or set status back to draft" }
+    "SPEC-02": { "op": "custom", "in": "spec.md", "check": "locked-closed", "why": "a locked spec is a contract, so nothing in it is still open", "fix": "resolve each question and drop the section, or set status back to draft" },
+    "SPEC-03": { "op": "custom", "in": "spec.md", "check": "gap-form", "why": "a reader finds every gap of a spec by one marker", "fix": "write each open question as - TBD: <question>" }
   }
 }
