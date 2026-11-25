@@ -101,21 +101,27 @@ A hook checks mechanical rules only; a rule that needs judgment belongs to the s
 
 ### Rules
 
-| Rule | Says |
-| --- | --- |
-| Owner scope | A hook checks the paths its plugin owns and exits before reading anything else. `aidd-context` also owns the layout of `aidd_docs/`; `aidd-dev` and `aidd-pm` own the artifacts their skills' contracts name. |
-| One neutral interface | Read and answer through `hooks/lib/host.cjs`, never a host's payload. `readEvent()` gives the event and its `files` (`written`, `replaced`, absent where the host gives none; a deleted file is possible: tolerate `ENOENT`). `answer({ level, text, person })` informs or requires, `continueTurn(text, person)` asks once, `refuse(reason)` denies the tool call about to run and does nothing elsewhere. `person` is shown to the person where the host can. `scripts/check/engine/sync.cjs` writes `host.cjs` from `cli/assets/hooks-runtime/host-claude.cjs`; shared rules live in `hooks/lib/common-rules.cjs`, held identical by the `hook-rule-copies` check of `scripts/check/run.cjs`. |
-| Findings only | Report what this write or turn produced, never standing errors: errors on the lines of `written` not in `replaced`, as a multiset. Lines unknown (a shell write, an edit without `written`, a removal): group by file or `<folder>/*`, inform only. A whole-file write without `replaced` informs only. Never a missing file; an error in another file belongs to turn state. Warnings follow, capped at 10. Silent when clean. Format below. |
-| One entry per concern | `node ${CLAUDE_PLUGIN_ROOT}/hooks/<concern>.cjs <goal>`. `aidd-context`: `memory.cjs` with `load`, `sync`; `aidd-context`, `aidd-dev`, `aidd-pm`: `artifacts.cjs` with `start`, `mark`, `check`, generated from `scripts/check/engine/hook.cjs`. `aidd-context` has one Stop entry, `memory.cjs sync` carrying the `artifacts.cjs` findings: the OpenCode and Kilo bridges silence a second one. |
-| Node built-ins | CommonJS, no dependency. A child process (git included) or a network call only when no built-in can do the job: read-only, scoped, measured under the timeout on a large repository. |
-| Bounded | 5 s declared timeout. Exit 0 on garbage, empty stdin or an unknown event; an internal failure answers nothing. |
-| Turn state is the plugin's own | A plugin with a Stop check keeps its own per-session state, and may tell an error new in another file once per turn; the shared library holds none. `artifacts.cjs` keeps, in the system temp folder, a mark of the artifacts written this turn and a reference time finding shell writes by mtime; a `"shell": false` contract keeps only the files a command of the turn names. `aidd-context` keeps a bank snapshot and checks at Stop the memory lines written, lines lost from the bank, and sync, naming a context file it could not sync. |
-| Status message | Every handler carries a short `statusMessage` naming its plugin and action (`AIDD Context: sync project memory`); Codex shows it when asking for trust. |
+| Rule | A hook must | Never | Implemented by |
+| --- | --- | --- | --- |
+| Owner scope | check the paths its plugin owns: `aidd-context` also the `aidd_docs/` layout, `aidd-dev` and `aidd-pm` the artifacts their contracts name | read anything else first | |
+| Neutral interface | read and answer through `hooks/lib/host.cjs`, calls below | read a host's payload | `scripts/check/engine/sync.cjs`, from `cli/assets/hooks-runtime/host-claude.cjs` |
+| Shared rules | take common checks from `hooks/lib/common-rules.cjs` | edit one copy alone | the `hook-rule-copies` check of `scripts/check/run.cjs` |
+| Findings only | report the errors on the lines of `written` not in `replaced`, as a multiset, then warnings, capped at 10 | report a standing error, a missing file, or anything when clean | |
+| Unknown lines | group errors by file or `<folder>/*` and inform: a shell write, an edit without `written`, a removal, a whole-file write without `replaced` | require | |
+| Message format | open with `<plugin>: <n> errors, <m> warnings`, then one `<file>[:<line>] <rule> ["<excerpt>"] => <fix>` per finding | | |
+| One entry per concern | run as `node ${CLAUDE_PLUGIN_ROOT}/hooks/<concern>.cjs <goal>` | add a second Stop entry: the OpenCode and Kilo bridges silence it | `memory.cjs` (`load`, `sync`, carrying the `artifacts.cjs` findings at Stop); `artifacts.cjs` (`start`, `mark`, `check`), generated from `scripts/check/engine/hook.cjs` |
+| Node built-ins | use CommonJS and built-ins; a child process (git included) or a network call only when no built-in can, read-only, scoped, measured under the timeout on a large repository | add a dependency | |
+| Bounded | declare a 5 s timeout; exit 0 on garbage, empty stdin or an unknown event | answer after an internal failure | |
+| Turn state | keep its own per-session state; tell an error new in another file once per turn | keep state in the shared library | `artifacts.cjs`: a mark of this turn's artifacts and a reference time finding shell writes by mtime, in the temp folder; a `"shell": false` contract keeps only files a command names. `aidd-context`: a bank snapshot, checked at Stop for lines written, lines lost and sync |
+| Status message | carry a short `statusMessage` naming plugin and action (`AIDD Context: sync project memory`) | | Codex shows it when asking for trust |
 
-```
-<plugin>: <n> errors, <m> warnings
-<file>[:<line>] <rule> ["<excerpt>"] => <fix>
-```
+| Call of `hooks/lib/host.cjs` | Does |
+| --- | --- |
+| `readEvent()` | gives the event and its `files`, each with `path`, `written` and `replaced`, the last two absent where the host gives none; a file may be deleted: tolerate `ENOENT` |
+| `answer({ level, text, person })` | informs or requires |
+| `continueTurn(text, person)` | asks once at the turn end |
+| `refuse(reason)` | denies the tool call about to run; does nothing on any other event or adapter |
+| `person` argument | shown to the person by hosts that can, ignored elsewhere |
 
 ### What the CLI carries
 
