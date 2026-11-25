@@ -40,6 +40,6 @@ flowchart LR
 - Never hand over a capture or a temp file.
 - End with one next step or question, never on an offer or a yes/no.
 - Save by writing the design files, and never use git unless asked.
-- Write only `reviews/` under `aidd_docs/ui/`.
+- Under `aidd_docs/ui/`, write only `reviews/` and the records sent back for rework.
 - Never write in the code, nor by hand what the engine writes.
 - Never write a capture: the user saves it.
