@@ -10,13 +10,13 @@ Plays the role of technical architect for a new SaaS project. Walks the user thr
 
 ## Actions
 
-| #   | Action                | Role                                                           | Input              |
-| --- | --------------------- | -------------------------------------------------------------- | ------------------ |
-| 01  | `gather-needs`        | Q&A across the 24-item checklist                               | user intent        |
-| 02  | `propose-candidates`  | Derive 2-3 candidate stacks, render comparison table           | filled checklist   |
-| 03  | `audit-candidates`    | Spawn parallel agents to validate each candidate, emit verdict | candidates table   |
-| 04  | `pick-and-design`     | User picks winner; generate folder tree + Mermaid diagram      | audit report       |
-| 05  | `write-install-md`    | Produce `aidd_docs/INSTALL.md`                                 | design + decisions |
+| #   | Action                                                       | Role                                                           | Input              |
+| --- | ------------------------------------------------------------ | -------------------------------------------------------------- | ------------------ |
+| 01  | [01-gather-needs.md](actions/01-gather-needs.md)             | Q&A across the 24-item checklist                               | user intent        |
+| 02  | [02-propose-candidates.md](actions/02-propose-candidates.md) | Derive 2-3 candidate stacks, render comparison table           | filled checklist   |
+| 03  | [03-audit-candidates.md](actions/03-audit-candidates.md)     | Spawn parallel agents to validate each candidate, emit verdict | candidates table   |
+| 04  | [04-pick-and-design.md](actions/04-pick-and-design.md)       | User picks winner; generate folder tree + Mermaid diagram      | audit report       |
+| 05  | [05-write-install-md.md](actions/05-write-install-md.md)     | Produce `aidd_docs/INSTALL.md`                                 | design + decisions |
 
 Run `01 → 02 → 03 → 04 → 05`. The audit (03) gates: if every candidate fails, loop back to 02 or 01.
 Before running an action, read its file in `actions/`, not only the table or assets.

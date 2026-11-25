@@ -10,11 +10,11 @@ Diagnose and fix issues through structured hypothesis validation, root-cause ana
 
 ## Actions
 
-| #   | Action          | When to use                                                                   |
-| --- | --------------- | ----------------------------------------------------------------------------- |
-| 01  | `reproduce`     | A known bug must be fixed end to end: reproduce, test-driven fix, branch, PR   |
-| 02  | `debug`         | Root cause unknown: enumerate hypotheses, validate each, confirm the cause     |
-| 03  | `reflect-issue` | Stuck or prior fixes failed: reopen the search space, instrument logs first    |
+| #   | Action                                             | When to use                                                                  |
+| --- | -------------------------------------------------- | ---------------------------------------------------------------------------- |
+| 01  | [01-reproduce.md](actions/01-reproduce.md)         | A known bug must be fixed end to end: reproduce, test-driven fix, branch, PR |
+| 02  | [02-debug.md](actions/02-debug.md)                 | Root cause unknown: enumerate hypotheses, validate each, confirm the cause   |
+| 03  | [03-reflect-issue.md](actions/03-reflect-issue.md) | Stuck or prior fixes failed: reopen the search space, instrument logs first  |
 
 Pick the one action matching the intent; never default to `01`. Triggers like "reproduce and fix" route to `01`, "why does this happen" to `02`, "I'm stuck" or "previous fixes didn't work" to `03`. Ask one question when the intent is ambiguous. Before running an action, read its file in `actions/`, not only the table or assets.
 

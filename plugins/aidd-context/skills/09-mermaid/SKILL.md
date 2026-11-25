@@ -10,9 +10,9 @@ Produces a valid, structured Mermaid diagram from a written source by planning i
 
 ## Actions
 
-| #   | Action    | Role                                                    | Input            |
-| --- | --------- | ------------------------------------------------------ | ---------------- |
-| 01  | `mermaid` | Plan, confirm, generate, and review one diagram         | a written source |
+| #   | Action                                 | Role                                            | Input            |
+| --- | -------------------------------------- | ----------------------------------------------- | ---------------- |
+| 01  | [01-mermaid.md](actions/01-mermaid.md) | Plan, confirm, generate, and review one diagram | a written source |
 
 Run action `01` and run its `## Test` before trusting the result.
 Before running an action, read its file in `actions/`, not only the table or assets.

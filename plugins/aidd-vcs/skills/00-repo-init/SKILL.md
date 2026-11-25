@@ -12,10 +12,10 @@ Initializes a project's repository locally and, on request, on the remote host, 
 
 ## Actions
 
-| #   | Action    | Role                                                                                              | Input                           |
-| --- | --------- | ------------------------------------------------------------------------------------------------- | ------------------------------- |
-| 01  | `init`    | Resolve VCS config, `git init`, set the default branch, write `CONTRIBUTING.md`, bootstrap commit | cwd, default_branch, remote_url |
-| 02  | `publish` | Create the remote repo on the resolved host and push, return its URL                              | cwd, non_interactive            |
+| #   | Action                                 | Role                                                                                              | Input                           |
+| --- | -------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------- |
+| 01  | [01-init.md](actions/01-init.md)       | Resolve VCS config, `git init`, set the default branch, write `CONTRIBUTING.md`, bootstrap commit | cwd, default_branch, remote_url |
+| 02  | [02-publish.md](actions/02-publish.md) | Create the remote repo on the resolved host and push, return its URL                              | cwd, non_interactive            |
 
 Run `01 → 02`. `init` alone for local-only; `publish` after it to create the remote.
 Before running an action, read its file in `actions/`, not only the table or assets.

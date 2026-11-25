@@ -23,11 +23,11 @@ const CLEAN_SKILL = [
   "",
   "| # | Action | Role |",
   "| --- | --- | --- |",
-  "| 01 | `step` | Do the one thing |",
+  "| 01 | `01-step` | Do the one thing |",
   "",
 ].join("\n");
 
-const UNCITED_ACTION_SKILL = CLEAN_SKILL.replace("| 01 | `step` | Do the one thing |", "");
+const UNCITED_ACTION_SKILL = CLEAN_SKILL.replace("| 01 | `01-step` | Do the one thing |", "");
 
 /** A temp tree with a `plugins/` root, so the file classifier applies exactly as it does here. */
 function makeTree(skillContent, actionNames = ["01-step.md"]) {

@@ -2,8 +2,8 @@
 
 ## Actions
 
-Run `step-one` to begin.
+Run `01-step-one` to begin.
 
 | Action | Does |
 | --- | --- |
-| step-one | begins |
+| 01-step-one | begins |

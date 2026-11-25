@@ -10,9 +10,9 @@ Cuts annotated semver releases with notes derived from recent commits.
 
 ## Actions
 
-| #   | Action         | Role                                                                       | Input                              |
-| --- | -------------- | -------------------------------------------------------------------------- | ---------------------------------- |
-| 01  | `release-tag`  | Compute version, draft notes, validate, bump, tag, push                    | version (optional), notes_overrides|
+| #   | Action                                         | Role                                                    | Input                               |
+| --- | ---------------------------------------------- | ------------------------------------------------------- | ----------------------------------- |
+| 01  | [01-release-tag.md](actions/01-release-tag.md) | Compute version, draft notes, validate, bump, tag, push | version (optional), notes_overrides |
 
 Before running an action, read its file in `actions/`, not only the table or assets.
 

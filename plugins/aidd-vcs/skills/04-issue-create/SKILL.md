@@ -10,9 +10,9 @@ Files well-formed issues in the configured tracker after gathering enough contex
 
 ## Actions
 
-| #   | Action          | Role                                                                       | Input                                  |
-| --- | --------------- | -------------------------------------------------------------------------- | -------------------------------------- |
-| 01  | `issue-create`  | Detect tool, fill template, validate, open the issue                        | problem_description, labels, type      |
+| #   | Action                                           | Role                                                 | Input                             |
+| --- | ------------------------------------------------ | ---------------------------------------------------- | --------------------------------- |
+| 01  | [01-issue-create.md](actions/01-issue-create.md) | Detect tool, fill template, validate, open the issue | problem_description, labels, type |
 
 Before running an action, read its file in `actions/`, not only the table or assets.
 

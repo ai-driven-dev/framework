@@ -10,12 +10,12 @@ The act-side of code improvement: it changes code to make it better. Behavior-pr
 
 ## Actions
 
-| #   | Action         | Axis         | Lens                                                       |
-| --- | -------------- | ------------ | ---------------------------------------------------------- |
-| 01  | `performance`  | performance  | N+1, hot paths, batching, memoization, unnecessary I/O      |
-| 02  | `security`     | security     | OWASP, input validation, authz, secrets: harden and fix    |
-| 03  | `cleanup`      | code-quality | clean code: rename, extract, DRY, dead code, complexity     |
-| 04  | `architecture` | architecture | extract layers, fix coupling, enforce boundaries            |
+| #   | Action                                           | Axis         | Lens                                                    |
+| --- | ------------------------------------------------ | ------------ | ------------------------------------------------------- |
+| 01  | [01-performance.md](actions/01-performance.md)   | performance  | N+1, hot paths, batching, memoization, unnecessary I/O  |
+| 02  | [02-security.md](actions/02-security.md)         | security     | OWASP, input validation, authz, secrets: harden and fix |
+| 03  | [03-cleanup.md](actions/03-cleanup.md)           | code-quality | clean code: rename, extract, DRY, dead code, complexity |
+| 04  | [04-architecture.md](actions/04-architecture.md) | architecture | extract layers, fix coupling, enforce boundaries        |
 
 Run the one axis named, or offer all applicable when the request is unscoped.
 Before running an action, read its file in `actions/`, not only the table or assets.
