@@ -12,6 +12,18 @@
         ]
       }
     ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/spec-lock.cjs",
+            "timeout": 5,
+            "statusMessage": "AIDD PM: refuse a write to a locked spec"
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Write|Edit|Bash|Shell|bash|PowerShell",

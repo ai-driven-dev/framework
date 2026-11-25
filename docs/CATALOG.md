@@ -100,6 +100,7 @@ Product backlog artifacts, refinement, Product Briefs, Epics, User Stories, Task
 | Event | Runs |
 | --- | --- |
 | `SessionStart` | `hooks/artifacts.cjs` |
+| `PreToolUse` | `hooks/spec-lock.cjs` |
 | `PostToolUse` | `hooks/artifacts.cjs` |
 | `Stop` | `hooks/artifacts.cjs` |
 

@@ -35,6 +35,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |------|
 | [artifacts.cjs](hooks/artifacts.cjs) |
 | [hooks.json](hooks/hooks.json) |
+| [spec-lock.cjs](hooks/spec-lock.cjs) |
 
 #### `hooks/lib`
 
