@@ -245,6 +245,22 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
     ]);
   });
 
+  it("tells a plugin's second Stop hook the turn continues once the first one blocked", async () => {
+    const hooksJson = JSON.stringify({
+      hooks: { Stop: [command("stop.cjs"), command("stop.cjs")] },
+    });
+    const { directory, emit, prompts, of } = await open(host, hooksJson);
+    await emit(host.sessionStarted("s1", directory), {
+      type: "session.idle",
+      properties: { sessionID: "s1" },
+    });
+
+    expect([
+      prompts.length,
+      (await of("stop.cjs")).map((c) => c.payload.stop_hook_active),
+    ]).toStrictEqual([1, [false, true]]);
+  });
+
   it("marks the follow-up it sends, so the host's message hook does not read it as the user's", async () => {
     const { directory, emit, prompts } = await open(host);
     await emit(host.sessionStarted("s1", directory), {

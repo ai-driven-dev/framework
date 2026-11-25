@@ -24,8 +24,9 @@ function translated(files: Record<string, string>) {
               content: "bridge",
               warnings: Object.keys(JSON.parse(raw).hooks ?? {})
                 .filter((event) => event !== "Stop")
-                .map((event) => `stub: unmapped event '${event}' skipped`),
+                .map((event) => `unmapped event '${event}' skipped`),
             }),
+            warning: (reason) => `stub: ${reason}`,
             dir: ".stub/plugin/",
             skipIfSourceHas: "own.js",
           },

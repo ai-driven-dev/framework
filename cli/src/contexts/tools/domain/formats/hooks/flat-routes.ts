@@ -106,9 +106,9 @@ function hooksBridge(
   return {
     generate: (rawHooksJson, plugin) => {
       const { content, unrelayed } = generate(rawHooksJson, plugin);
-      const warnings = unrelayed.map((event) => toolWarning(tool, unmappedEventWarning(event)));
-      return { content, warnings };
+      return { content, warnings: unrelayed.map(unmappedEventWarning) };
     },
+    warning: (reason) => toolWarning(tool, reason),
     dir: loaderEntry.dir,
     skipIfSourceHas: loaderEntry.baseName,
   };

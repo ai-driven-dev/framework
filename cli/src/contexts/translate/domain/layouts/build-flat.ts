@@ -24,8 +24,7 @@ import { type FlatHookPlans, flatHookPlans } from "../rules/hook-plans.js";
 import { relativeLinks } from "../rules/links.js";
 import { agentFiles, baseOf, namedByFolder } from "./build-shared.js";
 
-/** A flat build's plugin files, in the tool's own folders, and what its hooks bridge leaves out.
- * Its MCP servers and hooks file are merged across plugins by the sink. */
+/** A flat build's files and its bridge's warnings; the sink merges its MCP servers and hooks file. */
 export function buildFlatPlans(canon: PluginDistribution, contract: ToolBuildContract) {
   const { agents, hooks, skills } = contract.artifacts;
   const hookPlans = hooks.supported ? flatHooks(canon, hooks) : { plans: [], warnings: [] };
@@ -109,14 +108,15 @@ export function flatAgentPlan(
 }
 
 function flatHooks(canon: PluginDistribution, artifact: SupportedArtifact): FlatHookPlans {
-  const plugin = canon.manifest.name;
-  return flatHookPlans(canon, {
-    place: (relativePath) => artifactPath(artifact, plugin, relativePath),
+  const bridge = artifact.skipHooksJson ? (artifact.hooksBridge ?? null) : null;
+  const { plans, warnings } = flatHookPlans(canon, {
+    place: (relativePath) => artifactPath(artifact, canon.manifest.name, relativePath),
     script: (relativePath, content) => artifact.script?.(relativePath, content) ?? content,
-    bridge: artifact.skipHooksJson ? (artifact.hooksBridge ?? null) : null,
+    bridge,
     bridgeFirst: true,
     needsManifest: true,
   });
+  return { plans, warnings: bridge === null ? [] : warnings.map(bridge.warning) };
 }
 
 /** How a flat layout reads a skill's links: relative to where the skill lands. */

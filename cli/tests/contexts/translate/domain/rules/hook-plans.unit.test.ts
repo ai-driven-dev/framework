@@ -15,6 +15,7 @@ function bridge(
   return {
     dir: "flat/",
     skipIfSourceHas: "own.js",
+    warning: (reason: string) => reason,
     generate: (raw, plugin) => ({ content: generate(raw, plugin), warnings: [] }),
   };
 }

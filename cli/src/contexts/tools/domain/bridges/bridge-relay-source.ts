@@ -190,7 +190,8 @@ async function addSessionContext(input, output, show) {
  *
  * Limit: a host whose messages reach no message hook (the OpenCode V2 adapter) never clears it,
  * so after a session's first follow-up its Stop scripts are always told the turn continues.
- * Limit: several Stop hooks of one plugin that block each send a follow-up. */
+ * Limit: one Stop hook per plugin: once one blocked, the hooks after it are told the turn
+ * continues, and stay silent. */
 export const TURN_END_SOURCE = `const continuedTurns = new Set();
 
 function noteTurn(sessionId, parts) {
@@ -204,10 +205,9 @@ function isFollowUp(parts) {
 /** Resolves once the scripts ran, with the follow-ups still in flight: the prompt is the session's
  * next turn, and the turn end must not hold it. */
 async function runStop(sessionId, directory, { client, method, show }) {
-  const active = continuedTurns.has(sessionId);
   const sends = [];
   for (const call of stopCallsFor(sessionId, directory)) {
-    const payload = { ...call.payload, stop_hook_active: active };
+    const payload = { ...call.payload, stop_hook_active: continuedTurns.has(sessionId) };
     const { reason, person } = await stopReasonOf(call.script, call.args, payload, directory);
     show?.(person);
     if (!reason) continue;
@@ -242,7 +242,8 @@ export const BRIDGE_HOOKS_SOURCE = `function bridgeHooks({ directory, client, fo
       try {
         noteTurn(input?.sessionID, output?.parts ?? []);
       } catch (error) {
-        reportHookFailure("event", error);
+        reportHookFailure("UserPromptSubmit", error);
+        return;
       }
       await addPromptContext(input, output, folderOf(input?.sessionID));
     },

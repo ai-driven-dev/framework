@@ -51,7 +51,7 @@ describe("building Kilo's flat contract", () => {
     expect(hooks.hooksBridge?.dir).toBe(".kilo/plugin/");
   });
 
-  it("warns, under the tool, of each event its bridge leaves out", () => {
+  it("names each event its bridge leaves out", () => {
     const hooks = supported(present(kilo.buildContracts.flat)().artifacts.hooks);
     const manifest = JSON.stringify({
       hooks: Object.fromEntries(
@@ -62,7 +62,7 @@ describe("building Kilo's flat contract", () => {
     });
 
     expect(hooks.hooksBridge?.generate(manifest, "aidd-dev").warnings).toStrictEqual([
-      "kilo: unmapped event 'SessionEnd' skipped",
+      "unmapped event 'SessionEnd' skipped",
     ]);
   });
 

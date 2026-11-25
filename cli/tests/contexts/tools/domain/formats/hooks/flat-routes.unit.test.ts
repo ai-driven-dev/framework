@@ -186,8 +186,9 @@ describe("a flat build's hooks artifact", () => {
     expect(artifact.skipHooksJson).toBe(true);
     expect(artifact.hooksBridge?.generate("{}", "aidd-dev")).toStrictEqual({
       content: "aidd-dev:{}",
-      warnings: [`${TOOL.cursor}: unmapped event 'Other' skipped`],
+      warnings: ["unmapped event 'Other' skipped"],
     });
+    expect(artifact.hooksBridge?.warning("why")).toBe(`${TOOL.cursor}: why`);
     expect(artifact.hooksBridge?.dir).toBe(".tool/plugin/");
     expect(artifact.hooksBridge?.skipIfSourceHas).toBe("tool-plugin.js");
   });

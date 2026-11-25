@@ -47,6 +47,7 @@ const HOOKS = supportedAs({ kind: "hooks", scriptsDir: "H/hooks/" });
 describe("naming the hooks bridge file", () => {
   const bridge: FlatHooksBridge = {
     skipIfSourceHas: "own.js",
+    warning: (reason: string) => reason,
     dir: "bridge/",
     generate: (raw) => ({
       content: raw === "{}" ? null : `bridge of ${raw}`,
@@ -133,6 +134,7 @@ describe("retargeting a link in a flat layout", () => {
 describe("telling whether a source ships its hooks bridge", () => {
   const bridge: FlatHooksBridge = {
     skipIfSourceHas: "bridge.js",
+    warning: (reason: string) => reason,
     dir: "bridge/",
     generate: () => ({ content: "generated", warnings: [] }),
   };

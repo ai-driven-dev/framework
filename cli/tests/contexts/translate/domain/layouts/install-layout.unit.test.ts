@@ -160,6 +160,7 @@ describe("a flat target whose loader is triggered by a generated bridge", () => 
             }),
             dir: ".stub/plugin/",
             skipIfSourceHas: "own-plugin.js",
+            warning: (reason: string) => reason,
           },
         },
       },
@@ -234,8 +235,9 @@ describe("a flat target whose loader is triggered by a generated bridge", () => 
             hooksBridge: {
               generate: (raw, plugin) => ({
                 content: `bridge(${plugin}):${raw}`,
-                warnings: ["stub: unmapped event 'SessionEnd' skipped"],
+                warnings: ["unmapped event 'SessionEnd' skipped"],
               }),
+              warning: (reason) => `stub: ${reason}`,
               dir: ".stub/plugin/",
               skipIfSourceHas: "own-plugin.js",
             },
@@ -249,7 +251,7 @@ describe("a flat target whose loader is triggered by a generated bridge", () => 
         pluginName: "sample-plugin",
         component: "hooks",
         toolId: "opencode",
-        reason: "stub: unmapped event 'SessionEnd' skipped",
+        reason: "unmapped event 'SessionEnd' skipped",
       },
     ]);
   });

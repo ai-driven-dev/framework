@@ -72,6 +72,7 @@ describe("a hooks file and a bridge", () => {
     const bridge = {
       dir: ".b/",
       skipIfSourceHas: "x.js",
+      warning: (reason: string) => reason,
       generate: () => ({ content: null, warnings: [] }),
     };
 

@@ -564,10 +564,9 @@ function isFollowUp(parts) {
 /** Resolves once the scripts ran, with the follow-ups still in flight: the prompt is the session's
  * next turn, and the turn end must not hold it. */
 async function runStop(sessionId, directory, { client, method, show }) {
-  const active = continuedTurns.has(sessionId);
   const sends = [];
   for (const call of stopCallsFor(sessionId, directory)) {
-    const payload = { ...call.payload, stop_hook_active: active };
+    const payload = { ...call.payload, stop_hook_active: continuedTurns.has(sessionId) };
     const { reason, person } = await stopReasonOf(call.script, call.args, payload, directory);
     show?.(person);
     if (!reason) continue;
@@ -597,7 +596,8 @@ function bridgeHooks({ directory, client, followUp, endsTurn, show, track }) {
       try {
         noteTurn(input?.sessionID, output?.parts ?? []);
       } catch (error) {
-        reportHookFailure("event", error);
+        reportHookFailure("UserPromptSubmit", error);
+        return;
       }
       await addPromptContext(input, output, folderOf(input?.sessionID));
     },
@@ -916,10 +916,9 @@ function isFollowUp(parts) {
 /** Resolves once the scripts ran, with the follow-ups still in flight: the prompt is the session's
  * next turn, and the turn end must not hold it. */
 async function runStop(sessionId, directory, { client, method, show }) {
-  const active = continuedTurns.has(sessionId);
   const sends = [];
   for (const call of stopCallsFor(sessionId, directory)) {
-    const payload = { ...call.payload, stop_hook_active: active };
+    const payload = { ...call.payload, stop_hook_active: continuedTurns.has(sessionId) };
     const { reason, person } = await stopReasonOf(call.script, call.args, payload, directory);
     show?.(person);
     if (!reason) continue;
@@ -949,7 +948,8 @@ function bridgeHooks({ directory, client, followUp, endsTurn, show, track }) {
       try {
         noteTurn(input?.sessionID, output?.parts ?? []);
       } catch (error) {
-        reportHookFailure("event", error);
+        reportHookFailure("UserPromptSubmit", error);
+        return;
       }
       await addPromptContext(input, output, folderOf(input?.sessionID));
     },
