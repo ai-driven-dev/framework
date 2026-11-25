@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { AuthStorageError, GhCliError } from "../../../src/contexts/auth/contract/auth.error.js";
+import {
+  AuthStorageError,
+  CredentialRecordUnreadableError,
+  GhCliError,
+} from "../../../src/contexts/auth/contract/auth.error.js";
 import {
   ConflictingIdentityFlagsError,
   IdentityOffWithIdentifierError,
@@ -108,6 +112,10 @@ const cases: [() => Error, string][] = [
     "Plugin 'p': requested version '1.0.0' does not match catalog version '2.0.0'.",
   ],
   [() => new AuthStorageError("storage failed"), "storage failed"],
+  [
+    () => new CredentialRecordUnreadableError("/p/auth.json", "bad json"),
+    "Cannot read the credential record /p/auth.json (bad json). Delete the file, then run `aidd auth login`.",
+  ],
   [() => new GhCliError("gh failed"), "gh failed"],
   [
     () => new ElevatedPermissionUpdateError("npm i -g x"),

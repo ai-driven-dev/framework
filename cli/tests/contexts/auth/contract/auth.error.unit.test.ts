@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { AuthStorageError, GhCliError } from "../../../../src/contexts/auth/contract/auth.error.js";
+import {
+  AuthStorageError,
+  CredentialRecordUnreadableError,
+  GhCliError,
+} from "../../../../src/contexts/auth/contract/auth.error.js";
 
 describe("when AuthStorageError is raised", () => {
   it("carries its detail and says nothing itself", () => {
@@ -28,5 +32,16 @@ describe("when GhCliError is raised", () => {
 
   it("carries its stable code", () => {
     expect(new GhCliError("gh exited 1").code).toBe("gh-cli");
+  });
+});
+
+describe("when CredentialRecordUnreadableError is raised", () => {
+  it("carries the file and the reason, and its stable code", () => {
+    const error = new CredentialRecordUnreadableError("/p/auth.json", "bad json");
+    expect({ path: error.path, reason: error.reason, code: error.code }).toStrictEqual({
+      path: "/p/auth.json",
+      reason: "bad json",
+      code: "credential-record-unreadable",
+    });
   });
 });
