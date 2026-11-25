@@ -243,7 +243,7 @@ A branch is declared only when the command declared it on that branch. Both read
 Message: names the branch and the `aidd telemetry task` command.
 
 - Anything else prints nothing. A crash exits 0. `aidd` is not needed: the line only names the command.
-- Shown as the host's `systemMessage`, by Claude Code and Codex, and as a TUI toast by OpenCode, which holds a session-start message to the first turn; a tool with no person-only channel shows nothing.
+- Shown as the host's `systemMessage`, by Claude Code and Codex; a tool with no person-only channel shows nothing.
 - Declaring later loses nothing: it moves the branch's earlier calls onto its task ([Attribution](#attribution)).
 
 ## Consent

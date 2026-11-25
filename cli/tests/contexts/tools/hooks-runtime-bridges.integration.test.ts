@@ -402,7 +402,7 @@ async function capturedToast(project: string): Promise<CapturedToast> {
 
 /** What the bridge asked the host to show, in the shape the host accepted. */
 function asked(toast: CapturedToast, message: string) {
-  return { body: { message, variant: toast.request.body.variant } };
+  return { body: { message, variant: toast.event.properties.variant } };
 }
 
 describe("OpenCode's person message, through its bridge", () => {

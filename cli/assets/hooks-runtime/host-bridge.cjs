@@ -107,7 +107,7 @@ function hasPerson(person) {
 }
 
 /** Asks the model to go on before the turn ends, with `text` as what it must do, and hands the
- * bridge `person` to show. Asks once: a turn end that is already a continuation is never
+ * bridge `person` to show (OpenCode's bridge shows it, Kilo's ignores it). Asks once: a turn end that is already a continuation is never
  * continued again. */
 function continueTurn(text, person) {
   if (typeof text !== "string" || text === "" || current?.stopActive === true) return;
