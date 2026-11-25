@@ -152,36 +152,54 @@ describe("the memory hook under Kiro", () => {
     ]).toStrictEqual([true, false]);
   });
 
-  it.each(["SessionStart", "PostToolUse", "Stop"])(
-    "ends with a neutral exit when the %s script crashes, because Kiro continues the turn on exit 1",
-    (event) => {
-      const format = kiro.projectHooksDelivery()?.format;
-      if (format === undefined) throw new Error("kiro declares no project hooks format");
-      const { content } = format.merge(
-        null,
-        JSON.stringify({
-          hooks: {
-            [event]: [
-              {
-                hooks: [
-                  { type: "command", command: `node ${"$"}{CLAUDE_PLUGIN_ROOT}/hooks/crash.cjs` },
-                ],
-              },
-            ],
-          },
-        }),
-        PLUGIN
-      );
-      const [entry] = format.contributedEntries(content, PLUGIN);
-      if (entry === undefined) throw new Error("no entry was merged");
-      const script = join(HOME(), format.scriptPath(PLUGIN, "hooks/crash.cjs"));
-      mkdirSync(dirname(script), { recursive: true });
-      writeFileSync(script, 'throw new Error("boom");');
+  /** Runs a script with `body` as the hook of `event`, through the command Kiro is given. */
+  function runScript(event: string, body: string): SpawnSyncReturns<string> {
+    const format = kiro.projectHooksDelivery()?.format;
+    if (format === undefined) throw new Error("kiro declares no project hooks format");
+    const { content } = format.merge(
+      null,
+      JSON.stringify({
+        hooks: {
+          [event]: [
+            {
+              hooks: [
+                { type: "command", command: `node ${"$"}{CLAUDE_PLUGIN_ROOT}/hooks/script.cjs` },
+              ],
+            },
+          ],
+        },
+      }),
+      PLUGIN
+    );
+    const [entry] = format.contributedEntries(content, PLUGIN);
+    if (entry === undefined) throw new Error("no entry was merged");
+    const script = join(HOME(), format.scriptPath(PLUGIN, "hooks/script.cjs"));
+    mkdirSync(dirname(script), { recursive: true });
+    writeFileSync(script, body);
+    return runHook(entry.entry.command);
+  }
 
-      const run = runHook(entry.entry.command);
+  it.each([
+    ["SessionStart", 'throw new Error("boom");'],
+    ["PostToolUse", 'throw new Error("boom");'],
+    ["Stop", 'throw new Error("boom");'],
+    ["Stop", 'process.kill(process.pid, "SIGKILL");'],
+  ])(
+    "ends with a neutral exit when the %s script crashes (%s), because Kiro continues the turn on exit 1",
+    (event, body) => {
+      const run = runScript(event, body);
 
       expect([run.status, run.stdout]).toStrictEqual([0, ""]);
-      expect(run.stderr).toContain("boom");
+      expect(run.stderr).toContain("hook script failed");
     }
   );
+
+  it("keeps a refusal: exit 2 with its reason on stderr, which Kiro hands to the model", () => {
+    const run = runScript(
+      "PostToolUse",
+      'process.stderr.write("not this file"); process.exitCode = 2;'
+    );
+
+    expect([run.status, run.stdout, run.stderr]).toStrictEqual([2, "", "not this file"]);
+  });
 });

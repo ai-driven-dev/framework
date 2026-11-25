@@ -284,7 +284,7 @@ script, identical to the plugin source
       "trigger": "SessionStart",
       "action": {
         "type": "command",
-        "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-context/memory.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status!==0)console.error('aidd: hook script failed: '+r);process.exit(0)\" -- load"
+        "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-context/memory.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status===0||c.status===2)process.exit(c.status);console.error('aidd: hook script failed: '+r);process.exit(0)\" -- load"
       },
       "timeout": 5
     },
@@ -293,7 +293,7 @@ script, identical to the plugin source
       "trigger": "SessionStart",
       "action": {
         "type": "command",
-        "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-context/artifacts.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status!==0)console.error('aidd: hook script failed: '+r);process.exit(0)\" -- start"
+        "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-context/artifacts.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status===0||c.status===2)process.exit(c.status);console.error('aidd: hook script failed: '+r);process.exit(0)\" -- start"
       },
       "timeout": 5
     },
@@ -303,7 +303,7 @@ script, identical to the plugin source
       "matcher": "write",
       "action": {
         "type": "command",
-        "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-context/artifacts.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status!==0)console.error('aidd: hook script failed: '+r);process.exit(0)\" -- mark"
+        "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-context/artifacts.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status===0||c.status===2)process.exit(c.status);console.error('aidd: hook script failed: '+r);process.exit(0)\" -- mark"
       },
       "timeout": 5
     },
@@ -313,7 +313,7 @@ script, identical to the plugin source
       "matcher": "shell",
       "action": {
         "type": "command",
-        "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-context/artifacts.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status!==0)console.error('aidd: hook script failed: '+r);process.exit(0)\" -- mark"
+        "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-context/artifacts.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status===0||c.status===2)process.exit(c.status);console.error('aidd: hook script failed: '+r);process.exit(0)\" -- mark"
       },
       "timeout": 5
     },
@@ -322,7 +322,7 @@ script, identical to the plugin source
       "trigger": "Stop",
       "action": {
         "type": "command",
-        "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-context/memory.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status!==0)console.error('aidd: hook script failed: '+r);process.exit(0)\" -- sync"
+        "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-context/memory.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status===0||c.status===2)process.exit(c.status);console.error('aidd: hook script failed: '+r);process.exit(0)\" -- sync"
       },
       "timeout": 5
     },
@@ -331,7 +331,7 @@ script, identical to the plugin source
       "trigger": "SessionStart",
       "action": {
         "type": "command",
-        "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-telemetry/task.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status!==0)console.error('aidd: hook script failed: '+r);process.exit(0)\" -- remind"
+        "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-telemetry/task.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status===0||c.status===2)process.exit(c.status);console.error('aidd: hook script failed: '+r);process.exit(0)\" -- remind"
       },
       "timeout": 5
     },
@@ -340,7 +340,7 @@ script, identical to the plugin source
       "trigger": "SessionStart",
       "action": {
         "type": "command",
-        "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-telemetry/ledger.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status!==0)console.error('aidd: hook script failed: '+r);process.exit(0)\" -- ingest"
+        "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-telemetry/ledger.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status===0||c.status===2)process.exit(c.status);console.error('aidd: hook script failed: '+r);process.exit(0)\" -- ingest"
       },
       "timeout": 5
     }
@@ -354,28 +354,28 @@ project kiro aidd-context scope=project: 0 hook files
   "entries": [
     {
       "event": "SessionStart",
-      "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-context/memory.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status!==0)console.error('aidd: hook script failed: '+r);process.exit(0)\" -- load",
-      "digest": "2468411cdab7ec63940c14dd4a527271"
+      "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-context/memory.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status===0||c.status===2)process.exit(c.status);console.error('aidd: hook script failed: '+r);process.exit(0)\" -- load",
+      "digest": "14fe0e14c3e31866dd8ec489fb4f4cef"
     },
     {
       "event": "SessionStart",
-      "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-context/artifacts.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status!==0)console.error('aidd: hook script failed: '+r);process.exit(0)\" -- start",
-      "digest": "656c85f8c71c1c278f045e131b0d1dbf"
+      "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-context/artifacts.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status===0||c.status===2)process.exit(c.status);console.error('aidd: hook script failed: '+r);process.exit(0)\" -- start",
+      "digest": "b94a3b9c338e6c84e2830d3d0f60b48a"
     },
     {
       "event": "PostToolUse",
-      "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-context/artifacts.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status!==0)console.error('aidd: hook script failed: '+r);process.exit(0)\" -- mark",
-      "digest": "57f8973058a490f200f5b0c937cf29ee"
+      "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-context/artifacts.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status===0||c.status===2)process.exit(c.status);console.error('aidd: hook script failed: '+r);process.exit(0)\" -- mark",
+      "digest": "6b1fd1af3e547de0e132b6f67c56e218"
     },
     {
       "event": "PostToolUse",
-      "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-context/artifacts.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status!==0)console.error('aidd: hook script failed: '+r);process.exit(0)\" -- mark",
-      "digest": "55dcb369ab58a670ecebdf9f9b4c900c"
+      "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-context/artifacts.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status===0||c.status===2)process.exit(c.status);console.error('aidd: hook script failed: '+r);process.exit(0)\" -- mark",
+      "digest": "d3c35356e2fd05d8e1bd0132998fb481"
     },
     {
       "event": "Stop",
-      "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-context/memory.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status!==0)console.error('aidd: hook script failed: '+r);process.exit(0)\" -- sync",
-      "digest": "a84cceab528be3989baf77bce9dcbbe6"
+      "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-context/memory.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status===0||c.status===2)process.exit(c.status);console.error('aidd: hook script failed: '+r);process.exit(0)\" -- sync",
+      "digest": "01d030d1784c7768d723849458baef2a"
     }
   ],
   "scripts": {}
@@ -386,13 +386,13 @@ project kiro aidd-telemetry scope=project: 0 hook files
   "entries": [
     {
       "event": "SessionStart",
-      "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-telemetry/task.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status!==0)console.error('aidd: hook script failed: '+r);process.exit(0)\" -- remind",
-      "digest": "78ef5c199845952a1c686a08879ea915"
+      "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-telemetry/task.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status===0||c.status===2)process.exit(c.status);console.error('aidd: hook script failed: '+r);process.exit(0)\" -- remind",
+      "digest": "c1d3e9e9f22614eaeccecee0b0778eef"
     },
     {
       "event": "SessionStart",
-      "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-telemetry/ledger.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status!==0)console.error('aidd: hook script failed: '+r);process.exit(0)\" -- ingest",
-      "digest": "d746d0cb7e7d1d8653ab72327b126468"
+      "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-telemetry/ledger.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status===0||c.status===2)process.exit(c.status);console.error('aidd: hook script failed: '+r);process.exit(0)\" -- ingest",
+      "digest": "67b7f1dd05a545cc969252f8716ce35d"
     }
   ],
   "scripts": {}
