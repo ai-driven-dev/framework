@@ -3,7 +3,7 @@
 ## Requirements
 
 - [Node](https://nodejs.org) 22.12 or later (`node --version`).
-- An AI coding tool: Claude Code, Cursor, GitHub Copilot, Codex, OpenCode, Kilo Code or Antigravity CLI.
+- An AI coding tool: Claude Code, Cursor, GitHub Copilot, Codex, OpenCode, Kilo Code, Antigravity CLI or Kiro.
 
 ## Pick a method
 
@@ -119,7 +119,7 @@ cp -r aidd-framework-cursor-marketplace-<version>/plugins/aidd-* ~/.cursor/plugi
 
 </details>
 
-*OpenCode and Kilo Code have no marketplace: use flat files. Antigravity CLI also uses flat files.*
+*OpenCode and Kilo Code have no marketplace: use flat files. Antigravity CLI and Kiro also use flat files.*
 
 ## Flat files
 
@@ -130,7 +130,7 @@ git clone https://github.com/ai-driven-dev/framework.git
 npx @ai-driven-dev/cli@latest translate ./framework --to <tool> --as flat --out .
 ```
 
-Replace `<tool>` with your tool: `claude`, `cursor`, `copilot`, `codex`, `opencode`, `kilo` or `antigravity`.
+Replace `<tool>` with your tool: `claude`, `cursor`, `copilot`, `codex`, `opencode`, `kilo`, `antigravity` or `kiro`.
 
 <details>
 <summary>Without Node</summary>

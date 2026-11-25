@@ -7,7 +7,15 @@ import { REPOSITORY_ROOT } from "../../../shared/testing/repository-root.builder
 // Beside this package, never the repository's: a mutation run mutates its own copy.
 export const RUNTIME = join(import.meta.dirname, "..", "..", "..", "..", "assets", "hooks-runtime");
 const PAYLOADS = join(REPOSITORY_ROOT, "scripts", "__tests__", "fixtures", "hook-payloads");
-export const HOSTS = ["claude", "codex", "copilot", "cursor", "antigravity", "bridge"] as const;
+export const HOSTS = [
+  "claude",
+  "codex",
+  "copilot",
+  "cursor",
+  "antigravity",
+  "kiro",
+  "bridge",
+] as const;
 
 const require = createRequire(import.meta.url);
 export const fs = require("node:fs") as typeof import("node:fs");

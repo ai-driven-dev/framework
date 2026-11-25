@@ -32,6 +32,7 @@ export const TOOL = (() => {
     kilo: ai("kilo"),
     codex: ai("codex"),
     antigravity: ai("antigravity"),
+    kiro: ai("kiro"),
     vscode: ide("vscode"),
   } as const;
 })();

@@ -4,7 +4,7 @@
 
 | | |
 | --- | --- |
-| AI tools | Claude Code, Cursor, GitHub Copilot, Codex, OpenCode, Kilo Code, Antigravity CLI |
+| AI tools | Claude Code, Cursor, GitHub Copilot, Codex, OpenCode, Kilo Code, Antigravity CLI, Kiro |
 | IDE | VS Code |
 | Requires | Node.js 22.12 or later |
 | Requires for marketplace plugins | `git` |
@@ -190,6 +190,7 @@ The token resolves from the first hit:
 | `opencode` | no | yes | `.opencode/` |
 | `kilo` | no | yes | `.kilo/` |
 | `antigravity` | no | yes | `.agents/` |
+| `kiro` | no | yes | `.kiro/` |
 
 ## Environment variables
 
