@@ -33,7 +33,7 @@ flowchart LR
 - Only reading is tool-specific; everything after the usage record is written once.
 - Hooks and CLI meet only in files, pinned for both by `scripts/__tests__/fixtures/telemetry-bindings/`.
 - `plugins/aidd-telemetry/hooks/ledger.cjs` runs `aidd telemetry ingest --quiet` at session start.
-- Another tool's calls are attributed by branch. `telemetry task` binds the session `CLAUDE_CODE_SESSION_ID` names; Codex names none to a command.
+- Another tool's calls are attributed by branch. `telemetry task` binds the session `CLAUDE_CODE_SESSION_ID` names. Codex names none to a command, so one run from a Codex started inside Claude Code binds the inherited parent session (limit in the usage contract).
 
 ## Where to look
 

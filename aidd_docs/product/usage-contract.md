@@ -196,6 +196,8 @@ Task and ticket come only from `aidd telemetry task <name> [--ticket <ref>]` or 
 
 A declaration binds the running session (if `CLAUDE_CODE_SESSION_ID` is set) and, on a working branch, the branch. Never bound: the default branch (target of `origin/HEAD`, else `main` or `master`) and a detached `HEAD`.
 
+Limit: run from a Codex started inside Claude Code, the command binds the parent Claude session, because it reads the `CLAUDE_CODE_SESSION_ID` the Codex inherited. Codex's own session is then attributed by its branch only.
+
 ```mermaid
 flowchart TD
   A["call"] --> S{"session declaration in force?"}
