@@ -117,8 +117,14 @@ function sandbox({ aidd = true, branch = "feat/x", consent = true } = {}) {
     fs.existsSync(box.log)
       ? fs.readFileSync(box.log, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l))
       : [];
-  // Windows refuses to remove a folder a detached child still runs in: retry while it exits.
-  box.dispose = () => fs.rmSync(root, { recursive: true, force: true, maxRetries: 50, retryDelay: 100 });
+  // Windows refuses to remove a folder a detached ingest still runs in; the OS clears its temp folder.
+  box.dispose = () => {
+    try {
+      fs.rmSync(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+    } catch (error) {
+      if (!WINDOWS || error.code !== "EBUSY") throw error;
+    }
+  };
   return box;
 }
 
