@@ -57,12 +57,8 @@ export function reportAgentModels(report: AgentModelsReport): void {
   );
 }
 
-function reportRestoredModels(
-  { output, hosts, main, agentsOnly }: AgentModelsReport,
-  unchanged: string
-): void {
+function reportRestoredModels({ output, hosts, main }: AgentModelsReport, unchanged: string): void {
   output.success(`${hosts.join(", ")}: the agents run on the IDE's model again${unchanged}.`);
-  if (agentsOnly === true) return;
   for (const { host, path } of main.changed)
     output.info(`  ${host} main session: restored in ${path}`);
 }
