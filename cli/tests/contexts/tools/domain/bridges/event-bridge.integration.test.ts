@@ -16,6 +16,7 @@ import {
   HOSTS,
   open,
   REFERENCE_HOOKS,
+  sessionStarted,
 } from "../../testing/event-bridge-host.builder.js";
 import { SESSION } from "../../testing/hook-payload-captures.builder.js";
 
@@ -44,7 +45,7 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
 
   it("runs a SessionStart script with its arguments and a payload naming the event", async () => {
     const { directory, emit, of } = await open(host);
-    await emit(host.sessionStarted("ses_one", directory));
+    await emit(sessionStarted(host, "ses_one", directory));
 
     await vi.waitFor(async () => expect(await of("record.cjs")).toHaveLength(1), { timeout: 5000 });
     expect(await of("record.cjs")).toEqual([
@@ -53,7 +54,7 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
         args: ["--quiet"],
         payload: {
           hook_event_name: "SessionStart",
-          session_id: host.sessionStartId,
+          session_id: "ses_one",
           cwd: directory,
         },
       },
@@ -155,7 +156,7 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
     const { directory, emit, tool, of } = await open(host, REFERENCE_HOOKS, (dir) =>
       join(dir, "absent")
     );
-    await emit(host.sessionStarted("ses_one", directory), {
+    await emit(sessionStarted(host, "ses_one", directory), {
       type: "session.idle",
       properties: { sessionID: "ses_one" },
     });
@@ -182,7 +183,7 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
 
   it("sends a Stop script's block reason as the next prompt, and tells the next Stop it is a continuation", async () => {
     const { directory, emit, of, prompts } = await open(host);
-    await emit(host.sessionStarted("s1", directory));
+    await emit(sessionStarted(host, "s1", directory));
     const idle = { type: "session.idle", properties: { sessionID: "s1" } };
 
     await emit(idle, idle);
@@ -202,8 +203,8 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
     const first = await open(host);
     const second = await open(host);
     const idle = { type: "session.idle", properties: { sessionID: "shared" } };
-    await first.emit(host.sessionStarted("shared", first.directory), idle);
-    await second.emit(host.sessionStarted("shared", second.directory), idle);
+    await first.emit(sessionStarted(host, "shared", first.directory), idle);
+    await second.emit(sessionStarted(host, "shared", second.directory), idle);
 
     for (const plugin of [first, second]) {
       expect(plugin.prompts).toMatchObject([
@@ -221,7 +222,7 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
     const plugins = [await open(host), await open(host)];
     const idle = { type: "session.idle", properties: { sessionID: "shared" } };
     for (const plugin of plugins)
-      await plugin.emit(host.sessionStarted("shared", plugin.directory));
+      await plugin.emit(sessionStarted(host, "shared", plugin.directory));
     for (const plugin of plugins) await plugin.emit(idle);
 
     // The host runs each queued follow-up as a turn of its own, handing every plugin its message.
@@ -247,7 +248,7 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
       hooks: { Stop: [command("stop.cjs"), command("stop.cjs")] },
     });
     const { directory, emit, prompts, of } = await open(host, hooksJson);
-    await emit(host.sessionStarted("s1", directory), {
+    await emit(sessionStarted(host, "s1", directory), {
       type: "session.idle",
       properties: { sessionID: "s1" },
     });
@@ -260,7 +261,7 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
 
   it("marks the follow-up it sends, so the host's message hook does not read it as the user's", async () => {
     const { directory, emit, prompts } = await open(host);
-    await emit(host.sessionStarted("s1", directory), {
+    await emit(sessionStarted(host, "s1", directory), {
       type: "session.idle",
       properties: { sessionID: "s1" },
     });
@@ -492,6 +493,71 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
     await server["chat.message"]?.(input, output);
 
     expect([output.parts.length, (await of("note.cjs")).length]).toEqual([1, 0]);
+  });
+
+  it("treats a message the user sends as a new turn", async () => {
+    const { directory, emit, of, server } = await open(host);
+    await emit(sessionStarted(host, "s1", directory));
+    const idle = { type: "session.idle", properties: { sessionID: "s1" } };
+    const typed = { parts: [{ type: "text", text: "hello" }] };
+
+    await emit(idle);
+    await server["chat.message"]?.({ sessionID: "s1" }, typed);
+    await emit(idle);
+
+    expect((await of("stop.cjs")).map((c) => c.payload.stop_hook_active)).toStrictEqual([
+      false,
+      false,
+    ]);
+  });
+
+  it("keeps a session's continuation across the plugin being created again", async () => {
+    const { descriptor, directory, emit, of } = await open(host);
+    const sent = async () => undefined;
+    const again = await descriptor.server({
+      directory,
+      client: { session: { prompt: sent, promptAsync: sent } },
+    });
+    const idle = { type: "session.idle", properties: { sessionID: "s1" } };
+
+    await emit(idle);
+    await again.event({ event: idle });
+
+    expect((await of("stop.cjs")).map((c) => c.payload.stop_hook_active)).toStrictEqual([
+      false,
+      true,
+    ]);
+  });
+
+  it("reports a SessionStart script that cannot start, once, without blocking the session", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const hooksJson = JSON.stringify({ hooks: { SessionStart: [command("exit7.cjs")] } });
+    const { emit } = await open(host, hooksJson, (dir) => join(dir, "absent"));
+
+    await emit({ type: "session.created", properties: { sessionID: "failed" } });
+
+    await vi.waitFor(() => expect(warn).toHaveBeenCalledWith(expect.stringContaining("ENOENT")), {
+      timeout: 5000,
+      interval: 20,
+    });
+    await delay(100);
+    expect(warn).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports an event it cannot read without blocking the session", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const { server } = await open(host);
+
+    await server.event({
+      event: {
+        get properties() {
+          throw new Error("broken event");
+        },
+      },
+    });
+
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("broken event"));
   });
 
   it("runs no Stop script for an event that is not an idle session", async () => {

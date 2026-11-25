@@ -66,8 +66,6 @@
   "tests/contexts/tools/hooks-routes.integration.test.ts": 3,
   "tests/contexts/tools/hooks-runtime-claude.integration.test.ts": 2,
   "tests/contexts/tools/hooks-runtime-codex.integration.test.ts": 1,
-  "tests/contexts/tools/hooks-runtime-kilo-bridge.integration.test.ts": 2,
-  "tests/contexts/tools/hooks-runtime-opencode-bridge.integration.test.ts": 2,
   "tests/contexts/tools/testing/event-bridge-host.builder.ts": 1,
   "tests/contexts/tools/testing/hook-payload-captures.builder.ts": 1,
   "tests/contexts/tools/testing/hooks-runtime-bridges.builder.ts": 2,

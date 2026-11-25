@@ -196,7 +196,7 @@ export const EDIT = 3;
 export const PATCH = 4;
 
 export interface ToolCall {
-  readonly call: unknown;
+  readonly call: { readonly args: { readonly content?: string } };
   readonly output: { output: string };
 }
 
@@ -232,13 +232,6 @@ export const REQUIRED = [
   },
 ];
 
-/** A hooks.json whose SessionStart runs these commands, in order. */
-export function startingWith(...commands: string[]): string {
-  return JSON.stringify({
-    hooks: { SessionStart: [{ hooks: commands.map((command) => ({ type: "command", command })) }] },
-  });
-}
-
 export const SILENT = `node ${ROOT}/hooks/silent.cjs`;
 export const FAILING = `node ${ROOT}/hooks/fail.cjs`;
 // A NUL in an argument is refused by `spawn` itself, before any child exists.
@@ -256,13 +249,21 @@ export function kiloBridge(hooksJson = HOOKS_JSON): string {
   return content;
 }
 
+/** Each bridged host: its id, and its name in what its bridge logs. */
+export const BRIDGED_HOSTS = [
+  { host: "opencode", label: "OpenCode" },
+  { host: "kilo", label: "Kilo" },
+] as const;
+
+/** The bridge generated for `host` from `hooksJson`. */
+export function bridgeOf(host: "opencode" | "kilo", hooksJson = HOOKS_JSON): string {
+  return host === "kilo" ? kiloBridge(hooksJson) : opencodeBridge(hooksJson);
+}
+
 /** What SessionStart hands the model on `host` once its hooks ran: the system prompt after the
  * host's own entries, and what the plugin added to it. */
 export async function startedWith(host: "opencode" | "kilo", hooksJson: string) {
-  const ws = await workspace(
-    host,
-    host === "kilo" ? kiloBridge(hooksJson) : opencodeBridge(hooksJson)
-  );
+  const ws = await workspace(host, bridgeOf(host, hooksJson));
   vi.stubEnv("AIDD_START", "answer");
   const { input, output } = await systemTransform(host, ws.project);
   const before = [...output.system];

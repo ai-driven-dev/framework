@@ -3,12 +3,8 @@ import {
   parseHooksJsonForBridge,
   replaysNothing,
 } from "../../../../../src/contexts/tools/domain/bridges/bridge-hook-table.js";
+import { hooksOf, ROOT } from "../../testing/event-bridge-host.builder.js";
 
-const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
-const hooksOf = (event: string, ...commands: (string | undefined)[]) =>
-  JSON.stringify({
-    hooks: { [event]: [{ hooks: commands.map((command) => ({ type: "command", command })) }] },
-  });
 const stopCalls = (...commands: (string | undefined)[]) =>
   parseHooksJsonForBridge(hooksOf("Stop", ...commands)).calls.Stop;
 

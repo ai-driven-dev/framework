@@ -14,6 +14,11 @@ import { capturedSample } from "./hook-payload-captures.builder.js";
 import { madeFolder, removeMadeFolders } from "./made-folders.builder.js";
 
 export const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
+/** A hooks.json whose one `event` group runs these commands, in order. */
+export const hooksOf = (event: string, ...commands: (string | undefined)[]) =>
+  JSON.stringify({
+    hooks: { [event]: [{ hooks: commands.map((command) => ({ type: "command", command })) }] },
+  });
 export const command = (script: string, prefix = "node ") => ({
   hooks: [{ type: "command", command: `${prefix}${ROOT}/hooks/${script}` }],
 });
@@ -69,11 +74,8 @@ export interface Descriptor {
 export interface Host {
   readonly name: string;
   readonly generate: (hooksJson: string, plugin: string) => string | null;
-  /** What the host loads of the descriptor, and what its SessionStart payload names. */
+  /** What the host loads of the descriptor. */
   readonly descriptorKeys: readonly string[];
-  readonly sessionStartId: string | null;
-  /** The event that starts a session, on which the host fires SessionStart. */
-  readonly sessionStarted: (id: string, directory: string) => unknown;
 }
 
 export const HOSTS: readonly Host[] = [
@@ -81,23 +83,35 @@ export const HOSTS: readonly Host[] = [
     name: "OpenCode",
     generate: (hooksJson, plugin) => generateOpencodeHooksBridge(hooksJson, plugin).content,
     descriptorKeys: ["id", "server", "setup"],
-    sessionStartId: "ses_one",
-    sessionStarted: (id, directory) => ({
-      type: "session.created",
-      properties: { sessionID: id, info: { id, directory } },
-    }),
   },
   {
     name: "Kilo",
     generate: (hooksJson, plugin) => generateKiloHooksBridge(hooksJson, plugin).content,
     descriptorKeys: ["id", "server"],
-    sessionStartId: "ses_one",
-    sessionStarted: (id, directory) => ({
-      type: "session.created",
-      properties: { sessionID: id, info: { directory } },
-    }),
   },
 ];
+
+interface SessionCreated {
+  readonly properties: { readonly info: Record<string, unknown> };
+}
+
+/** The event that starts a session, on which the host fires SessionStart: the host's captured
+ * `session.created`, naming session `id` in `directory`. */
+export function sessionStarted(host: Host, id: string, directory: string) {
+  const { payload } = capturedSample<SessionCreated>(
+    `${host.name.toLowerCase()}-session.created.json`,
+    () => true,
+    "session.created"
+  );
+  return {
+    ...payload,
+    properties: {
+      ...payload.properties,
+      sessionID: id,
+      info: { ...payload.properties.info, id, directory },
+    },
+  };
+}
 
 /** Clears what a test spied on and removes the folders it made. */
 export async function cleanBridges(): Promise<void> {
