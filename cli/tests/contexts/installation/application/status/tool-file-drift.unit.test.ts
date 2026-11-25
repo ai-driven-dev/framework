@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   addedFileDrift,
@@ -48,7 +49,7 @@ describe("comparing a merge file with the disk", () => {
 
     await expect(mergeFileDrift(fs, [mergeFile], ROOT)).rejects.toMatchObject({
       code: "json-parse",
-      path: "/project/.tool/mcp.json",
+      path: join(ROOT, ".tool/mcp.json"),
     });
   });
 
