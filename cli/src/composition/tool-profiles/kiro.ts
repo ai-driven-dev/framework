@@ -60,15 +60,18 @@ const MATCHER_TOOLS: ReadonlyMap<string, string> = new Map([
 const hooks = declareHooks(
   { toolId: "kiro", directory: DIRECTORY, adapter },
   {
-    // Only SessionStart, PreToolUse, PostToolUse and Stop have a payload captured from kiro-cli V3
-    // (the kiro-* hook-payload fixtures); https://kiro.dev/docs/hooks/types/ names the triggers.
-    // Every other event is dropped from the merge with a warning.
+    // Only the events with a payload captured from kiro-cli V3 (the kiro-* hook-payload fixtures)
+    // are delivered; https://kiro.dev/docs/hooks/types/ names the triggers. SessionEnd is
+    // documented but seen firing in one of six headless runs, so it is dropped from the merge with a
+    // warning, like every other event.
     undeclaredEvents: "skipped",
     events: {
       SessionStart: "SessionStart",
+      UserPromptSubmit: "UserPromptSubmit",
       PreToolUse: "PreToolUse",
       PostToolUse: "PostToolUse",
       Stop: "Stop",
+      SubagentStop: "SubagentStop",
     },
     toolNames: MATCHER_TOOLS,
     // Kiro loads every `.kiro/hooks/*.json` of a project, and CLI V3 those of `~/.kiro/hooks/`
