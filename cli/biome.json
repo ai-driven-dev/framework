@@ -6982,7 +6982,10 @@
     },
     {
       "includes": ["src/**"],
-      "plugins": ["./biome-plugins/no-inline-re-export.grit"]
+      "plugins": [
+        "./biome-plugins/no-inline-re-export.grit",
+        "./biome-plugins/no-swallowed-catch-value.grit"
+      ]
     },
     {
       "includes": ["tests/helpers/**", "tests/shared/**"],

@@ -37,6 +37,7 @@ export class UpdateCheckCacheAdapter implements UpdateCheckCache {
 
   private async readAt(path: string): Promise<CheckEntry | null> {
     if (!(await this.fs.fileExists(path))) return null;
+    // biome-ignore lint/plugin: a cache that cannot be read is a miss, rewritten by the next check
     try {
       return JSON.parse(await this.fs.readFile(path)) as CheckEntry;
     } catch {

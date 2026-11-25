@@ -18,6 +18,7 @@ const COMMAND_TIMEOUT_MS = 120000;
 /** Whether a plugin list names a plugin of the marketplace installed beyond the user's scope. A
  * list that does not parse counts as yes, like one that could not be read. */
 function listsOtherScopeUse(stdout: string, name: string): boolean {
+  // biome-ignore lint/plugin: a list that does not parse counts as use elsewhere, the answer that keeps the marketplace
   try {
     const plugins = JSON.parse(stdout) as { id?: string; scope?: string }[];
     return plugins.some(

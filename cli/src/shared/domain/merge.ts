@@ -77,6 +77,7 @@ function deleteKeys(container: Record<string, unknown> | null, keys: readonly st
 }
 
 export function isMergeContentEmpty(content: string, sectionKey: string | null): boolean {
+  // biome-ignore lint/plugin: content that does not parse is not empty, so the file is kept
   try {
     const parsed = asPlainObject(JSON.parse(content));
     // Limit: a root that is not an object is never empty here, not even `[]`; no merge file

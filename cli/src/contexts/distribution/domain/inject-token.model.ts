@@ -14,6 +14,7 @@ const HOST_MATCHERS: readonly HostMatcher[] = [
 /** The host a URL addresses, never its text: `evil.example/github.com/x` and
  * `notgithub.com/x` both contain `github.com` and must get no GitHub credential. */
 function hostnameOf(url: string): string | null {
+  // biome-ignore lint/plugin: a string that is no URL has no host
   try {
     return new URL(url).hostname.toLowerCase();
   } catch {

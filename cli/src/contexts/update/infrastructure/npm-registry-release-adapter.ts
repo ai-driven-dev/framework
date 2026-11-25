@@ -64,6 +64,7 @@ export class NpmRegistryReleaseAdapter implements CliReleaseSource {
   // Changelog is best-effort: the GitHub release body enriches the update notice
   // but is optional. A private repo without a token reads as no release: swallow it.
   private async fetchChangelog(version: string): Promise<string | null> {
+    // biome-ignore lint/plugin: the changelog is optional and the failure is logged
     try {
       return await this.releases.readReleaseBody(CLI_REPO, `${CLI_TAG_PREFIX}${version}`);
     } catch (err) {

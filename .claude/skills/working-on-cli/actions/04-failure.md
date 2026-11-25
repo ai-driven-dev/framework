@@ -19,7 +19,7 @@ A typed error with a code and data, its message in the presenter, and a test on 
 5. **Report and continue.** A flow that must report one failure and continue catches in an orchestration scenario, on a line tagged `// @policy report-and-continue`, and collects `{ scope, error }` items so one scope never aborts the run.
    - No gate reads the tag: it is a convention (model: `src/orchestration/marketplace/refresh-marketplaces.use-case.ts`).
 6. **Best effort.** A caller that treats an unreadable or missing file as absent calls `FileReader.readFileIfReadable` or `realpathIfResolvable` (`src/shared/ports/file-reader.ts`). The swallow sits in `shared/infrastructure/file-adapter.ts`, never in the use case.
-7. **Adapters.** An adapter catches only to type a raw error. An empty catch needs `biome-ignore lint/plugin: <reason>` above its `try` (`biome-plugins/no-swallowed-catch.grit`); prefer fixing the cause.
+7. **Adapters.** An adapter catches only to type a raw error. An empty catch, or one in `src/` that returns or assigns a neutral value (`null`, `[]`, `false`, `""`) with no rethrow, needs `biome-ignore lint/plugin: <reason>` above its `try` (`biome-plugins/no-swallowed-catch.grit`, `no-swallowed-catch-value.grit`); prefer fixing the cause: `whenAbsent` returns the fallback for `ENOENT` only and rethrows the rest.
 8. **Exit.** A thrown error becomes an exit code per `architecture.md`, Process.
 9. **Test.** Assert the failure by its code and data, never its sentence; wording is tested at the presenter.
 
