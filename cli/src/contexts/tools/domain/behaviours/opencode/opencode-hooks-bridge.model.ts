@@ -105,6 +105,10 @@ function stopReasonOf(script, args, payload, directory) {
   });
 }
 
+function reportHookFailure(script, error) {
+  console.warn("[aidd] OpenCode hook " + script + " failed: " + String(error));
+}
+
 /** Pure: a finished tool call -> every PostToolUse hook whose matcher allows its tool. OpenCode
  * names the written file \`filePath\`; the scripts read Claude Code's \`file_path\`. */
 function postToolUseCallsFor(call, directory) {
@@ -178,8 +182,7 @@ export const ${parts.identifier} = async (input) => {
                 body: { parts: [{ type: "text", text: reason }] },
               });
             })
-            // Limit: a refused follow-up is dropped without a trace, none was observed.
-            .catch(() => {});
+            .catch((error) => reportHookFailure(call.script, "follow-up not delivered: " + String(error)));
           pending = Promise.all([pending, handling]).then(() => {});
           await asking;
         }
