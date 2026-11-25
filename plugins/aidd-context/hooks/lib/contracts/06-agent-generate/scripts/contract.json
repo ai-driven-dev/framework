@@ -8,7 +8,8 @@
     ".github/agents/*.agent.md",
     ".agents/agents/*/agent.md",
     ".opencode/agents/*.md",
-    ".kilo/agents/*.md"
+    ".kilo/agents/*.md",
+    ".kiro/agents/*.md"
   ],
   "shell": false,
   "rules": {
