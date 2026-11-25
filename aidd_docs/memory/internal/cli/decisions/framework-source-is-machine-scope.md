@@ -9,12 +9,11 @@ One `aidd-framework` registration per machine, shared by every project, under th
 
 ## Where
 
-| What | Path |
-| --- | --- |
-| Registration | `marketplaces.json`, `scope: "user"` |
-| Build, once per CLI version | `cache/built/<version>/aidd-framework/<tool>`; `userBuiltMarketplaceDir` in `cli/src/shared/domain/layout/aidd-layout.ts` |
-| Project claims | `references.json`: `{ "<version>": ["<projectRoot>"] }`; `cli/src/contexts/machine-claims/ports/user-source-references.ts` |
-| User manifest | `manifest.json`, a project's schema |
+Files and paths: [`cli/README.md`](../../../../../cli/README.md#on-the-machine). Code and shape:
+
+- The registration is `scope: "user"`; the user manifest has a project's schema.
+- One build per CLI version: `userBuiltMarketplaceDir` in `cli/src/shared/domain/layout/aidd-layout.ts`.
+- Project claims are `{ "<version>": ["<projectRoot>"] }`: `cli/src/contexts/machine-claims/ports/user-source-references.ts`.
 
 ## Migration
 

@@ -7,9 +7,8 @@ One GitHub token gates private marketplaces and plugin sources; no user accounts
 | Fact | Where |
 | --- | --- |
 | `aidd auth login, logout, status` | `cli/src/presentation/controllers/auth.controller.ts`, built by `cli/src/composition/contexts/auth.ts` |
-| Source order: `--token`, `AIDD_TOKEN`, project record, user record | `sourcesInOrder` in `cli/src/contexts/auth/domain/credential-sources.ts` |
-| Project record | `<root>/.aidd/auth.json` |
-| User record | under the config dir; `AIDD_USER_CONFIG_DIR` moves it, keeping suites off a real profile |
+| Source order | `sourcesInOrder` in `cli/src/contexts/auth/domain/credential-sources.ts`; user view in [`cli/README.md`](../../../../cli/README.md#authentication) |
+| Record locations | [`cli/README.md`](../../../../cli/README.md#where-things-live); `AIDD_USER_CONFIG_DIR` moves the user record, keeping suites off a real profile |
 
 - A record's method is `stored` (a token in `auth.json`) or `external` (asked of a provider at read time).
 - An `external` record always asks `gh`, whatever provider it names: only `gh` is ever written.
