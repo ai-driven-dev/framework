@@ -14,18 +14,11 @@ function evaluated<T>(source: string, declared: string, scope: Record<string, un
 }
 
 describe("the source of the events relayed around a tool", () => {
-  // Every run throws: what a hook does when running its scripts fails.
-  const toolUse = (reported: unknown[][] = []) =>
+  const toolUse = () =>
     evaluated<{
       postToolUseCallsFor: (call: unknown, directory: string) => { payload: unknown }[];
-      refuseToolUse: (call: unknown, output: unknown, directory: string) => Promise<void>;
-    }>(TOOL_USE_SOURCE, "{ postToolUseCallsFor, refuseToolUse }", {
-      PRE_TOOL_USE: [{ script: "a.cjs", args: [] }],
+    }>(TOOL_USE_SOURCE, "{ postToolUseCallsFor }", {
       POST_TOOL_USE: [{ script: "b.cjs", args: [], tools: ["write"] }],
-      settledRun: async () => {
-        throw new Error("scripted failure");
-      },
-      reportHookFailure: (...args: unknown[]) => reported.push(args),
     });
 
   it("matches a tool name ignoring case, any tool when no matcher is given", () => {
@@ -75,36 +68,18 @@ describe("the source of the events relayed around a tool", () => {
       [],
     ]);
   });
-
-  it("reports a PreToolUse it could not run, and refuses nothing", async () => {
-    const reported: unknown[][] = [];
-
-    await expect(
-      toolUse(reported).refuseToolUse({ tool: "write" }, {}, "/p")
-    ).resolves.toBeUndefined();
-    expect(reported).toEqual([
-      ["PreToolUse", expect.objectContaining({ message: "scripted failure" })],
-    ]);
-  });
 });
 
 describe("the source of the event that adds to the user's message", () => {
-  const reported: unknown[][] = [];
-  const prompt = (answers: string[] = []) =>
+  const prompt = (answers: string[]) =>
     evaluated<{
-      userPromptCallsFor: (input: unknown, output: unknown, directory: string) => unknown[];
       addPromptContext: (input: unknown, output: unknown, directory: string) => Promise<void>;
-    }>(userPromptSource("probe"), "{ userPromptCallsFor, addPromptContext }", {
+    }>(userPromptSource("probe"), "{ addPromptContext }", {
       USER_PROMPT_SUBMIT: [
         { script: "a.cjs", args: [] },
         { script: "b.cjs", args: [] },
       ],
-      answerOf: async () => {
-        const next = answers.shift();
-        if (next === undefined) throw new Error("scripted failure");
-        return { text: next, person: "" };
-      },
-      reportHookFailure: (...args: unknown[]) => reported.push(args),
+      answerOf: async () => ({ text: answers.shift() ?? "", person: "" }),
       isBridgePrompt: evaluated(SEND_PROMPT_SOURCE, "isBridgePrompt", {}),
     });
 
@@ -117,16 +92,5 @@ describe("the source of the event that adds to the user's message", () => {
       "prt_1-probe-0",
       "prt_1-probe-1",
     ]);
-  });
-
-  it("reports an answer it could not add, and leaves the user's message as it was", async () => {
-    const output = { parts: [{ id: "prt_1", type: "text", text: "hi" }] };
-
-    await prompt([]).addPromptContext({}, output, "/p");
-
-    expect(reported).toEqual([
-      ["UserPromptSubmit", expect.objectContaining({ message: "scripted failure" })],
-    ]);
-    expect(output.parts).toHaveLength(1);
   });
 });

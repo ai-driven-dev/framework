@@ -6,16 +6,16 @@
  * adds nothing to it; each host's own template is held apart.
  */
 
+import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { BRIDGED_HOSTS, bridgedHost } from "../../testing/bridged-hosts.builder.js";
+import { afterEach, describe, expect, it, onTestFinished, vi } from "vitest";
+import { BRIDGED_HOSTS, bridgedHost, command } from "../../testing/bridged-hosts.builder.js";
 import {
   ALONGSIDE,
   beforeTool,
   capturedRun,
   cleanBridges,
-  command,
   open,
   REFERENCE_HOOKS,
   sessionStarted,
@@ -393,22 +393,6 @@ describe("the bridge body every host shares, in Kilo's module", () => {
     expect(warn).toHaveBeenCalledTimes(1);
   });
 
-  it("reports an event it cannot read without blocking the session", async () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    const { server } = await open(host);
-
-    await server.event({
-      event: {
-        get properties() {
-          throw new Error("broken event");
-        },
-      },
-    });
-
-    expect(warn).toHaveBeenCalledTimes(1);
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining("broken event"));
-  });
-
   it("runs no Stop script for an event that is not an idle session", async () => {
     const { emit, of } = await open(host);
     await emit(
@@ -418,4 +402,27 @@ describe("the bridge body every host shares, in Kilo's module", () => {
 
     expect(await of("stop.cjs")).toEqual([]);
   });
+
+  // Real time: a child process's timeout runs on the clock, so this case costs the bridge's 5 s.
+  it("stops a script that never exits and gives the tool's output back", async () => {
+    const hooksJson = JSON.stringify({
+      hooks: { PostToolUse: [{ matcher: "Hang", ...command("hang.cjs") }] },
+    });
+    const { directory, tool } = await open(host, hooksJson);
+
+    const answered = await Promise.race([tool("hang"), delay(8000, "still waiting")]);
+    const pid = Number(await readFile(join(directory, "hang.pid"), "utf8"));
+    // A failing run must not leave the hung script behind.
+    onTestFinished(() => {
+      try {
+        process.kill(pid, "SIGKILL");
+      } catch (error) {
+        // ESRCH: already gone, which is the passing case.
+        if (!(error instanceof Error && "code" in error && error.code === "ESRCH")) throw error;
+      }
+    });
+
+    expect(answered).not.toBe("still waiting");
+    await vi.waitFor(() => expect(() => process.kill(pid, 0)).toThrow(), { timeout: 2000 });
+  }, 15_000);
 });

@@ -4,7 +4,7 @@ import { generateKiloHooksBridge } from "../../../../../src/contexts/tools/domai
 import { generateOpencodeHooksBridge } from "../../../../../src/contexts/tools/domain/behaviours/opencode/opencode-hooks-bridge.model.js";
 import { BRIDGE_EVENTS } from "../../../../../src/contexts/tools/domain/bridges/bridge-hook-table.js";
 import { pascalCasePluginName } from "../../../../../src/contexts/tools/domain/bridges/event-bridge.js";
-import { hooksOf, ROOT } from "../../testing/event-bridge-host.builder.js";
+import { hooksOf, ROOT } from "../../testing/bridged-hosts.builder.js";
 
 describe("naming a plugin in Pascal case", () => {
   it.each([

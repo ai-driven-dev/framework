@@ -21,7 +21,8 @@ export const BRIDGE_EVENTS = [
 export type BridgeEvent = (typeof BRIDGE_EVENTS)[number];
 
 export interface BridgeHookTable {
-  readonly calls: Readonly<Record<BridgeEvent, readonly BridgeHookCall[]>>;
+  /** The calls of one replayed event, in the manifest's order. */
+  readonly callsOf: (event: BridgeEvent) => readonly BridgeHookCall[];
   /** The events the manifest names that no bridge replays. */
   readonly unrelayed: readonly string[];
 }
@@ -33,13 +34,7 @@ export function parseHooksJsonForBridge(rawHooksJson: string): BridgeHookTable {
   const parsed = JSON.parse(rawHooksJson) as PluginHooksShape;
   const hooks = parsed.hooks ?? {};
   return {
-    calls: {
-      SessionStart: bridgeHookCalls(hooks.SessionStart),
-      PostToolUse: bridgeHookCalls(hooks.PostToolUse),
-      Stop: bridgeHookCalls(hooks.Stop),
-      PreToolUse: bridgeHookCalls(hooks.PreToolUse),
-      UserPromptSubmit: bridgeHookCalls(hooks.UserPromptSubmit),
-    },
+    callsOf: (event) => bridgeHookCalls(hooks[event]),
     unrelayed: Object.keys(hooks).filter((event) => !isBridgeEvent(event)),
   };
 }
@@ -50,5 +45,5 @@ function isBridgeEvent(event: string): boolean {
 
 /** A bridge with nothing to spawn is not a file worth writing. */
 export function replaysNothing(table: BridgeHookTable): boolean {
-  return BRIDGE_EVENTS.every((event) => table.calls[event].length === 0);
+  return BRIDGE_EVENTS.every((event) => table.callsOf(event).length === 0);
 }

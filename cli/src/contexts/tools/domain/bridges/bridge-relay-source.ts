@@ -60,19 +60,15 @@ async function refusalOf(calls) {
 
 /** The refusal is thrown out of the host's hook, the one way it stops the call. */
 async function refuseToolUse(call, output, directory) {
-  let refusal = null;
-  try {
-    refusal = await refusalOf(preToolUseCallsFor(call, output, directory));
-  } catch (error) {
-    reportHookFailure("PreToolUse", error);
-  }
+  const refusal = await refusalOf(preToolUseCallsFor(call, output, directory));
   if (refusal !== null) throw new Error(refusal);
 }
 
 /** Each PostToolUse answer is appended to the output the model reads, its message for the person
- * handed to \`show\` where the host has one, a failure reported. An answer the script marks
- * required is also queued as the session's next prompt, which the model takes up after the current
- * step; not awaited, so the host's prompt call never holds the tool. */
+ * handed to \`show\` where the host has one. An answer the script marks required is also queued as
+ * the session's next prompt, which the model takes up after the current step; not awaited, so the
+ * host's prompt call never holds the tool. A client with no \`promptAsync\` throws there: reported,
+ * and the call's later hooks are skipped. */
 async function addToolAnswers(call, output, directory, client, show) {
   try {
     for (const hook of postToolUseCallsFor(call, directory)) {
@@ -114,22 +110,18 @@ function userPromptCallsFor(input, output, directory) {
 /** Each answer becomes a synthetic text part after the user's, its id derived from the first
  * part's, this plugin's name and the hook's place in its list, so no two parts share one. */
 async function addPromptContext(input, output, directory) {
-  try {
-    const calls = userPromptCallsFor(input, output, directory);
-    for (const [index, call] of calls.entries()) {
-      const { text } = await answerOf(call.script, call.args, call.payload, directory);
-      if (!text) continue;
-      output.parts.push({
-        id: output.parts[0].id + "-" + ${JSON.stringify(plugin)} + "-" + index,
-        messageID: output.message?.id,
-        sessionID: input?.sessionID,
-        type: "text",
-        text,
-        synthetic: true,
-      });
-    }
-  } catch (error) {
-    reportHookFailure("UserPromptSubmit", error);
+  const calls = userPromptCallsFor(input, output, directory);
+  for (const [index, call] of calls.entries()) {
+    const { text } = await answerOf(call.script, call.args, call.payload, directory);
+    if (!text) continue;
+    output.parts.push({
+      id: output.parts[0].id + "-" + ${JSON.stringify(plugin)} + "-" + index,
+      messageID: output.message?.id,
+      sessionID: input?.sessionID,
+      type: "text",
+      text,
+      synthetic: true,
+    });
   }
 }`;
 }
@@ -232,10 +224,12 @@ async function runStop(sessionId, directory, { client, method, show }) {
 /** The hooks every bridge hands its host, over the host's own client: what differs per host is the
  * folder it starts in, the client call that sends a follow-up, where a message for the person goes
  * and whether a turn end's follow-ups are tracked. A turn ends at `session.idle`, on both hosts.
- * Every hook that runs a script reports its failure and never throws into the host, but a
- * PreToolUse refusal, which is how the host stops the call. The system-prompt hand-over runs none:
- * it reads what SessionStart answered, which never rejects.
+ * A script that fails is reported and answers nothing; a PreToolUse refusal is thrown, which is
+ * how the host stops the call.
  *
+ * Limit: a hook throws into the host only on input no capture shows, such as a message with no
+ * part. A PostToolUse failure is reported: OpenCode's V2 adapter hands a client with no
+ * `promptAsync`.
  * Limit: every idle is a turn end. No capture shows a host idle twice in one turn; were it to,
  * the second Stop would run told the turn continues when the first blocked, and as a fresh one
  * when it did not. */
@@ -243,16 +237,12 @@ export const BRIDGE_HOOKS_SOURCE = `function bridgeHooks({ directory, client, fo
   const folderOf = (sessionId) => sessionDirectory(sessionId, directory);
   return {
     event: async ({ event }) => {
-      try {
-        runSessionStart(event, directory);
-        const sessionId = event?.properties?.sessionID;
-        if (typeof sessionId !== "string" || event.type !== "session.idle") return;
-        const stopping = runStop(sessionId, folderOf(sessionId), { client, method: followUp, show });
-        track?.(stopping.then((sends) => Promise.all(sends)));
-        await stopping;
-      } catch (error) {
-        reportHookFailure("event", error);
-      }
+      runSessionStart(event, directory);
+      const sessionId = event?.properties?.sessionID;
+      if (typeof sessionId !== "string" || event.type !== "session.idle") return;
+      const stopping = runStop(sessionId, folderOf(sessionId), { client, method: followUp, show });
+      track?.(stopping.then((sends) => Promise.all(sends)));
+      await stopping;
     },
     "experimental.chat.system.transform": (input, output) => addSessionContext(input, output, show),
     "chat.message": async (input, output) => {

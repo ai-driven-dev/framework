@@ -3,23 +3,20 @@
  * drives it with that host's events, with real hook scripts that record what reached them.
  */
 
-import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { vi } from "vitest";
-import { type BridgedHost, descriptorOf, placeBridge, sessionOf } from "./bridged-hosts.builder.js";
+import {
+  type BridgedHost,
+  command,
+  descriptorOf,
+  jsonLines,
+  type Prompt,
+  placeBridge,
+  promptRecorder,
+} from "./bridged-hosts.builder.js";
 import { capturedSample, captureFile } from "./hook-payload-captures.builder.js";
-import { madeFolder, removeMadeFolders } from "./made-folders.builder.js";
-
-export const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
-/** A hooks.json whose one `event` group runs these commands, in order. */
-export const hooksOf = (event: string, ...commands: (string | undefined)[]) =>
-  JSON.stringify({
-    hooks: { [event]: [{ hooks: commands.map((command) => ({ type: "command", command })) }] },
-  });
-export const command = (script: string, prefix = "node ") => ({
-  hooks: [{ type: "command", command: `${prefix}${ROOT}/hooks/${script}` }],
-});
+import { removeMadeFolders } from "./made-folders.builder.js";
 export const REFERENCE_HOOKS = JSON.stringify({
   hooks: {
     SessionStart: [command("record.cjs --quiet")],
@@ -97,11 +94,6 @@ export async function cleanBridges(): Promise<void> {
   await removeMadeFolders();
 }
 
-export interface Prompt {
-  readonly path: { readonly id: string };
-  readonly body: { readonly parts: readonly unknown[] };
-}
-
 export interface Call {
   readonly script: string;
   readonly args: readonly string[];
@@ -113,43 +105,36 @@ export async function open(
   hooksJson = REFERENCE_HOOKS,
   inputDirectory: (directory: string) => string = (directory) => directory
 ) {
-  const directory = await madeFolder("aidd-event-bridge-");
-  // A stand-in for the shipped events adapter, so a test sees what the descriptor hands it.
-  const { scripts, module } = await placeBridge(
-    directory,
-    "probe",
-    host.generate(hooksJson, "probe") ?? "",
-    "export function setupOpencodeEvents(ctx, server) { return { ctx, server }; }\n"
-  );
-  for (const [name, tail] of Object.entries(SCRIPTS)) {
-    await writeFile(join(scripts, name), `${RECORDING}\n${tail}\n});\n`);
-  }
-  await writeFile(join(scripts, "deaf.cjs"), DEAF);
-  await writeFile(join(scripts, "hang.cjs"), HANG);
+  const recording = Object.entries(SCRIPTS).map(([name, tail]) => [
+    name,
+    `${RECORDING}\n${tail}\n});\n`,
+  ]);
+  const { dir: directory, module } = await placeBridge({
+    prefix: "aidd-event-bridge-",
+    plugin: "probe",
+    bridge: host.generate(hooksJson, "probe") ?? "",
+    scripts: { ...Object.fromEntries(recording), "deaf.cjs": DEAF, "hang.cjs": HANG },
+    // A stand-in for the shipped events adapter, so a test sees what the descriptor hands it.
+    eventsAdapter: "export function setupOpencodeEvents(ctx, server) { return { ctx, server }; }\n",
+  });
   const descriptor = await descriptorOf<Descriptor>(module);
-  const prompts: Prompt[] = [];
   const delivered: Prompt[] = [];
-  // `prompt` resolves once its turn is delivered, after a delay as a real turn is (only what the
-  // bridge awaits has landed); `promptAsync` once queued.
-  const client = {
-    session: sessionOf(host, {
-      prompt: async (r: Prompt) => {
-        prompts.push(r);
-        await delay(100);
-        delivered.push(r);
-      },
-      promptAsync: async (r: Prompt) => void prompts.push(r),
-    }),
-  };
-  const server = await descriptor.server({ directory: inputDirectory(directory), client });
+  // The follow-up call resolves once its turn is delivered, after a delay as a real turn is (only
+  // what the bridge awaits has landed); `promptAsync` once queued.
+  const { prompts, session } = promptRecorder(host, {
+    deliver: async (request) => {
+      await delay(100);
+      delivered.push(request);
+    },
+  });
+  const server = await descriptor.server({
+    directory: inputDirectory(directory),
+    client: { session },
+  });
   const emit = async (...events: unknown[]) => {
     for (const event of events) if (event !== undefined) await server.event({ event });
   };
-  const calls = async (): Promise<Call[]> =>
-    (await readFile(join(directory, "calls.jsonl"), "utf8").catch(() => ""))
-      .split("\n")
-      .filter(Boolean)
-      .map((line) => JSON.parse(line));
+  const calls = () => jsonLines<Call>(join(directory, "calls.jsonl"));
   const of = async (script: string) => (await calls()).filter((c) => c.script === script);
   const tool = async (name: string, args: unknown = {}) => {
     const output = { output: "done" };

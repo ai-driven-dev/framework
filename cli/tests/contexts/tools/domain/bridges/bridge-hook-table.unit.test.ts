@@ -3,10 +3,10 @@ import {
   parseHooksJsonForBridge,
   replaysNothing,
 } from "../../../../../src/contexts/tools/domain/bridges/bridge-hook-table.js";
-import { hooksOf, ROOT } from "../../testing/event-bridge-host.builder.js";
+import { hooksOf, ROOT } from "../../testing/bridged-hosts.builder.js";
 
 const stopCalls = (...commands: (string | undefined)[]) =>
-  parseHooksJsonForBridge(hooksOf("Stop", ...commands)).calls.Stop;
+  parseHooksJsonForBridge(hooksOf("Stop", ...commands)).callsOf("Stop");
 
 describe("reading a hooks file for the bridge", () => {
   it.each([
@@ -49,11 +49,11 @@ describe("reading a hooks file for the bridge", () => {
     );
 
     expect([
-      table.calls.SessionStart.length,
-      table.calls.Stop.length,
-      table.calls.PostToolUse.length,
-      table.calls.PreToolUse.length,
-      table.calls.UserPromptSubmit.length,
+      table.callsOf("SessionStart").length,
+      table.callsOf("Stop").length,
+      table.callsOf("PostToolUse").length,
+      table.callsOf("PreToolUse").length,
+      table.callsOf("UserPromptSubmit").length,
     ]).toEqual([1, 0, 1, 1, 1]);
   });
 });

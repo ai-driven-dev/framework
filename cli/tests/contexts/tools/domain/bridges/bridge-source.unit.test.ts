@@ -21,14 +21,11 @@ describe("the source every generated bridge writes the same way", () => {
     expect(answerFrom(2, "", " why \n").text).toBe("why");
   });
 
-  it("reads the additionalContext of a script that exits 0, nothing for any other exit", () => {
-    const stdout = JSON.stringify({ hookSpecificOutput: { additionalContext: " noted " } });
-
+  it("reads the additionalContext a script that exits 0 prints, nothing of text that is no JSON", () => {
     expect([
-      answerFrom(0, stdout, "").text,
-      answerFrom(1, stdout, "").text,
+      answerFrom(0, JSON.stringify({ additionalContext: " noted " }), "").text,
       answerFrom(0, "text", "").text,
-    ]).toEqual(["noted", "", ""]);
+    ]).toEqual(["noted", ""]);
   });
 
   it("reads the person's message of a script that exits 0 apart from what the model reads", () => {

@@ -106,6 +106,19 @@ describe("OpenCode's person message, through its bridge", () => {
     expect(prompts).toStrictEqual(CONTINUED);
   });
 
+  it("reports a required finding the V2 adapter's client cannot queue, without throwing into the host", async () => {
+    const ws = await workspace("opencode", bridgeOf("opencode"));
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const [write] = await capturedPayloads<ToolCall>("opencode", "tool.execute.after", ws.project);
+    const { plugin } = await start(ws, { directory: ws.project }, undefined, undefined, true);
+    if (write === undefined) throw new Error("no captured write");
+
+    await expect(plugin["tool.execute.after"](write.call, write.output)).resolves.toBeUndefined();
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringMatching(/^\[aidd\] OpenCode hook PostToolUse failed: TypeError/)
+    );
+  });
+
   it("shows it at a turn end that answers only the person, with no follow-up", async () => {
     const ws = await workspace("opencode", bridgeOf("opencode"));
     vi.stubEnv("AIDD_STOP", "person-only");

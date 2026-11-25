@@ -45,9 +45,11 @@ function bridgeIdentifier(plugin: string, suffix: string): string {
 function callTableDeclarations(table: BridgeHookTable): string {
   return BRIDGE_EVENTS.map((event) => {
     const name = event.replace(/([a-z])([A-Z])/g, "$1_$2").toUpperCase();
-    const calls = table.calls[event].map(({ matcher, ...call }) =>
-      matcher === undefined ? call : { ...call, tools: matcherNames(matcher) }
-    );
+    const calls = table
+      .callsOf(event)
+      .map(({ matcher, ...call }) =>
+        matcher === undefined ? call : { ...call, tools: matcherNames(matcher) }
+      );
     return `const ${name} = ${JSON.stringify(calls)};`;
   }).join("\n");
 }

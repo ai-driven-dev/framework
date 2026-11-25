@@ -4,7 +4,7 @@
  * neutral interface, with the adapter where the build puts it.
  */
 
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { vi } from "vitest";
 import { kilo } from "../../../../src/composition/tool-profiles/kilo.js";
@@ -13,21 +13,23 @@ import { present } from "../../../shared/testing/present.builder.js";
 import {
   type BridgedHostId,
   bridgedHost,
+  command,
   descriptorOf,
+  jsonLines,
   placeBridge,
-  sessionOf,
+  promptRecorder,
+  ROOT,
 } from "./bridged-hosts.builder.js";
-import { ROOT } from "./event-bridge-host.builder.js";
 import { capturedSamples, captureFile, SESSION } from "./hook-payload-captures.builder.js";
-import { madeFolder, removeMadeFolders } from "./made-folders.builder.js";
+import { removeMadeFolders } from "./made-folders.builder.js";
 
 export const RECORD = `node ${ROOT}/hooks/record.cjs`;
 
 export const HOOKS_JSON = JSON.stringify({
   hooks: {
-    SessionStart: [{ hooks: [{ type: "command", command: RECORD }] }],
-    PostToolUse: [{ matcher: "Write|Edit|bash", hooks: [{ type: "command", command: RECORD }] }],
-    Stop: [{ hooks: [{ type: "command", command: RECORD }] }],
+    SessionStart: [command("record.cjs")],
+    PostToolUse: [{ matcher: "Write|Edit|bash", ...command("record.cjs") }],
+    Stop: [command("record.cjs")],
   },
 });
 
@@ -92,14 +94,14 @@ export async function capturedPayloads<T = unknown>(
 }
 
 export async function workspace(host: BridgedHostId, bridge: string): Promise<Workspace> {
-  const dir = await madeFolder("aidd-hooks-runtime-bridge-");
+  const { dir, module } = await placeBridge({
+    prefix: "aidd-hooks-runtime-bridge-",
+    plugin: "aidd-sample",
+    bridge,
+    scripts: { "record.cjs": RECORDER, "silent.cjs": "", "lib/host.cjs": ADAPTERS[host] },
+  });
   const project = join(dir, "project");
-  const { scripts, module } = await placeBridge(dir, "aidd-sample", bridge);
-  await mkdir(join(scripts, "lib"));
   await mkdir(project);
-  await writeFile(join(scripts, "record.cjs"), RECORDER);
-  await writeFile(join(scripts, "silent.cjs"), "");
-  await writeFile(join(scripts, "lib", "host.cjs"), ADAPTERS[host]);
   const record = join(dir, "record.jsonl");
   vi.stubEnv("AIDD_RECORD", record);
   return { dir, project, record, host, module };
@@ -107,10 +109,8 @@ export async function workspace(host: BridgedHostId, bridge: string): Promise<Wo
 
 export async function recorded(ws: Workspace, count: number): Promise<readonly Recorded[]> {
   for (let attempt = 0; attempt < 100; attempt++) {
-    const lines = (await readFile(ws.record, "utf8").catch(() => ""))
-      .split("\n")
-      .filter((line) => line !== "");
-    if (lines.length >= count) return lines.map((line) => JSON.parse(line) as Recorded);
+    const lines = await jsonLines<Recorded>(ws.record);
+    if (lines.length >= count) return lines;
     await new Promise((resolve) => setTimeout(resolve, 20));
   }
   throw new Error(`fewer than ${count} hook calls recorded`);
@@ -153,7 +153,7 @@ export async function start(
   /** The client OpenCode's V2 adapter hands the bridge: a session `prompt`, nothing else. */
   v2Client = false
 ) {
-  const prompts: unknown[] = [];
+  const recorder = promptRecorder(bridgedHost(ws.host), { refusal });
   const toasts: unknown[] = [];
   const showToast = (request: unknown) => {
     toasts.push(request);
@@ -161,19 +161,12 @@ export async function start(
       ? Promise.resolve({ data: true })
       : Promise.reject(toastRefusal);
   };
-  const send = (request: unknown) => {
-    prompts.push(request);
-    return refusal === undefined ? Promise.resolve() : Promise.reject(refusal);
-  };
   const client = v2Client
-    ? { session: { prompt: send } }
-    : {
-        session: sessionOf(bridgedHost(ws.host), { prompt: send, promptAsync: send }),
-        tui: { showToast },
-      };
+    ? { session: { prompt: recorder.queue } }
+    : { session: recorder.session, tui: { showToast } };
   const { server } = await descriptorOf<{ server: (input: unknown) => Promise<Plugin> }>(ws.module);
   const plugin = await server({ ...input, client });
-  return { plugin, prompts, toasts };
+  return { plugin, prompts: recorder.prompts, toasts };
 }
 
 /** The captured tool calls, by position in the fixture. */

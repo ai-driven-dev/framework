@@ -442,13 +442,13 @@ function personOf(output) {
 
 const NO_ANSWER = { text: "", person: "", required: false };
 
-/** `required` is what the adapter prints for a finding the model must deal with before going on. */
+/** A settled run, which exited 0 or 2. `required` is what the adapter prints for a finding the
+ * model must deal with before going on. */
 function answerFrom(code, stdout, stderr) {
   if (code === 2) return { text: stderr.trim(), person: "", required: false };
-  if (code !== 0) return NO_ANSWER;
   const output = stdoutJson(stdout);
   return {
-    text: String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim(),
+    text: String(output?.additionalContext ?? "").trim(),
     person: personOf(output),
     required: output?.required === true,
   };
@@ -526,19 +526,15 @@ async function refusalOf(calls) {
 
 /** The refusal is thrown out of the host's hook, the one way it stops the call. */
 async function refuseToolUse(call, output, directory) {
-  let refusal = null;
-  try {
-    refusal = await refusalOf(preToolUseCallsFor(call, output, directory));
-  } catch (error) {
-    reportHookFailure("PreToolUse", error);
-  }
+  const refusal = await refusalOf(preToolUseCallsFor(call, output, directory));
   if (refusal !== null) throw new Error(refusal);
 }
 
 /** Each PostToolUse answer is appended to the output the model reads, its message for the person
- * handed to `show` where the host has one, a failure reported. An answer the script marks
- * required is also queued as the session's next prompt, which the model takes up after the current
- * step; not awaited, so the host's prompt call never holds the tool. */
+ * handed to `show` where the host has one. An answer the script marks required is also queued as
+ * the session's next prompt, which the model takes up after the current step; not awaited, so the
+ * host's prompt call never holds the tool. A client with no `promptAsync` throws there: reported,
+ * and the call's later hooks are skipped. */
 async function addToolAnswers(call, output, directory, client, show) {
   try {
     for (const hook of postToolUseCallsFor(call, directory)) {
@@ -577,22 +573,18 @@ function userPromptCallsFor(input, output, directory) {
 /** Each answer becomes a synthetic text part after the user's, its id derived from the first
  * part's, this plugin's name and the hook's place in its list, so no two parts share one. */
 async function addPromptContext(input, output, directory) {
-  try {
-    const calls = userPromptCallsFor(input, output, directory);
-    for (const [index, call] of calls.entries()) {
-      const { text } = await answerOf(call.script, call.args, call.payload, directory);
-      if (!text) continue;
-      output.parts.push({
-        id: output.parts[0].id + "-" + "aidd-context" + "-" + index,
-        messageID: output.message?.id,
-        sessionID: input?.sessionID,
-        type: "text",
-        text,
-        synthetic: true,
-      });
-    }
-  } catch (error) {
-    reportHookFailure("UserPromptSubmit", error);
+  const calls = userPromptCallsFor(input, output, directory);
+  for (const [index, call] of calls.entries()) {
+    const { text } = await answerOf(call.script, call.args, call.payload, directory);
+    if (!text) continue;
+    output.parts.push({
+      id: output.parts[0].id + "-" + "aidd-context" + "-" + index,
+      messageID: output.message?.id,
+      sessionID: input?.sessionID,
+      type: "text",
+      text,
+      synthetic: true,
+    });
   }
 }
 
@@ -669,16 +661,12 @@ function bridgeHooks({ directory, client, followUp, show, track }) {
   const folderOf = (sessionId) => sessionDirectory(sessionId, directory);
   return {
     event: async ({ event }) => {
-      try {
-        runSessionStart(event, directory);
-        const sessionId = event?.properties?.sessionID;
-        if (typeof sessionId !== "string" || event.type !== "session.idle") return;
-        const stopping = runStop(sessionId, folderOf(sessionId), { client, method: followUp, show });
-        track?.(stopping.then((sends) => Promise.all(sends)));
-        await stopping;
-      } catch (error) {
-        reportHookFailure("event", error);
-      }
+      runSessionStart(event, directory);
+      const sessionId = event?.properties?.sessionID;
+      if (typeof sessionId !== "string" || event.type !== "session.idle") return;
+      const stopping = runStop(sessionId, folderOf(sessionId), { client, method: followUp, show });
+      track?.(stopping.then((sends) => Promise.all(sends)));
+      await stopping;
     },
     "experimental.chat.system.transform": (input, output) => addSessionContext(input, output, show),
     "chat.message": async (input, output) => {
@@ -821,13 +809,13 @@ function personOf(output) {
 
 const NO_ANSWER = { text: "", person: "", required: false };
 
-/** `required` is what the adapter prints for a finding the model must deal with before going on. */
+/** A settled run, which exited 0 or 2. `required` is what the adapter prints for a finding the
+ * model must deal with before going on. */
 function answerFrom(code, stdout, stderr) {
   if (code === 2) return { text: stderr.trim(), person: "", required: false };
-  if (code !== 0) return NO_ANSWER;
   const output = stdoutJson(stdout);
   return {
-    text: String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim(),
+    text: String(output?.additionalContext ?? "").trim(),
     person: personOf(output),
     required: output?.required === true,
   };
@@ -905,19 +893,15 @@ async function refusalOf(calls) {
 
 /** The refusal is thrown out of the host's hook, the one way it stops the call. */
 async function refuseToolUse(call, output, directory) {
-  let refusal = null;
-  try {
-    refusal = await refusalOf(preToolUseCallsFor(call, output, directory));
-  } catch (error) {
-    reportHookFailure("PreToolUse", error);
-  }
+  const refusal = await refusalOf(preToolUseCallsFor(call, output, directory));
   if (refusal !== null) throw new Error(refusal);
 }
 
 /** Each PostToolUse answer is appended to the output the model reads, its message for the person
- * handed to `show` where the host has one, a failure reported. An answer the script marks
- * required is also queued as the session's next prompt, which the model takes up after the current
- * step; not awaited, so the host's prompt call never holds the tool. */
+ * handed to `show` where the host has one. An answer the script marks required is also queued as
+ * the session's next prompt, which the model takes up after the current step; not awaited, so the
+ * host's prompt call never holds the tool. A client with no `promptAsync` throws there: reported,
+ * and the call's later hooks are skipped. */
 async function addToolAnswers(call, output, directory, client, show) {
   try {
     for (const hook of postToolUseCallsFor(call, directory)) {
@@ -956,22 +940,18 @@ function userPromptCallsFor(input, output, directory) {
 /** Each answer becomes a synthetic text part after the user's, its id derived from the first
  * part's, this plugin's name and the hook's place in its list, so no two parts share one. */
 async function addPromptContext(input, output, directory) {
-  try {
-    const calls = userPromptCallsFor(input, output, directory);
-    for (const [index, call] of calls.entries()) {
-      const { text } = await answerOf(call.script, call.args, call.payload, directory);
-      if (!text) continue;
-      output.parts.push({
-        id: output.parts[0].id + "-" + "aidd-telemetry" + "-" + index,
-        messageID: output.message?.id,
-        sessionID: input?.sessionID,
-        type: "text",
-        text,
-        synthetic: true,
-      });
-    }
-  } catch (error) {
-    reportHookFailure("UserPromptSubmit", error);
+  const calls = userPromptCallsFor(input, output, directory);
+  for (const [index, call] of calls.entries()) {
+    const { text } = await answerOf(call.script, call.args, call.payload, directory);
+    if (!text) continue;
+    output.parts.push({
+      id: output.parts[0].id + "-" + "aidd-telemetry" + "-" + index,
+      messageID: output.message?.id,
+      sessionID: input?.sessionID,
+      type: "text",
+      text,
+      synthetic: true,
+    });
   }
 }
 
@@ -1048,16 +1028,12 @@ function bridgeHooks({ directory, client, followUp, show, track }) {
   const folderOf = (sessionId) => sessionDirectory(sessionId, directory);
   return {
     event: async ({ event }) => {
-      try {
-        runSessionStart(event, directory);
-        const sessionId = event?.properties?.sessionID;
-        if (typeof sessionId !== "string" || event.type !== "session.idle") return;
-        const stopping = runStop(sessionId, folderOf(sessionId), { client, method: followUp, show });
-        track?.(stopping.then((sends) => Promise.all(sends)));
-        await stopping;
-      } catch (error) {
-        reportHookFailure("event", error);
-      }
+      runSessionStart(event, directory);
+      const sessionId = event?.properties?.sessionID;
+      if (typeof sessionId !== "string" || event.type !== "session.idle") return;
+      const stopping = runStop(sessionId, folderOf(sessionId), { client, method: followUp, show });
+      track?.(stopping.then((sends) => Promise.all(sends)));
+      await stopping;
     },
     "experimental.chat.system.transform": (input, output) => addSessionContext(input, output, show),
     "chat.message": async (input, output) => {

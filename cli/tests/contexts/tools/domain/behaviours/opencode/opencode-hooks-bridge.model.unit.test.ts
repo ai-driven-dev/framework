@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { generateOpencodeHooksBridge } from "../../../../../../src/contexts/tools/domain/behaviours/opencode/opencode-hooks-bridge.model.js";
-import { hooksOf, ROOT } from "../../../testing/event-bridge-host.builder.js";
+import { hooksOf, ROOT } from "../../../testing/bridged-hosts.builder.js";
 
 const STOP_HOOK = hooksOf("Stop", `node ${ROOT}/hooks/a.cjs`);
 

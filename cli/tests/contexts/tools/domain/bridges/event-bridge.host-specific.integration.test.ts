@@ -1,16 +1,13 @@
 /**
  * What OpenCode's generated bridge does its own way, under a fake host that emits its events: its
  * loader, and the follow-ups and scripts its disposal waits for. Kilo's bridge has nothing of its
- * own. A script that never exits is stopped by the runtime both share; that case costs 5 s, so it
- * runs once, here.
+ * own.
  */
 
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
-import { afterEach, describe, expect, it, onTestFinished, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { bridgedHost } from "../../testing/bridged-hosts.builder.js";
-import { cleanBridges, command, open } from "../../testing/event-bridge-host.builder.js";
+import { cleanBridges, open } from "../../testing/event-bridge-host.builder.js";
 
 afterEach(cleanBridges);
 
@@ -51,27 +48,4 @@ describe("the bridge generated with OpenCode's parameters", () => {
 
     expect(await of("stop.cjs")).toStrictEqual([]);
   });
-
-  // Real time: a child process's timeout runs on the clock, so this case costs the bridge's 5 s.
-  it("stops a script that never exits and gives the tool's output back", async () => {
-    const hooksJson = JSON.stringify({
-      hooks: { PostToolUse: [{ matcher: "Hang", ...command("hang.cjs") }] },
-    });
-    const { directory, tool } = await open(bridgedHost("opencode"), hooksJson);
-
-    const answered = await Promise.race([tool("hang"), delay(8000, "still waiting")]);
-    const pid = Number(await readFile(join(directory, "hang.pid"), "utf8"));
-    // A failing run must not leave the hung script behind.
-    onTestFinished(() => {
-      try {
-        process.kill(pid, "SIGKILL");
-      } catch (error) {
-        // ESRCH: already gone, which is the passing case.
-        if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error;
-      }
-    });
-
-    expect(answered).not.toBe("still waiting");
-    await vi.waitFor(() => expect(() => process.kill(pid, 0)).toThrow(), { timeout: 2000 });
-  }, 15_000);
 });

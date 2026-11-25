@@ -99,13 +99,13 @@ function personOf(output) {
 
 const NO_ANSWER = { text: "", person: "", required: false };
 
-/** \`required\` is what the adapter prints for a finding the model must deal with before going on. */
+/** A settled run, which exited 0 or 2. \`required\` is what the adapter prints for a finding the
+ * model must deal with before going on. */
 function answerFrom(code, stdout, stderr) {
   if (code === 2) return { text: stderr.trim(), person: "", required: false };
-  if (code !== 0) return NO_ANSWER;
   const output = stdoutJson(stdout);
   return {
-    text: String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim(),
+    text: String(output?.additionalContext ?? "").trim(),
     person: personOf(output),
     required: output?.required === true,
   };

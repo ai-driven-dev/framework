@@ -2,13 +2,14 @@
  * OpenCode and Kilo send a hook nothing on stdin: a plugin receives arguments, and the bridge
  * generated for it runs the hook with a payload of its own. Their adapter reads that payload,
  * so each captured argument goes through the real bridge into a hook that speaks only the
- * neutral interface, with the adapter where the build puts it.
+ * neutral interface, with the adapter where the build puts it. Both hosts ship one adapter source
+ * and one bridge body, so what the adapter reads is held once, on Kilo; only the host each adapter
+ * names is held per host. What the bridge body does with an answer is event-bridge.integration's.
  */
 
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { BRIDGED_HOSTS } from "./testing/bridged-hosts.builder.js";
-import { hooksOf } from "./testing/event-bridge-host.builder.js";
+import { bridgedHost, hooksOf } from "./testing/bridged-hosts.builder.js";
 import { SESSION } from "./testing/hook-payload-captures.builder.js";
 import {
   ADAPTERS,
@@ -33,30 +34,6 @@ import {
 
 afterEach(cleanWorkspaces);
 
-// How SessionStart joins its answers is the body every host's bridge shares: held once, on Kilo.
-describe("SessionStart answers, through the shared bridge body", () => {
-  const host = "kilo";
-
-  it("joins several answers into one entry, a blank line apart", async () => {
-    const { added } = await startedWith(host, hooksOf("SessionStart", RECORD, RECORD));
-
-    expect(added).toStrictEqual(["start note\n\nstart note"]);
-  });
-
-  it("leaves a silent script out of the entry, with no separator left behind", async () => {
-    const { added } = await startedWith(host, hooksOf("SessionStart", SILENT, RECORD));
-
-    expect(added).toStrictEqual(["start note"]);
-  });
-
-  it("adds nothing, and does not throw, when a script cannot be spawned", async () => {
-    vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    const { added } = await startedWith(host, hooksOf("SessionStart", UNSPAWNABLE));
-
-    expect(added).toStrictEqual([]);
-  });
-});
-
 describe("the adapter both bridged hosts share", () => {
   it("is one source, read as opencode behind the OpenCode bridge and as kilo behind the Kilo bridge", async () => {
     const opencode = await workspace("opencode", bridgeOf("opencode"));
@@ -75,28 +52,32 @@ describe("the adapter both bridged hosts share", () => {
   });
 });
 
-describe.each(BRIDGED_HOSTS)("$label, through its bridge", ({ id: host, label }) => {
+describe("the shared adapter, through Kilo's bridge", () => {
+  const host = "kilo";
   const failed = (reason: string) =>
     expect.stringMatching(
-      new RegExp(`^\\[aidd\\] ${label} hook .*record\\.cjs failed: .*${reason}.*refused`)
+      new RegExp(
+        `^\\[aidd\\] ${bridgedHost(host).label} hook .*record\\.cjs failed: .*${reason}.*refused`
+      )
     );
 
-  it("reads a created session as SessionStart, in the session's own folder", async () => {
-    const ws = await workspace(host, bridgeOf(host));
-    const [created] = await capturedPayloads(host, "session.created", ws.project);
-    const { plugin } = await start(ws, { directory: ws.dir });
-    await plugin.event({ event: created });
+  it("joins several SessionStart answers into one entry, a blank line apart", async () => {
+    const { added } = await startedWith(host, hooksOf("SessionStart", RECORD, RECORD));
 
-    expect(await recorded(ws, 1)).toMatchObject([
-      {
-        host,
-        event: "SessionStart",
-        files: [],
-        stopActive: false,
-        sessionId: SESSION,
-        cwd: ws.project,
-      },
-    ]);
+    expect(added).toStrictEqual(["start note\n\nstart note"]);
+  });
+
+  it("leaves a silent script out of the entry, with no separator left behind", async () => {
+    const { added } = await startedWith(host, hooksOf("SessionStart", SILENT, RECORD));
+
+    expect(added).toStrictEqual(["start note"]);
+  });
+
+  it("adds nothing, and does not throw, when a script cannot be spawned", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const { added } = await startedWith(host, hooksOf("SessionStart", UNSPAWNABLE));
+
+    expect(added).toStrictEqual([]);
   });
 
   it("runs SessionStart once for a session, though the host creates the plugin again", async () => {
@@ -151,7 +132,7 @@ describe.each(BRIDGED_HOSTS)("$label, through its bridge", ({ id: host, label })
     expect(output.system).toStrictEqual(before);
   });
 
-  it("reads a write as its file and content, and appends the answer to the tool's result", async () => {
+  it("reads a write as its file and content", async () => {
     const ws = await workspace(host, bridgeOf(host));
     const write = await toolCall(host, 0, ws.project);
     const { content } = write.call.args;
@@ -163,7 +144,6 @@ describe.each(BRIDGED_HOSTS)("$label, through its bridge", ({ id: host, label })
       files: [{ path: join(ws.project, "notes.md"), content, written: content }],
       sessionId: SESSION,
     });
-    expect(write.output.output).toBe("Wrote file successfully.\n\nfinding");
   });
 
   it("reads a shell call as its command", async () => {
@@ -197,7 +177,6 @@ describe.each(BRIDGED_HOSTS)("$label, through its bridge", ({ id: host, label })
       files: patched(ws.project),
       sessionId: SESSION,
     });
-    expect(patch.output.output.endsWith("\n\nfinding")).toBe(true);
   });
 
   it("continues the turn for any answer at Stop", async () => {
@@ -218,22 +197,6 @@ describe.each(BRIDGED_HOSTS)("$label, through its bridge", ({ id: host, label })
     await plugin.event({ event: idle });
 
     await vi.waitFor(() => expect(warn).toHaveBeenCalledWith(failed("follow-up")));
-  });
-
-  it("reads an idle session as Stop, continues it once, and reads the next one as a continuation", async () => {
-    const ws = await workspace(host, bridgeOf(host));
-    const [created] = await capturedPayloads(host, "session.created", ws.project);
-    const [, first, second] = await capturedPayloads(host, "session.idle", ws.project);
-    const { plugin, prompts } = await start(ws, { directory: ws.project });
-    await plugin.event({ event: created });
-    await plugin.event({ event: first });
-    await plugin.event({ event: second });
-
-    expect((await recorded(ws, 3)).filter((call) => call.event === "Stop")).toMatchObject([
-      { host, event: "Stop", stopActive: false, sessionId: SESSION, cwd: ws.project },
-      { host, event: "Stop", stopActive: true, sessionId: SESSION, cwd: ws.project },
-    ]);
-    expect(prompts).toStrictEqual(CONTINUED);
   });
 
   it("queues a required finding as the session's next prompt, beside the tool's result", async () => {
@@ -257,7 +220,7 @@ describe.each(BRIDGED_HOSTS)("$label, through its bridge", ({ id: host, label })
     expect(write.output.output).toBe("Wrote file successfully.\n\nfinding");
   });
 
-  it("reports a required finding the host refused, and still answers in the tool's result", async () => {
+  it("reports a required finding the host refused, without throwing into it", async () => {
     const ws = await workspace(host, bridgeOf(host));
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const write = await toolCall(host, 0, ws.project);
@@ -265,6 +228,5 @@ describe.each(BRIDGED_HOSTS)("$label, through its bridge", ({ id: host, label })
     await plugin["tool.execute.after"](write.call, write.output);
 
     await vi.waitFor(() => expect(warn).toHaveBeenCalledWith(failed("finding not queued")));
-    expect(write.output.output).toBe("Wrote file successfully.\n\nfinding");
   });
 });
