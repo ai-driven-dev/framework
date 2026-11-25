@@ -66,6 +66,15 @@ export function flatAgentFilePath(
     : `${layout.agentsDir}${name}${layout.agent.ext}`;
 }
 
+/** A file's path below its section folder: the path itself when it sits outside it. */
+export function belowSection(section: string, path: string): string {
+  return path.startsWith(`${section}/`) ? path.slice(section.length + 1) : path;
+}
+
+/** Whether a layout's tool reads no rule frontmatter, so a rule's scope is stated in its body. */
+export const statesRuleScope = ({ rules }: Pick<FlatArtifactLayout, "rules">): boolean =>
+  rules === "top-level-no-frontmatter";
+
 /** Where a file of a section lands: skills and agents as a build places them, every other section
  * nested under its plugin. */
 export function flatSectionPath(
@@ -76,7 +85,7 @@ export function flatSectionPath(
   const { plugin, name } = file;
   if (section === "skills") return flatSkillPath(layout, plugin, name);
   if (section === "agents") return flatAgentFilePath(layout, plugin, name);
-  if (section === "rules" && layout.rules === "top-level-no-frontmatter") {
+  if (section === "rules" && statesRuleScope(layout)) {
     return `${layout.directory}rules/${plugin}-${name.replaceAll("/", "-")}`;
   }
   return `${layout.directory}${section}/${plugin}/${name}`;
@@ -88,15 +97,25 @@ export function flatRulesPlacement(
   layout: FlatArtifactLayout,
   plugin: string
 ): { readonly prefix: string; readonly glob: string } | null {
-  if (layout.rules !== "top-level-no-frontmatter") return null;
+  if (!statesRuleScope(layout)) return null;
   const prefix = `${layout.directory}rules/${plugin}-`;
   return { prefix, glob: `${prefix}*.md` };
 }
 
-/** Whether a project-relative path is one of the plugin's skills or agents: the inverse of the
- * two placements above, read from the same declaration.
+/** The glob that lists a plugin's rules, when `paths` hold any of them: nothing to list otherwise. */
+export function rulesGlobOf(
+  placement: { readonly prefix: string; readonly glob: string } | null,
+  paths: Iterable<string>
+): string | null {
+  if (placement === null) return null;
+  for (const path of paths) if (path.startsWith(placement.prefix)) return placement.glob;
+  return null;
+}
+
+/** Whether a project-relative path is one of the plugin's skills, agents or top-level rules: the
+ * inverse of the placements above, read from the same declaration.
  *
- * Limit: a flat single-level skill or agent is owned by the `<plugin>-` name prefix, so plugin
+ * Limit: a flat single-level skill, agent or top-level rule is owned by the `<plugin>-` name prefix, so plugin
  * "aidd" also claims the `aidd-x-...` artifacts of a sibling plugin "aidd-x". No framework plugin
  * name is a prefix of another, so nothing guards it; a plugin named that way must change the
  * placement first. The nested skill layout (`<plugin>/`) has no such overlap. */
@@ -113,6 +132,7 @@ export function ownsFlatArtifact(
       ? skill.startsWith(`${plugin}/`)
       : skill.startsWith(`${plugin}-`);
   }
+  if (rulesGlobOf(flatRulesPlacement(layout, plugin), [relativePath]) !== null) return true;
   return below(layout.agentsDir)?.startsWith(`${plugin}-`) ?? false;
 }
 

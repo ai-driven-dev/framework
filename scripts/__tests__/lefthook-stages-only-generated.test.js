@@ -36,3 +36,29 @@ test("framework-content stages the files --fix rewrote, not an unstaged hand edi
   assert.equal(sh("git diff --name-only --cached").split("\n").sort().join(" ").trim(), "docs/CATALOG.md plugins/p/skills/s/SKILL.md");
   assert.equal(sh("git diff --name-only").trim(), "README.md");
 });
+
+// The aidd-ui engine copies are generated too: a new, changed or deleted copy follows its source into the commit.
+test("framework-content stages the aidd-ui engine copies --fix wrote, removed or created", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-hook-"));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const sh = (cmd) => execFileSync("sh", ["-c", cmd], { cwd: dir, encoding: "utf8", env: CLEAN_ENV });
+  const write = (file, text) => {
+    fs.mkdirSync(path.dirname(path.join(dir, file)), { recursive: true });
+    fs.writeFileSync(path.join(dir, file), text);
+  };
+  const copy = "plugins/aidd-ui/skills/s/scripts/aidd-ui";
+  write("scripts/check/run.cjs", `const fs = require('node:fs'); fs.writeFileSync('${copy}/lib/a.cjs', 'changed\\n'); fs.writeFileSync('${copy}/lib/new.cjs', 'new\\n'); fs.rmSync('${copy}/lib/gone.cjs');\n`);
+  write("README.md", "readme\n");
+  write("docs/CATALOG.md", "catalog\n");
+  write(`${copy}/lib/a.cjs`, "a\n");
+  write(`${copy}/lib/gone.cjs`, "gone\n");
+  write("plugins/aidd-ui/hooks/lib/a.cjs", "a\n");
+  sh("git init -q && git add -A && git -c user.name=t -c user.email=t@t commit -qm init");
+  write("plugins/aidd-ui/hooks/lib/a.cjs", "changed\n");
+  sh("git add plugins/aidd-ui/hooks");
+
+  sh(hook.replace("{staged_files}", "plugins/aidd-ui/hooks/lib/a.cjs"));
+
+  assert.equal(sh("git diff --name-only --cached").split("\n").sort().join(" ").trim(), `plugins/aidd-ui/hooks/lib/a.cjs ${copy}/lib/a.cjs ${copy}/lib/gone.cjs ${copy}/lib/new.cjs`);
+  assert.equal(sh("git status --porcelain").split("\n").filter((line) => !/^[MADR] /u.test(line) && line).join("|"), "");
+});

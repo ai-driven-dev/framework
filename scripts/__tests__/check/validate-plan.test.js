@@ -79,6 +79,7 @@ before(() => {
   fs.mkdirSync(path.join(project, "src"), { recursive: true });
   fs.writeFileSync(path.join(project, "src/a.js"), "");
   fs.writeFileSync(path.join(project, "src/old.js"), "");
+  fs.writeFileSync(path.join(project, "src/with space.js"), "");
 });
 after(() => fs.rmSync(root, { recursive: true, force: true }));
 
@@ -180,6 +181,32 @@ describe("validate-plan", () => {
     const tree = (lines) => lines.join("\n");
     it("resolves a nested tree against the project", () => {
       assert.deepEqual(run(good(tree(["└── src/", "    └── ✏️ a.js"]))), OK);
+    });
+    it("checks a name with spaces whole, the mark before or after it", () => {
+      assert.deepEqual(run(good(tree(["└── src/", "    └── ✏️ with space.js"]))), OK);
+      assert.deepEqual(run(good(tree(["└── src/", "    └── with space.js ✏️"]))), OK);
+    });
+    it("refuses a missing name with spaces under its whole name", () => {
+      refused(run(good(tree(["└── src/", "    └── ✏️ no such file.js"]))), /PLAN-05 src\/no such file\.js is marked modify/);
+    });
+    it("ignores a trailing comment or note, so an annotated entry is still checked by its name", () => {
+      assert.deepEqual(run(good(tree(["└── src/", "    └── ✏️ a.js    # add a branch"]))), OK);
+      assert.deepEqual(run(good(tree(["└── src/", "    └── a.js   ✏️ regenerate (auto)"]))), OK);
+      assert.deepEqual(run(good(tree(["├── src/ # app code", "│   └── ✏️ a.js"]))), OK);
+      refused(run(good(tree(["└── src/", "    └── ✏️ ghost.js    # add a branch"]))), /PLAN-05 src\/ghost\.js is marked modify/);
+      refused(run(good(tree(["└── src/", "    └── ghost.js   ✏️ regenerate"]))), /PLAN-05 src\/ghost\.js is marked modify/);
+      refused(run(good(tree(["├── src/ # app code", "│   └── ✏️ ghost.js"]))), /PLAN-05 src\/ghost\.js is marked modify/);
+    });
+    it("falls back to the first word when a single-spaced note follows the name", () => {
+      assert.deepEqual(run(good(tree(["└── src/", "    └── ✏️ a.js (note)"]))), OK);
+      assert.deepEqual(run(good(tree(["└── src/", "    └── ✏️ a.js # trace"]))), OK);
+      refused(run(good(tree(["└── src/", "    └── ✏️ ghost.js # trace"]))), /PLAN-05 src\/ghost\.js is marked modify/);
+      assert.deepEqual(run(good(tree(["└── src/", "    └── a.js (+ property) ✏️"]))), OK);
+      assert.deepEqual(run(good(tree(["└── src/ (app code)", "    └── ✏️ a.js"]))), OK);
+      refused(run(good(tree(["└── src/", "    └── ✏️ ghost.js (note)"]))), /PLAN-05 src\/ghost\.js is marked modify/);
+      refused(run(good(tree(["└── src/", "    └── ghost.js (+ property) ✏️"]))), /PLAN-05 src\/ghost\.js is marked modify/);
+      refused(run(good(tree(["└── src/ (app code)", "    └── ✏️ ghost.js"]))), /PLAN-05 src\/ghost\.js is marked modify/);
+      assert.deepEqual(run(good(tree(["└── ✅ src/new.js (note)"]), tree(["└── ✏️ src/new.js"]))), OK);
     });
     it("refuses a file to modify that does not exist", () => {
       refused(run(good(tree(["└── src/", "    └── ✏️ ghost.js"]))), /PLAN-05 src\/ghost\.js is marked modify/);

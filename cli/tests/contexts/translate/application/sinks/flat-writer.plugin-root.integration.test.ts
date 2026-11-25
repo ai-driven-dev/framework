@@ -46,7 +46,14 @@ describe("what a flat layout writes once every plugin is built", () => {
     });
     const sink = stubSink(memFs);
     await sink.prepare(stubTarget(contract));
-    const built = [{ name: "aidd-test", declaredMcp: '{"mcpServers":{}}' }, { name: "aidd-bare" }];
+    const built = [
+      {
+        name: "aidd-test",
+        declaredMcp: '{"mcpServers":{}}',
+        rulesGlob: ".stub/rules/aidd-test-*.md",
+      },
+      { name: "aidd-bare" },
+    ];
     const reads = vi.spyOn(memFs, "readFile");
 
     expect(await sink.finish(stubTarget(contract), { name: "m", plugins: [] }, built)).toBe(2);
@@ -54,6 +61,7 @@ describe("what a flat layout writes once every plugin is built", () => {
       {
         builtPlugins: ["aidd-test", "aidd-bare"],
         pluginMcp: new Map([["aidd-test", '{"mcpServers":{}}']]),
+        rulesGlobs: [".stub/rules/aidd-test-*.md"],
         existing: new Map([["kept.json", "kept"]]),
         present: new Set(["probed.js"]),
         assets: new Map([["opencode-events.js", "export async function setupOpencodeEvents() {}"]]),

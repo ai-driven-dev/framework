@@ -38,6 +38,6 @@ flowchart LR
 
 ## Gotchas
 
-- Off the curated install path: `aidd-ui` (alpha), `aidd-telemetry` (beta, opt-in), `aidd-qa` (unproven outside this repository).
+- Off the curated install path: `aidd-ui` (beta), `aidd-telemetry` (beta, opt-in), `aidd-qa` (unproven outside this repository).
 - A skill never links outside itself: the tree ships flat and as a marketplace, and no relative path survives both.
 - Bundled hooks run Node: without `node` on `PATH`, no memory refresh and no task question.

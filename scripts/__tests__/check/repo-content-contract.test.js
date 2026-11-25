@@ -12,7 +12,7 @@ const LIBRARY = "module.exports = { rules: true };\n";
 /** The contract with only the content rules: the others read anchor files a scratch repository does not hold. */
 function contentContract() {
   const contract = engine.loadContract(CONTRACT);
-  for (const id of Object.keys(contract.rules)) if (!/^REPO-(0[45678]|09|10)$/u.test(id)) delete contract.rules[id];
+  for (const id of Object.keys(contract.rules)) if (!/^REPO-(0[45678]|09|1[01])$/u.test(id)) delete contract.rules[id];
   return contract;
 }
 
@@ -97,6 +97,14 @@ describe("repo content rules", () => {
   it("REPO-08 flags a bundled skill or agent that sets a model", () => {
     assert.deepEqual(ids({ "plugins/a/skills/s/SKILL.md": "---\nname: s\nmodel: opus\n---\n" }), ["REPO-08"]);
     assert.deepEqual(ids({ "plugins/a/agents/x.md": "---\nname: x\nmodel:\n---\n" }), ["REPO-08"]);
+  });
+
+  it("REPO-11 flags a path in a skill file that climbs out of its skill", () => {
+    assert.deepEqual(ids({ "plugins/a/skills/s/references/engine.md": "Run `node ../../hooks/e.cjs` from here.\n" }), ["REPO-11"]);
+  });
+
+  it("REPO-11 lets a path that stays inside its skill through", () => {
+    assert.deepEqual(ids({ "plugins/a/skills/s/actions/01-go.md": "Fill `../assets/t.md`, then run `node scripts/e.cjs`.\n" }), []);
   });
 
   it("REPO-06 flags a library copy no hook requires", () => {
