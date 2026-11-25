@@ -1,4 +1,5 @@
 import type { InstallationFile } from "../../../../../shared/domain/installation-file.js";
+import { rulesGlobOf } from "../../../../../shared/domain/materialization/flat-paths.js";
 import type { ReadonlySkipList } from "../../../../../shared/domain/plugin/plugin-translation-skip.js";
 import type { FileReader } from "../../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../../shared/ports/file-writer.js";
@@ -14,7 +15,6 @@ import type {
 } from "../../../ports/plugin/plugin-translation.js";
 import type { AddPluginRequest } from "../add-plugin-request.js";
 import { materializeRequestedMcp } from "../flat-mcp-materializer.js";
-import { placedRulesGlob } from "../placed-rules-glob.js";
 import { deliversHooksToProject } from "../plugin-placement.js";
 import type { ProjectHooksMaterializer } from "../project-hooks-materializer.use-case.js";
 import {
@@ -63,7 +63,10 @@ export async function readTranslatedBuiltTree(request: AddPluginRequest, read: B
   const { files, hooks } = await readBuiltContent(request, translated, read);
   const mcp = await materializeRequestedMcp(deps.fs, request, {
     declaration: translated.installedMcp,
-    rulesGlob: placedRulesGlob(request.tool, { pluginName: request.dist.manifest.name, files }),
+    rulesGlob: rulesGlobOf(
+      request.tool.flatRulesPlacement(request.dist.manifest.name),
+      files.map((file) => file.relativePath)
+    ),
   });
   return { files, hooks, mcp };
 }

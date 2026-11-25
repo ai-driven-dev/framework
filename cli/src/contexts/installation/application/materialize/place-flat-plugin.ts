@@ -1,4 +1,5 @@
 import type { InstallationFile } from "../../../../shared/domain/installation-file.js";
+import { rulesGlobOf } from "../../../../shared/domain/materialization/flat-paths.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
 import type { Scope } from "../../../../shared/domain/scope.js";
@@ -18,7 +19,6 @@ import { resolveScopeForInstall, scopeBaseOf } from "../plugin/plugin-target-res
 import { hashOutputFiles } from "../shared/hash-output-files.js";
 import type { AddPluginRequest, AddPluginResult } from "./add-plugin-request.js";
 import { materializeRequestedMcp } from "./flat-mcp-materializer.js";
-import { placedRulesGlob } from "./placed-rules-glob.js";
 import type { ProjectHooksMaterializer } from "./project-hooks-materializer.use-case.js";
 
 export interface FlatPlacementDeps {
@@ -56,7 +56,10 @@ export async function placeFlatPlugin(
   if (ctx === null) return { skipped: [] };
   const mcp = await materializeRequestedMcp(deps.fs, request, {
     declaration: ctx.installedMcp,
-    rulesGlob: placedRulesGlob(tool, { pluginName: dist.manifest.name, files: ctx.files }),
+    rulesGlob: rulesGlobOf(
+      tool.flatRulesPlacement(dist.manifest.name),
+      ctx.files.map((file) => file.relativePath)
+    ),
   });
   const hooks = await placeProjectHooks(request, { ctx, deps });
   const skipped: ReadonlySkipList = [...ctx.skipped, ...mcp.mcpSkips, ...hooks.skipped];
