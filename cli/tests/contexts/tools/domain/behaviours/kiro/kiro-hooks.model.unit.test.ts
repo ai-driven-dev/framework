@@ -28,6 +28,13 @@ const SHIPPED = JSON.stringify({
         hooks: [{ type: "command", command: `node ${PLUGIN_ROOT_VAR}/hooks/a.cjs` }],
       },
     ],
+    Stop: [{ hooks: [{ type: "command", command: `node ${PLUGIN_ROOT_VAR}/hooks/b.cjs` }] }],
+  },
+});
+
+const UNCAPTURED = JSON.stringify({
+  hooks: {
+    PreToolUse: [{ hooks: [{ type: "command", command: `node ${PLUGIN_ROOT_VAR}/hooks/c.cjs` }] }],
   },
 });
 
@@ -42,12 +49,129 @@ const USER_FILE = `${JSON.stringify(
   2
 )}\n`;
 
-function hooksOf(content: string): { name: string; trigger: string }[] {
+function hooksOf(content: string): { name: string; trigger: string; matcher?: string }[] {
   const { hooks } = JSON.parse(content);
   return hooks;
 }
 
+const PAIRED = JSON.stringify({
+  hooks: {
+    SessionStart: [
+      { hooks: [{ type: "command", command: `node ${PLUGIN_ROOT_VAR}/hooks/memory.cjs load` }] },
+    ],
+    Stop: [
+      { hooks: [{ type: "command", command: `node ${PLUGIN_ROOT_VAR}/hooks/memory.cjs sync` }] },
+    ],
+  },
+});
+
 describe("kiro's hooks file", () => {
+  it("carries a plugin matcher as the tool tags Kiro selects by, one hook per tag", () => {
+    const shipped = JSON.stringify({
+      hooks: {
+        PostToolUse: [
+          {
+            matcher: "Write|Edit|Delete|Bash|Shell|bash|PowerShell",
+            hooks: [{ type: "command", command: `node ${PLUGIN_ROOT_VAR}/hooks/a.cjs` }],
+          },
+        ],
+      },
+    });
+    const { content, warnings } = format.merge(null, shipped, "aidd-context");
+    const hooks = hooksOf(content);
+
+    expect(hooks.map(({ matcher }) => matcher)).toEqual(["write", "shell"]);
+    expect(new Set(hooks.map(({ name }) => name)).size).toBe(2);
+    expect(warnings).toEqual([]);
+  });
+
+  it.each([
+    ["Write", "write"],
+    ["Edit", "write"],
+    ["Delete", "write"],
+    ["Bash", "shell"],
+    ["Shell", "shell"],
+    ["PowerShell", "shell"],
+  ])("maps the matcher name %s to the %s tag on its own", (name, tag) => {
+    const shipped = JSON.stringify({
+      hooks: {
+        PostToolUse: [
+          {
+            matcher: name,
+            hooks: [{ type: "command", command: `node ${PLUGIN_ROOT_VAR}/hooks/a.cjs` }],
+          },
+        ],
+      },
+    });
+    const { content } = format.merge(null, shipped, "aidd-context");
+
+    expect(hooksOf(content).map(({ matcher }) => matcher)).toEqual([tag]);
+  });
+
+  it("reads a matcher as a list of names, whatever their case, each tag once", () => {
+    for (const [matcher, tags] of [
+      ["EDIT|write", ["write"]],
+      ["Write|BASH", ["write", "shell"]],
+      ["bash", ["shell"]],
+      ["Edit.*", []],
+    ] as const) {
+      const shipped = JSON.stringify({
+        hooks: {
+          PostToolUse: [
+            {
+              matcher,
+              hooks: [{ type: "command", command: `node ${PLUGIN_ROOT_VAR}/hooks/a.cjs` }],
+            },
+          ],
+        },
+      });
+      const { content } = format.merge(null, shipped, "aidd-context");
+
+      expect(hooksOf(content).map((hook) => hook.matcher)).toEqual(tags);
+    }
+  });
+
+  it("selects every tool when the plugin names none, and for events that take no matcher", () => {
+    const command = `node ${PLUGIN_ROOT_VAR}/hooks/a.cjs`;
+    const shipped = JSON.stringify({
+      hooks: {
+        SessionStart: [{ matcher: "Write", hooks: [{ type: "command", command }] }],
+        PostToolUse: [{ hooks: [{ type: "command", command }] }],
+        Stop: [{ matcher: "Bash", hooks: [{ type: "command", command }] }],
+      },
+    });
+    const { content } = format.merge(null, shipped, "aidd-context");
+
+    expect(hooksOf(content)).toHaveLength(3);
+    for (const hook of hooksOf(content)) expect(hook).not.toHaveProperty("matcher");
+  });
+
+  it("drops a PostToolUse group whose matcher names no tool Kiro has, and says so", () => {
+    const shipped = JSON.stringify({
+      hooks: {
+        PostToolUse: [
+          {
+            matcher: "NotebookEdit",
+            hooks: [{ type: "command", command: `node ${PLUGIN_ROOT_VAR}/hooks/a.cjs` }],
+          },
+        ],
+      },
+    });
+    const { content, warnings } = format.merge(null, shipped, "aidd-context");
+
+    expect(hooksOf(content)).toEqual([]);
+    expect(warnings).toEqual([
+      "PostToolUse matcher 'NotebookEdit' names no Kiro tool, group skipped",
+    ]);
+  });
+
+  it("names a script paired across events once per trigger, so no two hooks share a name", () => {
+    const { content } = format.merge(null, PAIRED, "aidd-context");
+    const names = hooksOf(content).map((hook) => hook.name);
+
+    expect(new Set(names).size).toBe(names.length);
+  });
+
   it("holds a named hook per plugin script, triggered on SessionStart, in a v1 file", () => {
     const { content } = format.merge(null, SHIPPED, "aidd-context");
 
@@ -55,27 +179,38 @@ describe("kiro's hooks file", () => {
       version: "v1",
       hooks: [
         {
-          name: "aidd-context-memory.cjs",
+          name: "aidd-context-SessionStart-memory.cjs",
           trigger: "SessionStart",
           timeout: 5,
           action: { type: "command" },
         },
+        {
+          name: "aidd-context-PostToolUse-a.cjs-write",
+          trigger: "PostToolUse",
+          action: { type: "command" },
+        },
+        { name: "aidd-context-Stop-b.cjs", trigger: "Stop", action: { type: "command" } },
       ],
     });
   });
 
   it("drops an event with no captured payload and says so", () => {
-    const { content, warnings } = format.merge(null, SHIPPED, "aidd-context");
+    const { content, warnings } = format.merge(null, UNCAPTURED, "aidd-context");
 
-    expect(hooksOf(content).map((hook) => hook.trigger)).toEqual(["SessionStart"]);
-    expect(warnings).toEqual(["unmapped event 'PostToolUse' skipped"]);
+    expect(hooksOf(content)).toEqual([]);
+    expect(warnings).toEqual(["unmapped event 'PreToolUse' skipped"]);
   });
 
   it("keeps a hook the user declared, and changes nothing when merged twice", () => {
     const { content: first } = format.merge(USER_FILE, SHIPPED, "aidd-context");
     const { content: second } = format.merge(first, SHIPPED, "aidd-context");
 
-    expect(hooksOf(first).map((hook) => hook.name)).toEqual(["lint", "aidd-context-memory.cjs"]);
+    expect(hooksOf(first).map((hook) => hook.name)).toEqual([
+      "lint",
+      "aidd-context-SessionStart-memory.cjs",
+      "aidd-context-PostToolUse-a.cjs-write",
+      "aidd-context-Stop-b.cjs",
+    ]);
     expect(second).toBe(first);
   });
 
@@ -83,7 +218,11 @@ describe("kiro's hooks file", () => {
     const { content } = format.merge(null, SHIPPED, "aidd-context");
     const left = format.unmerge(format.merge(content, SHIPPED, "other").content, "aidd-context");
 
-    expect(hooksOf(left).map((hook) => hook.name)).toEqual(["other-memory.cjs"]);
+    expect(hooksOf(left).map((hook) => hook.name)).toEqual([
+      "other-SessionStart-memory.cjs",
+      "other-PostToolUse-a.cjs-write",
+      "other-Stop-b.cjs",
+    ]);
     expect(format.isEmpty(format.unmerge(content, "aidd-context"))).toBe(true);
   });
 
@@ -91,7 +230,12 @@ describe("kiro's hooks file", () => {
     const { content } = format.merge(null, SHIPPED, "aidd-context");
 
     expect(format.contributedEntries(content, "aidd-context")).toMatchObject([
-      { event: "SessionStart", entry: { name: "aidd-context-memory.cjs", timeout: 5 } },
+      {
+        event: "SessionStart",
+        entry: { name: "aidd-context-SessionStart-memory.cjs", timeout: 5 },
+      },
+      { event: "PostToolUse", entry: { name: "aidd-context-PostToolUse-a.cjs-write" } },
+      { event: "Stop", entry: { name: "aidd-context-Stop-b.cjs" } },
     ]);
   });
 
