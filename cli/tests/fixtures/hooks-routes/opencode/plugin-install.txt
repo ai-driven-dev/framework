@@ -235,13 +235,10 @@ script, identical to the plugin source
 ## project/.opencode/hooks/aidd-context/memory.cjs
 script, identical to the plugin source
 
-## project/.opencode/hooks/aidd-telemetry/catch-up.cjs
+## project/.opencode/hooks/aidd-telemetry/ledger.cjs
 script, identical to the plugin source
 
 ## project/.opencode/hooks/aidd-telemetry/lib/aidd.cjs
-script, identical to the plugin source
-
-## project/.opencode/hooks/aidd-telemetry/lib/binding.cjs
 script, identical to the plugin source
 
 ## project/.opencode/hooks/aidd-telemetry/lib/claude-only.cjs
@@ -256,22 +253,13 @@ script, identical to the plugin source
 ## project/.opencode/hooks/aidd-telemetry/lib/context.cjs
 script, identical to the plugin source
 
-## project/.opencode/hooks/aidd-telemetry/lib/declaration.cjs
-script, identical to the plugin source
-
 ## project/.opencode/hooks/aidd-telemetry/lib/git.cjs
 script, identical to the plugin source
 
-## project/.opencode/hooks/aidd-telemetry/lib/hook-io.cjs
-script, identical to the plugin source
+## project/.opencode/hooks/aidd-telemetry/lib/host.cjs
+script, identical to the host adapter for opencode
 
 ## project/.opencode/hooks/aidd-telemetry/lib/jsonl.cjs
-script, identical to the plugin source
-
-## project/.opencode/hooks/aidd-telemetry/lib/lookup.cjs
-script, identical to the plugin source
-
-## project/.opencode/hooks/aidd-telemetry/lib/presence.cjs
 script, identical to the plugin source
 
 ## project/.opencode/hooks/aidd-telemetry/lib/telemetry-dir.cjs
@@ -280,10 +268,7 @@ script, identical to the plugin source
 ## project/.opencode/hooks/aidd-telemetry/lib/tool.cjs
 script, identical to the plugin source
 
-## project/.opencode/hooks/aidd-telemetry/prompt-gate.cjs
-script, identical to the plugin source
-
-## project/.opencode/hooks/aidd-telemetry/session-start.cjs
+## project/.opencode/hooks/aidd-telemetry/task.cjs
 script, identical to the plugin source
 
 ## project/.opencode/hooks/opencode-events.js
@@ -325,11 +310,14 @@ function withAnswer(content, answer) {
 }
 
 export async function setupOpencodeEvents(ctx, factory) {
+  // OpenCode 1.19 also calls setup with its early V2 context, which has no location, while
+  // server() already serves that host.
+  if (ctx.location === undefined) return;
   const controller = new AbortController();
   // A Stop script's block becomes the session's next prompt, sent through the V2 session API.
   const client = {
     session: {
-      promptAsync: ({ path, body }) =>
+      prompt: ({ path, body }) =>
         ctx.session.prompt({
           sessionID: path.id,
           text: body.parts.map((part) => part.text).join("\n"),
@@ -466,6 +454,10 @@ function stopReasonOf(script, args, payload, directory) {
   });
 }
 
+function reportHookFailure(script, error) {
+  console.warn("[aidd] OpenCode hook " + script + " failed: " + String(error));
+}
+
 /** Pure: a finished tool call -> every PostToolUse hook whose matcher allows its tool. OpenCode
  * names the written file `filePath`; the scripts read Claude Code's `file_path`. */
 function postToolUseCallsFor(call, directory) {
@@ -487,9 +479,15 @@ function postToolUseCallsFor(call, directory) {
   }));
 }
 
+// Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
+// Module-level: the host creates the plugin again, and a fresh set would forget a continuation.
+const continued = new Set();
+
 export const AiddContextHooks = async (input) => {
-  // Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
-  const continued = new Set();
+  // Stop handlings in flight: `opencode run` exits once the session is idle, so dispose waits.
+  let pending = Promise.resolve();
+  // OpenCode keeps delivering events to an instance it disposed once it has created the next one.
+  let disposed = false;
   // SessionStart's own approximation (module doc comment above): fired once here, never
   // per session. Silent on purpose: a memory refresh
   // that breaks OpenCode's own startup is worse than one that never ran.
@@ -506,22 +504,36 @@ export const AiddContextHooks = async (input) => {
     // Silent on purpose - see above.
   }
   return {
+    dispose: async () => {
+      disposed = true;
+      await pending;
+    },
     event: async ({ event }) => {
+      if (disposed) return;
       try {
         const directory = event?.properties?.directory ?? input.directory;
+        // Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
         for (const call of stopCallsFor(event, directory)) {
           const sessionId = call.payload.session_id;
           const payload = { ...call.payload, stop_hook_active: continued.has(sessionId) };
-          const reason = await stopReasonOf(call.script, call.args, payload, directory);
-          if (!reason) {
-            continued.delete(sessionId);
-            continue;
-          }
-          continued.add(sessionId);
-          // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
-          input.client.session
-            .promptAsync({ path: { id: sessionId }, body: { parts: [{ type: "text", text: reason }] } })
-            .catch(() => {});
+          const asking = stopReasonOf(call.script, call.args, payload, directory);
+          // Pending before the script ends: dispose waits for a handling whose script still runs.
+          // The prompt is the session's next turn, and this handler must not hold it.
+          const handling = asking
+            .then((reason) => {
+              if (!reason) {
+                continued.delete(sessionId);
+                return undefined;
+              }
+              continued.add(sessionId);
+              return input.client.session.prompt({
+                path: { id: sessionId },
+                body: { parts: [{ type: "text", text: reason }] },
+              });
+            })
+            .catch((error) => reportHookFailure(call.script, "follow-up not delivered: " + String(error)));
+          pending = Promise.all([pending, handling]).then(() => {});
+          await asking;
         }
       } catch {
         // Silent on purpose - see above.
@@ -564,7 +576,7 @@ import { fileURLToPath } from "node:url";
 // itself, not a Node runtime able to run this plugin's own hook scripts.
 const HOOKS_DIR = fileURLToPath(new URL("../hooks/aidd-telemetry/", import.meta.url));
 
-const SESSION_START = [{"script":"session-start.cjs","args":[]},{"script":"catch-up.cjs","args":[]}];
+const SESSION_START = [{"script":"task.cjs","args":["remind"]},{"script":"ledger.cjs","args":["ingest"]}];
 const STOP = [];
 const POST_TOOL_USE = [];
 
@@ -651,6 +663,10 @@ function stopReasonOf(script, args, payload, directory) {
   });
 }
 
+function reportHookFailure(script, error) {
+  console.warn("[aidd] OpenCode hook " + script + " failed: " + String(error));
+}
+
 /** Pure: a finished tool call -> every PostToolUse hook whose matcher allows its tool. OpenCode
  * names the written file `filePath`; the scripts read Claude Code's `file_path`. */
 function postToolUseCallsFor(call, directory) {
@@ -672,9 +688,15 @@ function postToolUseCallsFor(call, directory) {
   }));
 }
 
+// Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
+// Module-level: the host creates the plugin again, and a fresh set would forget a continuation.
+const continued = new Set();
+
 export const AiddTelemetryHooks = async (input) => {
-  // Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
-  const continued = new Set();
+  // Stop handlings in flight: `opencode run` exits once the session is idle, so dispose waits.
+  let pending = Promise.resolve();
+  // OpenCode keeps delivering events to an instance it disposed once it has created the next one.
+  let disposed = false;
   // SessionStart's own approximation (module doc comment above): fired once here, never
   // per session. Silent on purpose: a memory refresh
   // that breaks OpenCode's own startup is worse than one that never ran.
@@ -691,22 +713,36 @@ export const AiddTelemetryHooks = async (input) => {
     // Silent on purpose - see above.
   }
   return {
+    dispose: async () => {
+      disposed = true;
+      await pending;
+    },
     event: async ({ event }) => {
+      if (disposed) return;
       try {
         const directory = event?.properties?.directory ?? input.directory;
+        // Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
         for (const call of stopCallsFor(event, directory)) {
           const sessionId = call.payload.session_id;
           const payload = { ...call.payload, stop_hook_active: continued.has(sessionId) };
-          const reason = await stopReasonOf(call.script, call.args, payload, directory);
-          if (!reason) {
-            continued.delete(sessionId);
-            continue;
-          }
-          continued.add(sessionId);
-          // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
-          input.client.session
-            .promptAsync({ path: { id: sessionId }, body: { parts: [{ type: "text", text: reason }] } })
-            .catch(() => {});
+          const asking = stopReasonOf(call.script, call.args, payload, directory);
+          // Pending before the script ends: dispose waits for a handling whose script still runs.
+          // The prompt is the session's next turn, and this handler must not hold it.
+          const handling = asking
+            .then((reason) => {
+              if (!reason) {
+                continued.delete(sessionId);
+                return undefined;
+              }
+              continued.add(sessionId);
+              return input.client.session.prompt({
+                path: { id: sessionId },
+                body: { parts: [{ type: "text", text: reason }] },
+              });
+            })
+            .catch((error) => reportHookFailure(call.script, "follow-up not delivered: " + String(error)));
+          pending = Promise.all([pending, handling]).then(() => {});
+          await asking;
         }
       } catch {
         // Silent on purpose - see above.
@@ -766,24 +802,19 @@ project opencode aidd-context scope=project: 19 hook files
   .opencode/plugin/aidd-context-hooks.js
   projectHooks null
   dependents []
-project opencode aidd-telemetry scope=project: 18 hook files
-  .opencode/hooks/aidd-telemetry/catch-up.cjs
+project opencode aidd-telemetry scope=project: 13 hook files
+  .opencode/hooks/aidd-telemetry/ledger.cjs
   .opencode/hooks/aidd-telemetry/lib/aidd.cjs
-  .opencode/hooks/aidd-telemetry/lib/binding.cjs
   .opencode/hooks/aidd-telemetry/lib/claude-only.cjs
   .opencode/hooks/aidd-telemetry/lib/codex-session-file.cjs
   .opencode/hooks/aidd-telemetry/lib/consent.cjs
   .opencode/hooks/aidd-telemetry/lib/context.cjs
-  .opencode/hooks/aidd-telemetry/lib/declaration.cjs
   .opencode/hooks/aidd-telemetry/lib/git.cjs
-  .opencode/hooks/aidd-telemetry/lib/hook-io.cjs
+  .opencode/hooks/aidd-telemetry/lib/host.cjs
   .opencode/hooks/aidd-telemetry/lib/jsonl.cjs
-  .opencode/hooks/aidd-telemetry/lib/lookup.cjs
-  .opencode/hooks/aidd-telemetry/lib/presence.cjs
   .opencode/hooks/aidd-telemetry/lib/telemetry-dir.cjs
   .opencode/hooks/aidd-telemetry/lib/tool.cjs
-  .opencode/hooks/aidd-telemetry/prompt-gate.cjs
-  .opencode/hooks/aidd-telemetry/session-start.cjs
+  .opencode/hooks/aidd-telemetry/task.cjs
   .opencode/plugin/aidd-telemetry-hooks.js
   projectHooks null
   dependents []

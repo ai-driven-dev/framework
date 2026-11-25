@@ -1,0 +1,62 @@
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribution/contract/marketplace.js";
+import {
+  type MachineStateGuards,
+  PurgeMachineState,
+} from "../../../../../src/contexts/installation/application/removal/purge-machine-state.js";
+import { ResolvePurgeCandidate } from "../../../../../src/contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
+import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+
+const CONFIG = "/fake-home/.config/aidd";
+
+function machineOver(fs: InMemoryFileAdapter) {
+  const logger = new CapturingLogger();
+  const cache = new ResolvePurgeCandidate(fs, logger);
+  const guards: MachineStateGuards = {
+    userConfigDir: () => CONFIG,
+    resolveCacheCandidate: (cacheRoot, segments, label) =>
+      cache.execute(cacheRoot, segments, label),
+    frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+  };
+  return new PurgeMachineState({ fs, logger, guards });
+}
+
+describe("listing the built versions on the machine", () => {
+  it("names each built version once, sorted", async () => {
+    const fs = new InMemoryFileAdapter();
+    fs.setFile(join(CONFIG, "cache", "built", "2.0.0", "a", "x"), "1");
+    fs.setFile(join(CONFIG, "cache", "built", "1.2.3", "a", "x"), "1");
+    fs.setFile(join(CONFIG, "cache", "built", "1.2.3", "b", "y"), "1");
+
+    await expect(machineOver(fs).builtVersions()).resolves.toEqual(["1.2.3", "2.0.0"]);
+  });
+
+  it("names none when nothing was ever built", async () => {
+    await expect(machineOver(new InMemoryFileAdapter()).builtVersions()).resolves.toEqual([]);
+  });
+});
+
+describe("purging the machine state", () => {
+  it("removes the built cache and the self-update check, then the cache shell they emptied", async () => {
+    const fs = new InMemoryFileAdapter();
+    fs.setFile(join(CONFIG, "cache", "built", "1.0.0", "x"), "1");
+    fs.setFile(join(CONFIG, "cache", "update-check.json"), "{}");
+
+    await machineOver(fs).purge();
+
+    expect(await fs.isDirectory(join(CONFIG, "cache"))).toBe(false);
+  });
+
+  it("keeps the cache shell while another occupant still uses it", async () => {
+    const fs = new InMemoryFileAdapter();
+    fs.setFile(join(CONFIG, "cache", "built", "1.0.0", "x"), "1");
+    fs.setFile(join(CONFIG, "cache", "other-tool", "keep"), "1");
+
+    await machineOver(fs).purge();
+
+    expect(fs.has(join(CONFIG, "cache", "other-tool", "keep"))).toBe(true);
+    expect(await fs.isDirectory(join(CONFIG, "cache", "built"))).toBe(false);
+  });
+});

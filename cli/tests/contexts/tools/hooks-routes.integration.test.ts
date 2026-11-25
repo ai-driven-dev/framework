@@ -1,19 +1,30 @@
-import { cp, mkdir, mkdtemp, readdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join, relative, sep } from "node:path";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { Manifest } from "../../../src/contexts/framework/domain/manifest.js";
-import type { HooksDescriptor } from "../../../src/contexts/tools/domain/formats/hooks-descriptor.js";
-import { CLAUDE_HOOKS } from "../../../src/contexts/tools/domain/profiles/claude/hooks.js";
-import { CODEX_HOOKS } from "../../../src/contexts/tools/domain/profiles/codex/hooks.js";
-import { COPILOT_HOOKS } from "../../../src/contexts/tools/domain/profiles/copilot/hooks.js";
-import { CURSOR_HOOKS } from "../../../src/contexts/tools/domain/profiles/cursor/hooks.js";
-import { KILO_HOOKS } from "../../../src/contexts/tools/domain/profiles/kilo/hooks.js";
-import { OPENCODE_HOOKS } from "../../../src/contexts/tools/domain/profiles/opencode/hooks.js";
-import { AI_TOOL_IDS, type AiToolId } from "../../../src/kernel/tool.js";
-import { CLIOutput } from "../../../src/presentation/output.js";
-import { pathWithoutAidd } from "../../e2e/helpers.js";
-import { REPOSITORY_ROOT } from "../../helpers/repository-root.js";
+import { afterAll, afterEach, beforeAll, describe, it, vi } from "vitest";
+import { createOutput } from "../../../src/composition/shared.js";
+import { claude } from "../../../src/composition/tool-profiles/claude.js";
+import { codexSpec } from "../../../src/composition/tool-profiles/codex.js";
+import { copilot } from "../../../src/composition/tool-profiles/copilot.js";
+import { cursor } from "../../../src/composition/tool-profiles/cursor.js";
+import { kilo } from "../../../src/composition/tool-profiles/kilo.js";
+import { opencode } from "../../../src/composition/tool-profiles/opencode.js";
+import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
+import type { HooksDescriptor } from "../../../src/contexts/tools/domain/formats/hooks/descriptor.js";
+import { defineAiTool } from "../../../src/contexts/tools/domain/profile/define-tool.js";
+import { SmolTomlCodec } from "../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
+import { render } from "../../../src/presentation/errors/error-translator.presenter.js";
+import type { AiToolId } from "../../../src/shared/domain/tool.js";
+import { expectGolden } from "../../golden/testing/expect-golden.builder.js";
+import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
+import { pathWithoutAidd } from "../../shared/testing/cli-sandbox.builder.js";
+import { dependentsRecorded } from "../../shared/testing/host-record-reading.builder.js";
+import {
+  type PluginMarketplaceSource,
+  pluginMarketplaceSource,
+} from "../../shared/testing/plugin-marketplace-source.builder.js";
+import { present } from "../../shared/testing/present.builder.js";
+import { REPOSITORY_ROOT } from "../../shared/testing/repository-root.builder.js";
 
 /**
  * Every route that writes or removes a tool's hook files, driven through the same use cases
@@ -60,6 +71,13 @@ interface Workspace {
 }
 
 const created: string[] = [];
+let marketplaceSource: PluginMarketplaceSource;
+
+beforeAll(async () => {
+  marketplaceSource = await pluginMarketplaceSource(PLUGINS);
+});
+
+afterAll(() => marketplaceSource.remove());
 
 afterEach(async () => {
   vi.unstubAllEnvs();
@@ -84,53 +102,44 @@ async function workspace(): Promise<Workspace> {
 }
 
 async function writeSource(source: string): Promise<void> {
-  await mkdir(join(source, ".claude-plugin"), { recursive: true });
-  for (const plugin of PLUGINS) {
-    await cp(join(REPOSITORY_ROOT, "plugins", plugin), join(source, "plugins", plugin), {
-      recursive: true,
-    });
-  }
-  await writeFile(
-    join(source, ".claude-plugin", "marketplace.json"),
-    JSON.stringify({
-      name: "aidd-framework",
-      version: "0.1.0",
-      description: "Hook routes",
-      owner: { name: "Test" },
-      plugins: PLUGINS.map((name) => ({ name, source: `./plugins/${name}`, strict: true })),
-    })
-  );
+  await marketplaceSource.linkAt(source);
 }
 
+type Deps = Awaited<ReturnType<typeof deps>>;
+
 async function deps(project: string) {
-  const { createDeps } = await import("../../../src/runtime/wiring/framework.js");
-  return createDeps(project, { verbose: false }, new CLIOutput(false));
+  const { containerFactory } = await import("../../../src/composition/container.js");
+  return containerFactory(catalogOf())(project, { verbose: false }, createOutput(false));
 }
 
 async function installTool(project: string, toolId: AiToolId): Promise<void> {
-  const d = await deps(project);
-  const { InitUseCase } = await import(
-    "../../../src/contexts/framework/application/init-use-case.js"
+  const wired = await deps(project);
+  const { InitProject } = await import(
+    "../../../src/contexts/installation/application/init-project.use-case.js"
   );
-  await new InitUseCase(d.fs, d.manifestRepo).execute({ projectRoot: project });
-  await d.installAiToolUseCase.execute({
-    toolId,
+  await new InitProject(
+    {
+      fs: wired.shared.fs,
+      manifestRepo: wired.shared.manifestRepo,
+      updateGitignore: new UpdateGitignore(wired.shared.fs),
+    },
+    catalogOf()
+  ).execute({
     projectRoot: project,
-    force: false,
-    version: "1.0.0",
+  });
+  const install = { tools: catalogOf(), toolId, force: false, version: "1.0.0" };
+  await wired.global.installAiToolWithPlugins.execute({
+    ...install,
+    projectRoot: project,
     propagatePlugins: false,
   });
 }
 
 async function installPlugin(project: string, toolId: AiToolId, plugin: string): Promise<void> {
-  const d = await deps(project);
-  await d.pluginInstallUseCase.execute({
-    pluginArg: join(REPOSITORY_ROOT, "plugins", plugin),
-    toolIds: [toolId],
-    projectRoot: project,
-    interactive: false,
-    yes: true,
-  });
+  const wired = await deps(project);
+  const pluginArg = join(REPOSITORY_ROOT, "plugins", plugin);
+  const install = { pluginArg, toolIds: [toolId], tools: catalogOf(), interactive: false };
+  await wired.plugin.installPlugin.execute({ ...install, projectRoot: project, yes: true });
 }
 
 async function build(
@@ -138,16 +147,26 @@ async function build(
   toolId: AiToolId,
   mode: "marketplace" | "flat"
 ): Promise<string | null> {
-  const { createFrameworkBuildUseCase } = await import("../../../src/runtime/wiring/translate.js");
-  const d = await deps(ws.project);
+  const { createFrameworkBuildUseCase } = await import(
+    "../../../src/composition/contexts/translate.js"
+  );
+  const wired = await deps(ws.project);
   const out = join(ws.root, `out-${mode}`);
   await mkdir(out, { recursive: true });
-  const useCase = createFrameworkBuildUseCase(d, {
-    target: toolId,
-    mode,
-    outDir: out,
-    force: false,
-  });
+  const useCase = createFrameworkBuildUseCase(
+    catalogOf(),
+    {
+      fs: wired.shared.fs,
+      assetProvider: wired.installation.assetProvider,
+      logger: wired.shared.logger,
+    },
+    {
+      target: toolId,
+      mode,
+      outDir: out,
+      force: false,
+    }
+  );
   if (useCase === undefined) return null;
   await writeSource(ws.source);
   await useCase.execute({ sourceDir: ws.source, outDir: out, target: toolId, mode });
@@ -191,12 +210,12 @@ async function sourceHookScripts(): Promise<Map<string, string>> {
 const ADAPTERS = join(import.meta.dirname, "..", "..", "..", "assets", "hooks-runtime");
 
 const DESCRIPTORS: Readonly<Record<string, HooksDescriptor>> = {
-  claude: CLAUDE_HOOKS,
-  codex: CODEX_HOOKS,
-  copilot: COPILOT_HOOKS,
-  cursor: CURSOR_HOOKS,
-  opencode: OPENCODE_HOOKS,
-  kilo: KILO_HOOKS,
+  claude: present(claude.hooks),
+  codex: present(defineAiTool(codexSpec, { toml: new SmolTomlCodec() }).hooks),
+  copilot: present(copilot.hooks),
+  cursor: present(cursor.hooks),
+  opencode: present(opencode.hooks),
+  kilo: present(kilo.hooks),
 };
 
 /** Each tool's host adapter by content, so a delivered copy names the one it is: an asset file
@@ -228,14 +247,53 @@ function hooksOfDescriptor(content: string): string | null {
   return hooks === undefined ? null : JSON.stringify({ hooks }, null, 2);
 }
 
+function byRelativePath(a: { rel: string }, b: { rel: string }): number {
+  if (a.rel === b.rel) return 0;
+  return a.rel < b.rel ? -1 : 1;
+}
+
+interface HookSources {
+  readonly scripts: ReadonlyMap<string, string>;
+  readonly adapters: ReadonlyMap<string, string>;
+}
+
+/** The plugin script a delivered file was copied from, by the path it arrives under. */
+function pluginScriptOf(scripts: ReadonlyMap<string, string>, rel: string): string | undefined {
+  const origin = [...scripts].find(([key]) => {
+    const [plugin, ...rest] = key.split("/");
+    return /\.c?js$/.test(rel) && rel.includes(`${plugin}/`) && rel.endsWith(`/${rest.join("/")}`);
+  });
+  return origin?.[1];
+}
+
+/** One delivered hook file as the snapshot shows it, or `null` for a descriptor with no hooks. */
+async function hookFileSection(
+  { label, rel, file }: { label: string; rel: string; file: string },
+  sources: HookSources,
+  ws: Workspace
+): Promise<string | null> {
+  const content = await readFile(file, "utf8");
+  const shown = `${label}/${rel}`;
+  const adapter = basename(rel) === "host.cjs" ? sources.adapters.get(content) : undefined;
+  if (adapter !== undefined) {
+    return `## ${shown}\nscript, identical to the host adapter ${adapter}\n`;
+  }
+  const origin = pluginScriptOf(sources.scripts, rel);
+  if (origin !== undefined) {
+    const verdict = origin === content ? "identical to" : "differs from";
+    return `## ${shown}\nscript, ${verdict} the plugin source\n`;
+  }
+  const shownContent = basename(rel) === "plugin.json" ? hooksOfDescriptor(content) : content;
+  return shownContent === null ? null : `## ${shown}\n${normalize(shownContent, ws)}\n`;
+}
+
 /**
  * Hook scripts are plugin content, not route output: they are pinned by path and by whether
  * they arrive byte for byte. Everything a route composes (config, bridges, descriptors'
  * hooks reference) is pinned in full.
  */
 async function describeHookFiles(ws: Workspace, bases: readonly string[]): Promise<string> {
-  const scripts = await sourceHookScripts();
-  const adapters = await hostAdapters();
+  const sources = { scripts: await sourceHookScripts(), adapters: await hostAdapters() };
   const sections: string[] = [];
   for (const base of bases) {
     const label = relative(ws.root, base).split(sep).join("/");
@@ -243,57 +301,55 @@ async function describeHookFiles(ws: Workspace, bases: readonly string[]): Promi
       file,
       rel: relative(base, file).split(sep).join("/"),
     }));
-    for (const { file, rel } of found.sort((a, b) =>
-      a.rel < b.rel ? -1 : a.rel > b.rel ? 1 : 0
-    )) {
-      if (!isHookFile(rel)) continue;
-      const content = await readFile(file, "utf8");
-      const shown = `${label}/${rel}`;
-      const adapter = basename(rel) === "host.cjs" ? adapters.get(content) : undefined;
-      if (adapter !== undefined) {
-        sections.push(`## ${shown}\nscript, identical to the host adapter ${adapter}\n`);
-        continue;
-      }
-      const origin = [...scripts].find(([key]) => {
-        const [plugin, ...rest] = key.split("/");
-        return (
-          /\.c?js$/.test(rel) && rel.includes(`${plugin}/`) && rel.endsWith(`/${rest.join("/")}`)
-        );
-      });
-      if (origin !== undefined) {
-        const verdict = origin[1] === content ? "identical to" : "differs from";
-        sections.push(`## ${shown}\nscript, ${verdict} the plugin source\n`);
-        continue;
-      }
-      const shownContent = basename(rel) === "plugin.json" ? hooksOfDescriptor(content) : content;
-      if (shownContent !== null) sections.push(`## ${shown}\n${normalize(shownContent, ws)}\n`);
+    const hookFiles = found.sort(byRelativePath).filter(({ rel }) => isHookFile(rel));
+    for (const { file, rel } of hookFiles) {
+      const section = await hookFileSection({ label, rel, file }, sources, ws);
+      if (section !== null) sections.push(section);
     }
   }
   return sections.length === 0 ? "no hook file\n" : sections.join("\n");
 }
 
-async function recordedPlugins(ws: Workspace, path: string, scope: string): Promise<string[]> {
-  const text = await readFile(path, "utf8").catch(() => null);
-  if (text === null) return [`${scope}: no manifest`];
-  const manifest = Manifest.fromJSON(JSON.parse(text));
+type RecordedManifest = NonNullable<Awaited<ReturnType<Deps["shared"]["manifestRepo"]["load"]>>>;
+
+type RegistrationRecords = Awaited<ReturnType<Deps["shared"]["manifestRepo"]["loadRecords"]>>;
+type RecordedPlugin = ReturnType<RecordedManifest["getRecordedPlugins"]>[number];
+
+function recordedPluginLines(
+  ws: Workspace,
+  header: { scope: string; toolId: string },
+  recorded: RecordedPlugin,
+  registrations: RegistrationRecords extends Map<unknown, infer Record> ? Record | undefined : never
+): string[] {
+  const { plugin } = recorded;
+  const hookFiles = [...plugin.files.keys()]
+    .filter((f) => /hook/i.test(f) && !f.includes("/skills/"))
+    .sort();
+  const projectHooks = JSON.stringify(recorded.provenance.projectHooks ?? null, null, 2);
+  const dependents = dependentsRecorded(registrations, plugin.name).map(
+    (dependent) => `<root>/${relative(ws.root, dependent).split(sep).join("/")}`
+  );
+  return [
+    `${header.scope} ${header.toolId} ${plugin.name} scope=${plugin.scope}: ${hookFiles.length} hook files`,
+    ...hookFiles.map((f) => `  ${f}`),
+    `  projectHooks ${projectHooks}`,
+    `  dependents ${JSON.stringify(dependents)}`,
+  ];
+}
+
+async function recordedPlugins(
+  ws: Workspace,
+  manifest: RecordedManifest | null,
+  records: RegistrationRecords,
+  scope: string
+): Promise<string[]> {
+  if (manifest === null) return [`${scope}: no manifest`];
   const lines: string[] = [];
   for (const toolId of manifest.getInstalledToolIds()) {
-    for (const plugin of manifest.getPlugins(toolId)) {
-      const hookFiles = [...plugin.files.keys()]
-        .filter((f) => /hook/i.test(f) && !f.includes("/skills/"))
-        .sort();
-      lines.push(
-        `${scope} ${toolId} ${plugin.name} scope=${plugin.scope}: ${hookFiles.length} hook files`
-      );
-      lines.push(...hookFiles.map((f) => `  ${f}`));
-      const projectHooks = JSON.stringify(plugin.projectHooks ?? null, null, 2);
-      lines.push(`  projectHooks ${projectHooks}`);
-      const dependents = plugin.dependents.map(
-        (dependent) => `<root>/${relative(ws.root, dependent).split(sep).join("/")}`
-      );
-      lines.push(`  dependents ${JSON.stringify(dependents)}`);
+    const registrations = records.get(toolId);
+    for (const plugin of manifest.getRecordedPlugins(toolId)) {
+      lines.push(...recordedPluginLines(ws, { scope, toolId }, plugin, registrations));
     }
-    const registrations = manifest.getNativeRegistrations(toolId);
     lines.push(
       `${scope} ${toolId} nativeRegistrations pluginRefs ${JSON.stringify(registrations?.pluginRefs ?? null)}`
     );
@@ -302,22 +358,33 @@ async function recordedPlugins(ws: Workspace, path: string, scope: string): Prom
 }
 
 async function pluginsRecorded(ws: Workspace): Promise<string> {
+  const wired = await deps(ws.project);
   const lines = [
-    ...(await recordedPlugins(ws, join(ws.project, ".aidd", "manifest.json"), "project")),
-    ...(await recordedPlugins(ws, join(ws.home, ".config", "aidd", "manifest.json"), "machine")),
+    ...(await recordedPlugins(
+      ws,
+      await wired.shared.manifestRepo.load(),
+      await wired.shared.manifestRepo.loadRecords(),
+      "project"
+    )),
+    ...(await recordedPlugins(
+      ws,
+      await wired.shared.userManifestRepo.load(),
+      await wired.shared.userManifestRepo.loadRecords(),
+      "machine"
+    )),
   ];
   return `${normalize(lines.join("\n"), ws)}\n`;
 }
 
 /**
- * `aidd setup --plugins <names>` is the route that reinstalls: SetupPluginsPromptUseCase asks
+ * `aidd setup --plugins <names>` is the route that reinstalls: ChoosePlugins asks
  * for `replace: true`, so an existing plugin's entries are dropped and added again. The plugins
  * are installed from a marketplace first, as setup does, then setup runs over them.
  */
 async function reinstallThroughSetup(ws: Workspace): Promise<string> {
   await writeSource(ws.source);
-  const d = await deps(ws.project);
-  await d.marketplaceAddUseCase.execute({
+  const wired = await deps(ws.project);
+  await wired.marketplace.addMarketplace.execute({
     source: { kind: "local", path: ws.source },
     name: "hooks-routes",
     scope: "project",
@@ -329,19 +396,51 @@ async function reinstallThroughSetup(ws: Workspace): Promise<string> {
     mode: "named",
     pluginNames: [...PLUGINS],
     interactive: false,
+    tools: catalogOf(),
   } as const;
-  await d.setupPluginsPromptUseCase.execute(options);
+  await wired.setup.choosePlugins.execute(options);
   const before = await describeHookFiles(ws, [ws.project, ws.home]);
   let outcome = "setup over installed plugins resolved";
   try {
-    await d.setupPluginsPromptUseCase.execute(options);
+    await wired.setup.choosePlugins.execute(options);
   } catch (error) {
-    outcome = `setup over installed plugins threw ${(error as Error).constructor.name}: ${normalize((error as Error).message, ws)}`;
+    outcome = `setup over installed plugins threw ${(error as Error).constructor.name}: ${normalize(render(error), ws)}`;
   }
   const after = await describeHookFiles(ws, [ws.project, ws.home]);
   if (!/^## .*hook/im.test(after))
     return `${outcome}\nno hook file written without the host binary`;
   return `${outcome}\nhook files unchanged by the second run: ${before === after}`;
+}
+
+async function recordedReport(ws: Workspace, bases: readonly string[]): Promise<string> {
+  return `${await describeHookFiles(ws, bases)}\n# recorded\n${await pluginsRecorded(ws)}`;
+}
+
+async function secondInstall(ws: Workspace, toolId: AiToolId): Promise<string> {
+  try {
+    await installPlugin(ws.project, toolId, "aidd-context");
+    return "second install resolved";
+  } catch (error) {
+    return `second install threw ${(error as Error).constructor.name}: ${normalize(render(error), ws)}`;
+  }
+}
+
+/** The routes that start from the tool and the two plugins installed in a project. */
+async function runOnInstalled(ws: Workspace, route: Route, toolId: AiToolId): Promise<string> {
+  const bases = [ws.project, ws.home];
+  if (route === "plugin-install") return recordedReport(ws, bases);
+  if (route === "plugin-install-twice") {
+    return `${await secondInstall(ws, toolId)}\n\n${await recordedReport(ws, bases)}`;
+  }
+  const wired = await deps(ws.project);
+  if (route === "plugin-remove") {
+    const removal = { pluginName: "aidd-context", toolIds: [toolId] };
+    await wired.plugin.removePlugin.execute({ ...removal, projectRoot: ws.project });
+    return recordedReport(ws, bases);
+  }
+  const clean = { force: true, interactive: false, tools: catalogOf() };
+  await wired.clean.cleanProject.execute({ ...clean, projectRoot: ws.project });
+  return recordedReport(ws, bases);
 }
 
 async function run(route: Route, toolId: AiToolId): Promise<string> {
@@ -357,40 +456,17 @@ async function run(route: Route, toolId: AiToolId): Promise<string> {
   }
   await installPlugin(ws.project, toolId, "aidd-context");
   await installPlugin(ws.project, toolId, "aidd-telemetry");
-  const bases = [ws.project, ws.home];
-  if (route === "plugin-install") {
-    return `${await describeHookFiles(ws, bases)}\n# recorded\n${await pluginsRecorded(ws)}`;
-  }
-  if (route === "plugin-install-twice") {
-    let outcome = "second install resolved";
-    try {
-      await installPlugin(ws.project, toolId, "aidd-context");
-    } catch (error) {
-      outcome = `second install threw ${(error as Error).constructor.name}: ${normalize((error as Error).message, ws)}`;
-    }
-    return `${outcome}\n\n${await describeHookFiles(ws, bases)}\n# recorded\n${await pluginsRecorded(ws)}`;
-  }
-  const d = await deps(ws.project);
-  if (route === "plugin-remove") {
-    await d.pluginRemoveUseCase.execute({
-      pluginName: "aidd-context",
-      toolIds: [toolId],
-      projectRoot: ws.project,
-    });
-    return `${await describeHookFiles(ws, bases)}\n# recorded\n${await pluginsRecorded(ws)}`;
-  }
-  await d.cleanUseCase.execute({ projectRoot: ws.project, force: true, interactive: false });
-  return `${await describeHookFiles(ws, bases)}\n# recorded\n${await pluginsRecorded(ws)}`;
+  return runOnInstalled(ws, route, toolId);
 }
 
 describe("the hook files every route writes and removes, per tool", () => {
-  for (const toolId of AI_TOOL_IDS) {
+  for (const toolId of catalogOf().idsInCanonicalOrder("ai")) {
     describe(toolId, () => {
       for (const route of ROUTES) {
         it(`${route} leaves exactly the pinned hook files`, async () => {
           const actual = await run(route, toolId);
 
-          await expect(actual).toMatchFileSnapshot(join(FIXTURES, toolId, `${route}.txt`));
+          await expectGolden(join(FIXTURES, toolId, `${route}.txt`), actual, { format: "text" });
         });
       }
     });

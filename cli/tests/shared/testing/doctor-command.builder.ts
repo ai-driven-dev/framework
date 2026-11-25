@@ -1,0 +1,123 @@
+import { Command } from "commander";
+import { afterEach, beforeEach, type Mock, vi } from "vitest";
+import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
+import { ReadMachineInstallation } from "../../../src/contexts/installation/application/doctor/read-machine-installation.use-case.js";
+import { RunUserScopeDoctor } from "../../../src/orchestration/doctor/run-user-scope-doctor.use-case.js";
+import { registerDoctorCommand } from "../../../src/presentation/controllers/doctor/doctor.controller.js";
+import { bindOutput } from "../../../src/presentation/controllers/menu/global-options.controller.js";
+import { processOutputFactory } from "./output-factory.builder.js";
+import { parseToExit } from "./parse-to-exit.builder.js";
+import { manifestRepositoryLoading } from "./partial-ports.builder.js";
+import { SYNTHETIC_TOOL, syntheticMixedCatalog } from "./synthetic-tool-id.builder.js";
+
+/** A scope with nothing to report. */
+export const HEALTHY_SCOPE = { toolHealth: [], issues: [] };
+
+/** The doctor command over doubles: every read it makes, what it wrote, and a way to run it. */
+export interface DoctorHarness {
+  readonly doctorAll: Mock;
+  readonly statusAll: Mock;
+  readonly doctorScoped: Mock;
+  readonly statusScoped: Mock;
+  readonly doctorRegistration: Mock;
+  readonly loadUserManifest: Mock;
+  readonly containerOf: Mock;
+  readonly written: string[];
+  readonly errors: string[];
+  readonly catalog: RegisteredCatalog;
+  readonly run: (...args: string[]) => Promise<string[]>;
+}
+
+/** Wires the doctor command to healthy doubles before each case and restores the process after. */
+export function doctorHarness(catalog: RegisteredCatalog = syntheticMixedCatalog()): DoctorHarness {
+  const doctorAll: Mock = vi.fn();
+  const statusAll: Mock = vi.fn();
+  const doctorScoped: Mock = vi.fn();
+  const statusScoped: Mock = vi.fn();
+  const doctorRegistration: Mock = vi.fn();
+  const loadUserManifest: Mock = vi.fn();
+  const containerOf: Mock = vi.fn(async () => ({
+    doctor: {
+      doctorAll: { execute: doctorAll },
+      runDoctor: { execute: doctorScoped },
+      runUserScopeDoctor: new RunUserScopeDoctor(
+        new ReadMachineInstallation(manifestRepositoryLoading(loadUserManifest)),
+        { execute: doctorRegistration }
+      ),
+      userSettingsFileOf: (toolId: string) => {
+        const profile = catalog.profile(toolId);
+        return profile.kind === "ai"
+          ? profile.nativeActivation()?.userSettingsFile("/home/dev", () => undefined)
+          : undefined;
+      },
+    },
+    global: {
+      reportAllStatus: { execute: statusAll },
+      reportStatus: { execute: statusScoped },
+    },
+  }));
+  const written: string[] = [];
+  const errors: string[] = [];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    written.length = 0;
+    errors.length = 0;
+    vi.spyOn(process.stdout, "write").mockImplementation((chunk) => {
+      written.push(String(chunk));
+      return true;
+    });
+    vi.spyOn(process.stderr, "write").mockImplementation((chunk) => {
+      errors.push(String(chunk));
+      return true;
+    });
+    doctorAll.mockResolvedValue({
+      errors: [],
+      ai: HEALTHY_SCOPE,
+      ide: HEALTHY_SCOPE,
+      pluginIssues: [],
+      healthy: true,
+    });
+    statusAll.mockResolvedValue({
+      aiTools: { tools: [] },
+      ideTools: { tools: [] },
+      pluginDrift: [],
+    });
+    doctorScoped.mockResolvedValue({ toolHealth: [], issues: [], pluginIssues: [], healthy: true });
+    statusScoped.mockResolvedValue({ tools: [], pluginDrift: [] });
+    doctorRegistration.mockResolvedValue([]);
+    loadUserManifest.mockResolvedValue({
+      getInstalledToolIds: () => [SYNTHETIC_TOOL],
+      getToolVersion: () => "5.2.2",
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    process.exitCode = undefined;
+  });
+
+  async function run(...args: string[]): Promise<string[]> {
+    const program = new Command();
+    bindOutput(program, processOutputFactory());
+    program.exitOverride();
+    program.option("--verbose");
+    registerDoctorCommand(program, catalog, containerOf);
+    await parseToExit(program, ["node", "aidd", "doctor", ...args]);
+    return written.join("").split("\n").slice(0, -1);
+  }
+
+  return {
+    doctorAll,
+    statusAll,
+    doctorScoped,
+    statusScoped,
+    doctorRegistration,
+    loadUserManifest,
+    containerOf,
+    written,
+    errors,
+    catalog,
+    run,
+  };
+}

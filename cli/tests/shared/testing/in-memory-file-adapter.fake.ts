@@ -1,0 +1,236 @@
+import { join, posix, resolve } from "node:path";
+import type { FileMerger } from "../../../src/contexts/installation/ports/file-merger.js";
+import { FileHash } from "../../../src/shared/domain/file-hash.js";
+import { type MergeStrategy, mergeIntoJsonFile } from "../../../src/shared/domain/merge.js";
+import type { FileReader } from "../../../src/shared/ports/file-reader.js";
+import type { FileWriter } from "../../../src/shared/ports/file-writer.js";
+
+export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
+  async isDirectory(path: string): Promise<boolean> {
+    return !this.files.has(norm(path)) && this.directories.has(dirKey(path));
+  }
+
+  /** No file here has a mode: none is ever executable, and no product code asks. */
+  async isExecutable(_path: string): Promise<boolean> {
+    return false;
+  }
+
+  private readonly files = new Map<string, string>();
+  /** Directories that exist: every ancestor of a file, plus what `createDirectory` made.
+   * Deleting a file leaves them, as on a real filesystem. */
+  private readonly directories = new Set<string>();
+  /** Path → what it resolves to, for a test proving `realpath`-based containment
+   * without a real filesystem - see `setSymlink`. */
+  private readonly symlinks = new Map<string, string>();
+
+  /** `directories` exist empty, as a project root does before anything is installed into it. */
+  constructor(seed: Record<string, string> = {}, directories: readonly string[] = []) {
+    for (const [path, content] of Object.entries(seed)) {
+      this.setFile(path, content);
+    }
+    for (const path of directories) {
+      const key = dirKey(path);
+      this.directories.add(key);
+      this.registerAncestors(key);
+    }
+  }
+
+  async writeFile(path: string, content: string): Promise<void> {
+    this.setFile(path, content);
+  }
+
+  async deleteFile(path: string): Promise<void> {
+    this.files.delete(norm(path));
+  }
+
+  async createDirectory(path: string): Promise<void> {
+    const key = dirKey(path);
+    this.directories.add(key);
+    this.registerAncestors(key);
+  }
+
+  /** Climbs from `path` while the directory is known and holds nothing, as the real adapter. */
+  async deleteEmptyDirectories(path: string, floor?: string): Promise<void> {
+    let current = dirKey(path);
+    const stop = floor === undefined ? undefined : dirKey(floor);
+    while (current !== stop && this.directories.has(current) && !this.holdsAnything(current)) {
+      this.directories.delete(current);
+      const parent = posix.dirname(current);
+      if (parent === current) break;
+      current = parent;
+    }
+  }
+
+  async readFile(path: string): Promise<string> {
+    const normalizedPath = norm(path);
+    const content = this.files.get(normalizedPath);
+    if (content === undefined) {
+      throw enoent("open", normalizedPath);
+    }
+    return content;
+  }
+
+  /** Relative paths, recursive, the shape `FileAdapter` returns. */
+  async listDirectory(dirPath: string): Promise<string[]> {
+    const normalizedDir = dirKey(dirPath);
+    if (!this.directories.has(normalizedDir)) throw enoent("scandir", normalizedDir);
+    const prefix = normalizedDir.endsWith("/") ? normalizedDir : `${normalizedDir}/`;
+    const result: string[] = [];
+    for (const key of this.files.keys()) {
+      if (key.startsWith(prefix)) {
+        result.push(key.slice(prefix.length));
+      }
+    }
+    return result;
+  }
+
+  async fileExists(path: string): Promise<boolean> {
+    const normalizedPath = norm(path);
+    return this.files.has(normalizedPath) || this.directories.has(dirKey(path));
+  }
+
+  async readFileIfReadable(path: string): Promise<string | undefined> {
+    return this.readFile(path).catch(() => undefined);
+  }
+
+  async realpathIfResolvable(path: string): Promise<string | undefined> {
+    return this.realpath(path).catch(() => undefined);
+  }
+
+  async readFileHash(path: string): Promise<FileHash> {
+    const content = await this.readFile(path);
+    return FileHash.of(content);
+  }
+
+  /** Resolves through the longest matching registered symlink, like a real `fs.realpath`
+   * walking a symlinked ancestor; identity when none was declared, and `ENOENT` for a path that is
+   * neither a file nor a known directory. */
+  async realpath(path: string): Promise<string> {
+    const key = norm(resolve(path));
+    const bestMatch = this.longestSymlinkAbove(key);
+    // `posix.normalize`, not `resolve`: a virtual `/project/file` stays drive-free on Windows.
+    const resolved =
+      bestMatch === undefined
+        ? posix.normalize(norm(path))
+        : bestMatch.target + key.slice(bestMatch.link.length);
+    if (!(await this.existsIgnoringDrive(resolved))) {
+      throw enoent("realpath", norm(path));
+    }
+    return resolved;
+  }
+
+  private longestSymlinkAbove(key: string): { link: string; target: string } | undefined {
+    const above = [...this.symlinks]
+      .filter(([link]) => key === link || key.startsWith(`${link}/`))
+      .sort(([a], [b]) => b.length - a.length)[0];
+    return above && { link: above[0], target: above[1] };
+  }
+
+  /** Test-only: declares that `path` is a symlink resolving to `target`, so a test can
+   * prove `realpath`-based containment without touching a real filesystem. */
+  setSymlink(path: string, target: string): void {
+    this.symlinks.set(norm(resolve(path)), norm(target));
+  }
+
+  async mergeJsonFile(path: string, content: string, strategy: MergeStrategy): Promise<void> {
+    return mergeIntoJsonFile(this, { path, content, strategy });
+  }
+
+  async deleteDirectory(dirPath: string): Promise<void> {
+    const normalizedDir = dirKey(dirPath);
+    const prefix = normalizedDir.endsWith("/") ? normalizedDir : `${normalizedDir}/`;
+    const inside = (entry: string): boolean => entry.startsWith(prefix) || entry === normalizedDir;
+    for (const key of [...this.files.keys()].filter(inside)) this.files.delete(key);
+    for (const dir of [...this.directories].filter(inside)) this.directories.delete(dir);
+  }
+
+  async listFilesRecursive(dirPath: string): Promise<string[]> {
+    const normalizedDir = norm(dirPath);
+    const prefix = normalizedDir.endsWith("/") ? normalizedDir : `${normalizedDir}/`;
+    const result: string[] = [];
+    for (const key of this.files.keys()) {
+      if (key.startsWith(prefix)) {
+        result.push(join(dirPath, key.slice(prefix.length)));
+      }
+    }
+    return result;
+  }
+
+  setFile(path: string, content: string): void {
+    const key = norm(path);
+    this.files.set(key, content);
+    this.registerAncestors(key);
+  }
+
+  /** On Windows, product code resolves a virtual `/project` to `D:\project` (the working drive)
+   * before asking `realpath`; a tree seeded either way matches a path spelled either way. */
+  private async existsIgnoringDrive(path: string): Promise<boolean> {
+    return (
+      (await this.fileExists(path)) ||
+      (await this.fileExists(path.replace(DRIVE_PREFIX, ""))) ||
+      (await this.fileExists(resolve(path)))
+    );
+  }
+
+  private registerAncestors(key: string): void {
+    let parent = posix.dirname(key);
+    while (parent !== "." && !this.directories.has(parent)) {
+      this.directories.add(parent);
+      const next = posix.dirname(parent);
+      if (next === parent) break;
+      parent = next;
+    }
+  }
+
+  private holdsAnything(dir: string): boolean {
+    const prefix = dir.endsWith("/") ? dir : `${dir}/`;
+    for (const key of this.files.keys()) if (key.startsWith(prefix)) return true;
+    for (const other of this.directories) if (other.startsWith(prefix)) return true;
+    return false;
+  }
+
+  getFile(path: string): string | undefined {
+    return this.files.get(norm(path));
+  }
+
+  has(path: string): boolean {
+    return this.files.has(norm(path));
+  }
+
+  listAll(): string[] {
+    return [...this.files.keys()];
+  }
+
+  listUnder(dirPath: string): string[] {
+    const normalizedDir = norm(dirPath);
+    const prefix = normalizedDir.endsWith("/") ? normalizedDir : `${normalizedDir}/`;
+    return [...this.files.keys()].filter((k) => k.startsWith(prefix));
+  }
+}
+
+// A real Windows filesystem accepts "/" and "\" as equivalent; this Map<path, content>
+// double does not unless every path put through it is normalized to one spelling first.
+const DRIVE_PREFIX = /^[A-Za-z]:(?=\/)/;
+
+function norm(path: string): string {
+  return path.replaceAll("\\", "/");
+}
+
+// The real adapter's `stat` and `readdir` accept a trailing separator on a directory, and
+// callers spell directories that way (`report-status.use-case.ts` joins a tool directory ending in "/").
+function dirKey(path: string): string {
+  const key = norm(path);
+  return key.length > 1 && key.endsWith("/") ? key.replace(/\/+$/, "") || "/" : key;
+}
+
+/** An in-memory file system whose `root` exists empty, as a project does before anything is
+ * installed into it. */
+export function fsAt(root: string, seed: Record<string, string> = {}): InMemoryFileAdapter {
+  return new InMemoryFileAdapter(seed, [root]);
+}
+
+function enoent(syscall: string, path: string): Error {
+  return Object.assign(new Error(`ENOENT: no such file or directory, ${syscall} '${path}'`), {
+    code: "ENOENT",
+  });
+}

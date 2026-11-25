@@ -96,10 +96,17 @@ function continueTurn(text) {
   print({ decision: "block", reason: text });
 }
 
+/** Shows the person `person` alone, as the host's warning, and tells the model nothing. */
+function showPerson(person) {
+  if (typeof person === "string" && person !== "") print({ systemMessage: person });
+}
+
 /** Level 1 informs the model, level 2 requires a fix after a write. At Stop, any answer
- * continues the turn: there is no other way to reach the model there. */
-function answer({ level, text } = {}) {
-  if (current === undefined || typeof text !== "string" || text === "") return;
+ * continues the turn: there is no other way to reach the model there. With no `text`, only
+ * `person` is shown, at any event; beside a `text`, it is ignored. */
+function answer({ level, text, person } = {}) {
+  if (current === undefined) return;
+  if (typeof text !== "string" || text === "") return showPerson(person);
   if (current.event === "Stop") return continueTurn(text);
   if (level === 2 && current.event === "PostToolUse") {
     return print({ decision: "block", reason: text });

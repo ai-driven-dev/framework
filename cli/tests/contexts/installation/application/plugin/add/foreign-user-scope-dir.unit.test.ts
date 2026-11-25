@@ -1,0 +1,97 @@
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { foreignUserScopeDir } from "../../../../../../src/contexts/installation/application/plugin/add/foreign-user-scope-dir.js";
+import type { PlacePluginRequest } from "../../../../../../src/contexts/installation/application/plugin/add/place-plugin.use-case.js";
+import {
+  resolveScopeForInstall,
+  scopeBaseOf,
+} from "../../../../../../src/contexts/installation/application/plugin/plugin-target-resolution.js";
+import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
+import { RecordedPlugin } from "../../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import { PluginDistribution } from "../../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../../src/shared/domain/plugin/plugin-name.js";
+import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
+
+const homedir = (): string => "/home/dev";
+
+const ROOT = "/test-project";
+
+function command(machine: Manifest): PlacePluginRequest {
+  return {
+    dist: new PluginDistribution({
+      manifest: { name: parsePluginName("sample"), version: "1.0.0" },
+      format: TOOL.claude,
+      files: [],
+      components: { skills: [], commands: [], agents: [], rules: [], hooks: [], mcp: [] },
+    }),
+    toolIds: [],
+    source: { kind: "local", path: "/plugin" },
+    projectRoot: ROOT,
+    manifest: Manifest.create(),
+    machine,
+    marketplace: undefined,
+    previousMcpEntries: new Map(),
+    previousProjectHooks: new Map(),
+    previousFiles: new Map(),
+  };
+}
+
+const tools = registeredTools();
+const { vscode: _ide, ...aiTools } = TOOL;
+const userScoped = Object.values(aiTools)
+  .map((id) => tools.aiProfile(id))
+  .find((profile) => resolveScopeForInstall(profile) === "user");
+
+describe("looking for a user-scope directory someone else owns", () => {
+  it("has nothing to report for a tool that installs at project scope", async () => {
+    const tool = tools.aiProfile(TOOL.claude);
+
+    expect(
+      await foreignUserScopeDir({
+        fs: new InMemoryFileAdapter(),
+        command: command(Manifest.create()),
+        tool,
+        homedir,
+      })
+    ).toBeUndefined();
+  });
+
+  it.runIf(userScoped !== undefined)(
+    "names a user directory this project did not install",
+    async () => {
+      const tool = userScoped ?? tools.aiProfile(TOOL.claude);
+      const dir = join(scopeBaseOf(tool, { scope: "user", projectRoot: ROOT, homedir }), "sample");
+      const fs = new InMemoryFileAdapter({ [join(dir, "a.md")]: "x" });
+
+      expect(
+        await foreignUserScopeDir({ fs, command: command(Manifest.create()), tool, homedir })
+      ).toBe(dir);
+    }
+  );
+
+  it.runIf(userScoped !== undefined)(
+    "leaves a directory the machine already owns alone",
+    async () => {
+      const tool = userScoped ?? tools.aiProfile(TOOL.claude);
+      const dir = join(scopeBaseOf(tool, { scope: "user", projectRoot: ROOT, homedir }), "sample");
+      const machine = Manifest.create();
+      machine.addTool(tool.toolId, "1.0.0", []);
+      machine.addPlugin(
+        tool.toolId,
+        RecordedPlugin.fromMetadata({
+          name: "sample",
+          version: "1.0.0",
+          source: { kind: "local", path: "/plugin" },
+          strict: false,
+          scope: "user",
+        })
+      );
+      const fs = new InMemoryFileAdapter({ [join(dir, "a.md")]: "x" });
+
+      expect(
+        await foreignUserScopeDir({ fs, command: command(machine), tool, homedir })
+      ).toBeUndefined();
+    }
+  );
+});

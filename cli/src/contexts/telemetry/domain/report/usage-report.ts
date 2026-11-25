@@ -1,55 +1,17 @@
+import {
+  type AxisValue,
+  byCounter,
+  COUNTERS,
+  type CounterSum,
+  type ReportAxis,
+  type ReportRow,
+  type Tally,
+  UNATTRIBUTED_REASONS,
+  type UsageReport,
+} from "../../contract/usage-report.js";
 import type { StoredUsage } from "../stored-usage.js";
 import { compareText } from "../text-order.js";
-import {
-  type Attribution,
-  type AttributionFacts,
-  attribute,
-  UNATTRIBUTED_REASONS,
-  type UnattributedReason,
-} from "./attribution.js";
-
-export const REPORT_AXES = [
-  "total",
-  "person",
-  "session",
-  "model",
-  "agent",
-  "day",
-  "repository",
-  "task",
-  "ticket",
-  "tool",
-] as const;
-export type ReportAxis = (typeof REPORT_AXES)[number];
-
-export const COUNTERS = ["input", "output", "cache_read", "cache_write"] as const;
-export type Counter = (typeof COUNTERS)[number];
-
-export interface CounterSum {
-  readonly known: number;
-  readonly unknownRecords: number;
-}
-
-export type AxisValue =
-  | { readonly kind: "value"; readonly value: string }
-  | { readonly kind: "unattributed"; readonly reason: UnattributedReason }
-  | { readonly kind: "absent" };
-
-export interface Tally {
-  readonly records: number;
-  readonly counters: Readonly<Record<Counter, CounterSum>>;
-  readonly total: CounterSum;
-}
-
-export interface ReportRow extends Tally {
-  readonly value: AxisValue;
-}
-
-export interface UsageReport {
-  readonly axis: ReportAxis;
-  readonly rows: readonly ReportRow[];
-  readonly totals: Tally;
-}
+import { type Attribution, type AttributionFacts, attribute } from "./attribution.js";
 
 const ABSENT: AxisValue = { kind: "absent" };
 
@@ -63,16 +25,12 @@ function addCounter(sum: CounterSum, value: number | null): CounterSum {
 const EMPTY_SUM: CounterSum = { known: 0, unknownRecords: 0 };
 const EMPTY_TALLY: Tally = {
   records: 0,
-  counters: Object.fromEntries(
-    COUNTERS.map((counter) => [counter, EMPTY_SUM])
-  ) as Tally["counters"],
+  counters: byCounter(() => EMPTY_SUM),
   total: EMPTY_SUM,
 };
 
 function tally(held: Tally, record: StoredUsage): Tally {
-  const counters = Object.fromEntries(
-    COUNTERS.map((counter) => [counter, addCounter(held.counters[counter], record[counter])])
-  ) as Tally["counters"];
+  const counters = byCounter((counter) => addCounter(held.counters[counter], record[counter]));
   const known = COUNTERS.reduce((sum, counter) => sum + (record[counter] ?? 0), 0);
   const unknown = COUNTERS.some((counter) => record[counter] === null);
   return {
@@ -92,12 +50,17 @@ function unattributedValue(
 }
 
 /** What a call is on one axis: the row it lands on, and what a filter on that axis compares. */
-export function axisValueOf(
-  axis: ReportAxis,
-  record: StoredUsage,
-  attribution: Attribution,
-  person: string | null
-): AxisValue {
+export function axisValueOf({
+  axis,
+  record,
+  attribution,
+  person,
+}: {
+  readonly axis: ReportAxis;
+  readonly record: StoredUsage;
+  readonly attribution: Attribution;
+  readonly person: string | null;
+}): AxisValue {
   const value = (text: string | null): AxisValue =>
     text === null ? ABSENT : { kind: "value", value: text };
   switch (axis) {
@@ -149,16 +112,21 @@ function compareRows(axis: ReportAxis, a: ReportRow, b: ReportRow): number {
 
 /** What the calls cost, split along one axis. Every axis is a partition of the same calls, so
  * every axis adds up to the same totals: a call lands on exactly one row. */
-export function buildReport(
-  records: readonly StoredUsage[],
-  facts: AttributionFacts,
-  person: string | null,
-  axis: ReportAxis
-): UsageReport {
+export function buildReport({
+  records,
+  facts,
+  person,
+  axis,
+}: {
+  readonly records: readonly StoredUsage[];
+  readonly facts: AttributionFacts;
+  readonly person: string | null;
+  readonly axis: ReportAxis;
+}): UsageReport {
   const rows = new Map<string, ReportRow>();
   let totals = EMPTY_TALLY;
   for (const record of records) {
-    const value = axisValueOf(axis, record, attribute(record, facts), person);
+    const value = axisValueOf({ axis, record, attribution: attribute(record, facts), person });
     const key = JSON.stringify(value);
     rows.set(key, { value, ...tally(rows.get(key) ?? EMPTY_TALLY, record) });
     totals = tally(totals, record);

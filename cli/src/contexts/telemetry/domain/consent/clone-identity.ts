@@ -1,4 +1,4 @@
-import { asPlainObject } from "../../../../kernel/reading/plain-object.js";
+import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 
 /** A clone, told from every other by its git common dir: where it is, and which directory it
  * really is. The path alone is not enough, because a clone can be deleted and another made at
@@ -58,14 +58,15 @@ export function sameClone(a: CloneIdentity, b: CloneIdentity): boolean {
   return cloneKey(a) === cloneKey(b);
 }
 
+const filled = (value: unknown): value is string => typeof value === "string" && value !== "";
+const isBirth = (value: unknown): value is number =>
+  typeof value === "number" && Number.isFinite(value) && value >= 0;
+
 export function parseCloneIdentity(value: unknown): CloneIdentity | null {
   const object = asPlainObject(value);
   if (object === null) return null;
   const { path, dev, ino, birthtimeMs } = object;
-  if (typeof path !== "string" || path === "") return null;
-  if (typeof dev !== "string" || dev === "") return null;
-  if (typeof ino !== "string" || ino === "" || ino === "0") return null;
-  if (typeof birthtimeMs !== "number" || !Number.isFinite(birthtimeMs) || birthtimeMs < 0) {
+  if (!filled(path) || !filled(dev) || !filled(ino) || ino === "0" || !isBirth(birthtimeMs)) {
     return null;
   }
   return { path, dev, ino, birthtimeMs };

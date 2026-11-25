@@ -60,12 +60,17 @@ function declared(declaration: TaskDeclaration): SessionBinding {
 /** A session's own binding at an instant: what it declared, else what it carried. A carry
  * takes the carried session's binding as it stood when the carry was made, whatever was
  * declared there since. */
-function sessionBinding(
-  facts: BindingFacts,
-  sessionId: string,
-  at: number,
-  visiting: ReadonlySet<string>
-): SessionBinding | null {
+function sessionBinding({
+  facts,
+  sessionId,
+  at,
+  visiting,
+}: {
+  readonly facts: BindingFacts;
+  readonly sessionId: string;
+  readonly at: number;
+  readonly visiting: ReadonlySet<string>;
+}): SessionBinding | null {
   if (visiting.has(sessionId)) return null;
   const own = latestUpTo(
     facts.declarations.filter((entry) => entry.session_id === sessionId),
@@ -79,12 +84,12 @@ function sessionBinding(
     at
   );
   if (carry === null) return null;
-  const from = sessionBinding(
+  const from = sessionBinding({
     facts,
-    carry.from,
-    Date.parse(carry.at),
-    new Set(visiting).add(sessionId)
-  );
+    sessionId: carry.from,
+    at: Date.parse(carry.at),
+    visiting: new Set(visiting).add(sessionId),
+  });
   return from === null ? null : { ...from, source: "session-carried", carriedFrom: carry.from };
 }
 
@@ -92,7 +97,12 @@ function sessionBinding(
  * it carried across a `/clear`, then its branch's. */
 export function resolveBinding(facts: BindingFacts): Binding {
   if (facts.sessionId !== null) {
-    const session = sessionBinding(facts, facts.sessionId, facts.at.getTime(), new Set());
+    const session = sessionBinding({
+      facts,
+      sessionId: facts.sessionId,
+      at: facts.at.getTime(),
+      visiting: new Set(),
+    });
     if (session !== null) return session;
   }
   const branch = facts.branch;

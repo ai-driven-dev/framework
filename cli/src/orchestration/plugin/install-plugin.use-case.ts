@@ -1,0 +1,116 @@
+import { isAbsolute } from "node:path";
+import type { PluginAdd } from "../../contexts/installation/application/plugin/add/plugin-add.js";
+import type {
+  PlanPluginInstall,
+  PlanPluginInstallRequest,
+} from "../../contexts/installation/application/plugin/plan-plugin-install.use-case.js";
+import { parsePluginSpec } from "../../contexts/installation/contract/plugin-spec.js";
+import { parsePluginSourceShorthand } from "../../shared/domain/plugin/source-parsing.js";
+import type { AiToolId } from "../../shared/domain/tool.js";
+import { InteractiveOnlyError } from "../orchestration.error.js";
+import type { ConfirmPluginSourceTrust } from "./confirm-plugin-source-trust.use-case.js";
+import type { PluginInstallFromMarketplace } from "./install-from-marketplace.use-case.js";
+
+export interface InstallPluginRequest {
+  pluginArg: string | undefined;
+  toolIds: AiToolId[] | "all";
+  projectRoot: string;
+  interactive: boolean;
+  fromMarketplace?: string;
+  yes?: boolean;
+  scope?: PlanPluginInstallRequest["scope"];
+}
+
+export interface InstallPluginResult {
+  kind: "picked" | "local" | "marketplace";
+  installed: readonly string[];
+}
+
+/** Picking a plugin interactively, as the install command needs it: ask, get a choice back. */
+export interface PickPlugin {
+  execute(options: {
+    toolIds: AiToolId[] | "all";
+    projectRoot: string;
+    interactive: boolean;
+  }): Promise<{ installed: readonly string[] }>;
+}
+
+export interface InstallPluginDeps {
+  readonly planPluginInstall: Pick<PlanPluginInstall, "execute">;
+  readonly pickPlugin: PickPlugin;
+  readonly addPlugin: PluginAdd;
+  readonly installFromMarketplace: PluginInstallFromMarketplace;
+  readonly trustPluginSource: Pick<ConfirmPluginSourceTrust, "execute">;
+}
+
+/** Installs a plugin the way `plugin install` was asked: picked, from a source, or by name. */
+export class InstallPlugin {
+  constructor(private readonly deps: InstallPluginDeps) {}
+
+  async execute(options: InstallPluginRequest): Promise<InstallPluginResult> {
+    if (options.scope !== undefined) {
+      await this.deps.planPluginInstall.execute({
+        toolIds: options.toolIds,
+        scope: options.scope,
+      });
+    }
+    const { pluginArg } = options;
+    if (pluginArg === undefined) return this.executeNoArg(options);
+    if (this.isSourceArg(pluginArg)) return this.executeLocalSource(options, pluginArg);
+    return this.executeMarketplace(options, pluginArg);
+  }
+
+  private isSourceArg(arg: string): boolean {
+    // `isAbsolute` also catches a Windows-rooted path (`C:\...`, `\\server\share`), which
+    // `startsWith("/")` never does - without it, a local Windows source falls through to
+    // the marketplace branch below and is looked up as a package name instead.
+    return arg.includes("://") || arg.startsWith("./") || isAbsolute(arg);
+  }
+
+  private async executeNoArg(options: InstallPluginRequest): Promise<InstallPluginResult> {
+    if (!options.interactive) throw new InteractiveOnlyError("plugin install");
+    const result = await this.deps.pickPlugin.execute({
+      toolIds: options.toolIds,
+      projectRoot: options.projectRoot,
+      interactive: true,
+    });
+    return { kind: "picked", installed: result.installed };
+  }
+
+  private async executeLocalSource(
+    options: InstallPluginRequest,
+    pluginArg: string
+  ): Promise<InstallPluginResult> {
+    const source = parsePluginSourceShorthand(pluginArg);
+    await this.deps.trustPluginSource.execute({
+      projectRoot: options.projectRoot,
+      source,
+      yes: options.yes,
+    });
+    await this.deps.addPlugin.execute({
+      source,
+      toolIds: options.toolIds,
+      projectRoot: options.projectRoot,
+      interactive: options.interactive,
+      githubMarketplace: false,
+    });
+    return { kind: "local", installed: [] };
+  }
+
+  private async executeMarketplace(
+    options: InstallPluginRequest,
+    pluginArg: string
+  ): Promise<InstallPluginResult> {
+    const { name, version } = parsePluginSpec(pluginArg);
+    const result = await this.deps.installFromMarketplace.execute({
+      pluginName: name,
+      version,
+      fromMarketplace: options.fromMarketplace,
+      toolIds: options.toolIds,
+      projectRoot: options.projectRoot,
+      interactive: options.interactive,
+      autoSelect: options.yes ?? false,
+    });
+    return { kind: "marketplace", installed: [result.entry.name] };
+  }
+}

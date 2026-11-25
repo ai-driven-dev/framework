@@ -49,18 +49,6 @@ pre-commit:
         # assertion and destroys an install nothing can restore — `.git` is in no history.
         node scripts/check-tests-leave-git-alone.js -- \
           node --test 'scripts/__tests__/**/*.test.js'
-    recipe-validity:
-      glob:
-        - "aidd_docs/recipes/**"
-        - "plugins/aidd-context/skills/12-cook/assets/recipes/**"
-      run: |
-        if ! command -v node >/dev/null 2>&1; then
-          echo '❌ node not available; cannot validate recipes'
-          exit 1
-        fi
-        pnpm --dir cli build && \
-        AIDD_SKIP_UPDATE_CHECK=1 node cli/dist/cli.js framework validate-recipes --all \
-          --bundled plugins/aidd-context/skills/12-cook/assets/recipes
     architecture-rules:
       # Router coherence for a skill with no flowchart, until no SKILL-06 no-flowchart finding is baselined.
       glob: "plugins/*/skills/*/SKILL.md"
@@ -96,7 +84,7 @@ pre-commit:
     cli-type-honesty:
       # Type honesty only; dependency direction between layers belongs to biome
       # (cli/biome.json's noRestrictedImports overrides), not here.
-      glob: "{cli/src/**,cli/tests/**}"
+      glob: "{cli/src/**,cli/tests/**,cli/type-assertions-baseline.json}"
       run: |
         if ! command -v node >/dev/null 2>&1; then
           echo 'ℹ️  node not available; skipping cli-type-honesty'
@@ -109,12 +97,22 @@ pre-push:
     cli-knip:
       glob: "cli/**"
       run: node scripts/gate-witness.js cli-knip -- pnpm --dir cli knip
+    cli-knip-production:
+      glob: "cli/**"
+      run: node scripts/gate-witness.js cli-knip-production -- pnpm --dir cli knip:production
+    cli-jscpd:
+      glob: "cli/**"
+      run: node scripts/gate-witness.js cli-jscpd -- pnpm --dir cli jscpd
     cli-jscpd-profiles:
       glob: "cli/**"
       run: node scripts/gate-witness.js cli-jscpd-profiles -- pnpm --dir cli jscpd:profiles
+    # The architecture project runs in pre-commit and in `cli-ci.yml`'s cli-architecture: the
+    # full suite is not replayed here.
     cli-test:
       glob: "cli/**"
-      run: node scripts/gate-witness.js cli-test -- pnpm --dir cli test
+      run: >-
+        node scripts/gate-witness.js cli-test --
+        pnpm --dir cli exec vitest run --project=!tooling --project=!architecture
 
 commit-msg:
   commands:

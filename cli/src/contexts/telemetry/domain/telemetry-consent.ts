@@ -50,8 +50,10 @@ export function turnedOff(reading: ConsentReading): boolean {
   return reading.kind === "value" && reading.value === CONSENT_WITHDRAWN;
 }
 
-/** `AIDD_TELEMETRY` set to exactly `0` refuses measurement, whatever a clone granted. Reading
- * the environment is the composition root's job; this is only what its value means. */
-export function refusedByEnvironment(value: string | undefined): boolean {
-  return value === "0";
+/** The environment variable that refuses measurement. */
+export const MEASUREMENT_SWITCH = "AIDD_TELEMETRY";
+
+/** The switch set to exactly `0` refuses measurement, whatever a clone granted. */
+export function measurementRefused(switchValue: string | undefined): boolean {
+  return switchValue === "0";
 }

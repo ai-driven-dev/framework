@@ -1,0 +1,94 @@
+import { join, resolve } from "node:path";
+import { Command } from "commander";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { bindOutput } from "../../../src/presentation/controllers/menu/global-options.controller.js";
+import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";
+import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
+import { parseToExit } from "../../shared/testing/parse-to-exit.builder.js";
+
+const validate = vi.fn();
+const containerOf = vi.fn(async () => ({ recipes: { validateRecipes: { execute: validate } } }));
+
+const { registerRecipesCommand } = await import(
+  "../../../src/presentation/controllers/recipes.controller.js"
+);
+
+const PROJECT_ROOT = process.cwd();
+
+let written: string[] = [];
+let errors: string[] = [];
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  written = [];
+  errors = [];
+  vi.spyOn(process.stdout, "write").mockImplementation((chunk) => {
+    written.push(String(chunk));
+    return true;
+  });
+  vi.spyOn(process.stderr, "write").mockImplementation((chunk) => {
+    errors.push(String(chunk));
+    return true;
+  });
+  vi.spyOn(process, "exit").mockImplementation((code) => {
+    throw new ExitRequested(Number(code));
+  });
+  validate.mockReturnValue({ fileCount: 2, findings: [] });
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+async function run(...args: string[]): Promise<void> {
+  const program = new Command();
+  bindOutput(program, processOutputFactory());
+  program.exitOverride();
+  program.option("--verbose");
+  const toolConfig = program.command("framework");
+  registerRecipesCommand(toolConfig, program, containerOf);
+  await parseToExit(program, ["node", "aidd", "framework", "validate-recipes", ...args]);
+}
+
+describe("aidd framework validate-recipes: what it hands the validation", () => {
+  it("resolves the files against the project and adds no directory by default", async () => {
+    await run("a.md", "docs/b.md");
+
+    expect(validate).toHaveBeenCalledWith({
+      files: [resolve(PROJECT_ROOT, "a.md"), resolve(PROJECT_ROOT, "docs/b.md")],
+      directories: [],
+    });
+  });
+
+  it("adds the project recipes as an optional directory and the bundled one as required", async () => {
+    await run("--all", "--bundled", "assets");
+
+    expect(validate).toHaveBeenCalledWith({
+      files: [],
+      directories: [
+        { path: join(PROJECT_ROOT, "aidd_docs", "recipes"), optional: true },
+        { path: resolve(PROJECT_ROOT, "assets"), optional: false },
+      ],
+    });
+  });
+
+  it("reports a pass and leaves the exit code alone when nothing is found", async () => {
+    await run();
+
+    expect(written.join("")).toContain("PASS: 2 recipe(s) validated.");
+    expect(process.exitCode).toBeUndefined();
+  });
+
+  it("reports the findings on stderr and fails the run", async () => {
+    validate.mockReturnValue({
+      fileCount: 1,
+      findings: [{ file: join(PROJECT_ROOT, "a.md"), line: 3, rule: "r1", fix: "do it" }],
+    });
+
+    await expect(run("a.md")).rejects.toMatchObject({ code: 1 });
+
+    expect(errors.join("")).toContain("| a.md | 3 | r1 | do it |");
+    expect(errors.join("")).toContain("FAIL: 1 finding(s) in 1 recipe(s).");
+    expect(process.exitCode).toBeUndefined();
+  });
+});

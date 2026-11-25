@@ -1,0 +1,29 @@
+import { describe, expect, it } from "vitest";
+import { kilo } from "../../../../../../src/composition/tool-profiles/kilo.js";
+import { installed, NAMED_AGENT, UNNAMED_AGENT } from "../../../testing/agent-fixture.builder.js";
+
+const NATIVE = `---
+description: 'Plans the work'
+model: 'm'
+variant: 'high'
+mode: 'subagent'
+---
+Plan before building.
+`;
+
+describe("kilo agents", () => {
+  describe("name resolution", () => {
+    it("names a plugin agent after its file, so no name, and Claude's effort as its variant", () => {
+      expect(installed(kilo, NAMED_AGENT)).toBe(NATIVE);
+    });
+
+    it("writes an unnamed plugin agent the same way", () => {
+      expect(installed(kilo, UNNAMED_AGENT)).toBe(`---
+description: 'Plans the work'
+mode: 'subagent'
+---
+Plan before building.
+`);
+    });
+  });
+});

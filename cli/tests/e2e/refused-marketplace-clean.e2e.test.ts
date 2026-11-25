@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { delimiter, join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createTestEnv, pathWithoutAidd, runCli } from "./helpers.js";
+import { createTestEnv, pathWithoutAidd, runCli } from "../shared/testing/cli-sandbox.builder.js";
 
 const FRAMEWORK_REAL_PATH = resolve(process.cwd(), "tests/fixtures/framework-real");
 const SHELL_FAKE_BINARY = process.platform !== "win32";
@@ -22,7 +22,7 @@ async function writeCopilotThatRefusesMarketplaceAdd(binDir: string, logFile: st
   );
 }
 
-describe("E2E: clean leaves a marketplace the host refused to register for this project", () => {
+describe("clean leaves a marketplace the host refused to register for this project", () => {
   it.runIf(SHELL_FAKE_BINARY)("never asks copilot to remove it", async () => {
     const test = await createTestEnv("refused-marketplace-clean");
     try {

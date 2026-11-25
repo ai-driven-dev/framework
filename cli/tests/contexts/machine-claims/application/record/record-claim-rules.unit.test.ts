@@ -1,0 +1,200 @@
+import { describe, expect, it } from "vitest";
+import { registrationRecordRules as rules } from "../../../../../src/composition/contexts/installation.js";
+
+const registry = (source: string) => ({ kind: "registry" as const, source });
+
+const claim = (ref: string): { ref: string; dependents: string[] } => ({ ref, dependents: [] });
+
+const recordWith = () => ({
+  binary: "claude",
+  marketplaces: [
+    { alias: "local", hostName: "catalog" },
+    { alias: "other", hostName: "second" },
+  ],
+  pluginRefs: ["a@catalog", "b@second", "c@catalog"],
+  pluginClaims: [claim("a@catalog"), claim("b@second")],
+});
+
+describe("record claim rules, following the host data", () => {
+  describe("merging catalogue claims into a record", () => {
+    it("writes the claims list after the host data, even when there were none", () => {
+      const merged = rules.mergeCatalogueClaims(
+        { binary: "claude", marketplaces: [], pluginRefs: ["a@catalog"] },
+        { marketplaces: [], refs: [], dependent: undefined },
+        "fallback"
+      );
+      expect(merged.record.pluginClaims).toEqual([]);
+      expect(Object.keys(merged.record)).toEqual([
+        "binary",
+        "marketplaces",
+        "pluginRefs",
+        "pluginClaims",
+      ]);
+    });
+
+    it("reports a change once however many refs and marketplaces say so", () => {
+      const merged = rules.mergeCatalogueClaims(
+        undefined,
+        {
+          marketplaces: [{ alias: "local", hostName: "catalog", provenance: registry("/built") }],
+          refs: ["a@catalog", "b@catalog"],
+          dependent: "/a",
+        },
+        "fallback"
+      );
+      expect(merged.changed).toBe(true);
+      expect(merged.record.pluginClaims).toHaveLength(2);
+    });
+
+    it("reports a change a new marketplace alone makes", () => {
+      const merged = rules.mergeCatalogueClaims(
+        undefined,
+        { marketplaces: [{ alias: "local", hostName: "catalog" }], refs: [], dependent: "/a" },
+        "fallback"
+      );
+      expect(merged.changed).toBe(true);
+    });
+  });
+
+  describe("dropping a claimed ref from a record", () => {
+    it("drops the ref and its claim, keeping the other claims", () => {
+      const record = recordWith();
+      const next = rules.withoutClaimedRef(record, "a@catalog");
+      expect(next.pluginRefs).toEqual(["b@second", "c@catalog"]);
+      expect(next.pluginClaims).toEqual([claim("b@second")]);
+      expect(next.pluginClaims?.[0]).toEqual(record.pluginClaims[1]);
+    });
+
+    it("writes an empty claims list when the record had none, after the existing keys", () => {
+      const { pluginClaims: _claims, ...bare } = recordWith();
+      const next = rules.withoutClaimedRef(bare, "a@catalog");
+      expect(next.pluginClaims).toEqual([]);
+      expect(Object.keys(next)).toEqual(["binary", "marketplaces", "pluginRefs", "pluginClaims"]);
+    });
+  });
+
+  describe("dropping a marketplace from a record", () => {
+    it("drops the alias, and the refs and claims on its host name", () => {
+      const record = recordWith();
+      const next = rules.withoutMarketplace(record, "local");
+      expect(next.marketplaces).toEqual([{ alias: "other", hostName: "second" }]);
+      expect(next.pluginRefs).toEqual(["b@second"]);
+      expect(next.pluginClaims).toEqual([claim("b@second")]);
+      expect(next.pluginClaims[0]).toEqual(record.pluginClaims[1]);
+    });
+
+    it("keeps every claim when the alias is unknown, even one ending in the word undefined", () => {
+      const record = { ...recordWith(), pluginClaims: [claim("a@undefined")] };
+      expect(rules.withoutMarketplace(record, "missing").pluginClaims).toEqual([
+        claim("a@undefined"),
+      ]);
+    });
+
+    it("always writes the claims list and keeps the key order", () => {
+      const { pluginClaims: _claims, ...bare } = recordWith();
+      expect(rules.withoutMarketplace(bare, "local").pluginClaims).toEqual([]);
+      expect(Object.keys(rules.withoutMarketplace(recordWith(), "local"))).toEqual(
+        Object.keys(recordWith())
+      );
+    });
+
+    it("returns the record unchanged in content when the alias is unknown", () => {
+      const record = recordWith();
+      expect(rules.withoutMarketplace(record, "missing")).toEqual(record);
+    });
+  });
+
+  describe("keeping the claims on a marketplace", () => {
+    it("keeps the claims on the host name of the alias", () => {
+      const record = recordWith();
+      const claims = rules.claimsOnMarketplace(record, "other");
+      expect(claims).toEqual([claim("b@second")]);
+      expect(claims[0]).toEqual(record.pluginClaims[1]);
+    });
+
+    it("keeps no claim for an alias that was never registered", () => {
+      const record = { ...recordWith(), pluginClaims: [claim("a@undefined")] };
+      expect(rules.claimsOnMarketplace(record, "missing")).toEqual([]);
+    });
+
+    it("reads a record without claims", () => {
+      const { pluginClaims: _claims, ...bare } = recordWith();
+      expect(rules.claimsOnMarketplace(bare, "local")).toEqual([]);
+    });
+  });
+
+  describe("the claim a plugin holds, beside the claims on refs", () => {
+    const held = { plugin: "sample", dependents: ["/p"] };
+    const withPlugin = () => ({
+      ...recordWith(),
+      pluginClaims: [held, ...recordWith().pluginClaims],
+    });
+
+    it("survives merging catalogue claims, which change only the claims on refs", () => {
+      const merged = rules.mergeCatalogueClaims(
+        withPlugin(),
+        { marketplaces: [], refs: ["c@catalog"], dependent: "/a" },
+        "fallback"
+      );
+      expect(merged.record.pluginClaims).toEqual([
+        held,
+        claim("a@catalog"),
+        claim("b@second"),
+        { ref: "c@catalog", dependents: ["/a"] },
+      ]);
+    });
+
+    it("survives dropping a claimed ref", () => {
+      expect(rules.withoutClaimedRef(withPlugin(), "a@catalog").pluginClaims).toEqual([
+        held,
+        claim("b@second"),
+      ]);
+    });
+
+    it("survives dropping a marketplace", () => {
+      expect(rules.withoutMarketplace(withPlugin(), "local").pluginClaims).toEqual([
+        held,
+        claim("b@second"),
+      ]);
+    });
+
+    it("is no claim on a ref", () => {
+      expect(rules.claimsOf(withPlugin())).toEqual([claim("a@catalog"), claim("b@second")]);
+      expect(rules.claimedRefs(withPlugin())).toEqual(["a@catalog", "b@second"]);
+      expect(rules.claimsOnMarketplace(withPlugin(), "local")).toEqual([claim("a@catalog")]);
+    });
+
+    it("is read by the plugin's name, the projects holding it listed by holdersOf", () => {
+      const claims = rules.pluginClaimsOf(withPlugin(), ["sample", "other"]);
+
+      expect(claims).toEqual([held]);
+      expect(rules.holdersOf(claims)).toEqual(["/p"]);
+      expect(rules.pluginClaimsOf(undefined, ["sample"])).toEqual([]);
+    });
+  });
+
+  describe("a claim that keeps no dependents", () => {
+    const unchecked: Record<string, unknown> = {
+      ...recordWith(),
+      pluginClaims: [{ ref: "a@catalog" }],
+    };
+    const refusal = "expected a ref or a plugin, and its dependents";
+
+    it.each([
+      ["claimsOnMarketplace", () => rules.claimsOnMarketplace(unchecked, "local")],
+      ["withoutMarketplace", () => rules.withoutMarketplace(unchecked, "local")],
+      ["withoutClaimedRef", () => rules.withoutClaimedRef(unchecked, "b@second")],
+      [
+        "mergeCatalogueClaims",
+        () =>
+          rules.mergeCatalogueClaims(
+            unchecked,
+            { marketplaces: [], refs: ["a@catalog"], dependent: "/a" },
+            "fallback"
+          ),
+      ],
+    ])("is refused by %s", (_rule, run) => {
+      expect(run).toThrow(refusal);
+    });
+  });
+});

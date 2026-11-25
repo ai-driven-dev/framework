@@ -71,6 +71,14 @@ describe("markdown-links", () => {
     assert.deepEqual(custom("markdown-links")(anchor()), []);
   });
 
+  it("skips the generated .aidd cache but still fails a broken link in a source file", () => {
+    put(".aidd/cache/x.md", "[x](nowhere.md)\n");
+    put("README.md", "fine\n");
+    assert.deepEqual(custom("markdown-links")(anchor()), []);
+    put("docs/src.md", "[x](nowhere.md)\n");
+    assert.equal(custom("markdown-links")(anchor()).length, 1);
+  });
+
   it("reads the markdown, @import and src: forms, and ignores anchors, mail, phone, URLs, placeholders and globs", () => {
     put("real.md", "# Real\n");
     put("page.md", [
@@ -103,6 +111,39 @@ describe("referenced-paths", () => {
     put("docs/a.md", "x\n");
     const found = custom("referenced-paths")(anchor());
     assert.deepEqual(found.map((f) => f.offending), ["docs/b.md"]);
+  });
+});
+
+describe("referenced-paths in cli prose", () => {
+  // Assembled, never written out: a cited path in this file would itself be checked.
+  const cite = (...parts) => parts.join("/");
+
+  it("resolves a cli citation against the package, as ESM names it, and ignores a fenced example", () => {
+    const { CLI_SCANNED } = custom("referenced-paths");
+    for (const source of CLI_SCANNED.filter((s) => path.extname(s))) put(path.join("cli", source), "");
+    put("aidd_docs/memory/internal/cli/x.md", "");
+    put(cite("cli", "src", "alive.ts"), "");
+    put(cite(".claude", "skills", "working-on-cli", "rule.md"), [
+      `Alive, as ESM names it: \`${cite("src", "alive.js")}\`.`,
+      `Dead: \`${cite("src", "gone.ts")}\`.`,
+      `Dead, written relative to src: \`${cite("contexts", "gone.ts")}\`.`,
+      `Dead, under shared: \`${cite("shared", "gone.ts")}\`.`,
+      `A longer path holding shared: \`${cite("application", "shared", "x.ts")}\`.`,
+      `A hyphenated folder holding contexts: \`${cite("extra-contexts", "gone.md")}\`.`,
+      `A folder of a skill holding contexts: \`${cite("references", "contexts", "gone.md")}\`.`,
+      "```ts",
+      `// ${cite("src", "invented.ts")}`,
+      "```",
+      "",
+    ].join("\n"));
+    put("README.md", "fine\n");
+    const found = custom("referenced-paths")(anchor());
+    assert.deepEqual(found.map((f) => f.offending), [cite("src", "gone.ts"), cite("contexts", "gone.ts"), cite("shared", "gone.ts")]);
+    assert.deepEqual(found.map((f) => [f.file, f.line]), [2, 3, 4].map((line) => [cite(".claude", "skills", "working-on-cli", "rule.md"), line]));
+  });
+
+  it("throws on a cli source that is not there instead of skipping it", () => {
+    assert.throws(() => custom("referenced-paths").cliFiles(dir, ["a-source-this-repository-does-not-hold"]), { code: "ENOENT" });
   });
 });
 
@@ -141,6 +182,16 @@ describe("doc-duplication", () => {
     assert.deepEqual(custom("doc-duplication")(anchor()), []);
     put("docs/a.md", `${sentence}.\n`);
     assert.deepEqual(custom("doc-duplication")(anchor()).map((f) => f.file), ["README.md", "docs/a.md"]);
+  });
+});
+
+describe("doc-duplication in the cli skill", () => {
+  const sentence = "this sentence is long enough to count as a fact that two pages should never both carry in full";
+
+  it("catches a sentence a cli skill file shares with a scanned page", () => {
+    put("docs/a.md", `${sentence}.\n`);
+    put(".claude/skills/working-on-cli/actions/r.md", `${sentence}.\n`);
+    assert.deepEqual(custom("doc-duplication")(anchor()).map((f) => f.file), ["docs/a.md", ".claude/skills/working-on-cli/actions/r.md"]);
   });
 });
 
