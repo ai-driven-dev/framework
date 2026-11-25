@@ -4,7 +4,7 @@ import { rewritePluginRootInJson } from "../../../../shared/domain/materializati
 import type { ProjectHookEntry } from "../../contract/tool-vocabulary.js";
 import { toBase64 } from "../formats/base64.js";
 import { PLUGIN_HOOKS_SOURCE } from "../formats/hooks/descriptor.js";
-import { hostToolNamesMatching } from "../formats/host-tool-names.js";
+import { hostToolNamesMatching, noToolMatchedWarning } from "../formats/host-tool-names.js";
 import type { PluginHookItem, PluginHooksShape } from "./plugin-hooks-shape.js";
 
 // The host runs a handler from its own directory under the project and requires JSON stdout even
@@ -93,9 +93,7 @@ function convert(
     const grouped = groups.flatMap((group) => {
       const matcher = hostMatcher(target, group.matcher);
       if (matcher === undefined) {
-        warnings.push(
-          `${event} matcher '${group.matcher}' names no ${target.label} tool, group skipped`
-        );
+        warnings.push(noToolMatchedWarning(event, group.matcher ?? "", target.label));
         return [];
       }
       return [{ matcher, hooks: (group.hooks ?? []).filter(runsCommand).map(toHandler) }];

@@ -40,12 +40,12 @@ const FILE_WRITE_TOOLS = new Set(["edit", "write"]);
 const PATCH_TOOL = "apply_patch";
 
 /** The lowercased tool names a plugin matcher lists. */
-export function matcherNames(matcher: string): readonly string[] {
+function matcherNames(matcher: string): readonly string[] {
   return matcher.split("|").map((name) => name.toLowerCase());
 }
 
 /** Whether a lowercased tool name is one of Claude Code's file-write tools. */
-export function isFileWriteName(name: string): boolean {
+function isFileWriteName(name: string): boolean {
   return FILE_WRITE_TOOLS.has(name);
 }
 

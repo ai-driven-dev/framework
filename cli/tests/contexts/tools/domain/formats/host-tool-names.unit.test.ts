@@ -46,6 +46,11 @@ describe("a host's tool names for a plugin's matcher", () => {
     expect(hostToolNamesMatching("^(Write|Bash)$", tools)).toEqual(["write_file", "run_command"]);
   });
 
+  it("reads a tool's name whatever its case, as the bridges do", () => {
+    expect(hostToolNamesMatching("bash|EDIT", tools)).toEqual(["run_command", "edit_file"]);
+    expect(hostToolNamesMatching("edit.*", tools)).toEqual(["edit_file"]);
+  });
+
   it("selects nothing for a regular expression no mapped tool matches", () => {
     expect(hostToolNamesMatching("mcp__.*", tools)).toEqual([]);
   });

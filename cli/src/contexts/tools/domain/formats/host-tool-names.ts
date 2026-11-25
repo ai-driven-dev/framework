@@ -16,15 +16,27 @@ const PLAIN_NAMES = /^[\w|]+$/u;
 
 /** The host's names for the tools a plugin's matcher selects. Claude reads a matcher of plain names
  * as a list split on `|`, and any other as a regular expression over a tool's name: the same
- * reading here, over the tools the host has a name for. */
+ * reading here, over the tools the host has a name for. A name is read whatever its case, as the
+ * OpenCode and Kilo bridges read it. */
 export function hostToolNamesMatching(
   matcher: string,
   renames: ReadonlyMap<string, string>
 ): string[] {
-  if (PLAIN_NAMES.test(matcher)) return hostToolNames(matcher.split("|"), renames);
-  const selects = new RegExp(matcher);
+  if (PLAIN_NAMES.test(matcher)) {
+    const known = new Map([...renames.keys()].map((tool) => [tool.toLowerCase(), tool]));
+    return hostToolNames(
+      matcher.split("|").map((name) => known.get(name.toLowerCase()) ?? name),
+      renames
+    );
+  }
+  const selects = new RegExp(matcher, "i");
   return hostToolNames(
     [...renames.keys()].filter((tool) => selects.test(tool)),
     renames
   );
+}
+
+/** What a host's merge says of a matcher that selects none of the host's tools. */
+export function noToolMatchedWarning(event: string, matcher: string, label: string): string {
+  return `${event} matcher '${matcher}' names no ${label} tool, group skipped`;
 }

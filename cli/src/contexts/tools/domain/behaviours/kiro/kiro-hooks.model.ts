@@ -13,18 +13,19 @@ import { genericFlatHooksScriptPath } from "../../../../../shared/domain/materia
 import { asPlainObject } from "../../../../../shared/domain/reading/plain-object.js";
 import type { ProjectHooksFormat } from "../../../contract/tool-vocabulary.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
+import { hostToolNamesMatching, noToolMatchedWarning } from "../../formats/host-tool-names.js";
 import { pluginScriptDir, pluginScriptPath } from "../../hooks/hooks-merge.js";
 import {
   type BridgeHookCall,
   bridgeHookCalls,
-  isFileWriteName,
-  matcherNames,
   type PluginMatcherGroup,
 } from "../../hooks/plugin-hooks-shape.js";
 
 export type KiroHooks = HooksRouting & {
   readonly flat: FlatHooksRoute;
   readonly eventMap: Readonly<Record<string, string>>;
+  /** The tag Kiro selects a tool by, for each Claude tool a plugin's matcher can name. */
+  readonly toolNames: ReadonlyMap<string, string>;
 };
 
 interface KiroHook {
@@ -33,25 +34,6 @@ interface KiroHook {
   readonly action: { readonly type: string; readonly command?: string };
   readonly matcher?: string;
   readonly timeout?: number;
-}
-
-/** The Kiro tag selecting what a Claude Code tool name (lowercase) names, beyond the file-write
- * tools the shared shape knows, which are `write`: the `write` tag was seen matching `fs_write`
- * and `str_replace`, the `shell` tag `execute_bash`. `delete` and `powershell` rest on the vendor
- * docs' tool families alone (https://kiro.dev/docs/hooks/types/), no capture. A name Kiro has no
- * tool for, such as `apply_patch`, selects nothing. */
-const TOOL_TAGS: ReadonlyMap<string, string> = new Map([
-  ["delete", "write"],
-  ["bash", "shell"],
-  ["shell", "shell"],
-  ["powershell", "shell"],
-]);
-
-function selectorsOf(matcher: string): readonly string[] {
-  const tags = matcherNames(matcher).flatMap((name) =>
-    isFileWriteName(name) ? "write" : (TOOL_TAGS.get(name) ?? [])
-  );
-  return [...new Set(tags)];
 }
 
 const VERSION = "v1";
@@ -120,17 +102,25 @@ interface Built {
   readonly warnings: readonly string[];
 }
 
+interface Where {
+  readonly scriptsDir: string;
+  readonly plugin: string;
+  readonly trigger: string;
+  readonly toolNames: ReadonlyMap<string, string>;
+}
+
 /** One hook per tag of the call's matcher, or one selecting every tool when it has none. Kiro keys
  * a hook by its place in the file (`<file>#hook-<index>`, seen on kiro-cli 3.6.0), so a name only has to read well: each trigger and tag of a
  * script gets its own. Ownership is matched by command, not name. */
 function hooksOfCall(
-  { scriptsDir, plugin, trigger }: { scriptsDir: string; plugin: string; trigger: string },
+  { scriptsDir, plugin, trigger, toolNames }: Where,
   call: BridgeHookCall,
   timeout: unknown
 ): Built {
-  const selectors = call.matcher === undefined ? [undefined] : selectorsOf(call.matcher);
+  const selectors =
+    call.matcher === undefined ? [undefined] : hostToolNamesMatching(call.matcher, toolNames);
   const warnings =
-    selectors.length === 0 ? [`matcher '${call.matcher}' names no kiro tool, hook skipped`] : [];
+    selectors.length === 0 ? [noToolMatchedWarning(trigger, call.matcher ?? "", "Kiro")] : [];
   const hooks = selectors.map((selector) => ({
     name: [plugin, trigger, call.script, selector].filter(Boolean).join("-"),
     trigger,
@@ -141,10 +131,7 @@ function hooksOfCall(
   return { hooks, warnings };
 }
 
-function hooksOfEvent(
-  where: { scriptsDir: string; plugin: string; trigger: string },
-  groups: readonly PluginMatcherGroup[]
-): Built {
+function hooksOfEvent(where: Where, groups: readonly PluginMatcherGroup[]): Built {
   const built = groups.flatMap((group) =>
     (group.hooks ?? []).flatMap((item) =>
       // Only PostToolUse selects by tool: Stop takes no matcher, and none ships at SessionStart.
@@ -174,7 +161,12 @@ export function mergeKiroHooks(
       continue;
     }
     const built = hooksOfEvent(
-      { scriptsDir: hooks.flat.scriptsDir, plugin: shipped.plugin, trigger },
+      {
+        scriptsDir: hooks.flat.scriptsDir,
+        plugin: shipped.plugin,
+        trigger,
+        toolNames: hooks.toolNames,
+      },
       groups
     );
     added.push(...built.hooks);

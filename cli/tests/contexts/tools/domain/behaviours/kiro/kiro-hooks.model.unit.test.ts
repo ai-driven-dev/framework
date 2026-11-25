@@ -108,6 +108,28 @@ describe("kiro's hooks file", () => {
     expect(hooksOf(content).map(({ matcher }) => matcher)).toEqual([tag]);
   });
 
+  it("reads a matcher as Claude does: a regular expression, whatever the case of a name", () => {
+    for (const [matcher, tags] of [
+      ["Edit.*", ["write"]],
+      ["^(Write|Bash)$", ["write", "shell"]],
+      ["bash", ["shell"]],
+    ] as const) {
+      const shipped = JSON.stringify({
+        hooks: {
+          PostToolUse: [
+            {
+              matcher,
+              hooks: [{ type: "command", command: `node ${PLUGIN_ROOT_VAR}/hooks/a.cjs` }],
+            },
+          ],
+        },
+      });
+      const { content } = format.merge(null, shipped, "aidd-context");
+
+      expect(hooksOf(content).map((hook) => hook.matcher)).toEqual(tags);
+    }
+  });
+
   it("selects every tool when the plugin names none, and for events that take no matcher", () => {
     const command = `node ${PLUGIN_ROOT_VAR}/hooks/a.cjs`;
     const shipped = JSON.stringify({
@@ -137,7 +159,9 @@ describe("kiro's hooks file", () => {
     const { content, warnings } = format.merge(null, shipped, "aidd-context");
 
     expect(hooksOf(content)).toEqual([]);
-    expect(warnings).toEqual(["matcher 'NotebookEdit' names no kiro tool, hook skipped"]);
+    expect(warnings).toEqual([
+      "PostToolUse matcher 'NotebookEdit' names no Kiro tool, group skipped",
+    ]);
   });
 
   it("names a script paired across events once per trigger, so no two hooks share a name", () => {

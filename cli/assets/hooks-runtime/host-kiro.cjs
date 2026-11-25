@@ -34,6 +34,8 @@ function writtenFiles(tool, input, cwd) {
   if (!WRITES.has(tool) || typeof input?.path !== "string") return [];
   const file = { path: path.resolve(cwd, input.path) };
   if (typeof input.text === "string") file.written = input.text;
+  if (typeof input.newStr === "string") file.written = input.newStr;
+  if (typeof input.oldStr === "string") file.replaced = input.oldStr;
   return [file];
 }
 

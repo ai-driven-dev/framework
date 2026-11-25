@@ -55,10 +55,12 @@ describe("reading Kiro hook payloads", () => {
     expect(read("kiro", payload).event?.files).toStrictEqual([]);
   });
 
-  it("lists the edited file of a captured edit, without text: only fragments came", () => {
+  it("lists the edited file of a captured edit with what it put and what it replaced", () => {
     const { payload } = sample("kiro-PostToolUse.json", 3);
 
-    expect(read("kiro", payload).event?.files).toStrictEqual([{ path: at("b.txt") }]);
+    expect(read("kiro", payload).event?.files).toStrictEqual([
+      { path: at("b.txt"), written: "beta", replaced: "alpha" },
+    ]);
   });
 
   it("carries the command of a captured shell call, and no file", () => {
