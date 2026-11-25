@@ -37,6 +37,7 @@ const host = require("./lib/host.cjs");
 const event = host.readEvent();
 if (event !== undefined) {
   fs.appendFileSync(process.env.AIDD_RECORD, JSON.stringify(event) + "\\n");
+  if (event.event === "SessionStart" && process.env.AIDD_START === "answer") host.answer({ level: 1, text: "start note" });
   if (event.event === "PostToolUse") host.answer({ level: 2, text: "finding" });
   if (event.event === "Stop" && process.env.AIDD_STOP === "answer") host.answer({ level: 1, text: "go on" });
   else if (event.event === "Stop") host.continueTurn("go on");
@@ -79,13 +80,13 @@ afterEach(async () => {
 });
 
 /** The captured arguments, the scrubbed project folder pointed at a real one. */
-async function captured(file: string, project: string): Promise<readonly unknown[]> {
+async function captured<T = unknown>(file: string, project: string): Promise<readonly T[]> {
   // Replaced inside the JSON text, so the folder goes in JSON-escaped: a Windows path's backslashes.
   const text = (await readFile(join(PAYLOADS, file), "utf8")).replaceAll(
     SCRUBBED_PROJECT,
     JSON.stringify(project).slice(1, -1)
   );
-  return (JSON.parse(text) as { samples: { payload: unknown }[] }).samples.map((s) => s.payload);
+  return (JSON.parse(text) as { samples: { payload: T }[] }).samples.map((s) => s.payload);
 }
 
 async function workspace(host: "opencode" | "kilo", bridge: string): Promise<Workspace> {
@@ -143,6 +144,25 @@ interface Plugin {
   readonly dispose?: () => Promise<void>;
   readonly event: Handler;
   readonly "tool.execute.after": Handler;
+  readonly "experimental.chat.system.transform": Handler;
+}
+
+interface SystemTransform {
+  readonly input: { readonly sessionID: string };
+  readonly output: { system: string[] };
+}
+
+/** The system prompt the host handed the hook, as captured: what it holds before a plugin adds. */
+async function systemTransform(
+  host: "opencode" | "kilo",
+  project: string
+): Promise<SystemTransform> {
+  const [sample] = await captured<SystemTransform>(
+    `${host}-experimental.chat.system.transform.json`,
+    project
+  );
+  if (sample === undefined) throw new Error("no captured system prompt");
+  return sample;
 }
 
 /** Loads the bridge as the host does: its default descriptor's `server`. */
@@ -205,8 +225,8 @@ function kiloBridge(): string {
 describe("OpenCode, through its bridge", () => {
   it("reads the server start as SessionStart, with no session yet", async () => {
     const ws = await workspace("opencode", opencodeBridge());
-    const [init] = await captured("opencode-server-init.json", ws.project);
-    await start(ws, init as Record<string, unknown>);
+    const [init] = await captured<Record<string, unknown>>("opencode-server-init.json", ws.project);
+    await start(ws, init);
 
     expect(await recorded(ws, 1)).toMatchObject([
       {
@@ -218,6 +238,29 @@ describe("OpenCode, through its bridge", () => {
         cwd: ws.project,
       },
     ]);
+  });
+
+  it("hands a SessionStart answer to the model through the system prompt", async () => {
+    const ws = await workspace("opencode", opencodeBridge());
+    vi.stubEnv("AIDD_START", "answer");
+    const [init] = await captured<Record<string, unknown>>("opencode-server-init.json", ws.project);
+    const { input, output } = await systemTransform("opencode", ws.project);
+    const before = [...output.system];
+    const { plugin } = await start(ws, init);
+    await plugin["experimental.chat.system.transform"](input, output);
+
+    expect(output.system).toStrictEqual([...before, "start note"]);
+  });
+
+  it("adds nothing to the system prompt when SessionStart answers nothing", async () => {
+    const ws = await workspace("opencode", opencodeBridge());
+    const [init] = await captured<Record<string, unknown>>("opencode-server-init.json", ws.project);
+    const { input, output } = await systemTransform("opencode", ws.project);
+    const before = [...output.system];
+    const { plugin } = await start(ws, init);
+    await plugin["experimental.chat.system.transform"](input, output);
+
+    expect(output.system).toStrictEqual(before);
   });
 
   it("leaves OpenCode 1.19's early V2 setup context alone, which has no location", async () => {
@@ -345,6 +388,32 @@ describe("Kilo, through its bridge", () => {
     ]);
   });
 
+  it("hands a created session's SessionStart answer to the model through that session's system prompt", async () => {
+    const ws = await workspace("kilo", kiloBridge());
+    vi.stubEnv("AIDD_START", "answer");
+    const [created] = await captured("kilo-session.created.json", ws.project);
+    const { input, output } = await systemTransform("kilo", ws.project);
+    const before = [...output.system];
+    const { plugin } = await start(ws, { directory: ws.dir });
+    await plugin.event({ event: created });
+    await plugin["experimental.chat.system.transform"](input, output);
+
+    expect(output.system).toStrictEqual([...before, "start note"]);
+  });
+
+  it("leaves another session's system prompt alone", async () => {
+    const ws = await workspace("kilo", kiloBridge());
+    vi.stubEnv("AIDD_START", "answer");
+    const [created] = await captured("kilo-session.created.json", ws.project);
+    const { input, output } = await systemTransform("kilo", ws.project);
+    const before = [...output.system];
+    const { plugin } = await start(ws, { directory: ws.dir });
+    await plugin.event({ event: created });
+    await plugin["experimental.chat.system.transform"]({ ...input, sessionID: "another" }, output);
+
+    expect(output.system).toStrictEqual(before);
+  });
+
   it("reads a write as its file and content, and appends the answer to the tool's result", async () => {
     const ws = await workspace("kilo", kiloBridge());
     const [write] = (await captured("kilo-tool.execute.after.json", ws.project)) as {
@@ -451,8 +520,11 @@ describe("Kilo, through its bridge", () => {
 describe("the adapter both bridged hosts share", () => {
   it("is one source, read as opencode behind the OpenCode bridge and as kilo behind the Kilo bridge", async () => {
     const opencode = await workspace("opencode", opencodeBridge());
-    const [init] = await captured("opencode-server-init.json", opencode.project);
-    await start(opencode, init as Record<string, unknown>);
+    const [init] = await captured<Record<string, unknown>>(
+      "opencode-server-init.json",
+      opencode.project
+    );
+    await start(opencode, init);
     const kilo = await workspace("kilo", kiloBridge());
     const [session] = await captured("kilo-session.created.json", kilo.project);
     const { plugin } = await start(kilo, { directory: kilo.dir });

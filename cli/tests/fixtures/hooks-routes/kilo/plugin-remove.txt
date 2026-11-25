@@ -49,29 +49,6 @@ const SESSION_START = [{"script":"task.cjs","args":["remind"]},{"script":"ledger
 const STOP = [];
 const POST_TOOL_USE = [];
 
-function runHook(script, args, payload, directory) {
-  const body = JSON.stringify(payload);
-  const child = spawn("node", [HOOKS_DIR + script, ...args], {
-    cwd: directory,
-    stdio: ["pipe", "ignore", "ignore"],
-    timeout: 5000,
-  });
-  let reported = false;
-  const report = (error) => {
-    if (reported) return;
-    reported = true;
-    reportHookFailure(script, error);
-  };
-  child.on("error", report);
-  child.on("close", (code, signal) => {
-    if (code !== 0 || signal !== null) {
-      report("exited with code " + String(code) + (signal === null ? "" : " (" + signal + ")"));
-    }
-  });
-  child.stdin.on("error", report);
-  child.stdin.end(body);
-}
-
 // Exit 2 puts the answer on stderr; exit 0 puts it in additionalContext on stdout.
 function answerFrom(code, stdout, stderr) {
   if (code === 2) return stderr.trim();
@@ -118,7 +95,11 @@ function answerOf(script, args, payload, directory) {
       stdio: ["pipe", "pipe", "pipe"],
       timeout: 5000,
     });
+    // A spawn that never launches emits both an error and a close: one report per script.
+    let failed = false;
     const fail = (error) => {
+      if (failed) return;
+      failed = true;
       reportHookFailure(script, error);
       resolve("");
     };
@@ -187,12 +168,20 @@ const AiddTelemetryKiloHooks = async ({ directory, client }) => {
           }
         }
       }
-      for (const call of calls) {
-        runHook(call.script, call.args, call.payload, call.payload.cwd);
+      // Not awaited: this handler must not hold the host's events. The session's first turn awaits it.
+      if (calls.length > 0) {
+        session.context = Promise.all(
+          calls.map((call) => answerOf(call.script, call.args, call.payload, call.payload.cwd))
+        ).then((answers) => answers.filter(Boolean).join("\n\n"));
       }
     } catch (error) {
       console.warn("[aidd] Kilo hook dispatch failed: " + String(error));
     }
+  },
+  // What SessionStart answered reaches the model through its session's system prompt, every turn.
+  "experimental.chat.system.transform": async (input, output) => {
+    const context = await sessions.get(input?.sessionID)?.context;
+    if (context) output.system.push(context);
   },
   // A user's message starts a new turn. Kilo hands every plugin every message, so a follow-up,
   // this bridge's or another plugin's, is recognised by its mark and is not one.

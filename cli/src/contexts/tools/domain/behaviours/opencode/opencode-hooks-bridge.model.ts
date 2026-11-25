@@ -8,7 +8,9 @@
  * Only three hook events are replayed:
  *
  * - `SessionStart` runs once per server/directory at factory initialization and requires
- *   idempotent commands. V1 did not deliver `session.created` to this event hook;
+ *   idempotent commands. What it answers reaches the model through V1's
+ *   `experimental.chat.system.transform`, added to every turn's system prompt. V2's adapter
+ *   carries no such hook, so a V2 host reads nothing from it. V1 did not deliver `session.created` to this event hook;
  *   the V2 adapter delivers it.
  * - `Stop` maps to V1's `session.idle` or V2's execution terminal, once per turn.
  * - `PostToolUse` maps to V1's `tool.execute.after`, the one hook that waits for the script and
@@ -41,16 +43,6 @@ ${parts.hooksDir}
 
 ${parts.callTables}
 
-// Asynchronous on purpose: this can spawn one script per matching hook across every mapped
-// event, and blocking OpenCode's event loop once per hook would multiply the cost. A failed spawn (ENOENT, a killed timeout)
-// must not throw past this function - both listeners below, plus the caller's own
-// try/catch, exist because a spawn that never launches can still throw on the stdin write.
-function runHook(script, args, payload, directory) {
-${parts.spawnHook(2, '["pipe", "ignore", "ignore"]')}
-  child.on("error", () => {});
-${parts.feedStdin(2)}
-}
-
 /** Pure: \`session.idle\` -> every Stop hook's own {script, args, payload} - or \`[]\` for
  * any other event. Exported as a property (never a second named export - F6) so this
  * generated module's own mapping can be asserted without spawning anything. */
@@ -64,7 +56,7 @@ function stopCallsFor(event, directory) {
   }));
 }
 
-// Awaited, unlike runHook: the script has something the model must read.
+// Awaited: the script has something the model must read.
 // Exit 2 puts it on stderr; exit 0 puts it in additionalContext on stdout.
 ${parts.answerFrom}
 
@@ -140,24 +132,29 @@ export const ${parts.identifier} = async (input) => {
   // OpenCode keeps delivering events to an instance it disposed once it has created the next one.
   let disposed = false;
   // SessionStart's own approximation (module doc comment above): fired once here, never
-  // per session. Silent on purpose: a memory refresh
-  // that breaks OpenCode's own startup is worse than one that never ran.
-  try {
-    for (const hook of SESSION_START) {
-      runHook(
+  // per session. Its answer is what the model reads on every turn, through the system prompt.
+  // Silent on purpose: a memory refresh that breaks OpenCode's own startup is worse than one
+  // that never ran.
+  const started = Promise.all(
+    SESSION_START.map((hook) =>
+      answerOf(
         hook.script,
         hook.args,
         { hook_event_name: "SessionStart", session_id: null, cwd: input.directory },
         input.directory
-      );
-    }
-  } catch {
-    // Silent on purpose - see above.
-  }
+      )
+    )
+  )
+    .then((answers) => answers.filter(Boolean).join("\\n\\n"))
+    .catch(() => "");
   return {
     dispose: async () => {
       disposed = true;
       await pending;
+    },
+    "experimental.chat.system.transform": async (_input, output) => {
+      const context = await started;
+      if (context) output.system.push(context);
     },
     event: async ({ event }) => {
       if (disposed) return;

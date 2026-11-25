@@ -64,7 +64,7 @@
   "tests/contexts/tools/domain/sections/mcp-section.unit.test.ts": 1,
   "tests/contexts/tools/hooks-merge-routes.integration.test.ts": 1,
   "tests/contexts/tools/hooks-routes.integration.test.ts": 3,
-  "tests/contexts/tools/hooks-runtime-bridges.integration.test.ts": 10,
+  "tests/contexts/tools/hooks-runtime-bridges.integration.test.ts": 8,
   "tests/contexts/tools/hooks-runtime-claude.integration.test.ts": 2,
   "tests/contexts/tools/hooks-runtime-codex.integration.test.ts": 1,
   "tests/contexts/tools/testing/hooks-runtime-host.builder.ts": 6,

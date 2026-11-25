@@ -2,7 +2,8 @@
  * Kilo loads JavaScript modules from `.kilo/plugin/` and requires a default descriptor with
  * `{ id, server }`. Declarative hooks.json has no Kilo runtime, so this generator turns its
  * replayable commands into that native module. Kilo 7.7.5 delivers session.created and
- * session.idle through its event hook; PostToolUse runs from tool.execute.after, which waits
+ * session.idle through its event hook; a SessionStart answer reaches the model through
+ * experimental.chat.system.transform; PostToolUse runs from tool.execute.after, which waits
  * for the script and appends its exit-2 stderr to the tool's output for the model to read.
  * Matchers ignore case, since Kilo names its tools in lowercase.
  */
@@ -16,25 +17,6 @@ ${parts.nodeImports}
 
 ${parts.hooksDir}
 ${parts.callTables}
-
-function runHook(script, args, payload, directory) {
-  const body = JSON.stringify(payload);
-${parts.spawnHook(2, '["pipe", "ignore", "ignore"]')}
-  let reported = false;
-  const report = (error) => {
-    if (reported) return;
-    reported = true;
-    reportHookFailure(script, error);
-  };
-  child.on("error", report);
-  child.on("close", (code, signal) => {
-    if (code !== 0 || signal !== null) {
-      report("exited with code " + String(code) + (signal === null ? "" : " (" + signal + ")"));
-    }
-  });
-  child.stdin.on("error", report);
-  child.stdin.end(body);
-}
 
 // Exit 2 puts the answer on stderr; exit 0 puts it in additionalContext on stdout.
 ${parts.answerFrom}
@@ -64,7 +46,11 @@ function answerOf(script, args, payload, directory) {
     let stdout = "";
     let stderr = "";
 ${parts.spawnHook(4, '["pipe", "pipe", "pipe"]')}
+    // A spawn that never launches emits both an error and a close: one report per script.
+    let failed = false;
     const fail = (error) => {
+      if (failed) return;
+      failed = true;
       reportHookFailure(script, error);
       resolve("");
     };
@@ -132,12 +118,20 @@ const ${parts.identifier} = async ({ directory, client }) => {
           }
         }
       }
-      for (const call of calls) {
-        runHook(call.script, call.args, call.payload, call.payload.cwd);
+      // Not awaited: this handler must not hold the host's events. The session's first turn awaits it.
+      if (calls.length > 0) {
+        session.context = Promise.all(
+          calls.map((call) => answerOf(call.script, call.args, call.payload, call.payload.cwd))
+        ).then((answers) => answers.filter(Boolean).join("\\n\\n"));
       }
     } catch (error) {
       console.warn("[aidd] Kilo hook dispatch failed: " + String(error));
     }
+  },
+  // What SessionStart answered reaches the model through its session's system prompt, every turn.
+  "experimental.chat.system.transform": async (input, output) => {
+    const context = await sessions.get(input?.sessionID)?.context;
+    if (context) output.system.push(context);
   },
   // A user's message starts a new turn. Kilo hands every plugin every message, so a follow-up,
   // this bridge's or another plugin's, is recognised by its mark and is not one.
