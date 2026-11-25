@@ -106,9 +106,28 @@ test("does nothing on another event", () => {
   assert.deepEqual([result.status, result.stderr], [0, ""]);
 });
 
+const ADAPTERS = path.join(REPO, "cli/assets/hooks-runtime");
+const adapter = (host) => fs.readFileSync(path.join(ADAPTERS, `host-${host}.cjs`), "utf8");
+const denyReason = () => `${SPEC} is locked: only the person who approves it sets its status back to draft. Write nothing to it.`;
+
+// What a host sends just before it writes `rel`, from its documentation, and the answer that refuses it.
+const CLAUDE = {
+  payload: (root, rel) => ({ hook_event_name: "PreToolUse", tool_name: "Write", tool_input: { file_path: path.join(root, rel), content: "x" }, cwd: root }),
+  denied: (reason) => ({ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: reason } }),
+};
+
+test("refuses a write to a locked spec in the answer Claude Code delivers, and lets a draft through", () => {
+  const draft = "aidd_docs/tasks/2026_01/2026_01_03_other/spec.md";
+  const root = project({ [SPEC]: spec("locked"), [draft]: spec("draft") });
+  const refused = run(hooksWith(adapter("claude")), root, CLAUDE.payload(root, SPEC));
+  assert.deepEqual([refused.status, refused.stderr, JSON.parse(refused.stdout)], [0, "", CLAUDE.denied(denyReason())]);
+  const allowed = run(hooksWith(adapter("claude")), root, CLAUDE.payload(root, draft));
+  assert.deepEqual([allowed.status, allowed.stdout, allowed.stderr], [0, "", ""]);
+});
+
 test("does nothing under an adapter that does not report the moment before a tool", () => {
   const root = project({ [SPEC]: spec("locked") });
-  const payload = { hook_event_name: "PreToolUse", tool_name: "Write", tool_input: { file_path: path.join(root, SPEC), content: "x" }, cwd: root };
-  const result = run(hooksWith(undefined), root, payload);
+  const payload = { hookEventName: "PreToolUse", conversationId: "c", workspacePaths: [root], toolCall: { name: "write_file", args: { Path: path.join(root, SPEC), Content: "x" } } };
+  const result = run(hooksWith(adapter("antigravity")), root, payload);
   assert.deepEqual([result.status, result.stdout, result.stderr], [0, "", ""]);
 });
