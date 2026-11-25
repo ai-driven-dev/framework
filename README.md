@@ -161,7 +161,7 @@ Commits, pull requests, release tags, issues
 <a href="plugins/aidd-pm/README.md">
 <img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
 <h3>📋 aidd-pm</h3>
-10 skills · 3 hooks<br />
+10 skills · 4 hooks<br />
 Briefs, Epics, Stories, specs, Spikes, Defects
 </a>
 </td>

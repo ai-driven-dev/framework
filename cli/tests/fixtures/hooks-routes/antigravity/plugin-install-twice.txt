@@ -17,7 +17,7 @@ second install threw DuplicatePluginError: Plugin 'aidd-context' is already inst
     ],
     "PostToolUse": [
       {
-        "matcher": "*",
+        "matcher": "write_file|edit_file|run_command",
         "hooks": [
           {
             "type": "command",
