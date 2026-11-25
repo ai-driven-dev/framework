@@ -96,15 +96,30 @@ function runCapture(script, args, payload, directory) {
   });
 }
 
-function answerFrom(code, stdout, stderr) {
-  if (code === 2) return stderr.trim();
-  if (code !== 0) return "";
+/** The JSON a script printed on stdout, or an empty object when it printed none. */
+function stdoutJson(stdout) {
   try {
-    const output = JSON.parse(stdout);
-    return String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim();
+    return JSON.parse(stdout) ?? {};
   } catch {
-    return "";
+    return {};
   }
+}
+
+/** What a script printed for the person, never the model. */
+function personOf(output) {
+  return String(output?.systemMessage ?? "").trim();
+}
+
+const NO_ANSWER = { text: "", person: "" };
+
+function answerFrom(code, stdout, stderr) {
+  if (code === 2) return { text: stderr.trim(), person: "" };
+  if (code !== 0) return NO_ANSWER;
+  const output = stdoutJson(stdout);
+  return {
+    text: String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim(),
+    person: personOf(output),
+  };
 }
 
 /** A script that fails to run, or exits other than 0 or 2, is reported and answers nothing. */
@@ -112,11 +127,11 @@ function answerOf(script, args, payload, directory) {
   return runCapture(script, args, payload, directory).then(({ error, code, signal, stdout, stderr }) => {
     if (error !== undefined) {
       reportHookFailure(script, error);
-      return "";
+      return NO_ANSWER;
     }
     if ((code !== 0 && code !== 2) || signal !== null) {
       reportHookFailure(script, exitDescription(code, signal));
-      return "";
+      return NO_ANSWER;
     }
     return answerFrom(code, stdout, stderr);
   });
@@ -125,13 +140,10 @@ function answerOf(script, args, payload, directory) {
 /** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
 function stopReasonOf(script, args, payload, directory) {
   return runCapture(script, args, payload, directory).then(({ error, code, stdout }) => {
-    if (error !== undefined || code !== 0) return "";
-    try {
-      const output = JSON.parse(stdout);
-      return output?.decision === "block" ? String(output.reason ?? "").trim() : "";
-    } catch {
-      return "";
-    }
+    if (error !== undefined || code !== 0) return { reason: "", person: "" };
+    const output = stdoutJson(stdout);
+    const reason = output?.decision === "block" ? String(output.reason ?? "").trim() : "";
+    return { reason, person: personOf(output) };
   });
 }
 
@@ -196,12 +208,14 @@ async function refuseToolUse(call, output, directory) {
   if (refusal !== null) throw new Error(refusal);
 }
 
-/** Each PostToolUse answer is appended to the output the model reads, a failure reported. */
-async function addToolAnswers(call, output, directory) {
+/** Each PostToolUse answer is appended to the output the model reads, its message for the person
+ * handed to `show` where the host has one, a failure reported. */
+async function addToolAnswers(call, output, directory, show) {
   try {
     for (const hook of postToolUseCallsFor(call, directory)) {
-      const answer = await answerOf(hook.script, hook.args, hook.payload, directory);
-      if (answer) output.output = (output.output ?? "") + "\n\n" + answer;
+      const { text, person } = await answerOf(hook.script, hook.args, hook.payload, directory);
+      show?.(person);
+      if (text) output.output = (output.output ?? "") + "\n\n" + text;
     }
   } catch (error) {
     reportHookFailure("PostToolUse", error);
@@ -241,14 +255,14 @@ async function addPromptContext(input, output, directory) {
   try {
     const calls = userPromptCallsFor(input, output, directory);
     for (const [index, call] of calls.entries()) {
-      const answer = await answerOf(call.script, call.args, call.payload, directory);
-      if (!answer) continue;
+      const { text } = await answerOf(call.script, call.args, call.payload, directory);
+      if (!text) continue;
       output.parts.push({
         id: output.parts[0].id + "-" + "aidd-telemetry" + "-" + index,
         messageID: output.message?.id,
         sessionID: input?.sessionID,
         type: "text",
-        text: answer,
+        text,
         synthetic: true,
       });
     }
@@ -271,13 +285,25 @@ function runSessionStart(event, fallbackDirectory) {
   const answers = SESSION_START.map((hook) =>
     answerOf(hook.script, hook.args, { hook_event_name: "SessionStart", session_id: named, cwd: directory }, directory)
   );
-  sessionContexts.set(named, Promise.all(answers).then((texts) => texts.filter(Boolean).join("\n\n")));
+  const joined = (texts) => texts.filter(Boolean).join("\n\n");
+  sessionContexts.set(
+    named,
+    Promise.all(answers).then((all) => ({
+      context: joined(all.map((answer) => answer.text)),
+      person: joined(all.map((answer) => answer.person)),
+    }))
+  );
 }
 
-/** What SessionStart answered, added to the system prompt of the session's turn. */
-async function addSessionContext(input, output) {
-  const context = await sessionContexts.get(input?.sessionID);
-  if (context) output.system.push(context);
+/** What SessionStart answered, added to the system prompt of the session's turn; its message for
+ * the person handed to `show` once, where the host has one. */
+async function addSessionContext(input, output, show) {
+  const started = await sessionContexts.get(input?.sessionID);
+  if (started === undefined) return;
+  if (started.context) output.system.push(started.context);
+  const person = started.person;
+  started.person = "";
+  show?.(person);
 }
 
 const AiddTelemetryKiloHooks = async ({ directory, client }) => {
@@ -300,7 +326,7 @@ const AiddTelemetryKiloHooks = async ({ directory, client }) => {
         session.idle = true;
         for (const call of stopCallsFor(id, session.directory)) {
           const payload = { ...call.payload, stop_hook_active: session.continued };
-          const reason = await stopReasonOf(call.script, call.args, payload, session.directory);
+          const { reason } = await stopReasonOf(call.script, call.args, payload, session.directory);
           session.continued = reason !== "";
           // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
           // Open limit in `kilo run`: it exits at idle before this follow-up's turn runs, on 7.7.5 and 7.8.27

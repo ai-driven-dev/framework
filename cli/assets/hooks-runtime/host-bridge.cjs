@@ -101,18 +101,35 @@ function print(output) {
   process.stdout.write(`${JSON.stringify(output)}\n`);
 }
 
-/** Asks the model to go on before the turn ends, with `text` as what it must do. Asks once: a
- * turn end that is already a continuation is never continued again. */
-function continueTurn(text) {
+/** Whether there is a message to show the person. */
+function hasPerson(person) {
+  return typeof person === "string" && person !== "";
+}
+
+/** Hands the bridge `person` alone, to show to the person and not to the model. */
+function showPerson(person) {
+  if (hasPerson(person)) print({ systemMessage: person });
+}
+
+/** Asks the model to go on before the turn ends, with `text` as what it must do, and hands the
+ * bridge `person` to show (OpenCode's bridge shows it, Kilo's ignores it). Asks once: a turn end
+ * that is already a continuation is never continued again. */
+function continueTurn(text, person) {
   if (typeof text !== "string" || text === "" || current?.stopActive === true) return;
-  print({ decision: "block", reason: text });
+  print({
+    decision: "block",
+    reason: text,
+    ...(hasPerson(person) ? { systemMessage: person } : {}),
+  });
 }
 
 /** Both levels inform: the bridge appends the text to the tool's result, which is all a
- * block would do there. At Stop, any answer continues the turn. */
-function answer({ text } = {}) {
-  if (current === undefined || typeof text !== "string" || text === "") return;
-  if (current.event === "Stop") return continueTurn(text);
+ * block would do there. At Stop, any answer continues the turn. With no `text`, only `person`
+ * is handed to the bridge, at any event. */
+function answer({ text, person } = {}) {
+  if (current === undefined) return;
+  if (typeof text !== "string" || text === "") return showPerson(person);
+  if (current.event === "Stop") return continueTurn(text, person);
   print({ additionalContext: text });
 }
 

@@ -42,7 +42,7 @@ describe("the source of the events relayed around a tool", () => {
           if (next === undefined) throw new Error("scripted failure");
           return next;
         },
-        answerOf: async () => answers.shift() ?? "",
+        answerOf: async () => ({ text: answers.shift() ?? "", person: "" }),
         reportHookFailure: (...args: unknown[]) => reported.push(args),
       }
     );
@@ -132,7 +132,7 @@ describe("the source of the event that adds to the user's message", () => {
       answerOf: async () => {
         const next = answers.shift();
         if (next === undefined) throw new Error("scripted failure");
-        return next;
+        return { text: next, person: "" };
       },
       reportHookFailure: (...args: unknown[]) => reported.push(args),
     });

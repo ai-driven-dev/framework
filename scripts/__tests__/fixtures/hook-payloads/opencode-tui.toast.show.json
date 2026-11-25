@@ -1,0 +1,17 @@
+{
+  "host": "opencode",
+  "event": "tui.toast.show",
+  "samples": [
+    {
+      "run": "person",
+      "payload": {
+        "request": { "body": { "message": "TURN-MSG-6642", "variant": "warning" } },
+        "event": {
+          "id": "evt_2130b6ad5001qwykUkNcE0SeyT",
+          "type": "tui.toast.show",
+          "properties": { "message": "TURN-MSG-6642", "variant": "warning", "duration": 5000 }
+        }
+      }
+    }
+  ]
+}

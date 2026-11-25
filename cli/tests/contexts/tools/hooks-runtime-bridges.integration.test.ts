@@ -38,8 +38,12 @@ const event = host.readEvent();
 if (event !== undefined) {
   fs.appendFileSync(process.env.AIDD_RECORD, JSON.stringify(event) + "\\n");
   if (event.event === "SessionStart" && process.env.AIDD_START === "answer") host.answer({ level: 1, text: "start note" });
-  if (event.event === "PostToolUse") host.answer({ level: 2, text: "finding" });
+  if (event.event === "SessionStart" && process.env.AIDD_START === "person") host.answer({ level: 1, person: "person note" });
+  if (event.event === "PostToolUse" && process.env.AIDD_POST === "person") host.answer({ level: 1, person: "person note" });
+  else if (event.event === "PostToolUse") host.answer({ level: 2, text: "finding" });
   if (event.event === "Stop" && process.env.AIDD_STOP === "answer") host.answer({ level: 1, text: "go on" });
+  else if (event.event === "Stop" && process.env.AIDD_STOP === "person") host.continueTurn("go on", "person note");
+  else if (event.event === "Stop" && process.env.AIDD_STOP === "person-only") host.answer({ level: 1, person: "person note" });
   else if (event.event === "Stop") host.continueTurn("go on");
 }
 `;
@@ -163,21 +167,36 @@ async function systemTransform(
 }
 
 /** Loads the bridge as the host does: its default descriptor's `server`. */
-async function start(ws: Workspace, input: Record<string, unknown>, refusal?: Error) {
+async function start(
+  ws: Workspace,
+  input: Record<string, unknown>,
+  refusal?: Error,
+  toastRefusal?: Error
+) {
   const prompts: unknown[] = [];
+  const toasts: unknown[] = [];
+  const showToast = (request: unknown) => {
+    toasts.push(request);
+    return toastRefusal === undefined
+      ? Promise.resolve({ data: true })
+      : Promise.reject(toastRefusal);
+  };
   const send = (request: unknown) => {
     prompts.push(request);
     return refusal === undefined ? Promise.resolve() : Promise.reject(refusal);
   };
   // Each host calls its own method: OpenCode `prompt`, Kilo `promptAsync`.
-  const client = { session: ws.host === "opencode" ? { prompt: send } : { promptAsync: send } };
+  const client = {
+    session: ws.host === "opencode" ? { prompt: send } : { promptAsync: send },
+    tui: { showToast },
+  };
   const mod = (await import(
     pathToFileURL(join(ws.dir, "plugin", "aidd-sample-hooks.mjs")).href
   )) as { default?: { server?: (input: unknown) => Promise<Plugin> } };
   const factory = mod.default?.server;
   if (factory === undefined) throw new Error("the bridge exports no server");
   const plugin = await factory({ ...input, client });
-  return { plugin, prompts };
+  return { plugin, prompts, toasts };
 }
 
 /** The captured tool calls, by position in the fixture. */
@@ -446,6 +465,102 @@ describe("OpenCode, through its bridge", () => {
       { event: "Stop", stopActive: true, sessionId: SESSION },
     ]);
     expect(prompts).toStrictEqual(CONTINUED);
+  });
+});
+
+interface CapturedToast {
+  readonly request: { readonly body: { readonly variant: string } };
+  readonly event: { readonly properties: { readonly message: string; readonly variant: string } };
+}
+
+/** The toast OpenCode accepted and published, as captured: what a plugin asked for, and what the bus carried. */
+async function capturedToast(project: string): Promise<CapturedToast> {
+  const [sample] = await captured<CapturedToast>("opencode-tui.toast.show.json", project);
+  if (sample === undefined) throw new Error("no captured toast");
+  return sample;
+}
+
+/** What the bridge asked the host to show, in the shape the host accepted. */
+function asked(toast: CapturedToast, message: string) {
+  return { body: { message, variant: toast.event.properties.variant } };
+}
+
+describe("OpenCode's person message, through its bridge", () => {
+  it("shows the person's message as a toast when a tool call's hook answers only the person", async () => {
+    const ws = await workspace("opencode", opencodeBridge());
+    vi.stubEnv("AIDD_POST", "person");
+    const toast = await capturedToast(ws.project);
+    const [write] = await captured<ToolCall>("opencode-tool.execute.after.json", ws.project);
+    const { plugin, toasts } = await start(ws, { directory: ws.project });
+    if (write === undefined) throw new Error("no captured write");
+    await plugin["tool.execute.after"](write.call, write.output);
+
+    expect(toasts).toStrictEqual([asked(toast, "person note")]);
+    expect(write.output.output).toBe("Wrote file successfully.");
+  });
+
+  it("shows it at a turn end that continues, beside the follow-up", async () => {
+    const ws = await workspace("opencode", opencodeBridge());
+    vi.stubEnv("AIDD_STOP", "person");
+    const toast = await capturedToast(ws.project);
+    const [, idle] = await captured("opencode-session.idle.json", ws.project);
+    const { plugin, prompts, toasts } = await start(ws, { directory: ws.project });
+    await plugin.event({ event: idle });
+
+    expect(toasts).toStrictEqual([asked(toast, "person note")]);
+    expect(prompts).toStrictEqual(CONTINUED);
+  });
+
+  it("shows it at a turn end that answers only the person, with no follow-up", async () => {
+    const ws = await workspace("opencode", opencodeBridge());
+    vi.stubEnv("AIDD_STOP", "person-only");
+    const toast = await capturedToast(ws.project);
+    const [, idle] = await captured("opencode-session.idle.json", ws.project);
+    const { plugin, prompts, toasts } = await start(ws, { directory: ws.project });
+    await plugin.event({ event: idle });
+
+    expect(toasts).toStrictEqual([asked(toast, "person note")]);
+    expect(prompts).toStrictEqual([]);
+  });
+
+  it("holds SessionStart's message until the first turn, then shows it once", async () => {
+    const ws = await workspace("opencode", opencodeBridge());
+    vi.stubEnv("AIDD_START", "person");
+    const toast = await capturedToast(ws.project);
+    const [created] = await captured("opencode-session.created.json", ws.project);
+    const { input, output } = await systemTransform("opencode", ws.project);
+    const { plugin, toasts } = await start(ws, { directory: ws.dir });
+    await plugin.event({ event: created });
+    await recorded(ws, 1);
+    expect(toasts).toStrictEqual([]);
+
+    await plugin["experimental.chat.system.transform"](input, output);
+    await plugin["experimental.chat.system.transform"](input, output);
+
+    expect(toasts).toStrictEqual([asked(toast, "person note")]);
+  });
+
+  it("does not throw into the host when the toast is refused", async () => {
+    const ws = await workspace("opencode", opencodeBridge());
+    vi.stubEnv("AIDD_POST", "person");
+    const [write] = await captured<ToolCall>("opencode-tool.execute.after.json", ws.project);
+    const { plugin, toasts } = await start(
+      ws,
+      { directory: ws.project },
+      undefined,
+      new Error("no tui")
+    );
+    if (write === undefined) throw new Error("no captured write");
+    const unhandled = vi.fn();
+    process.on("unhandledRejection", unhandled);
+
+    await expect(plugin["tool.execute.after"](write.call, write.output)).resolves.toBeUndefined();
+    // An unhandled rejection is raised once the microtasks drain, before the next check phase.
+    await new Promise((resolve) => setImmediate(resolve));
+    process.off("unhandledRejection", unhandled);
+
+    expect(toasts).toHaveLength(1);
+    expect(unhandled).not.toHaveBeenCalled();
   });
 });
 

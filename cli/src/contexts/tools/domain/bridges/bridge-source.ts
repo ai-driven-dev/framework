@@ -65,17 +65,33 @@ function runCapture(script, args, payload, directory) {
 }`;
 
 /** The generated modules' reading of a finished script: exit 2 puts the answer on stderr, exit 0
- * puts it in `additionalContext` on stdout. Any other way a script ends is reported and answers
- * nothing. Written once here, so both hosts' bridges tell the model, and the person, the same thing. */
-export const ANSWER_OF_SOURCE = `function answerFrom(code, stdout, stderr) {
-  if (code === 2) return stderr.trim();
-  if (code !== 0) return "";
+ * puts it in `additionalContext` on stdout, and the person's message in `systemMessage`. Any other
+ * way a script ends is reported and answers nothing. Written once here, so both hosts' bridges
+ * tell the model, and the person, the same thing. */
+export const ANSWER_OF_SOURCE = `/** The JSON a script printed on stdout, or an empty object when it printed none. */
+function stdoutJson(stdout) {
   try {
-    const output = JSON.parse(stdout);
-    return String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim();
+    return JSON.parse(stdout) ?? {};
   } catch {
-    return "";
+    return {};
   }
+}
+
+/** What a script printed for the person, never the model. */
+function personOf(output) {
+  return String(output?.systemMessage ?? "").trim();
+}
+
+const NO_ANSWER = { text: "", person: "" };
+
+function answerFrom(code, stdout, stderr) {
+  if (code === 2) return { text: stderr.trim(), person: "" };
+  if (code !== 0) return NO_ANSWER;
+  const output = stdoutJson(stdout);
+  return {
+    text: String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim(),
+    person: personOf(output),
+  };
 }
 
 /** A script that fails to run, or exits other than 0 or 2, is reported and answers nothing. */
@@ -83,29 +99,26 @@ function answerOf(script, args, payload, directory) {
   return runCapture(script, args, payload, directory).then(({ error, code, signal, stdout, stderr }) => {
     if (error !== undefined) {
       reportHookFailure(script, error);
-      return "";
+      return NO_ANSWER;
     }
     if ((code !== 0 && code !== 2) || signal !== null) {
       reportHookFailure(script, exitDescription(code, signal));
-      return "";
+      return NO_ANSWER;
     }
     return answerFrom(code, stdout, stderr);
   });
 }`;
 
-/** The `stopReasonOf` of a bridge: the reason a Stop script gave to keep working, read through
- * `runCapture`; and `stopCallsFor`, an idle session's Stop calls. The host adds what it
- * tracks itself, `stop_hook_active`, to each payload. */
+/** The `stopReasonOf` of a bridge: the reason a Stop script gave to keep working and its message
+ * for the person, read through `runCapture`; and `stopCallsFor`, an idle session's Stop calls.
+ * The host adds what it tracks itself, `stop_hook_active`, to each payload. */
 export const STOP_REASON_OF_SOURCE = `/** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
 function stopReasonOf(script, args, payload, directory) {
   return runCapture(script, args, payload, directory).then(({ error, code, stdout }) => {
-    if (error !== undefined || code !== 0) return "";
-    try {
-      const output = JSON.parse(stdout);
-      return output?.decision === "block" ? String(output.reason ?? "").trim() : "";
-    } catch {
-      return "";
-    }
+    if (error !== undefined || code !== 0) return { reason: "", person: "" };
+    const output = stdoutJson(stdout);
+    const reason = output?.decision === "block" ? String(output.reason ?? "").trim() : "";
+    return { reason, person: personOf(output) };
   });
 }
 

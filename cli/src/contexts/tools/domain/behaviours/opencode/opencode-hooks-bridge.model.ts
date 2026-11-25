@@ -28,6 +28,12 @@
  *   a synthetic text part. A throw from that hook stops the prompt, but its reason reaches neither
  *   the person nor the model (OpenCode 1.19.3 answers a generic server error), so no script refuses.
  *
+ * What a script prints for the person (`systemMessage`, from `answer({ person })`) goes to the
+ * TUI's toast, at SessionStart, Stop and PostToolUse, through the server plugin's own client.
+ * SessionStart's waits for the session's first turn: a toast shown while the server starts
+ * reaches a TUI not yet listening. `opencode run` has no TUI and shows none. V2's adapter has no
+ * such client, so a V2 host shows none.
+ *
  * A `matcher` on a `PreToolUse` or `PostToolUse` group filters by tool name, exact or
  * pipe-separated alternation, ignoring case: OpenCode names its tools in lowercase. Absent, every
  * tool matches.
@@ -68,6 +74,14 @@ export const ${parts.identifier} = async (input) => {
   let pending = Promise.resolve();
   // OpenCode keeps delivering events to an instance it disposed once it has created the next one.
   let disposed = false;
+  // The person's message goes to the TUI's toast. Never awaited: the call comes back only once the
+  // server is up, and a toast the TUI cannot show is not worth holding a hook for.
+  const show = (person) => {
+    if (!person) return;
+    Promise.resolve()
+      .then(() => input.client.tui.showToast({ body: { message: person, variant: "warning" } }))
+      .catch(() => {});
+  };
   return {
     dispose: async () => {
       disposed = true;
@@ -85,7 +99,8 @@ export const ${parts.identifier} = async (input) => {
           // Pending before the script ends: dispose waits for a handling whose script still runs.
           // The prompt is the session's next turn, and this handler must not hold it.
           const handling = asking
-            .then((reason) => {
+            .then(({ reason, person }) => {
+              show(person);
               if (!reason) {
                 continued.delete(sessionId);
                 return undefined;
@@ -104,10 +119,10 @@ export const ${parts.identifier} = async (input) => {
         reportHookFailure("event", error);
       }
     },
-    "experimental.chat.system.transform": (input, output) => addSessionContext(input, output),
+    "experimental.chat.system.transform": (call, output) => addSessionContext(call, output, show),
     "tool.execute.before": (call, output) => refuseToolUse(call, output, input.directory),
     "chat.message": (call, output) => addPromptContext(call, output, input.directory),
-    "tool.execute.after": (call, output) => addToolAnswers(call, output, input.directory),
+    "tool.execute.after": (call, output) => addToolAnswers(call, output, input.directory, show),
   };
 };
 

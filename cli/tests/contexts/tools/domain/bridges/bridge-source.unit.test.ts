@@ -14,29 +14,35 @@ function evaluated<T>(source: string, declared: string, scope: Record<string, un
 }
 
 describe("the source every generated bridge writes the same way", () => {
-  const answerFrom = evaluated<(code: number | null, stdout: string, stderr: string) => string>(
-    ANSWER_OF_SOURCE,
-    "answerFrom"
-  );
+  const answerFrom = evaluated<
+    (code: number | null, stdout: string, stderr: string) => { text: string; person: string }
+  >(ANSWER_OF_SOURCE, "answerFrom");
 
   it("reads a script's stderr as its answer on exit code 2", () => {
-    expect(answerFrom(2, "", " why \n")).toBe("why");
+    expect(answerFrom(2, "", " why \n").text).toBe("why");
   });
 
   it("reads the additionalContext of a script that exits 0, nothing for any other exit", () => {
     const stdout = JSON.stringify({ hookSpecificOutput: { additionalContext: " noted " } });
 
     expect([
-      answerFrom(0, stdout, ""),
-      answerFrom(1, stdout, ""),
-      answerFrom(0, "text", ""),
+      answerFrom(0, stdout, "").text,
+      answerFrom(1, stdout, "").text,
+      answerFrom(0, "text", "").text,
     ]).toEqual(["noted", "", ""]);
+  });
+
+  it("reads the person's message of a script that exits 0 apart from what the model reads", () => {
+    expect(answerFrom(0, JSON.stringify({ systemMessage: " hi " }), "")).toEqual({
+      text: "",
+      person: "hi",
+    });
   });
 
   describe("a script's answer, awaited", () => {
     const answered = async (done: Record<string, unknown>) => {
       const reported: unknown[][] = [];
-      const answerOf = evaluated<(...args: unknown[]) => Promise<string>>(
+      const answerOf = evaluated<(...args: unknown[]) => Promise<{ text: string }>>(
         ANSWER_OF_SOURCE,
         "answerOf",
         {
@@ -45,7 +51,7 @@ describe("the source every generated bridge writes the same way", () => {
           exitDescription: evaluated(reportHookFailureSource("Probe"), "exitDescription"),
         }
       );
-      return { answer: await answerOf("a.cjs", [], {}, "/p"), reported };
+      return { answer: (await answerOf("a.cjs", [], {}, "/p")).text, reported };
     };
 
     it("reports a script that exits other than 0 or 2 by its code, and answers nothing", async () => {

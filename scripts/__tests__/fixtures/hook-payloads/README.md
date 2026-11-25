@@ -30,6 +30,8 @@ call's arguments in `output.args`; `chat.message` is `{ input, output }`, the us
 the moment the bridge runs SessionStart for a new session, `message.updated` the first event of a
 continued one. `hookAnswer` does not apply there.
 
+`opencode-tui.toast.show.json` is the one file not sent to a hook: it holds what a plugin asked OpenCode's client to show (`request`) and the bus event the server published for it (`event`), read from the server's event stream.
+
 ## Scrubbing
 
 Home and project paths are `/Users/user` and `/Users/user/project`, every session id is the one

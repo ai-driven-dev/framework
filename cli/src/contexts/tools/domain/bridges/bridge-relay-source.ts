@@ -59,12 +59,14 @@ async function refuseToolUse(call, output, directory) {
   if (refusal !== null) throw new Error(refusal);
 }
 
-/** Each PostToolUse answer is appended to the output the model reads, a failure reported. */
-async function addToolAnswers(call, output, directory) {
+/** Each PostToolUse answer is appended to the output the model reads, its message for the person
+ * handed to \`show\` where the host has one, a failure reported. */
+async function addToolAnswers(call, output, directory, show) {
   try {
     for (const hook of postToolUseCallsFor(call, directory)) {
-      const answer = await answerOf(hook.script, hook.args, hook.payload, directory);
-      if (answer) output.output = (output.output ?? "") + "\\n\\n" + answer;
+      const { text, person } = await answerOf(hook.script, hook.args, hook.payload, directory);
+      show?.(person);
+      if (text) output.output = (output.output ?? "") + "\\n\\n" + text;
     }
   } catch (error) {
     reportHookFailure("PostToolUse", error);
@@ -107,14 +109,14 @@ async function addPromptContext(input, output, directory) {
   try {
     const calls = userPromptCallsFor(input, output, directory);
     for (const [index, call] of calls.entries()) {
-      const answer = await answerOf(call.script, call.args, call.payload, directory);
-      if (!answer) continue;
+      const { text } = await answerOf(call.script, call.args, call.payload, directory);
+      if (!text) continue;
       output.parts.push({
         id: output.parts[0].id + "-" + ${JSON.stringify(plugin)} + "-" + index,
         messageID: output.message?.id,
         sessionID: input?.sessionID,
         type: "text",
-        text: answer,
+        text,
         synthetic: true,
       });
     }
@@ -128,8 +130,9 @@ async function addPromptContext(input, output, directory) {
  * That event is `session.created` for a new session; a continued one is created no more, and its
  * first event is another. A new session's first event names its folder under info; a continued
  * one's names none. Every script's answer reaches the model in one block, added to the system
- * prompt of each of that session's turns. Not awaited by the event: the session's first turn
- * awaits it. The map is module-level: the host creates the plugin again, and a fresh map would run
+ * prompt of each of that session's turns, and their messages for the person are shown once, at
+ * the first turn: shown while the host starts, they reach a TUI not yet listening. Not awaited by
+ * the event: the session's first turn awaits it. The map is module-level: the host creates the plugin again, and a fresh map would run
  * the scripts again and lose their answer.
  *
  * Limit: `session.deleted` clears a session's entry through `properties.sessionID`, a shape no
@@ -149,11 +152,23 @@ function runSessionStart(event, fallbackDirectory) {
   const answers = SESSION_START.map((hook) =>
     answerOf(hook.script, hook.args, { hook_event_name: "SessionStart", session_id: named, cwd: directory }, directory)
   );
-  sessionContexts.set(named, Promise.all(answers).then((texts) => texts.filter(Boolean).join("\\n\\n")));
+  const joined = (texts) => texts.filter(Boolean).join("\\n\\n");
+  sessionContexts.set(
+    named,
+    Promise.all(answers).then((all) => ({
+      context: joined(all.map((answer) => answer.text)),
+      person: joined(all.map((answer) => answer.person)),
+    }))
+  );
 }
 
-/** What SessionStart answered, added to the system prompt of the session's turn. */
-async function addSessionContext(input, output) {
-  const context = await sessionContexts.get(input?.sessionID);
-  if (context) output.system.push(context);
+/** What SessionStart answered, added to the system prompt of the session's turn; its message for
+ * the person handed to \`show\` once, where the host has one. */
+async function addSessionContext(input, output, show) {
+  const started = await sessionContexts.get(input?.sessionID);
+  if (started === undefined) return;
+  if (started.context) output.system.push(started.context);
+  const person = started.person;
+  started.person = "";
+  show?.(person);
 }`;

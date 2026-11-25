@@ -10,7 +10,8 @@
  * chat.message: a script's answer joins the user's message as a synthetic text part. A throw from
  * that hook stops the prompt, but its reason reaches neither the person nor the model (Kilo 7.8.32
  * answers a generic UnknownError), so no script refuses. Matchers ignore case, since Kilo names its
- * tools in lowercase.
+ * tools in lowercase. Limit: a script's message for the person (`systemMessage`) is not shown:
+ * Kilo's TUI rendering a plugin's toast was not observed.
  *
  * SessionStart runs on the first event naming a session, as on OpenCode, whose event shapes Kilo
  * shares. Limit: that a continued Kilo session's first event is not `session.created` was not
@@ -59,7 +60,7 @@ const ${parts.identifier} = async ({ directory, client }) => {
         session.idle = true;
         for (const call of stopCallsFor(id, session.directory)) {
           const payload = { ...call.payload, stop_hook_active: session.continued };
-          const reason = await stopReasonOf(call.script, call.args, payload, session.directory);
+          const { reason } = await stopReasonOf(call.script, call.args, payload, session.directory);
           session.continued = reason !== "";
           // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
           // Open limit in \`kilo run\`: it exits at idle before this follow-up's turn runs, on 7.7.5 and 7.8.27
