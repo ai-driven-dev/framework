@@ -43,9 +43,10 @@ the hook's output between `<HOOK_INSTRUCTION>` tags, a JSON answer included as r
 PostToolUse (an `fs_write` creating a file) and Stop, from `kiro-cli` 3.6.0 on the V3 engine, hooks
 declared in a project's `.kiro/hooks/*.json` under the triggers `PostToolUse` and `Stop`, run as
 `kiro-cli chat --v3 --no-interactive --trust-workspace --trust-tools=fs_write,fs_read --model
-qwen3-coder-next "<prompt>"`. Their stdin carries no `stop_hook_active`. A Stop hook printing
-`{"decision": "block", "reason": ...}` once made the model act on the reason, and Stop then fired no
-second time; text printed by a PostToolUse hook was not read by the model in two runs.
+qwen3-coder-next "<prompt>"`. Their stdin carries no `stop_hook_active`. In the one run whose model output
+was kept, a Stop hook printing `{"decision": "block", "reason": ...}` made the model answer READY,
+then CONTINUED, and Stop fired no second time; in the two runs whose model output was kept, text
+printed by a PostToolUse hook was not read by the model.
 
 ## How the harder ones were reached
 

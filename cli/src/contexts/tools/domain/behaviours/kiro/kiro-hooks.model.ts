@@ -99,7 +99,7 @@ function toKiroHooks(
   { trigger, item }: { trigger: string; item: PluginHookItem }
 ): KiroHook[] {
   return bridgeHookCalls([{ hooks: [item] }]).map((call) => ({
-    name: `${plugin}-${call.script}`,
+    name: `${plugin}-${trigger}-${call.script}`,
     trigger,
     action: { type: "command", command: launcher(scriptsDir, plugin, call) },
     ...(typeof item.timeout === "number" ? { timeout: item.timeout } : {}),

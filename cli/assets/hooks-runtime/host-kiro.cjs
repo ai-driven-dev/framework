@@ -44,7 +44,7 @@ function readEvent() {
     host: HOST,
     event,
     files: event === "PostToolUse" ? writtenFiles(raw.tool_name, raw.tool_input, cwd) : [],
-    stopActive: false,
+    stopActive: false, // kiro-cli V3 payloads carry no continuation marker
     sessionId: typeof raw.session_id === "string" ? raw.session_id : null,
     cwd,
     raw,
@@ -53,7 +53,7 @@ function readEvent() {
 }
 
 /** Asks the model to go on before the turn ends, with `text` as what it must do: a block decision
- * at Stop, which the model was seen answering. */
+ * at Stop, which the model was seen answering on kiro-cli V3 (other Kiro surfaces unprobed). */
 function continueTurn(text) {
   if (current?.event !== "Stop" || typeof text !== "string" || text === "") return;
   process.stdout.write(`${JSON.stringify({ decision: "block", reason: text })}\n`);

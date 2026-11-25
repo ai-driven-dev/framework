@@ -276,7 +276,7 @@ script, identical to the plugin source
   "version": "<version>",
   "hooks": [
     {
-      "name": "aidd-context-memory.cjs",
+      "name": "aidd-context-SessionStart-memory.cjs",
       "trigger": "SessionStart",
       "action": {
         "type": "command",
@@ -285,7 +285,7 @@ script, identical to the plugin source
       "timeout": 5
     },
     {
-      "name": "aidd-context-artifacts.cjs",
+      "name": "aidd-context-SessionStart-artifacts.cjs",
       "trigger": "SessionStart",
       "action": {
         "type": "command",
@@ -294,7 +294,7 @@ script, identical to the plugin source
       "timeout": 5
     },
     {
-      "name": "aidd-context-artifacts.cjs",
+      "name": "aidd-context-PostToolUse-artifacts.cjs",
       "trigger": "PostToolUse",
       "action": {
         "type": "command",
@@ -303,7 +303,7 @@ script, identical to the plugin source
       "timeout": 5
     },
     {
-      "name": "aidd-context-memory.cjs",
+      "name": "aidd-context-Stop-memory.cjs",
       "trigger": "Stop",
       "action": {
         "type": "command",
@@ -312,7 +312,7 @@ script, identical to the plugin source
       "timeout": 5
     },
     {
-      "name": "aidd-telemetry-task.cjs",
+      "name": "aidd-telemetry-SessionStart-task.cjs",
       "trigger": "SessionStart",
       "action": {
         "type": "command",
@@ -321,7 +321,7 @@ script, identical to the plugin source
       "timeout": 5
     },
     {
-      "name": "aidd-telemetry-ledger.cjs",
+      "name": "aidd-telemetry-SessionStart-ledger.cjs",
       "trigger": "SessionStart",
       "action": {
         "type": "command",

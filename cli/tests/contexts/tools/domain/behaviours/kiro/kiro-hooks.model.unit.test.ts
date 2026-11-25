@@ -54,7 +54,25 @@ function hooksOf(content: string): { name: string; trigger: string }[] {
   return hooks;
 }
 
+const PAIRED = JSON.stringify({
+  hooks: {
+    SessionStart: [
+      { hooks: [{ type: "command", command: `node ${PLUGIN_ROOT_VAR}/hooks/memory.cjs load` }] },
+    ],
+    Stop: [
+      { hooks: [{ type: "command", command: `node ${PLUGIN_ROOT_VAR}/hooks/memory.cjs sync` }] },
+    ],
+  },
+});
+
 describe("kiro's hooks file", () => {
+  it("names a script paired across events once per trigger, so no two hooks share a name", () => {
+    const { content } = format.merge(null, PAIRED, "aidd-context");
+    const names = hooksOf(content).map((hook) => hook.name);
+
+    expect(new Set(names).size).toBe(names.length);
+  });
+
   it("holds a named hook per plugin script, triggered on SessionStart, in a v1 file", () => {
     const { content } = format.merge(null, SHIPPED, "aidd-context");
 
@@ -62,13 +80,17 @@ describe("kiro's hooks file", () => {
       version: "v1",
       hooks: [
         {
-          name: "aidd-context-memory.cjs",
+          name: "aidd-context-SessionStart-memory.cjs",
           trigger: "SessionStart",
           timeout: 5,
           action: { type: "command" },
         },
-        { name: "aidd-context-a.cjs", trigger: "PostToolUse", action: { type: "command" } },
-        { name: "aidd-context-b.cjs", trigger: "Stop", action: { type: "command" } },
+        {
+          name: "aidd-context-PostToolUse-a.cjs",
+          trigger: "PostToolUse",
+          action: { type: "command" },
+        },
+        { name: "aidd-context-Stop-b.cjs", trigger: "Stop", action: { type: "command" } },
       ],
     });
   });
@@ -86,9 +108,9 @@ describe("kiro's hooks file", () => {
 
     expect(hooksOf(first).map((hook) => hook.name)).toEqual([
       "lint",
-      "aidd-context-memory.cjs",
-      "aidd-context-a.cjs",
-      "aidd-context-b.cjs",
+      "aidd-context-SessionStart-memory.cjs",
+      "aidd-context-PostToolUse-a.cjs",
+      "aidd-context-Stop-b.cjs",
     ]);
     expect(second).toBe(first);
   });
@@ -98,9 +120,9 @@ describe("kiro's hooks file", () => {
     const left = format.unmerge(format.merge(content, SHIPPED, "other").content, "aidd-context");
 
     expect(hooksOf(left).map((hook) => hook.name)).toEqual([
-      "other-memory.cjs",
-      "other-a.cjs",
-      "other-b.cjs",
+      "other-SessionStart-memory.cjs",
+      "other-PostToolUse-a.cjs",
+      "other-Stop-b.cjs",
     ]);
     expect(format.isEmpty(format.unmerge(content, "aidd-context"))).toBe(true);
   });
@@ -109,9 +131,12 @@ describe("kiro's hooks file", () => {
     const { content } = format.merge(null, SHIPPED, "aidd-context");
 
     expect(format.contributedEntries(content, "aidd-context")).toMatchObject([
-      { event: "SessionStart", entry: { name: "aidd-context-memory.cjs", timeout: 5 } },
-      { event: "PostToolUse", entry: { name: "aidd-context-a.cjs" } },
-      { event: "Stop", entry: { name: "aidd-context-b.cjs" } },
+      {
+        event: "SessionStart",
+        entry: { name: "aidd-context-SessionStart-memory.cjs", timeout: 5 },
+      },
+      { event: "PostToolUse", entry: { name: "aidd-context-PostToolUse-a.cjs" } },
+      { event: "Stop", entry: { name: "aidd-context-Stop-b.cjs" } },
     ]);
   });
 

@@ -55,6 +55,20 @@ describe("reading Kiro hook payloads", () => {
     expect(read("kiro", { ...payload, tool_name: "fs_read" }).event?.files).toStrictEqual([]);
   });
 
+  it("lists no file for a write naming no path", () => {
+    const { payload } = sample("kiro-PostToolUse.json", 0);
+
+    expect(read("kiro", { ...payload, tool_input: { text: "hi" } }).event?.files).toStrictEqual([]);
+  });
+
+  it("lists the path of a write carrying no text, without written text", () => {
+    const { payload } = sample("kiro-PostToolUse.json", 0);
+
+    expect(
+      read("kiro", { ...payload, tool_input: { path: "hello.txt" } }).event?.files
+    ).toStrictEqual([{ path: at("hello.txt") }]);
+  });
+
   it("reads Stop from its captured payload", () => {
     const { payload } = sample("kiro-Stop.json", 0);
 
