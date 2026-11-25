@@ -136,13 +136,21 @@ function realDirectories(): Set<string> {
   return real;
 }
 
+/** The map draws `src/<area>/<unit>`; a layer folder inside a context is the architecture
+ * reference's to describe, so it is not compared. */
+const MAP_DEPTH = 2;
+
+function withinMapDepth(dir: string): boolean {
+  return dir.split("/").length - 1 <= MAP_DEPTH;
+}
+
 function disagreements(
   real: ReadonlySet<string>,
   drawn: ReadonlySet<string>
 ): { undocumented: string[]; invented: string[] } {
   return {
-    undocumented: [...real].filter((dir) => !drawn.has(dir)).sort(),
-    invented: [...drawn].filter((dir) => !real.has(dir)).sort(),
+    undocumented: [...real].filter((dir) => withinMapDepth(dir) && !drawn.has(dir)).sort(),
+    invented: [...drawn].filter((dir) => withinMapDepth(dir) && !real.has(dir)).sort(),
   };
 }
 
@@ -178,13 +186,20 @@ describe("the map guard itself", () => {
   });
 
   it("names a real directory the map omits, an invented one it draws, nothing when they agree", () => {
-    const real = new Set(["src/shared", "src/contexts/tools/domain"]);
-    const drawn = new Set(["src/shared", "src/contexts/tools/application"]);
+    const real = new Set(["src/shared", "src/contexts/tools"]);
+    const drawn = new Set(["src/shared", "src/contexts/ghost"]);
 
     expect(disagreements(real, drawn)).toEqual({
-      undocumented: ["src/contexts/tools/domain"],
-      invented: ["src/contexts/tools/application"],
+      undocumented: ["src/contexts/tools"],
+      invented: ["src/contexts/ghost"],
     });
     expect(disagreements(real, real)).toEqual({ undocumented: [], invented: [] });
+  });
+
+  it("compares no directory deeper than the map draws", () => {
+    const real = new Set(["src/contexts/tools", "src/contexts/tools/domain"]);
+    const drawn = new Set(["src/contexts/tools", "src/contexts/tools/application"]);
+
+    expect(disagreements(real, drawn)).toEqual({ undocumented: [], invented: [] });
   });
 });
