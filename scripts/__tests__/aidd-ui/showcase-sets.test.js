@@ -2,7 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { scriptOf, UI, LIB, makeTmp, removeTmp, engine, writeProject, put, record } = require("../fixtures/aidd-ui/project.js");
+const { scriptOf, literally, UI, LIB, makeTmp, removeTmp, engine, writeProject, put, record } = require("../fixtures/aidd-ui/project.js");
 const { load } = require(path.join(LIB, "project.cjs"));
 const { showcaseOf, copiedOf, keptOf, entriesOf, blockedOf, remainingOf, pickedOf, LABELS } = require(path.join(LIB, "showcase.cjs"));
 
@@ -105,18 +105,14 @@ describe("aidd-ui showcase sets", () => {
       assert.doesNotMatch(html, /1 up|2 up|shift/i);
     });
 
-    it("shows of a markdown path every variant shares only the sections that differ, and names the others once", () => {
+    it("shows of a markdown path every variant shares only the sections that differ, and says nothing of the others", () => {
       const html = pagesOf([SET()])["_set-layout.html"];
       const [a, b] = columnsOf(html);
       assert.match(a.html, /Quiet words\./);
       assert.match(b.html, /Plain words\./);
       assert.match(a.html, /calm\./);
       for (const column of [a, b]) assert.doesNotMatch(column.html, /Same for all/);
-      const same = [...html.matchAll(/<p class="same"[^>]*>([\s\S]*?)<\/p>/g)].map((match) => match[1]);
-      assert.equal(same.length, 1);
-      assert.match(same[0], /Identique dans toutes|Same in all/);
-      assert.match(same[0], /Colours/);
-      assert.doesNotMatch(same[0], /Voice|Tone/);
+      assert.doesNotMatch(html, /<p class="same"|Colours/);
     });
 
     it("gives each row of a round the height of its tallest twin, the heads and each axis row alike", () => {
@@ -207,7 +203,7 @@ describe("aidd-ui showcase sets", () => {
       set.variants[1].files.push(file("only-b.md", "# Only B\n\n## Same\n\nShown.\n"));
       const html = pagesOf([set])["_set-layout.html"];
       assert.match(columnsOf(html)[1].html, /Only B/);
-      assert.equal([...html.matchAll(/<p class="same"/g)].length, 1);
+      assert.doesNotMatch(html, /<p class="same"/);
     });
 
     it("shows the problems of a set in place of its frames", () => {
@@ -651,10 +647,10 @@ describe("aidd-ui showcase sets", () => {
 
   describe("the words", () => {
     it("are the same keys in both languages, plain in French", () => {
-      for (const key of ["choose", "desktop", "mobile", "same", "keep", "discard"]) assert.ok(LABELS.en[key] && LABELS.fr[key], key);
+      for (const key of ["choose", "desktop", "mobile", "keep", "discard"]) assert.ok(LABELS.en[key] && LABELS.fr[key], key);
       assert.equal(LABELS.fr.choose, "Variantes");
       assert.deepEqual([LABELS.fr.desktop, LABELS.fr.mobile, LABELS.fr.keep, LABELS.fr.revise, LABELS.fr.discard], ["Ordinateur", "Mobile", "Garder", "À revoir", "Écarter"]);
-      assert.equal(LABELS.fr.same, "Identique dans toutes : {sections}");
+      assert.equal(LABELS.fr.same, undefined);
       assert.deepEqual(Object.keys(LABELS.fr).sort(), Object.keys(LABELS.en).sort());
     });
   });
@@ -678,6 +674,12 @@ describe("aidd-ui showcase sets", () => {
       const [cell] = cellsOf([["Colours", "#111111, #222222 ; #333333"]]);
       assert.match(cell, /<\/span><span class="tone">[^]*<\/span><span class="tone">/);
       assert.doesNotMatch(cell.replace(/<span class="sample"[^]*$/, ""), /<\/span>[,; ]+<span/);
+    });
+
+    it("lays a cell out as wrapping items, so a swatch never splits the words around it", () => {
+      const style = require(path.join(LIB, "variants.cjs")).STYLE;
+      for (const cell of [".take", ".axes .value"]) assert.match(style, new RegExp(`\\n${literally(cell)} \\{[^}]*display: flex; flex-wrap: wrap`), cell);
+      assert.match(style, /\n\.take-cta, \.specimen \{ flex-basis: 100%; \}/);
     });
 
     it("dims only the name of an identical row, never its swatches", () => {

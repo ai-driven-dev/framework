@@ -8,7 +8,6 @@ const SIZES = [["desktop", 1280, 800], ["mobile", 390, 844]];
 const SECTION_LINE = /^## +(.+?)\s*$/;
 const MARKDOWN_FILE = /\.md$/;
 const RENDER_FILE = /\.html$/;
-const JOINER = ", ";
 
 /** The variants of the latest round of a set: the only ones a choice is made on. */
 const latestOf = (variants) => {
@@ -58,8 +57,8 @@ function sectionsOf(text) {
   return sections.map(({ heading, lines }) => ({ heading, text: lines.join(LINE_BREAK).trim() })).filter((section) => section.text);
 }
 
-/** For each markdown path every variant holds: the headings whose section reads the same in all of them,
- * and what each variant shows of the path, the other sections. */
+/** For each markdown path every variant holds, what each variant shows of it: the sections that differ
+ * between them, since one that reads the same in all leaves nothing to compare. */
 function sharedOf(variants) {
   const shared = new Map();
   if (variants.length < 2) return shared;
@@ -69,7 +68,7 @@ function sharedOf(variants) {
     if (own.some((file) => !file)) continue;
     const cut = own.map((file) => sectionsOf(file.text));
     const same = cut[0].filter((section) => section.heading !== null && cut.every((sections) => sections.some((each) => each.heading === section.heading && each.text === section.text))).map((section) => section.heading);
-    shared.set(path, { same, texts: cut.map((sections) => sections.filter((section) => !same.includes(section.heading)).map((section) => section.text).join(`${LINE_BREAK}${LINE_BREAK}`)) });
+    shared.set(path, cut.map((sections) => sections.filter((section) => !same.includes(section.heading)).map((section) => section.text).join(`${LINE_BREAK}${LINE_BREAK}`)));
   }
   return shared;
 }
@@ -209,7 +208,7 @@ function columnOf({ variant, at, shared, tokens, labels, wireframes, parent, sib
   const axes = variant.axes.map(([axis, value]) => `<tr${same(axis) ? " data-same" : ""}><th>${escaped(axis)}${same(axis) ? ` <small class="same-tag">${escaped(labels.identical)}</small>` : ""}</th><td${changed(axis, value)}>${same(axis) ? `<span class="value">${cellOf(value, { variant, labels, sampled })}</span>` : `<button type="button" class="take" data-axis="${escaped(axis)}" data-variant="${escaped(variant.name)}" aria-pressed="false">${cellOf(value, { variant, labels, sampled })}<span class="take-cta">${escaped(labels.take)}</span></button>`}</td></tr>`).join("");
   const renders = screens ? [] : variant.files.filter((file) => RENDER_FILE.test(file.path)).map((file) => framesOf({ variant, file, tokens, labels, page }));
   const documents = variant.files.filter((file) => MARKDOWN_FILE.test(file.path)).flatMap((file) => {
-    const text = shared.has(file.path) ? shared.get(file.path).texts[at] : file.text;
+    const text = shared.has(file.path) ? shared.get(file.path)[at] : file.text;
     return text ? [`<div class="file" data-path="${escaped(file.path)}"><h3>${escaped(fileTitleOf(variant, file))}</h3>${documentOf(text)}</div>`] : [];
   });
   const full = documents.length ? `<details class="fulltext"><summary>${escaped(labels.full)}</summary>${documents.join("")}</details>` : "";
@@ -252,9 +251,8 @@ function setBodyOf({ set, tokens, labels, wireframes = [] }) {
   const roundBody = (round) => {
     const own = set.variants.filter((variant) => (variant.round ?? 1) === round);
     const shared = sharedOf(own);
-    const same = [...shared].filter(([, each]) => each.same.length).map(([path, each]) => `<p class="same" data-path="${escaped(path)}">${escaped(fileTitleOf(own.find((variant) => variant.files.some((file) => file.path === path)), { path }))} ${escaped(filled(labels.same, { sections: each.same.join(JOINER) }))}</p>`);
     const columns = own.map((variant, at) => columnOf({ variant, at, shared, tokens, labels, wireframes, siblings: own, voting: round === rounds.at(-1), page: set.title ?? titleOf(set.id), parent: set.variants.find((each) => each.name === variant.parent && (each.round ?? 1) < round) }));
-    const body = [same.join("\n"), compareOf({ variants: own.filter(shown), labels }), `<div class="variants" style="--count: ${columns.length}" data-set="${escaped(set.id)}" data-fingerprint="${escaped(set.fingerprint)}">${columns.join("")}</div>`].filter(Boolean).join("\n");
+    const body = [compareOf({ variants: own.filter(shown), labels }), `<div class="variants" style="--count: ${columns.length}" data-set="${escaped(set.id)}" data-fingerprint="${escaped(set.fingerprint)}">${columns.join("")}</div>`].filter(Boolean).join("\n");
     return rounds.length > 1 ? `<details class="round" data-round="${round}"${round === rounds.at(-1) ? " open" : ""}><summary>${escaped(filled(labels.round, { round }))}</summary>${body}</details>` : body;
   };
   return [head, note, ...rounds.map(roundBody), dressed || set.variants.some(shown) ? largeOf(labels) : ""].filter(Boolean).join("\n");
@@ -277,12 +275,13 @@ const STYLE = `
 .axes td { padding: 4px 0; overflow-wrap: anywhere; }
 .round > summary { cursor: pointer; font-weight: 600; margin: var(--s3) 0; }
 .axes td[data-changed] { box-shadow: inset 3px 0 0 var(--revise); }
-.take { display: block; inline-size: 100%; height: auto; line-height: 1.4; padding: var(--s1) var(--s2); border: 1px solid var(--line-strong); border-radius: var(--r1); background: var(--surface); color: inherit; font: inherit; text-align: left; cursor: pointer; transition: border-color var(--d1) var(--ease); }
+.take { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; inline-size: 100%; height: auto; line-height: 1.4; padding: var(--s1) var(--s2); border: 1px solid var(--line-strong); border-radius: var(--r1); background: var(--surface); color: inherit; font: inherit; text-align: left; cursor: pointer; transition: border-color var(--d1) var(--ease); }
 .take:hover { border-color: var(--accent); }
 .take-cta { display: block; margin-top: 2px; font-size: var(--t-xs); font-weight: 600; text-align: right; color: var(--text); }
+.take-cta, .specimen { flex-basis: 100%; }
 .take[aria-pressed="true"] { border-color: var(--ok); box-shadow: inset 0 0 0 1px var(--ok); }
 .take[aria-pressed="true"] .take-cta::before { content: "\\2713 "; color: var(--ok); }
-.axes .value { display: block; padding: var(--s1) var(--s2); color: var(--muted); }
+.axes .value { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; padding: var(--s1) var(--s2); color: var(--muted); }
 .choices h3 { margin: var(--s3) var(--s5) var(--s1); font-size: var(--t-xs); font-weight: 500; color: var(--muted); }
 .choice { border-bottom: 1px solid var(--line); }
 .choice summary { display: flex; align-items: center; gap: var(--s2); padding: var(--s3) var(--s5); cursor: pointer; font-size: var(--t-sm); font-weight: 600; }
@@ -296,7 +295,7 @@ const STYLE = `
 .vote[data-verdict="keep"][aria-pressed="true"] { background: var(--ok-soft); box-shadow: inset 0 0 0 1.5px var(--ok); color: var(--ok); }
 .vote[data-verdict="revise"][aria-pressed="true"] { background: var(--revise-soft); box-shadow: inset 0 0 0 1.5px var(--revise); color: var(--revise); }
 .vote[data-verdict="discard"][aria-pressed="true"] { background: var(--sunken); box-shadow: none; color: var(--muted); }
-.tone { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; margin: 0 6px 6px 0; vertical-align: top; }
+.tone { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; }
 .axes .swatch { display: block; inline-size: 44px; block-size: 44px; border: 1px solid var(--line-strong); border-radius: var(--r1); }
 .axes td code { font-size: 10px; }
 .sample { display: inline-block; padding: 6px 14px; border-radius: var(--r2); font-size: var(--t-sm); vertical-align: top; }
@@ -315,7 +314,6 @@ const STYLE = `
 .large-fit iframe { position: absolute; top: 0; left: 0; border: 0; transform-origin: 0 0; background: var(--paper); }
 .fulltext > summary { cursor: pointer; font-size: var(--t-sm); font-weight: 600; color: var(--muted); }
 .fulltext[open] > summary { margin-bottom: var(--s3); }
-.same { margin: 0; color: var(--muted); font-size: var(--t-sm); }
 .file { display: flex; flex-direction: column; gap: var(--s2); min-width: 0; }
 .variant .doc { padding: var(--s3) var(--s4); max-width: none; box-shadow: none; }
 .compare { padding: 0; margin: 0 0 var(--s4); flex-wrap: wrap; align-items: center; row-gap: 0; }
