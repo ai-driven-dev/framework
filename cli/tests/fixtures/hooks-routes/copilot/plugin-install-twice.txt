@@ -60,7 +60,6 @@ script, identical to the plugin source
 
 ## project/.github/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/contract.json
 {
-  "version": 1,
   "kind": "skill",
   "unit": "folder",
   "targets": "plugins/*/skills/*",
@@ -149,7 +148,6 @@ targets: [{{host tools}}]
 
 ## project/.github/plugins/aidd-context/hooks/lib/contracts/05-rule-generate/scripts/contract.json
 {
-  "version": 1,
   "kind": "rule",
   "unit": "file",
   "scope": ["aidd_docs/rules/*/*.md"],
@@ -168,7 +166,6 @@ targets: [{{host tools}}]
 
 ## project/.github/plugins/aidd-context/hooks/lib/contracts/06-agent-generate/scripts/contract.json
 {
-  "version": 1,
   "kind": "agent",
   "unit": "file",
   "targets": "plugins/*/agents/*.md",
@@ -245,7 +242,6 @@ disable-model-invocation:
 
 ## project/.github/plugins/aidd-context/hooks/lib/contracts/07-command-generate/scripts/contract.json
 {
-  "version": 1,
   "kind": "command",
   "unit": "file",
   "scope": [
