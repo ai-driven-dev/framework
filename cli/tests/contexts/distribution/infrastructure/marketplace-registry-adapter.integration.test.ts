@@ -55,6 +55,17 @@ describe("storing the marketplace registry in files", () => {
     );
   });
 
+  // Only an absent file is an empty registry. A registry that exists but cannot be read (here a
+  // directory stands where the file belongs) must not read as empty: `save()` would then
+  // rewrite the file from nothing and drop every marketplace registered.
+  it("refuses a registry path it cannot read rather than reading it as empty", async () => {
+    await mkdir(userFile);
+
+    await expect(adapter.list(projectRoot)).rejects.toThrow(
+      expect.objectContaining({ code: "unreadable-marketplace-registry", path: userFile })
+    );
+  });
+
   it("reads a registry file whose list is present and empty as an empty registry", async () => {
     await writeFile(userFile, '{"version":1,"marketplaces":[]}', "utf-8");
 
