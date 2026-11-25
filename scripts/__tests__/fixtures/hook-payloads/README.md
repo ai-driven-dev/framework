@@ -62,3 +62,27 @@ every shape tried, was not read by the model.
   schema; the model only filled them.
 
 Antigravity's `PostToolUse` (a `write_file`, a `run_command`, then an `edit_file`) and `Stop` (`executionNum` 0, then 1 on the continued turn end), captured from real `agy` runs. Its payloads name their event in `hookEventName`. Its edit tool is `edit_file`, with `Path`, `Target` and `Replacement`. Its `SessionStart` was answered with an `injectSteps` system message carrying a passphrase (`run: answer`), and the model repeated the passphrase, so the injection reaches it.
+
+## Checking the fixtures against the hosts
+
+`node scripts/refresh-hook-fixtures.cjs [--host claude,kiro] [--model host=id] [--write]` runs each
+host headless in a throwaway project, with a hook that only records its stdin, and prints per host
+and moment whether the payload still has the committed shape (keys and types, never values), under
+the host's version. Exit 0: every moment matches. 1: a payload drifted or a hook never fired. 2: a
+host could not be run.
+
+It is local and opt-in: it runs the hosts under your own login and spends their quota, so no
+workflow calls it. `--write` adds each drifted payload as a new `log` sample, scrubbed, and removes
+nothing. Review the diff, then re-run the tests that read the fixtures.
+
+Limits:
+
+- OpenCode and Kilo are not covered: a plugin receives arguments, and their fixtures hold what a
+  capture plugin shaped from them.
+- Cursor's `stop` fires only in an interactive session, so it reports `not-fired` here; its other
+  moments report `not-fired` too once the account is out of quota.
+- Codex and Copilot run on the host's default model unless `--model` names one, and their capture
+  declaration has not been run against a live host.
+- Claude Code, Cursor and Kiro leave nothing the tool does not delete from the host's session store,
+  except a folder Cursor may recreate under `~/.cursor/projects` named after the throwaway project.
+  Antigravity, Codex and Copilot keep their sessions where this tool does not look.
