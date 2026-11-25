@@ -7,25 +7,31 @@
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { hooksOf, jsonLines, ROOT } from "./testing/bridged-hosts.builder.js";
-import { SESSION } from "./testing/hook-payload-captures.builder.js";
+import { type Call, recordingScript, SCRIPTS } from "./testing/event-bridge-host.builder.js";
+import {
+  capturedRunOf,
+  capturedSample,
+  captureFile,
+  SESSION,
+} from "./testing/hook-payload-captures.builder.js";
 import {
   bridgeOf,
+  capturedPayloads,
   cleanWorkspaces,
   RECORD,
   recorded,
   workspace,
 } from "./testing/hooks-runtime-bridges.builder.js";
-import { setupV2, v2Payload, v2Payloads } from "./testing/opencode-v2-host.builder.js";
+import { setupV2, V2_HOST } from "./testing/opencode-v2-host.builder.js";
 
 afterEach(cleanWorkspaces);
 
-// Records what it was handed, raw, then refuses the call.
-const REFUSE = `let body = ""; process.stdin.on("data", (c) => { body += c; }); process.stdin.on("end", () => {
-  require("node:fs").appendFileSync(require("node:path").resolve(__dirname, "../../raw.jsonl"), body + "\\n");
-  process.stderr.write("no writes here\\n"); process.exitCode = 2; });`;
+// Records what it was handed, then refuses the call.
+const REFUSE = recordingScript(SCRIPTS["fix.cjs"] ?? "");
 // Answers the prompt it was handed with the prompt itself.
-const ECHO = `let body = ""; process.stdin.on("data", (c) => { body += c; }); process.stdin.on("end", () => {
-  process.stdout.write(JSON.stringify({ additionalContext: "heard: " + JSON.parse(body).prompt })); });`;
+const ECHO = recordingScript(
+  `process.stdout.write(JSON.stringify({ additionalContext: "heard: " + payload.prompt }));`
+);
 
 interface ToolCall {
   readonly input: Record<string, unknown>;
@@ -38,13 +44,14 @@ interface Request {
   readonly system: { type: string; text: string }[];
 }
 
-const tool = (hook: string, name: string, project: string) => {
-  const found = v2Payloads<ToolCall & { tool: string }>(hook, "log", project).find(
-    (call) => call.tool === name
-  );
-  if (found === undefined) throw new Error(`no captured ${name} at ${hook}`);
-  return found;
-};
+/** The captured call of tool `name` at `hook`. */
+const tool = (hook: string, name: string, project: string) =>
+  capturedSample<ToolCall & { tool: string }>(
+    captureFile(V2_HOST, hook),
+    (sample) => sample.run === "log" && sample.payload.tool === name,
+    `${name} call`,
+    project
+  ).payload;
 
 describe("OpenCode 2, through its bridge's setup", () => {
   it("refuses a tool call a PreToolUse script refuses, with the script's reason", async () => {
@@ -57,7 +64,7 @@ describe("OpenCode 2, through its bridge's setup", () => {
 
     await expect(
       call("tool.execute.before", tool("execute.before", "write", ws.project))
-    ).rejects.toThrow("no writes here");
+    ).rejects.toThrow("fix it");
   });
 
   it("hands a PreToolUse script the file a write names as its file_path", async () => {
@@ -69,10 +76,8 @@ describe("OpenCode 2, through its bridge's setup", () => {
     const { call } = await setupV2(ws);
     await call("tool.execute.before", tool("execute.before", "write", ws.project)).catch(() => {});
 
-    const [payload] = await jsonLines<{ tool_input: Record<string, unknown> }>(
-      join(ws.dir, "raw.jsonl")
-    );
-    expect(payload?.tool_input).toMatchObject({ file_path: "a.md", content: "hello" });
+    const [refused] = await jsonLines<Call>(join(ws.dir, "calls.jsonl"));
+    expect(refused?.payload.tool_input).toMatchObject({ file_path: "a.md", content: "hello" });
   });
 
   it("adds a PostToolUse answer to the result the model reads", async () => {
@@ -114,9 +119,12 @@ describe("OpenCode 2, through its bridge's setup", () => {
       { "echo.cjs": ECHO }
     );
     const { call } = await setupV2(ws);
-    const prompt = v2Payload<Prompt>("prompt", "log", ws.project);
+    const prompt = capturedRunOf<Prompt>(V2_HOST, "log", ws.project)("prompt");
     await call("session.prompt", prompt);
-    const request = await call("session.context", v2Payload<Request>("context", "log", ws.project));
+    const request = await call(
+      "session.context",
+      capturedRunOf<Request>(V2_HOST, "log", ws.project)("context")
+    );
 
     expect(request.system.at(-1)).toStrictEqual({
       type: "text",
@@ -128,8 +136,11 @@ describe("OpenCode 2, through its bridge's setup", () => {
     const ws = await workspace("opencode", bridgeOf("opencode"));
     vi.stubEnv("AIDD_START", "answer");
     const { call } = await setupV2(ws);
-    await call("session.prompt", v2Payload("prompt", "log", ws.project));
-    const request = await call("session.context", v2Payload<Request>("context", "log", ws.project));
+    await call("session.prompt", capturedRunOf(V2_HOST, "log", ws.project)("prompt"));
+    const request = await call(
+      "session.context",
+      capturedRunOf<Request>(V2_HOST, "log", ws.project)("context")
+    );
 
     expect(await recorded(ws, 1)).toMatchObject([
       { host: "opencode", event: "SessionStart", sessionId: SESSION, cwd: ws.project },
@@ -140,9 +151,12 @@ describe("OpenCode 2, through its bridge's setup", () => {
   it("runs neither SessionStart nor Stop for a subagent's child session", async () => {
     const ws = await workspace("opencode", bridgeOf("opencode"));
     const { call, admitted } = await setupV2(ws);
-    await call("session.prompt", v2Payload("prompt", "child", ws.project));
-    await call("session.experimental.idle", v2Payload("experimental.idle", "child", ws.project));
-    await call("session.prompt", v2Payload("prompt", "log", ws.project));
+    await call("session.prompt", capturedRunOf(V2_HOST, "child", ws.project)("prompt"));
+    await call(
+      "session.experimental.idle",
+      capturedRunOf(V2_HOST, "child", ws.project)("experimental.idle")
+    );
+    await call("session.prompt", capturedRunOf(V2_HOST, "log", ws.project)("prompt"));
 
     expect((await recorded(ws, 1)).map((entry) => entry.sessionId)).toStrictEqual([SESSION]);
     await new Promise((resolve) => setTimeout(resolve, 200));
@@ -153,7 +167,7 @@ describe("OpenCode 2, through its bridge's setup", () => {
   it("continues the turn at idle with a synthetic message, admitted before the hook returns", async () => {
     const ws = await workspace("opencode", bridgeOf("opencode"));
     const { call, admitted } = await setupV2(ws, { admitAfter: 100 });
-    const [idle] = v2Payloads("experimental.idle", "log", ws.project);
+    const [idle] = await capturedPayloads(V2_HOST, "experimental.idle", ws.project, "log");
     await call("session.experimental.idle", idle);
 
     expect(admitted).toStrictEqual([{ sessionID: SESSION, text: "go on", delivery: "steer" }]);
@@ -163,7 +177,7 @@ describe("OpenCode 2, through its bridge's setup", () => {
     const ws = await workspace("opencode", bridgeOf("opencode"));
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const { call } = await setupV2(ws, { refusal: new Error("refused") });
-    const [idle] = v2Payloads("experimental.idle", "log", ws.project);
+    const [idle] = await capturedPayloads(V2_HOST, "experimental.idle", ws.project, "log");
 
     await expect(call("session.experimental.idle", idle)).resolves.toBe(idle);
     expect(warn).toHaveBeenCalledWith(
@@ -174,11 +188,11 @@ describe("OpenCode 2, through its bridge's setup", () => {
   it("tells the Stop after the person's next prompt that the turn is a fresh one", async () => {
     const ws = await workspace("opencode", bridgeOf("opencode"));
     const { call } = await setupV2(ws);
-    const [first, second] = v2Payloads("experimental.idle", "log", ws.project);
-    await call("session.prompt", v2Payload("prompt", "log", ws.project));
+    const [first, second] = await capturedPayloads(V2_HOST, "experimental.idle", ws.project, "log");
+    await call("session.prompt", capturedRunOf(V2_HOST, "log", ws.project)("prompt"));
     await call("session.experimental.idle", first);
     await call("session.experimental.idle", second);
-    await call("session.prompt", v2Payload("prompt", "log", ws.project));
+    await call("session.prompt", capturedRunOf(V2_HOST, "log", ws.project)("prompt"));
     await call("session.experimental.idle", first);
 
     const stops = (await recorded(ws, 4)).filter((entry) => entry.event === "Stop");

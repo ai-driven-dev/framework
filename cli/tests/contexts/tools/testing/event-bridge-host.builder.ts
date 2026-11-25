@@ -15,7 +15,7 @@ import {
   placeBridge,
   promptRecorder,
 } from "./bridged-hosts.builder.js";
-import { capturedSample, captureFile } from "./hook-payload-captures.builder.js";
+import { capturedRunOf, capturedSample, captureFile } from "./hook-payload-captures.builder.js";
 import { removeMadeFolders } from "./made-folders.builder.js";
 export const REFERENCE_HOOKS = JSON.stringify({
   hooks: {
@@ -47,6 +47,12 @@ export const SCRIPTS: Record<string, string> = {
   "exit7.cjs": "process.exitCode = 7;",
   "note.cjs": `process.stdout.write(JSON.stringify({ additionalContext: "noted" }));`,
 };
+
+/** A script that appends what it received to calls.jsonl, then runs `tail`, which reads it as
+ * `payload`. */
+export function recordingScript(tail: string): string {
+  return `${RECORDING}\n${tail}\n});\n`;
+}
 
 // A script that exits without ever reading its stdin.
 export const DEAF = "process.exit(0);";
@@ -105,10 +111,7 @@ export async function open(
   hooksJson = REFERENCE_HOOKS,
   inputDirectory: (directory: string) => string = (directory) => directory
 ) {
-  const recording = Object.entries(SCRIPTS).map(([name, tail]) => [
-    name,
-    `${RECORDING}\n${tail}\n});\n`,
-  ]);
+  const recording = Object.entries(SCRIPTS).map(([name, tail]) => [name, recordingScript(tail)]);
   const { dir: directory, module } = await placeBridge({
     prefix: "aidd-event-bridge-",
     plugin: "probe",
@@ -157,11 +160,7 @@ export interface Captured {
 
 /** A payload the host really sent, from its capture: the sample of its hook's file from `run`. */
 export async function capturedRun(host: BridgedHost, hook: string, run: string): Promise<Captured> {
-  return capturedSample<Captured>(
-    captureFile(host.id, hook),
-    (sample) => sample.run === run,
-    `${run} sample`
-  ).payload;
+  return capturedRunOf<Captured>(host.id, run)(hook);
 }
 
 interface ToolAbout {

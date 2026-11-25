@@ -6,33 +6,11 @@
 
 import { setTimeout as delay } from "node:timers/promises";
 import { descriptorOf } from "./bridged-hosts.builder.js";
-import { capturedSamples, captureFile } from "./hook-payload-captures.builder.js";
-import type { Workspace } from "./hooks-runtime-bridges.builder.js";
+import { capturedRunOf } from "./hook-payload-captures.builder.js";
+import { capturedPayloads, type Workspace } from "./hooks-runtime-bridges.builder.js";
 
-const HOST = "opencode-v2";
-
-/** The payloads OpenCode 2 handed its `hook` in the captured `run`, in the order it sent them,
- * the scrubbed project folder pointed at a real one. */
-export function v2Payloads<T = Record<string, unknown>>(
-  hook: string,
-  run: string,
-  project: string
-): T[] {
-  return capturedSamples<T>(captureFile(HOST, hook), project)
-    .filter((sample) => sample.run === run)
-    .map((sample) => sample.payload);
-}
-
-/** The first payload of `hook` in `run`. */
-export function v2Payload<T = Record<string, unknown>>(
-  hook: string,
-  run: string,
-  project: string
-): T {
-  const [first] = v2Payloads<T>(hook, run, project);
-  if (first === undefined) throw new Error(`${captureFile(HOST, hook)} has no ${run} sample`);
-  return first;
-}
+/** OpenCode 2's captured hooks, by the name it gives each. */
+export const V2_HOST = "opencode-v2";
 
 export interface Synthetic {
   readonly sessionID: string;
@@ -54,10 +32,7 @@ export async function setupV2(
     hooks.set(`${domain}.${name}`, callback);
     return { dispose: async () => undefined };
   };
-  const sessions = [
-    ...v2Payloads<{ id: string }>("session.get", "log", ws.project),
-    ...v2Payloads<{ id: string }>("session.get", "child", ws.project),
-  ];
+  const sessions = await capturedPayloads<{ id: string }>(V2_HOST, "session.get", ws.project);
   const admitted: Synthetic[] = [];
   const ctx = {
     location: { directory: ws.project },
@@ -69,7 +44,7 @@ export async function setupV2(
         await delay(admitAfter);
         if (refusal !== undefined) throw refusal;
         admitted.push(input);
-        return v2Payload("session.synthetic", "log", ws.project);
+        return capturedRunOf(V2_HOST, "log", ws.project)("session.synthetic");
       },
     },
   };

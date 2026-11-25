@@ -4,12 +4,11 @@
  */
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { SESSION } from "./testing/hook-payload-captures.builder.js";
+import { capturedRunOf, SESSION } from "./testing/hook-payload-captures.builder.js";
 import {
   bridgeOf,
   CONTINUED,
   capturedPayloads,
-  capturedRunOf,
   cleanWorkspaces,
   recorded,
   start,

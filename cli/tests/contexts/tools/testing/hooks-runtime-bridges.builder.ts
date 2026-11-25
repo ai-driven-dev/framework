@@ -83,27 +83,17 @@ export async function cleanWorkspaces(): Promise<void> {
   await removeMadeFolders();
 }
 
-/** The arguments `host` handed its `hook`, as captured, the scrubbed project folder pointed at a
- * real one. */
+/** The arguments `host` handed its `hook`, as captured, those of the captured `run` alone when
+ * given, the scrubbed project folder pointed at a real one. */
 export async function capturedPayloads<T = unknown>(
-  host: BridgedHostId,
-  hook: string,
-  project: string
-): Promise<readonly T[]> {
-  return capturedSamples<T>(captureFile(host, hook), project).map((sample) => sample.payload);
-}
-
-/** What `host` handed each hook in the captured `run`, by hook: `of(hook)` is that hook's sample. */
-export function capturedRunOf<T = unknown>(
   host: string,
-  run: string,
-  project: string
-): (hook: string) => T {
-  return (hook) => {
-    const found = capturedSamples<T>(captureFile(host, hook), project).find((s) => s.run === run);
-    if (found === undefined) throw new Error(`${captureFile(host, hook)} has no ${run} sample`);
-    return found.payload;
-  };
+  hook: string,
+  project: string,
+  run?: string
+): Promise<readonly T[]> {
+  return capturedSamples<T>(captureFile(host, hook), project)
+    .filter((sample) => run === undefined || sample.run === run)
+    .map((sample) => sample.payload);
 }
 
 /** A workspace holding the bridge, the recorder and the adapter, and any `scripts` a case adds. */

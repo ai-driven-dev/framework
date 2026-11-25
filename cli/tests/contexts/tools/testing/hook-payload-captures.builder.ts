@@ -39,13 +39,31 @@ export function capturedSamples<T = Record<string, unknown>>(
   return (JSON.parse(text) as { samples: CapturedSample<T>[] }).samples;
 }
 
-/** The first sample of a capture file that `matches`; `what` names it when none does. */
+/** The first sample of a capture file that `matches`; `what` names it when none does. Given
+ * `project`, the scrubbed project folder names it. */
 export function capturedSample<T = Record<string, unknown>>(
   file: string,
   matches: (sample: CapturedSample<T>, index: number) => boolean,
-  what: string
+  what: string,
+  project?: string
 ): CapturedSample<T> {
-  const found = capturedSamples<T>(file).find(matches);
+  const found = capturedSamples<T>(file, project).find(matches);
   if (found === undefined) throw new Error(`${file} has no ${what}`);
   return found;
+}
+
+/** What `host` handed each hook in the captured `run`, by hook: `of(hook)` is that hook's first
+ * sample. Given `project`, the scrubbed project folder names it. */
+export function capturedRunOf<T = unknown>(
+  host: string,
+  run: string,
+  project?: string
+): (hook: string) => T {
+  return (hook) =>
+    capturedSample<T>(
+      captureFile(host, hook),
+      (sample) => sample.run === run,
+      `${run} sample`,
+      project
+    ).payload;
 }
