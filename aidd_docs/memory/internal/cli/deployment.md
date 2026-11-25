@@ -2,19 +2,11 @@
 
 Repository pipeline and release: [`../deployment.md`](../deployment.md).
 
-```mermaid
-flowchart LR
-    Push["push on main"] --> RP["release-please"]
-    RP --> Released["cli in paths_released"]
-    Released --> PublishCli["publish-cli"]
-    PublishCli --> Npm["npm · OIDC"]
-    PublishCli --> Packages["GitHub Packages · best effort"]
-```
-
 ## Pipeline
 
 - `.github/workflows/cli-ci.yml` has no `paths` filter, so its required check is always satisfiable.
 - Its `changes` job decides from the diff which jobs have work.
+- Mutation skips only a verified `promote/next-to-main-*` snapshot; anything unproven keeps normal scopes.
 - The `gate` job (`cli / gate`) fans every job in; it is the one CLI check `.github/rulesets/` requires.
 - `pnpm build` copies the runtime JSON schemas; `cli/scripts/check-bundle-size.mjs` then enforces `bundleBudgetKB`.
 
