@@ -93,10 +93,20 @@ export function flatRulesPlacement(
   return { prefix, glob: `${prefix}*.md` };
 }
 
-/** Whether a project-relative path is one of the plugin's skills or agents: the inverse of the
- * two placements above, read from the same declaration.
+/** The glob that lists a plugin's rules, when `paths` hold any of them: nothing to list otherwise. */
+export function rulesGlobOf(
+  placement: { readonly prefix: string; readonly glob: string } | null,
+  paths: Iterable<string>
+): string | null {
+  if (placement === null) return null;
+  for (const path of paths) if (path.startsWith(placement.prefix)) return placement.glob;
+  return null;
+}
+
+/** Whether a project-relative path is one of the plugin's skills, agents or top-level rules: the
+ * inverse of the placements above, read from the same declaration.
  *
- * Limit: a flat single-level skill or agent is owned by the `<plugin>-` name prefix, so plugin
+ * Limit: a flat single-level skill, agent or top-level rule is owned by the `<plugin>-` name prefix, so plugin
  * "aidd" also claims the `aidd-x-...` artifacts of a sibling plugin "aidd-x". No framework plugin
  * name is a prefix of another, so nothing guards it; a plugin named that way must change the
  * placement first. The nested skill layout (`<plugin>/`) has no such overlap. */
@@ -113,6 +123,7 @@ export function ownsFlatArtifact(
       ? skill.startsWith(`${plugin}/`)
       : skill.startsWith(`${plugin}-`);
   }
+  if (rulesGlobOf(flatRulesPlacement(layout, plugin), [relativePath]) !== null) return true;
   return below(layout.agentsDir)?.startsWith(`${plugin}-`) ?? false;
 }
 

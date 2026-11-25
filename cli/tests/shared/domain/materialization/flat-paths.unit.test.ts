@@ -8,6 +8,7 @@ import {
   genericFlatHooksFile,
   genericFlatHooksScriptPath,
   ownsFlatArtifact,
+  rulesGlobOf,
 } from "../../../../src/shared/domain/materialization/flat-paths.js";
 
 const nested = flatArtifactLayout(".opencode/", { skills: "nested", agent: { ext: ".md" } });
@@ -73,6 +74,32 @@ describe("a flat artifact layout", () => {
       ownsFlatArtifact(single, ".agents/agents/aiddx-a/agent.md", "aidd"),
       ownsFlatArtifact(nested, ".opencode/agents/aiddx-a.md", "aidd"),
     ]).toStrictEqual([false, false, false]);
+  });
+});
+
+describe("a rule at the top of a flat layout's rules folder", () => {
+  const topLevel = flatArtifactLayout(".kilo/", {
+    skills: "nested",
+    rules: "top-level-no-frontmatter",
+    agent: { ext: ".md" },
+  });
+
+  it("is owned by the plugin whose name prefixes it, and only by it", () => {
+    expect([
+      ownsFlatArtifact(topLevel, ".kilo/rules/aidd-dev-01-a.md", "aidd-dev"),
+      ownsFlatArtifact(topLevel, ".kilo/rules/aidd-dev-01-a.md", "aidd-pm"),
+      ownsFlatArtifact(nested, ".opencode/rules/aidd-dev/01-a.md", "aidd-dev"),
+    ]).toStrictEqual([true, false, false]);
+  });
+
+  it("is listed by a glob only when a written path holds one", () => {
+    const placement = { prefix: ".kilo/rules/aidd-dev-", glob: ".kilo/rules/aidd-dev-*.md" };
+
+    expect([
+      rulesGlobOf(placement, [".kilo/agents/aidd-dev-a.md", ".kilo/rules/aidd-dev-01-a.md"]),
+      rulesGlobOf(placement, [".kilo/rules/aidd-pm-01-a.md"]),
+      rulesGlobOf(null, [".kilo/rules/aidd-dev-01-a.md"]),
+    ]).toStrictEqual([placement.glob, null, null]);
   });
 });
 

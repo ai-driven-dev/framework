@@ -18,6 +18,7 @@ import { resolveScopeForInstall, scopeBaseOf } from "../plugin/plugin-target-res
 import { hashOutputFiles } from "../shared/hash-output-files.js";
 import type { AddPluginRequest, AddPluginResult } from "./add-plugin-request.js";
 import { materializeRequestedMcp } from "./flat-mcp-materializer.js";
+import { placedRulesGlob } from "./placed-rules-glob.js";
 import type { ProjectHooksMaterializer } from "./project-hooks-materializer.use-case.js";
 
 export interface FlatPlacementDeps {
@@ -81,18 +82,6 @@ export async function placeFlatPlugin(
   });
   manifest.addPlugin(tool.toolId, plugin.withProjectHooks(hooks.projectHooks));
   return { skipped, written };
-}
-
-/** The glob listing the plugin's rules in the tool's config, when the install placed any under it. */
-function placedRulesGlob(
-  tool: AiToolProfile,
-  placed: { pluginName: string; files: readonly InstallationFile[] }
-): string | null {
-  const rules = tool.flatRulesPlacement(placed.pluginName);
-  if (rules === null) return null;
-  return placed.files.some((file) => file.relativePath.startsWith(rules.prefix))
-    ? rules.glob
-    : null;
 }
 
 function placeProjectHooks(

@@ -12,10 +12,14 @@ import { FakeMarketplaceRegistry } from "../../../testing/fake-marketplace-regis
 
 async function readBuilt(
   fs: InMemoryFileAdapter,
-  translate: BuiltMaterializationDeps["translate"] = translateDistribution
+  translate: BuiltMaterializationDeps["translate"] = translateDistribution,
+  at: { tool: typeof TOOL.cursor | typeof TOOL.kilo; mode: "marketplace" | "flat" } = {
+    tool: TOOL.cursor,
+    mode: "marketplace",
+  }
 ) {
   const manifest = Manifest.create();
-  manifest.addTool(TOOL.cursor, "test", []);
+  manifest.addTool(at.tool, "test", []);
   return readTranslatedBuiltTree(
     {
       dist: new PluginDistribution({
@@ -24,7 +28,7 @@ async function readBuilt(
         files: [],
         components: { commands: [], agents: [], rules: [], skills: [], hooks: [], mcp: [] },
       }),
-      tool: registeredTools().aiProfile(TOOL.cursor),
+      tool: registeredTools().aiProfile(at.tool),
       source: { kind: "local", path: "/source" },
       projectRoot: "/proj",
       manifest,
@@ -45,7 +49,7 @@ async function readBuilt(
         source: { kind: "local", path: "/src" },
         scope: "project",
       },
-      mode: "marketplace",
+      mode: at.mode,
     }
   );
 }
@@ -75,5 +79,34 @@ describe("reading a translated built tree", () => {
     const { files } = await readBuilt(fs, translate);
 
     expect(files.map((f) => f.relativePath)).toStrictEqual(["sample-plugin/skills/demo/SKILL.md"]);
+  });
+});
+
+describe("reading a flat built tree of a tool that lists its rules in its config", () => {
+  const BUILT_RULE = "/built/kilo/.kilo/rules/sample-plugin-01-standards-naming.md";
+  const at = { tool: TOOL.kilo, mode: "flat" } as const;
+
+  it("keeps the plugin's rules among its files and lists them in the project's config", async () => {
+    const fs = new InMemoryFileAdapter();
+    fs.setFile(BUILT_RULE, "# Naming\n");
+    fs.setFile("/built/kilo/.kilo/rules/other-plugin-a.md", "# Other\n");
+
+    const { files } = await readBuilt(fs, translateDistribution, at);
+
+    expect(files.map((f) => f.relativePath)).toStrictEqual([
+      ".kilo/rules/sample-plugin-01-standards-naming.md",
+    ]);
+    expect(JSON.parse(fs.getFile("/proj/.kilo/kilo.jsonc") ?? "null")).toEqual({
+      instructions: [".kilo/rules/sample-plugin-*.md"],
+    });
+  });
+
+  it("lists no rules when the built tree holds none of the plugin's", async () => {
+    const fs = new InMemoryFileAdapter();
+    fs.setFile("/built/kilo/.kilo/skills/sample-plugin/demo/SKILL.md", "skill");
+
+    await readBuilt(fs, translateDistribution, at);
+
+    expect(fs.has("/proj/.kilo/kilo.jsonc")).toBe(false);
   });
 });

@@ -12,10 +12,11 @@ import { basename, isProse } from "../plugin-paths.js";
 import type { ComponentPlan } from "../rules/component-pipeline.js";
 import { flatHookPlans } from "../rules/hook-plans.js";
 import { chainLinks, toolLinks } from "../rules/links.js";
+import { scopeStated } from "../rules/rule-scope.js";
 import type { TranslatedAiTool, TranslatedFlatPlugin } from "../translate-profile.js";
 import { flatAgentPlan, flatSkillLinks } from "./build-flat.js";
 import { namedByFolder } from "./build-shared.js";
-import { prefixCommandName, ruleScopesOf, scopeStated } from "./install-flat-rules.js";
+import { prefixCommandName, ruleScopesOf } from "./install-flat-rules.js";
 
 type FlatSection = "agents" | "rules" | "skills";
 
