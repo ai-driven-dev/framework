@@ -18,7 +18,7 @@ const write = (file, text) => {
   fs.mkdirSync(path.dirname(path.join(dir, file)), { recursive: true });
   fs.writeFileSync(path.join(dir, file), text);
 };
-const contract = (rules, extra = {}) => write("contract.json", JSON.stringify({ version: 1, kind: "demo", unit: "file", rules, ...extra }));
+const contract = (rules, extra = {}) => write("contract.json", JSON.stringify({ kind: "demo", unit: "file", rules, ...extra }));
 const validate = (...targets) => lint(path.join(dir, "contract.json"), ...targets.map((t) => path.join(dir, t)));
 const snapshot = () => fs.readdirSync(dir, { recursive: true }).sort().map((f) => `${f}:${fs.statSync(path.join(dir, f)).isFile() ? fs.readFileSync(path.join(dir, f), "utf8") : ""}`);
 
@@ -122,6 +122,55 @@ describe("engine", () => {
     fs.mkdirSync(path.join(dir, "unit"));
     assert.equal(validate().status, 2);
     assert.match(validate("unit").err, /MAIN\.md: missing/u);
+  });
+
+  it("rejects version and the required op, which carry nothing", () => {
+    write("a.md", "x\n");
+    contract({ "DEMO-01": { op: "links", in: "*.md", fix: "f" } }, { version: 1 });
+    assert.match(validate("a.md").err, /unknown key version/u);
+    contract({ "DEMO-01": { op: "required", in: "*.md", field: "name", fix: "f" } });
+    assert.match(validate("a.md").err, /unknown op required/u);
+  });
+
+  it("needs no why, and for a file unit no in: the rule then judges the file", () => {
+    contract({ "DEMO-01": { op: "forbidden", regex: "TODO", fix: "remove the marker" } });
+    write("a.md", "TODO\n");
+    assert.match(validate("a.md").out, /DEMO-01 remove the marker/u);
+  });
+
+  it("still needs in for a folder unit, where it picks the files a rule judges", () => {
+    contract({ "DEMO-01": { op: "links", fix: "f" } }, { unit: "folder", marker: "MAIN.md" });
+    write("unit/MAIN.md", "x\n");
+    assert.match(validate("unit").err, /DEMO-01: in is required/u);
+  });
+
+  it("exits 2 on a template, custom check or schema that does not exist", () => {
+    write("a.md", "x\n");
+    contract({ "DEMO-01": { op: "template", in: "*.md", template: "none.md", fix: "f" } });
+    assert.match(validate("a.md").err, /DEMO-01: .*none\.md/u);
+    contract({ "DEMO-01": { op: "custom", in: "*.md", check: "none" } });
+    assert.match(validate("a.md").err, /DEMO-01: .*none\.cjs/u);
+    contract({ "DEMO-01": { op: "json", in: "*.md", schema: "none.json", fix: "f" } });
+    assert.equal(validate("a.md").status, 2);
+  });
+
+  it("exits 2 on a template op without template and a custom op without check", () => {
+    write("a.md", "x\n");
+    contract({ "DEMO-01": { op: "template", in: "*.md", optional: ["A"], fix: "f" } });
+    assert.match(validate("a.md").err, /DEMO-01: template is required/u);
+    contract({ "DEMO-01": { op: "custom", in: "*.md" } });
+    assert.match(validate("a.md").err, /DEMO-01: check is required/u);
+  });
+
+  it("exits 2 on an optional name the template does not hold, and on a regex that does not compile", () => {
+    write("a.md", "x\n");
+    write("t.md", "---\nstatus: draft\n---\n\n# T\n\n## Kept\n\n### Deep\n");
+    contract({ "DEMO-01": { op: "template", in: "*.md", template: "t.md", optional: ["status", "Kept", "Deep"], fix: "f" } });
+    assert.equal(validate("a.md").status, 1);
+    contract({ "DEMO-01": { op: "template", in: "*.md", template: "t.md", optional: ["Gone"], fix: "f" } });
+    assert.match(validate("a.md").err, /DEMO-01: optional Gone is not in t\.md/u);
+    contract({ "DEMO-01": { op: "forbidden", in: "*.md", regex: "(", fix: "f" } });
+    assert.match(validate("a.md").err, /DEMO-01: regex/u);
   });
 
   it("exits 2 on a folder contract without a marker", () => {

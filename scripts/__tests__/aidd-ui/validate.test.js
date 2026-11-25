@@ -114,7 +114,7 @@ const marked = () => fs.existsSync(markPath(sid));
 const sessionStart = () => JSON.stringify({ hook_event_name: "SessionStart", cwd: tmp, source: "startup" });
 /** Starts the session: the hook notes the errors the project holds now, which no turn then answers for. */
 const begin = () => hook(JSON.stringify({ hook_event_name: "SessionStart", cwd: tmp, session_id: sid, source: "startup" }));
-const stop = (active = false) => JSON.stringify({ hook_event_name: "Stop", cwd: tmp, session_id: sid, stop_hook_active: active });
+const stop = (active = false, reply) => JSON.stringify({ hook_event_name: "Stop", cwd: tmp, session_id: sid, stop_hook_active: active, ...(reply === undefined ? {} : { last_assistant_message: reply }) });
 const silent = { code: 0, out: "", err: "" };
 /** The one text every host gets: the count line, then the lines. */
 const counted = (count, noun) => `${count} ${noun}${count === 1 ? "" : "s"}`;
@@ -204,7 +204,7 @@ describe("aidd-ui validator entries", () => {
   describe("E9 commands", () => {
     it("names the commands and exits 2 on one it does not know", () => {
       const run = spawnSync(process.execPath, [ENGINE, "valdate", tmp], { encoding: "utf8" });
-      assert.deepEqual({ code: run.status, out: run.stdout, err: run.stderr }, { code: 2, out: "", err: "usage: node aidd-ui.cjs help [<command>]\nvalidate: Check the design system and print its problems.\ntokens: Write the stylesheet from the tokens.\nhook: Answer a host event with the problems it caused.\nimpact: List what a token or element reaches.\nextract: Write the tokens from the code the system names.\nbump: Raise the versions a change reaches, or start a history.\npublish: Publish the system, or validate elements.\ncompare: Check a set of variants and write their comparison page.\nkeep: Make one variant of a set the design system's own.\nhelp: Print a command's usage, effects, output and exit codes.\n" });
+      assert.deepEqual({ code: run.status, out: run.stdout, err: run.stderr }, { code: 2, out: "", err: "usage: node aidd-ui.cjs help [<command>]\nvalidate: Check the design system and print its problems.\ntokens: Write the stylesheet from the tokens.\nhook: Answer a host event with the problems it caused.\nimpact: List what a token or element reaches.\nextract: Write the tokens from the code the system names.\nbump: Raise the versions a change reaches, or start a history.\npublish: Publish the system, or validate records.\nkeep: Make one variant of a set the design system's own.\nshowcase: Write a static page for each record, to look at and review.\nhelp: Print a command's usage, effects, output and exit codes.\n" });
     });
   });
 
@@ -483,6 +483,12 @@ describe("aidd-ui validator entries", () => {
         assert.deepEqual(hook(editTool(RENDER, kept, kept.replace("</body>", "<p>x</p>\n</body>"))), silent);
       });
 
+      it("hands back the error it put inside a line, its strings being fragments of that line", () => {
+        edit(tmp, RENDER, "</body>", "<p>partial</p>\n</body>");
+        const input = editTool(RENDER, "<p>partial", '<p style="color: #111111">partial');
+        assert.deepEqual(hook(input), claudeFeedback(errorsText([`${RENDER}:28 V4 "#111111" => replace it with a token`])));
+      });
+
       it("groups the file's errors under its name when it only removed lines, its effect being unknown", () => {
         littering(3, 0);
         const input = editTool(RENDER, '<p style="color: #000000">x</p>\n</body>', "</body>");
@@ -575,6 +581,13 @@ describe("aidd-ui validator entries", () => {
       littering(1, 0);
       hook(postToolUse(path.join(tmp, RENDER), before));
       assert.deepEqual(hook(stop()), finish(errorsText([literal(30)])));
+    });
+
+    it("holds an edit that put an error inside a line, its strings being fragments of that line", () => {
+      edit(tmp, RENDER, "</body>", "<p>partial</p>\n</body>");
+      begin();
+      hook(editTool(RENDER, "<p>partial", '<p style="color: #111111">partial'));
+      assert.deepEqual(hook(stop()), finish(errorsText([`${RENDER}:28 V4 "#111111" => replace it with a token`])));
     });
 
     it("holds a whole-file write that does not say what it replaced only past the errors the baseline counts", () => {
@@ -772,6 +785,42 @@ describe("aidd-ui validator entries", () => {
 
   // Stop is the one answer that keeps the person waiting: it names what the turn produced, never
   // an error the project held before the turn began.
+  describe("E14 Stop holds a reply that shows the person a code, a unit or the word token", () => {
+    const JARGON = "Le fond passe en #0a0a0a et le chrono à 240 px, comme le disent les tokens : #0a0a0a partout.";
+    const wrote = () => {
+      begin();
+      hook(editTool(BUTTON, "Any action a person starts; never for navigation.", "Any action a person starts, never for navigation."));
+    };
+
+    it("holds the turn once, naming what the reply shows", () => {
+      wrote();
+      assert.deepEqual(hook(stop(false, JARGON)), finish("aidd-ui: the reply shows #0a0a0a, 240 px, tokens. Say it in plain words: a colour by its name, a size by what it looks like, never a code, a unit or the word token."));
+    });
+
+    it("ends the turn on a plain reply", () => {
+      wrote();
+      assert.deepEqual(hook(stop(false, "Le fond passe au noir profond et le chrono double de taille.")), silent);
+    });
+
+    it("ends the turn once it held it", () => {
+      wrote();
+      assert.deepEqual(hook(stop(true, JARGON)), silent);
+    });
+
+    it("leaves a turn that wrote no design file alone", () => {
+      begin();
+      assert.deepEqual(hook(stop(false, JARGON)), silent);
+    });
+
+    it("names the errors first, the reply waiting for the next Stop", () => {
+      begin();
+      const before = rendered();
+      littering(1, 0);
+      hook(postToolUse(path.join(tmp, RENDER), before));
+      assert.deepEqual(hook(stop(false, JARGON)), finish(errorsText([literal(28)])));
+    });
+  });
+
   describe("E13 Stop never holds the turn on a standing error", () => {
     for (const command of [`node ${ENGINE} validate ${tmp}`, `node ${ENGINE} impact button --root ${tmp}`, `node ${ENGINE} publish button --root ${tmp}`]) {
       it(`does not mark the turn when the engine only reads: ${command.replace(tmp, "<root>").replace(ENGINE, "aidd-ui.cjs")}`, () => {
@@ -998,7 +1047,7 @@ describe("aidd-ui validator entries", () => {
       'grep -n "=>" aidd_docs/ui/brand.md',
       "git rm --cached aidd_docs/ui/brand.md",
       "git reset aidd_docs/ui/brand.md",
-      "node .claude/hooks/aidd-ui/aidd-ui.cjs compare brand",
+      "node .claude/hooks/aidd-ui/aidd-ui.cjs showcase",
     ];
     for (const command of READS) {
       it(`does not mark the turn when a command only reads aidd_docs/ui/: ${command}`, () => {

@@ -13,7 +13,6 @@ const ABBREVIATION = /\b(?:e\.g|i\.e|etc|vs|cf)\./giu;
 
 /** Options each op accepts besides the common keys; the engine refuses any other key. */
 const OPTIONS = {
-  required: ["field"],
   max: ["measure", "field", "max"],
   pattern: ["regex", "field", "line", "any"],
   forbidden: ["regex", "field", "line", "scope"],
@@ -37,9 +36,6 @@ function targets(ctx, rule) {
 }
 
 const ops = {
-  required(ctx, rule) {
-    return rule.field in ctx.fm.fields ? [] : [at(1, undefined)];
-  },
   max(ctx, rule) {
     if (rule.measure === "lines") return ctx.lines.length > rule.max ? [at(rule.max + 1, undefined, { actual: ctx.lines.length })] : [];
     return targets(ctx, rule)
@@ -367,4 +363,4 @@ function parseTemplate(file) {
   return templates.get(file);
 }
 
-module.exports = { ops, OPTIONS, shape, cells, LINK, schemaProblems, readSchema, validateJson };
+module.exports = { ops, OPTIONS, shape, cells, LINK, schemaProblems, readSchema, validateJson, parseTemplate };

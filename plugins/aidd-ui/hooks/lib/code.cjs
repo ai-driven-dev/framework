@@ -47,7 +47,7 @@ const stringsOnly = (source) => source.replace(SCRIPT_TOKEN, (found, literal) =>
  * written as numbers lives in the code itself. */
 const codeOnly = (source) => source.replace(SCRIPT_TOKEN, (found, literal) => (literal !== undefined || /^\/[/*]/.test(found) ? blank(found) : found));
 
-/** An `ignore` list as normalised path prefixes, so `./src` reads as `src`. */
+/** An `ignore` list normalised, so `./src` reads as `src`. */
 const prefixes = (project, key) => list(systemOf(project)?.frontMatter[key]).map((prefix) => path.posix.normalize(prefix));
 /** Whether a normalised prefix names a folder inside the project, never the project itself. */
 const isInside = (prefix) => prefix !== "." && !prefix.startsWith("..") && !path.posix.isAbsolute(prefix);
@@ -147,13 +147,16 @@ function holdsNul(project, file) {
 /** Whether a file is code to read: not a document, data, image or font, and not binary. */
 const isRead = (project, file) => !SKIPPED_EXTENSIONS.includes(path.extname(file)) && !holdsNul(project, file);
 
-/** Every file to read under a code root that no `ignore` prefix covers, relative to the project root:
+/** Whether an `ignore` entry covers a file: `*.suffix` by the end of its name, else as a prefix. */
+const ignores = (entry, file) => (entry.startsWith("*") ? file.endsWith(entry.slice(1)) : isUnder(file, entry));
+
+/** Every file to read under a code root that no `ignore` entry covers, relative to the project root:
  * of them, only those of `project.scope` when a caller narrows the check to the files a turn wrote,
  * so no other file is opened. */
 function codeFiles(project) {
   const tree = codeTree(project);
   tree.read ??= tree.files
-    .filter((file) => !tree.ignore.some((prefix) => isUnder(file, prefix)))
+    .filter((file) => !tree.ignore.some((entry) => ignores(entry, file)))
     .filter((file) => !project.scope || project.scope.has(file))
     .filter((file) => isRead(project, file));
   return tree.read;
@@ -217,7 +220,7 @@ const literalsOf = (project, pattern, extensions = null) =>
     .filter((file) => !isTest(file))
     .flatMap((file) => findLiterals(searchable(project, file), pattern).map((found) => ({ file, ...found })));
 
-const literalProblems = (pattern, extensions = null, applies = () => true) => (project) =>
+const literalProblems = (pattern, extensions, applies) => (project) =>
   applies(project) ? literalsOf(project, pattern, extensions).map(({ literal, ...found }) => found) : [];
 
 /** Each colour literal of the code outside its tests, written or as numbers, with its file. */
@@ -339,4 +342,4 @@ const RULES = {
 /** Every broken code rule, in rule order. */
 const check = checkOf(RULES);
 
-module.exports = { check, colourDebt, codeRoots, codeFilesOf, codeTokens, tokenEntries, platformOfFile };
+module.exports = { check, colourDebt, parseLink, platformsOf, platformEntries, codeRoots, codeFilesOf, codeTokens, tokenEntries, platformOfFile };

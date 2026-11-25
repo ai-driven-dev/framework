@@ -4,13 +4,12 @@ const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 const { UI, PATHS, LIB, makeTmp, removeTmp, filesUnder, engine, validate, writeProject } = require("../fixtures/aidd-ui/project.js");
 
-const { feedbackOf, copiedOf } = require(path.join(LIB, "page.cjs"));
-
-// A set of variants is driven as a subprocess, as the skill calls it: `compare` checks it and
+// A set of variants is driven as a subprocess, as the skill calls it: `showcase` checks it and
 // writes its page, `keep` makes one of its variants the design system's own file.
 
 const DRAFTS = `${UI}/drafts`;
-const PAGE = `${DRAFTS}/brand/compare.html`;
+const CHOICES = `${UI}/choices.md`;
+const CHOICES_HEADER = "# Choices\n\n| Set | Kept | Set aside | Intent |\n| --- | --- | --- | --- |\n";
 const HEADER = ["Variant", "Intent", "Tone", "Density"];
 const ROWS = [
   ["a", "Calm and plain for analysts", "calm", "roomy"],
@@ -43,8 +42,8 @@ function writeSet(id, { header = HEADER, rows = ROWS, files = (name) => ({ "bran
   for (const [name] of rows) for (const [file, content] of Object.entries(files(name))) put(`${DRAFTS}/${id}/${name}/${file}`, content);
 }
 
-const compare = (id = "brand") => {
-  const run = engine("compare", id, "--root", tmp);
+const showcase = () => {
+  const run = engine("showcase", "--root", tmp);
   return { code: run.status, out: run.stdout, err: run.stderr };
 };
 const keep = (id, variant) => {
@@ -53,13 +52,15 @@ const keep = (id, variant) => {
 };
 const snapshot = () => filesUnder(tmp).map((file) => [file, fs.readFileSync(file, "utf8")]);
 
-/** `compare` refused the set for each of `rules`, writing nothing. */
+/** `showcase` printed the problems of the set for each of `rules`, exited 1, and showed them on the set's page. */
 function assertFlags(rules, id = "brand") {
-  const before = snapshot();
-  const run = compare(id);
+  const run = showcase();
   assert.equal(run.code, 1, run.out + run.err);
-  for (const rule of rules) assert.match(run.out, new RegExp(` ${rule}( |$)`, "m"), `${rule} in ${run.out}`);
-  assert.deepEqual(snapshot(), before);
+  const page = read(`${UI}/showcase/_set-${id}.html`);
+  for (const rule of rules) {
+    assert.match(run.out, new RegExp(` ${rule}( |$)`, "m"), `${rule} in ${run.out}`);
+    assert.match(page, new RegExp(`data-rule="${rule}"`), `${rule} on the page`);
+  }
   return run.out;
 }
 
@@ -71,12 +72,12 @@ describe("aidd-ui drafts", () => {
     });
   });
 
-  describe("compare", () => {
-    it("checks a valid set, prints each variant's name and intent in the table's order, and ignores the drafts", () => {
+  describe("D1 to D5, through showcase", () => {
+    it("shows a valid set on a page of its own, exits 0, and the drafts stay out of the validation", () => {
       writeSet("brand");
-      const run = compare();
+      const run = showcase();
       assert.deepEqual([run.code, run.err], [0, ""]);
-      assert.deepEqual(JSON.parse(run.out).variants, ROWS.map(([name, intent]) => ({ name, intent })));
+      assert.deepEqual(ROWS.filter(([name]) => !read(`${UI}/showcase/_set-brand.html`).includes(`data-variant="${name}"`)), []);
       assert.equal(read(`${DRAFTS}/.gitignore`), "*\n");
       assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
     });
@@ -111,23 +112,17 @@ describe("aidd-ui drafts", () => {
       assert.match(assertFlags(["D5"]), / D5 "b"/);
     });
 
-    it("refuses a set without variants.md, nothing written", () => {
-      const before = snapshot();
-      const run = compare("brand");
-      assert.deepEqual([run.code, run.out, run.err.startsWith("aidd-ui: ")], [2, "", true]);
-      assert.deepEqual(snapshot(), before);
-    });
-
-    it("refuses a project without aidd_docs/ui, nothing written", () => {
-      fs.rmSync(path.join(tmp, UI), { recursive: true });
-      const run = compare("brand");
-      assert.deepEqual([run.code, run.out, run.err.startsWith("aidd-ui: ")], [2, "", true]);
-      assert.equal(exists(UI), false);
+    it("D6 flags a variant render that loads the tokens from elsewhere than its record will, naming the file", () => {
+      const screen = (href) => `<!doctype html>\n<html lang="en">\n<head>\n<link rel="stylesheet" href="${href}">\n</head>\n<body></body>\n</html>\n`;
+      writeSet("brand", { files: (name) => ({ "brand.md": brandOf(`Tone of ${name}`), "screens/home.html": screen("../tokens.css"), "preview.html": `<p>${name}</p>\n` }) });
+      assert.equal(showcase().code, 0);
+      put(`${DRAFTS}/brand/b/screens/home.html`, screen("../../../../tokens.css"));
+      assert.match(assertFlags(["D6"]), / D6 "b\/screens\/home.html"/);
     });
 
     it("D5 flags a table without a Variant column, and a variant named like a path, naming the row", () => {
       writeSet("brand", { header: ["Direction", "Intent", "Tone"], rows: ROWS.map(([name, intent, tone]) => [name, intent, tone]) });
-      const run = compare();
+      const run = showcase();
       assert.deepEqual([run.code, run.err], [1, ""]);
       assert.match(run.out, / D5 "undefined"/);
       writeSet("brand", { rows: ROWS.slice(0, 1) });
@@ -135,16 +130,21 @@ describe("aidd-ui drafts", () => {
       assert.match(assertFlags(["D5"]), / D5 "\.\."/);
     });
 
-    it("exits 2 with its usage when the set is not named", () => {
-      const run = engine("compare", "--root", tmp);
-      assert.deepEqual([run.status, run.stderr], [2, "usage: node aidd-ui.cjs compare <set> [--root <dir>]\n"]);
+    it("is no command any more: compare exits 2 as an unknown command and writes nothing", () => {
+      writeSet("brand");
+      const before = snapshot();
+      const run = engine("compare", "brand", "--root", tmp);
+      assert.deepEqual([run.status, run.stdout], [2, ""]);
+      assert.match(run.stderr, /^usage: node aidd-ui.cjs help/);
+      assert.doesNotMatch(run.stderr, /compare/);
+      assert.deepEqual(snapshot(), before);
     });
   });
 
   describe("keep", () => {
     it("makes the variant the design system's file, drops every other, and leaves the set's ignore file", () => {
       writeSet("brand");
-      compare();
+      showcase();
       const run = keep("brand", "b");
       assert.deepEqual([run.code, run.err], [0, ""]);
       assert.deepEqual(JSON.parse(run.out), { kept: "b", written: [`${UI}/brand.md`] });
@@ -155,12 +155,50 @@ describe("aidd-ui drafts", () => {
       assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
     });
 
+    it("records each variant it sets aside, with its intent, in choices.md, which is no record", () => {
+      writeSet("brand");
+      keep("brand", "b");
+      assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
+      assert.equal(read(CHOICES), `${CHOICES_HEADER}| brand | b | a | Calm and plain for analysts |\n| brand | b | c | Dense and quiet for experts |\n`);
+    });
+
+    it("adds a later choice under the earlier ones", () => {
+      writeSet("brand");
+      keep("brand", "b");
+      writeSet("button", { rows: ROWS.slice(0, 2), files: (name) => ({ "components/x.md": `md ${name}\n`, "preview.html": "<p>p</p>\n" }) });
+      keep("button", "a");
+      assert.equal(read(CHOICES), `${CHOICES_HEADER}| brand | b | a | Calm and plain for analysts |\n| brand | b | c | Dense and quiet for experts |\n| button | a | b | Bold and direct for newcomers |\n`);
+    });
+
+    it("keeps the version of the record it replaces, never the variant's", () => {
+      writeSet("brand");
+      fs.writeFileSync(path.join(tmp, PATHS.BRAND), read(PATHS.BRAND).replace("version: 1", "version: 3"));
+      const run = keep("brand", "b");
+      assert.deepEqual([run.code, run.err], [0, ""]);
+      assert.equal(read(PATHS.BRAND), brandOf("Tone of b").replace("version: 1", "version: 3"));
+    });
+
+    it("keeps the variant's own version for a record the design system does not hold yet", () => {
+      writeSet("button", { rows: ROWS.slice(0, 2), files: (name) => ({ "components/x.md": "---\nid: x\nversion: 4\n---\n", "preview.html": "<p>p</p>\n" }) });
+      keep("button", "b");
+      assert.equal(read(`${UI}/components/x.md`), "---\nid: x\nversion: 4\n---\n");
+    });
+
+    it("removes every round of the set with the kept variant", () => {
+      writeSet("brand", { header: [...HEADER, "Round", "Parent"], rows: [[...ROWS[0], "1", ""], [...ROWS[1], "1", ""], [...ROWS[2], "2", "a"]] });
+      const run = keep("brand", "c");
+      assert.deepEqual([run.code, run.err], [0, ""]);
+      assert.equal(read(PATHS.BRAND), brandOf("Tone of c"));
+      assert.equal(exists(`${DRAFTS}/brand`), false);
+      assert.deepEqual(read(CHOICES).split("\n").filter((line) => line.startsWith("| brand ")).map((line) => line.split(" | ")[2]), ["a", "b"]);
+    });
+
     it("lands each file where the variant's folder mirrors it", () => {
-      writeSet("button", { rows: ROWS.slice(0, 2), files: (name) => ({ "components/x.md": `md ${name}\n`, "components/x.html": `<p>${name}</p>\n`, "preview.html": "<p>p</p>\n" }) });
+      writeSet("button", { rows: ROWS.slice(0, 2), files: (name) => ({ "components/x.md": `md ${name}\n`, "components/x.html": `<link rel="stylesheet" href="../tokens.css"><p>${name}</p>\n`, "preview.html": "<p>p</p>\n" }) });
       const run = keep("button", "b");
       assert.deepEqual(JSON.parse(run.out).written, [`${UI}/components/x.html`, `${UI}/components/x.md`]);
       assert.equal(read(`${UI}/components/x.md`), "md b\n");
-      assert.equal(read(`${UI}/components/x.html`), "<p>b</p>\n");
+      assert.equal(read(`${UI}/components/x.html`), '<link rel="stylesheet" href="../tokens.css"><p>b</p>\n');
     });
 
     it("refuses a name that leaves the drafts folder, nothing written", () => {
@@ -205,112 +243,76 @@ describe("aidd-ui drafts", () => {
     });
   });
 
-  describe("the comparison page", () => {
-    const page = () => read(PAGE);
-    const render = (title, states) => read(PATHS.BUTTON_RENDER).replace("<title>button</title>", `<title>${title}</title>`).replace(/<button class="ui"[\s\S]*<\/button>/, states.map((state) => `<button class="ui" data-state="${state}">${title}</button>`).join("\n"));
-    const componentSet = (states = ["default", "hover"]) => writeSet("button", { rows: ROWS.slice(0, 2), files: (name) => ({ "components/x.html": render(name, states) }) });
+  describe("setsOf", () => {
+    const { setsOf } = require(path.join(LIB, "drafts.cjs"));
 
-    it("is written beside the set by compare, and named in its output", () => {
+    it("lists no set when the project has no drafts", () => {
+      assert.deepEqual(setsOf(tmp), []);
+    });
+
+    it("lists each set with its rows, axes, shown variants, problems and a fingerprint of what it shows", () => {
       writeSet("brand");
-      assert.equal(JSON.parse(compare().out).page, PAGE);
-      assert.equal(exists(PAGE), true);
+      writeSet("layout", { rows: ROWS.slice(0, 1) });
+      const sets = setsOf(tmp);
+      assert.deepEqual(sets.map((set) => set.id), ["brand", "layout"]);
+      const [brand, layout] = sets;
+      assert.deepEqual(brand.axes, ["Tone", "Density"]);
+      assert.deepEqual(brand.rows.map((row) => row.Variant), ["a", "b", "c"]);
+      assert.deepEqual(brand.variants.map(({ name, intent, axes }) => [name, intent, axes]), ROWS.map(([name, intent, tone, density]) => [name, intent, [["Tone", tone], ["Density", density]]]));
+      assert.deepEqual(brand.variants[0].files.map((file) => file.path), ["brand.md", "preview.html"]);
+      assert.deepEqual(brand.problems, []);
+      assert.match(brand.fingerprint, /^[0-9a-f]{64}$/);
+      assert.deepEqual(layout.problems.map((problem) => problem.rule), ["D1"]);
     });
 
-    it("holds each variant's name, intent, axis values and text, and each html file in a frame of its own", () => {
+    it("changes the fingerprint when a variant's file changes, and only then", () => {
       writeSet("brand");
-      compare();
-      for (const [name, intent, tone, density] of ROWS) for (const text of [`data-name="${name}"`, intent, `<dd>${tone}</dd>`, `<dd>${density}</dd>`, `Tone of ${name}`]) assert.ok(page().includes(text), text);
-      assert.equal(page().match(/<iframe /g).length, ROWS.length);
-      assert.equal(page().match(/ srcdoc="/g).length, ROWS.length);
+      const before = setsOf(tmp)[0].fingerprint;
+      assert.equal(setsOf(tmp)[0].fingerprint, before);
+      put(`${DRAFTS}/brand/a/preview.html`, "<p>changed</p>\n");
+      assert.notEqual(setsOf(tmp)[0].fingerprint, before);
     });
 
-    it("asks for nothing outside itself: no link, no source, no address", () => {
+    it("reads a Round and a Parent column as the rounds of a set, never as axes", () => {
+      writeSet("brand", { header: [...HEADER, "Round", "Parent"], rows: [[...ROWS[0], "1", ""], [...ROWS[1], "1", ""], [...ROWS[2], "2", "a"]] });
+      const [set] = setsOf(tmp);
+      assert.deepEqual(set.axes, ["Tone", "Density"]);
+      assert.deepEqual(set.variants.map((variant) => [variant.name, variant.round, variant.parent]), [["a", 1, null], ["b", 1, null], ["c", 2, "a"]]);
+      assert.deepEqual(set.variants[2].axes.map(([axis]) => axis), ["Tone", "Density"]);
+      assert.deepEqual(set.problems, []);
+    });
+
+    it("puts every variant of a set without a Round column in round 1", () => {
       writeSet("brand");
-      compare();
-      assert.doesNotMatch(page(), /\b(?:src|href)=["']|https?:\/\//);
+      assert.deepEqual(setsOf(tmp)[0].variants.map((variant) => [variant.round, variant.parent]), [[1, null], [1, null], [1, null]]);
     });
 
-    it("takes the tokens of the design system in line, and lists its themes", () => {
-      componentSet();
-      compare("button");
-      const text = read(`${DRAFTS}/button/compare.html`);
-      assert.ok(text.includes("--space-md: 1rem"));
-      assert.equal(text.includes("../tokens.css"), false);
-      const themes = [...text.match(/<select id="theme">([\s\S]*?)<\/select>/)[1].matchAll(/<option value="([^"]*)"/g)].map((match) => match[1]);
-      assert.deepEqual(themes, ["light", "dark"]);
+    it("keeps a set whose variant is named like a path, with its problem and no files", () => {
+      writeSet("brand", { rows: [ROWS[0], ["../x", ROWS[1][1], "bold", "roomy"], ROWS[2]] });
+      const [set] = setsOf(tmp);
+      assert.ok(set.problems.some((problem) => problem.rule === "D5"));
+      assert.deepEqual(set.variants[1].files, []);
     });
 
-    it("lists no theme without a design system file", () => {
-      fs.rmSync(path.join(tmp, PATHS.SYSTEM));
+    it("skips a folder that holds no variants.md and a folder that is no set name", () => {
+      put(`${DRAFTS}/empty/a/preview.html`, "<p>a</p>");
+      put(`${DRAFTS}/Not A Name/variants.md`, "# x\n");
+      assert.deepEqual(setsOf(tmp), []);
+    });
+  });
+
+  describe("showcase and the drafts folder", () => {
+    const showcase = () => engine("showcase", "--root", tmp);
+
+    it("writes drafts/.gitignore when drafts exist, so a draft never reaches the history", () => {
       writeSet("brand");
-      compare();
-      assert.equal(page().includes('id="theme"'), false);
+      assert.equal(showcase().status, 0);
+      assert.equal(read(`${DRAFTS}/.gitignore`), "*\n");
     });
 
-    it("lists the states its renders carry, once and sorted", () => {
-      componentSet(["hover", "default"]);
-      compare("button");
-      const text = read(`${DRAFTS}/button/compare.html`);
-      const states = [...text.match(/<select id="state">([\s\S]*?)<\/select>/)[1].matchAll(/<option value="([^"]*)"/g)].map((match) => match[1]);
-      assert.deepEqual(states, ["", "default", "hover"]);
-    });
-
-    it("lists the variants in the order of variants.md", () => {
-      writeSet("brand", { rows: [ROWS[1], ROWS[0], ROWS[2]] });
-      compare();
-      assert.deepEqual([...page().matchAll(/<section class="variant" data-name="(\w+)"/g)].map((match) => match[1]), ["b", "a", "c"]);
-    });
-
-    it("is the same bytes on a second run", () => {
-      writeSet("brand");
-      compare();
-      const first = page();
-      compare();
-      assert.equal(page(), first);
-    });
-
-    it("builds the feedback of a rated, discarded and commented state, a missing rating being null", () => {
-      const state = {
-        set: "brand",
-        variants: [
-          { name: "a", rating: "4", discarded: false, comment: "  calm \n" },
-          { name: "b", rating: "", discarded: true, comment: "" },
-        ],
-      };
-      assert.deepEqual(feedbackOf(state), {
-        set: "brand",
-        variants: [
-          { name: "a", rating: 4, discarded: false, comment: "calm" },
-          { name: "b", rating: null, discarded: true, comment: "" },
-        ],
-      });
-    });
-
-    it("copies the feedback as 2-space JSON in a json fence", () => {
-      const state = { set: "brand", variants: [{ name: "a", rating: "4", discarded: false, comment: "calm" }] };
-      assert.equal(copiedOf(state), '```json\n{\n  "set": "brand",\n  "variants": [\n    {\n      "name": "a",\n      "rating": 4,\n      "discarded": false,\n      "comment": "calm"\n    }\n  ]\n}\n```\n');
-    });
-
-    it("carries feedbackOf and copiedOf as the module has them", () => {
-      writeSet("brand");
-      compare();
-      assert.ok(page().includes(feedbackOf.toString()));
-      assert.ok(page().includes(copiedOf.toString()));
-      assert.ok(page().includes("out.value = copiedOf(stateOf());"), "the textarea, so Copy and select agree, holds the fenced text");
-    });
-
-    it("copies the feedback from a textarea", () => {
-      writeSet("brand");
-      compare();
-      assert.doesNotMatch(page(), /showSaveFilePicker|id="save"/);
-      assert.match(page(), /<button id="copy">/);
-      assert.match(page(), /<textarea id="feedback" readonly/);
-    });
-
-    it("opens no connection", () => {
-      writeSet("brand");
-      compare();
-      assert.doesNotMatch(page(), /fetch|XMLHttpRequest|WebSocket/);
+    it("writes no drafts folder when the project holds none", () => {
+      assert.equal(showcase().status, 0);
+      assert.equal(exists(DRAFTS), false);
     });
   });
 });

@@ -67,13 +67,7 @@ Release rules: [Release](../RELEASE.md#rules).
 | A rule | `/aidd-context:05-rule-generate` |
 | A command | `/aidd-context:07-command-generate` |
 | A hook | [Hooks](ARCHITECTURE.md#hooks) |
-| A kind of artifact the content checks validate | the steps below |
-
-To validate a new kind of artifact:
-
-1. Copy `plugins/aidd-pm/skills/02-user-stories/scripts/` (`contract.json`, `validate-story.cjs`) beside the skill that writes it.
-2. Add `scope` for the turn-end check, with `"shell": false` when an install writes the kind: a shell turn then judges only the files a command names.
-3. Run `node scripts/check/engine/sync.cjs`.
+| A kind of artifact the content checks validate | [Contracts](ARCHITECTURE.md#contracts) |
 
 ## Create a plugin
 

@@ -1,5 +1,4 @@
 {
-  "version": 1,
   "kind": "agent",
   "unit": "file",
   "targets": "plugins/*/agents/*.md",

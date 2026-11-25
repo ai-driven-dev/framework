@@ -1,5 +1,4 @@
 {
-  "version": 1,
   "kind": "spec",
   "unit": "file",
   "scope": ["aidd_docs/tasks/**/spec.md"],

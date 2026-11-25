@@ -1,5 +1,4 @@
 {
-  "version": 1,
   "kind": "memory",
   "unit": "folder",
   "targets": "plugins/aidd-context/skills/02-project-memory",

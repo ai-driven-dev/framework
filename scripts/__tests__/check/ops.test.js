@@ -16,7 +16,7 @@ afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
 /** Findings of one rule applied to one file's text. */
 function findings(rule, text, file = "a.md") {
   fs.writeFileSync(path.join(dir, file), text);
-  fs.writeFileSync(path.join(dir, "contract.json"), JSON.stringify({ version: 1, kind: "demo", unit: "file", rules: { "DEMO-01": { in: file, why: "w", fix: "f {actual}", ...rule } } }));
+  fs.writeFileSync(path.join(dir, "contract.json"), JSON.stringify({ kind: "demo", unit: "file", rules: { "DEMO-01": { in: file, why: "w", fix: "f {actual}", ...rule } } }));
   return apply(path.join(dir, "contract.json"), path.join(dir, file));
 }
 const lines = (list) => list.map((f) => f.line);
