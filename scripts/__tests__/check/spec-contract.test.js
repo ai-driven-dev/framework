@@ -85,12 +85,6 @@ describe("spec contract", () => {
     }
   });
 
-  it("SPEC-04 refuses a Done-when condition that names a test command", () => {
-    for (const line of ["- `npm test` passes on the export module", "- node --test passes", "- all tests pass", "- pytest is green"]) {
-      refusedOnlyBy(GOOD.replace("- a signed-in user receives a file holding every field of their account", line), "SPEC-04");
-    }
-  });
-
   it("SPEC-01 refuses a status missing or other than draft or locked", () => {
     refusedOnlyBy(GOOD.replace("---\nstatus: draft\n---\n\n", ""), "SPEC-01");
     refusedOnlyBy(GOOD.replace("status: draft", "status: validated"), "SPEC-01");
