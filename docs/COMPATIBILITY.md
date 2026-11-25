@@ -27,7 +27,7 @@ What each AI tool receives from the framework.
 
 ## Hook events
 
-What the CLI carries to each host, per event. This is the one table: other pages point here. The Hooks column above is coarser: it marks only a bridge as `Some events`, so Kiro, Antigravity and Cursor read as fully supported although they carry fewer than seven. It reads the stored support record the CLI builds, which this page does not change.
+What the CLI carries to each host, per event. This is the one table: other pages point here. The Hooks column is coarser; this table is exact.
 
 | Host | SessionStart | UserPromptSubmit | PreToolUse | PostToolUse | Stop | SessionEnd | SubagentStop |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -49,7 +49,7 @@ What the CLI carries to each host, per event. This is the one table: other pages
 
 Sources, per row:
 
-- Claude Code, Codex, Copilot: the profile declares every event under its own name (`cli/src/composition/tool-profiles/claude.ts`, `codex.ts`, `copilot.ts`). Vendor event lists: [Claude Code](https://code.claude.com/docs/en/hooks), [Codex](https://learn.chatgpt.com/docs/hooks), [Copilot](https://docs.github.com/en/copilot/reference/hooks-configuration), where the vendor maps the PascalCase names the CLI writes to its own (`Stop` to `agentStop`, `UserPromptSubmit` to `userPromptSubmitted`). No host was run for this table; the host-side firing of `SessionEnd` and `SubagentStop` on Copilot is the vendor's word, unverified here.
+- Claude Code, Codex, Copilot: every event is declared under its own name: the default `events` in `cli/src/contexts/tools/domain/formats/hooks/declaration.ts`, which `codex.ts` and `copilot.ts` inherit, and `claude.ts`. Vendor event lists: [Claude Code](https://code.claude.com/docs/en/hooks), [Codex](https://learn.chatgpt.com/docs/hooks), [Copilot](https://docs.github.com/en/copilot/reference/hooks-configuration), where the vendor maps the PascalCase names the CLI writes to its own (`Stop` to `agentStop`, `UserPromptSubmit` to `userPromptSubmitted`). No host was run for this table; the host-side firing of `SessionEnd` and `SubagentStop` on Copilot is the vendor's word, unverified here.
 - Cursor: `cursor.ts` maps six events and skips the rest. Its project `.cursor/hooks.json` is the only file ever observed firing; a plugin-scope `hooks.json` fired none of seven events in three probes.
 - OpenCode and Kilo: a generated bridge per plugin, three events only (`opencode.ts`, `kilo.ts`, `bridges/event-bridge.ts`). `†` cells: a pending change relays `PreToolUse` and `UserPromptSubmit` through the bridge, one starts OpenCode's `SessionStart` from `session.created` and one carries a session-start answer to the model.
 - Antigravity: `antigravity.ts` maps three events and grants every PostToolUse script the matcher `*`. `†`: a pending change relays `PostToolUse` under agy's own tool names (`write_file`, `edit_file`, `run_command`) and honours a matcher, and another carries a session-start context to the model.
@@ -67,13 +67,14 @@ What an event can do differs per host and is the generator's table, [hosts.md](.
 - `PreToolUse`: `{}` denies, `{"decision":"deny","reason":...}` denies with the reason, `{"decision":"block"}` answered `unsupported hook decision: block` in 2 runs, and the reason reaches the model on its next tool call. A script exiting non-zero with an allow answer failed closed in single runs.
 - `SessionStart` and `PreInvocation` answers shaped `{"injectSteps":[{"systemMessage":{"systemMessage":"<text>"}}]}` reached the model.
 - Whether a model acts on a message injected mid-loop depends on the model: it did on `gpt-oss-120b-medium` 3 of 3, on `gemini-3.8-flash-low` 2 of 3, and on `claude-sonnet-4-6` 0 of 6, for a `PreInvocation` relay; the same model acted on a deny reason read on its next tool call, 3 of 3. It is unverified on `gemini-4-hydrogen`, the default model, which probes leave out.
-- A hook command runs from the folder holding `hooks.json`, `.agents/`. The CLI writes only the project's `.agents/hooks.json`; `agy` also loads a user-level hooks file, and a global hook group was active on every event.
+- A hook command runs from the folder holding `hooks.json`, `.agents/`. The CLI writes only the project's `.agents/hooks.json`; `agy` also loads a user-level hooks file, listed as global by `/hooks`, and runs it alongside the project file.
 - A `Stop` answer is relayed once: a message raised on a continuation (`executionNum` above 0) is dropped. `continuationActive` stayed false in 5 log entries from two runs, unverified against the vendor's statement that it should be true.
-- Unverified, never probed: `PostInvocation` `force_continue` effect on the model, injecting a tool call from a hook (one attempt failed with `unknown injected step type`), `replace_file_content` hook payloads, the IDE, a resumed session under `--continue`.
+- Unverified: injecting a tool call from a hook (one attempt, one shape, failed with `unknown injected step type`).
+- Never probed: `PostInvocation` `force_continue` effect on the model, `replace_file_content` hook payloads, the IDE, a resumed session under `--continue`.
 
 ## Cursor limits
 
-- Measured on `cursor-agent` 2026.10.22 for the captured payloads; a later probe was blocked by the Free tier usage limit, so nothing below was re-run. The deny path below was read from the 2026.11.17 bundle, nothing ran. Vendor reference: [hooks](https://cursor.com/docs/agent/hooks).
+- Measured on the captured `cursor-agent` build for the payloads; a later probe was blocked by the Free tier usage limit, so nothing below was re-run. The deny path below was read from a later bundle, nothing ran. Vendor reference: [hooks](https://cursor.com/docs/agent/hooks).
 - `postToolUse` takes `additional_context` and `updated_mcp_tool_output` only, so a `decision: block` after a write is dropped by design.
 - Whether `postToolUse` `additional_context` reaches the model for a built-in tool is unverified. Reports that it does not predate the vendor's fix notice and are not evidence of the current version.
 - `preToolUse` deny: `cursor-agent`'s local deny path reads `user_message`, not `agent_message`, and appends a note telling the model not to work around the block. Unverified at runtime.
@@ -82,7 +83,7 @@ What an event can do differs per host and is the generator's table, [hosts.md](.
 ## OpenCode and Kilo limits
 
 - Probed: OpenCode 1.19.3 (V1) and 2.4.1 (V2, published as `@opencode/cli`), Kilo 7.7.5 and 7.8.32. One run per case unless stated.
-- The bridge targets V1. On OpenCode 2.4.1 the generated bridge relays no `PreToolUse` and no `UserPromptSubmit`, silently: V2 runs only `setup`, which wires `execute.after` and the event stream. The V2 routes that worked in probes are `tool.hook("execute.before")` with a throw, `session.hook("context")`, `session.instructions.entry.put`, and `session.hook("experimental.idle")` with `session.synthetic`. Which of them the bridge adopts is undecided.
+- The bridge targets V1 and relays neither `PreToolUse` nor `UserPromptSubmit` today; the pending change (†) relays them on V1 only. On OpenCode 2.4.1 it would still relay neither, silently: V2 runs only `setup`, which wires `execute.after` and the event stream. The V2 routes that worked in probes are `tool.hook("execute.before")` with a throw, `session.hook("context")`, `session.instructions.entry.put`, and `session.hook("experimental.idle")` with `session.synthetic`. Which of them the bridge adopts is undecided.
 - V2 input names the written file `path`, not `filePath`, so a V2 `PostToolUse` script would get no `file_path`. Only the write input was captured.
 - On 2.4.1 with `run --standalone`, the run's own `session.created` never reaches the plugin, so a V2 `SessionStart` does not fire for it. Background service and the interface were not probed.
 - A child session also emits `session.created` and `session.idle` on 1.19.3, so the bridge runs `Stop` per subagent session. OpenCode's `SessionStart` runs once per server at plugin start with a null `session_id`, never per session; the pending change (†) starts it from `session.created`, which then fires for a child session too. `SubagentStop` is not mapped. `SessionEnd` is unverified: only `location.shutdown` was seen.

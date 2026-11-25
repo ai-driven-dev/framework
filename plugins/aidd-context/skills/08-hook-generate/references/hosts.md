@@ -11,7 +11,6 @@ Detect by listing the project root with hidden entries, since a file search miss
 | Cursor / `cursor` | `.cursor/` | `tool_name`, `tool_input` |
 | GitHub Copilot / `copilot` | `.github/copilot-instructions.md` or `.github/hooks/` | `toolName`, `toolArgs`, an object or a JSON string |
 | Antigravity / `antigravity` | `.agents/agents/`, `.agents/rules/` or `.agents/hooks.json` | `toolCall.name`, `toolCall.args` |
-| Kiro / `kiro` | `.kiro/` | none: `SessionStart` is its only event |
 | OpenCode / `opencode` | `.opencode/`, `opencode.json` or `opencode.jsonc` | `tool`, `args` |
 | Kilo Code / `kilo` | `.kilo/`, `kilo.jsonc` or `kilo.json` | `tool`, `args` |
 
@@ -23,11 +22,11 @@ A `-` means the host has no event for that moment.
 
 | Moment | Claude, Codex | Cursor | Copilot | Antigravity | OpenCode, Kilo |
 | --- | --- | --- | --- | --- | --- |
-| session start | `SessionStart` | `sessionStart` | `sessionStart` | `SessionStart` | `server-init` on OpenCode, `session.created` on Kilo |
-| prompt submitted | `UserPromptSubmit` | `beforeSubmitPrompt` | `userPromptSubmitted` | - | - |
+| session start | `SessionStart` | `sessionStart` | `sessionStart` | `SessionStart` | - |
+| prompt submitted | `UserPromptSubmit` | `beforeSubmitPrompt` | `userPromptSubmitted` | `PreInvocation` | - |
 | before a tool runs | `PreToolUse` | `preToolUse` | `preToolUse` | `PreToolUse` | `tool.execute.before` |
-| after a tool runs | `PostToolUse` | `postToolUse` | `postToolUse` | `PostToolUse` | `tool.execute.after` |
-| turn stop | `Stop` | `stop` | `agentStop` | `Stop` | `session.idle` |
+| after a tool runs | `PostToolUse` | `postToolUse` | `postToolUse` | `PostToolUse` | - |
+| turn stop | `Stop` | `stop` | `agentStop` | `Stop` | - |
 | session end | `SessionEnd` | `sessionEnd` | `sessionEnd` | - | - |
 
 A matcher is a pattern on the tool's name, on tool events only, never on Copilot. The shell tool is `Bash` on Claude and Codex, `run_command` on Antigravity, `bash` on Kilo, and `bash` or `shell` on OpenCode, so `^(bash|shell)$` covers both of its versions.
@@ -36,13 +35,13 @@ A matcher is a pattern on the tool's name, on tool events only, never on Copilot
 
 | Intent | Claude | Codex | Cursor | Copilot | Antigravity | OpenCode, Kilo |
 | --- | --- | --- | --- | --- | --- | --- |
-| inform the model | `additionalContext` | `additionalContext`, not at `Stop` | `additional_context` | `additionalContext` | `injectSteps` with a `systemMessage`, at `SessionStart` | - |
-| block before a tool runs | exit 2 or `deny` | exit 2 or `deny` | exit 2 or `permission: deny` | exit 2 | `decision: deny`, with its `reason` | exit 2, reason on stderr |
+| inform the model | `additionalContext` | `additionalContext`, not at `Stop` | `additional_context` | `additionalContext` | - | - |
+| block before a tool runs | exit 2 or `deny` | exit 2 or `deny` | exit 2 or `permission: deny` | exit 2 | `decision: deny` | exit 2, reason on stderr |
 | ask before a tool runs | `ask` | - | - | `ask` | `decision: ask` | - |
 | require a fix after a write | `decision: block` | `decision: block` | - | - | - | - |
 | keep the turn going at stop | `decision: block` | `decision: block` | `followup_message` | - | `decision: continue` | - |
 
-Claude and Codex read decisions under `hookSpecificOutput`. Antigravity reads JSON on stdout only, and blocks when the script fails, as observed on 1.5.17.
+Claude and Codex read decisions under `hookSpecificOutput`. Antigravity reads JSON on stdout only, and blocks when the script fails.
 
 ## Teammates
 
