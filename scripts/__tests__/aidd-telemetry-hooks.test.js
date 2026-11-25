@@ -57,6 +57,7 @@ if (process.env.FAKE_AIDD_LOG) {
   fs.appendFileSync(process.env.FAKE_AIDD_LOG, JSON.stringify({ argv, cwd: process.cwd() }) + "\\n");
 }
 if (process.env.FAKE_AIDD_NOISE) { process.stdout.write("noise\\n"); process.stderr.write("noise\\n"); }
+if (process.env.FAKE_AIDD_HOLD_MS) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, Number(process.env.FAKE_AIDD_HOLD_MS));
 `;
 
 /** A throwaway world: a home, a telemetry dir, a repository on feat/x that opted in, and a
@@ -187,6 +188,13 @@ function run(hook, box, { payload, env, input, args = [] } = {}) {
 
 const remind = (box, opts) => run(TASK, box, { ...opts, args: ["remind"] });
 const ingest = (box, opts) => run(LEDGER, box, { ...opts, args: ["ingest"] });
+/** The ingest runs `aidd` detached: its calls land after the hook has returned. */
+async function callsOf(box, count = 1) {
+  const deadline = Date.now() + 10_000;
+  while (box.calls().length < count && Date.now() < deadline) await new Promise((resolve) => setTimeout(resolve, 50));
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  return box.calls();
+}
 const reminds = (result) => result.json !== null && typeof result.json.systemMessage === "string";
 function assertPasses(result) {
   assert.equal(result.status, 0);
@@ -633,48 +641,66 @@ test("cmd.exe /s command line: the whole line is wrapped in one more pair of quo
 
 // ---------------------------------------------------------------- the async ingest
 
-test("the ingest runs aidd once, silently", () => {
-  withBox({}, (box) => {
+test("the ingest runs aidd once, silently, in the clone", async () => {
+  const box = sandbox();
+  try {
     assertPasses(ingest(box, { env: box.env({ FAKE_AIDD_NOISE: "1" }) }));
-    assert.deepEqual(box.calls().map((c) => c.argv), [["telemetry", "ingest", "--quiet"]]);
-  });
+    assert.deepEqual(await callsOf(box), [{ argv: ["telemetry", "ingest", "--quiet"], cwd: box.repo }]);
+  } finally {
+    box.dispose();
+  }
 });
 
-test("codex: the ingest runs aidd once, silently", () => {
-  withBox({}, (box) => {
+test("the ingest returns before aidd ends, on every host", async () => {
+  const box = sandbox();
+  try {
+    const started = Date.now();
+    assertPasses(ingest(box, { env: box.env({ FAKE_AIDD_HOLD_MS: "4000" }) }));
+    assert.ok(Date.now() - started < 3000, `the hook waited ${Date.now() - started} ms`);
+    assert.equal((await callsOf(box)).length, 1);
+  } finally {
+    box.dispose();
+  }
+});
+
+test("codex: the ingest runs aidd once, silently", async () => {
+  const box = sandbox();
+  try {
     const ledger = path.join(codexHooks(box), "ledger.cjs");
     const payload = codexPayload(box, codexFile(box, null));
     assertPasses(run(ledger, box, { payload, env: codexEnv(box, { FAKE_AIDD_NOISE: "1" }), args: ["ingest"] }));
-    assert.deepEqual(box.calls().map((c) => c.argv), [["telemetry", "ingest", "--quiet"]]);
-  });
+    assert.deepEqual((await callsOf(box)).map((c) => c.argv), [["telemetry", "ingest", "--quiet"]]);
+  } finally {
+    box.dispose();
+  }
 });
 
-test("the ingest is silent and succeeds with no aidd, with no consent, outside Claude", () => {
+test("the ingest is silent and succeeds with no aidd, with no consent, outside Claude", async () => {
   withBox({ aidd: false }, (box) => assertPasses(ingest(box)));
-  withBox({ consent: false }, (box) => {
-    assertPasses(ingest(box));
-    assert.deepEqual(box.calls(), []);
-  });
-  withBox({}, (box) => {
-    assertPasses(ingest(box, { payload: box.payload({ session_id: OTHER }) }));
-    assert.deepEqual(box.calls(), []);
-  });
+  for (const [options, extra] of [[{ consent: false }, {}], [{}, { payload: { session_id: OTHER } }]]) {
+    const box = sandbox(options);
+    try {
+      assertPasses(ingest(box, extra.payload ? { payload: box.payload(extra.payload) } : {}));
+      assert.deepEqual(await callsOf(box), []);
+    } finally {
+      box.dispose();
+    }
+  }
 });
 
 // ---------------------------------------------------------------- what is registered
 
-test("hooks.json: a sync reminder and an async ingest at SessionStart, no prompt hook", () => {
+test("hooks.json: a reminder and an ingest at SessionStart, both bounded to 5 s, no prompt hook", () => {
   const registered = JSON.parse(fs.readFileSync(path.join(HOOKS, "hooks.json"), "utf8")).hooks;
   assert.deepEqual(Object.keys(registered), ["SessionStart"]);
   const entries = registered.SessionStart.flatMap((group) => group.hooks);
   assert.equal(entries.length, 2);
   const [reminder, ledger] = entries;
   assert.equal(reminder.command, "node ${CLAUDE_PLUGIN_ROOT}/hooks/task.cjs remind");
-  assert.equal(reminder.timeout, 5);
-  assert.notEqual(reminder.async, true);
   assert.equal(ledger.command, "node ${CLAUDE_PLUGIN_ROOT}/hooks/ledger.cjs ingest");
-  assert.equal(ledger.async, true);
   for (const entry of [reminder, ledger]) {
+    assert.equal(entry.timeout, 5);
+    assert.notEqual(entry.async, true);
     assert.equal(typeof entry.statusMessage, "string");
     assert.ok(fs.existsSync(path.join(HOOKS, entry.command.split(" ")[1].split("/").pop())), entry.command);
   }
