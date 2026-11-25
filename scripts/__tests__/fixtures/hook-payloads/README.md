@@ -62,3 +62,39 @@ every shape tried, was not read by the model.
   schema; the model only filled them.
 
 Antigravity's `PostToolUse` (a `write_file`, a `run_command`, then an `edit_file`) and `Stop` (`executionNum` 0, then 1 on the continued turn end), captured from real `agy` runs. Its payloads name their event in `hookEventName`. Its edit tool is `edit_file`, with `Path`, `Target` and `Replacement`. Its `SessionStart` was answered with an `injectSteps` system message carrying a passphrase (`run: answer`), and the model repeated the passphrase, so the injection reaches it.
+
+## Checking the fixtures against the hosts
+
+`node scripts/refresh-hook-fixtures.cjs [--host claude,kiro] [--model host=id] [--write]` runs each
+host headless in a throwaway project, with a hook that only records its stdin, and prints the run
+time, then per host and moment whether the payload still has the committed shape (keys and types,
+never values), under the host's version. Exit codes:
+
+- 0: every moment matches.
+- 1: a payload drifted or a hook never fired. It wins over 2.
+- 2: a host could not be judged: not installed, it refused the run (a usage limit), or it delivered
+  no hook at all.
+
+It is local and opt-in: it runs the hosts under your own login and spends their quota, so no
+workflow calls it. OpenCode and Kilo run under a throwaway home, with a plugin that records the
+arguments they hand it. `--write` adds each payload whose shape no committed sample has, once,
+scrubbed (paths, ids, email, ISO timestamps and dated session-file names; a timestamp that is a
+bare number is fixed by hand), and removes nothing. Review the diff, then re-run the tests that
+read the fixtures.
+
+Limits:
+
+- Codex and Copilot are not covered: a capture declaration for them was never run against a live
+  host.
+- Cursor's `stop` fires only in an interactive session, so it is reported as expected and not
+  counted.
+- Each run deletes the sessions it created: Claude Code's and Cursor's folders, Antigravity's
+  conversation, brain and presence entries, Kiro's through `kiro-cli chat --delete-session`.
+  Left behind: Antigravity's `cache/last_conversations.json` pointer and logs, and a socket-only
+  folder Cursor creates under `~/.cursor/projects` with a shortened name.
+- OpenCode and Kilo tool arguments are filled by the model, so an optional key (a `bash` call's
+  `description`) may drift with the model and not with the host.
+- A host's hook declaration is written here, in the form the host documents, and not installed with
+  the built CLI: a hook installed through it records the plugin script's arguments, not the host's
+  raw stdin the fixtures hold. The tool matchers come from these fixtures. The tool checks what a
+  host sends, not what aidd declares.

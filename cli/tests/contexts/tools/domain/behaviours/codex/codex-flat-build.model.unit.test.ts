@@ -60,7 +60,10 @@ describe("building Codex's flat contract", () => {
       skills: { kind: "fullTree", srcDir: "skills" },
       agents: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
       hooks: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
-      mcp: { supported: false, reason: "carried by the config artifact (config.toml mcp_servers)" },
+      mcp: {
+        supported: false,
+        reason: "carried by the config artifact (config.toml mcp_servers)",
+      },
     });
   });
 

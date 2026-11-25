@@ -244,8 +244,8 @@ describe("the engine translate()", () => {
       expect(pathsFor(opencode)).toContain(".opencode/skills/sample-plugin/hello/SKILL.md");
     });
 
-    it("emits rules under .opencode/rules/sample-plugin/", () => {
-      expect(pathsFor(opencode)).toContain(".opencode/rules/sample-plugin/standards.md");
+    it("emits a rule at the top of .opencode/rules/, named by its plugin", () => {
+      expect(pathsFor(opencode)).toContain(".opencode/rules/sample-plugin-standards.md");
     });
   });
 
