@@ -11,19 +11,13 @@ const CONFIG = path.join(os.tmpdir(), "probe-config");
 const TRANSCRIPT = path.join(CONFIG, "projects", "-w-project", `${ID}.jsonl`);
 
 /** What a real headless run showed on 2.1.295: the hook handed the session's id, the same in
- * its payload, its environment and every transcript line, and was spawned by Claude itself. */
+ * its payload, its environment and every transcript line. */
 function held(overrides = {}) {
   return {
     configDir: CONFIG,
     captured: {
       payload: { session_id: ID, transcript_path: TRANSCRIPT, hook_event_name: "SessionStart" },
-      env: {
-        CLAUDE_CODE_SESSION_ID: ID,
-        CLAUDE_PID: "4242",
-        CLAUDE_CODE_SESSION_ATTENDED: "0",
-        CLAUDE_CODE_ENTRYPOINT: "sdk-cli",
-      },
-      ppid: 4242,
+      env: { CLAUDE_CODE_SESSION_ID: ID },
     },
     transcript: [{ type: "user", sessionId: ID }, { type: "system", sessionId: ID }],
     ...overrides,
@@ -72,20 +66,6 @@ describe("the join the telemetry rests on, judged from one headless run", () => 
     assert.match(judge(held({ transcript: null })).message, /no transcript/);
   });
 
-  it("is a change when CLAUDE_PID is gone, leaving the hook's parent pid to name Claude", () => {
-    const observation = withCaptured((c) => {
-      delete c.env.CLAUDE_PID;
-    });
-    assert.match(judge(observation).message, /CLAUDE_PID/);
-  });
-
-  it("is a change when a headless run reads as a person at the keyboard", () => {
-    const observation = withCaptured((c) => {
-      c.env.CLAUDE_CODE_SESSION_ATTENDED = "1";
-      c.env.CLAUDE_CODE_ENTRYPOINT = "cli";
-    });
-    assert.match(judge(observation).message, /present/);
-  });
 });
 
 /** A `claude` stand-in, a node script: it reads the probe's SessionStart hook from the project,
@@ -110,8 +90,7 @@ const command = settings.hooks.SessionStart[0].hooks[0].command;
 const [bin, ...args] = command.match(/"(?:[^"\\\\]|\\\\.)*"/g).map((word) => JSON.parse(word));
 spawnSync(bin, args, {
   input: JSON.stringify({ session_id: id, transcript_path: transcript }),
-  env: { ...process.env, CLAUDE_CODE_SESSION_ID: id, CLAUDE_PID: String(process.pid),
-    CLAUDE_CODE_SESSION_ATTENDED: "0", CLAUDE_CODE_ENTRYPOINT: "sdk-cli" },
+  env: { ...process.env, CLAUDE_CODE_SESSION_ID: id },
 });
 `
   );

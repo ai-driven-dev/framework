@@ -33,7 +33,7 @@ flowchart LR
 - An envelope keeps its figures apart from its `run`: [envelope reference](../../../../plugins/aidd-telemetry/skills/01-usage/references/envelope.md#figures-and-run).
 - Only reading is tool-specific; everything after the usage record is written once.
 - Hooks and CLI meet only in files, pinned for both by `scripts/__tests__/fixtures/telemetry-bindings/`.
-- `plugins/aidd-telemetry/hooks/catch-up.cjs` runs `aidd telemetry ingest --quiet` at session start.
+- `plugins/aidd-telemetry/hooks/ledger.cjs` runs `aidd telemetry ingest --quiet` at session start.
 - Another tool's calls are attributed by branch; hooks set `AIDD_TELEMETRY_SESSION_ID` where the tool names no session.
 
 ## Where to look
