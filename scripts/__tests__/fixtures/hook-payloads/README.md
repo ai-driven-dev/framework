@@ -38,9 +38,7 @@ for it (`event`), read from the server's event stream.
 
 Home and project paths are `/Users/user` and `/Users/user/project`, every session id is the one
 fake id `00000000-0000-4000-8000-000000000000`, the account email is `user@example.com`, and
-timestamps and dated session-file names are fixed to the epoch. Nothing else is altered: a date
-inside a host's own prompt text or model catalogue (`experimental.chat.system.transform`) is kept
-verbatim.
+timestamps, dates and dated session-file names are fixed to the epoch. Nothing else is altered.
 
 ## Established
 
