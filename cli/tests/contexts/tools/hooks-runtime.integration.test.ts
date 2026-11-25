@@ -98,8 +98,8 @@ describe("Antigravity CLI", () => {
       expect(read("antigravity", unnamed).event).toBe(undefined);
     });
 
-    it("reads PreToolUse as no event: no framework script acts before a tool", () => {
-      expect(read("antigravity", { ...ran, hookEventName: "PreToolUse" }).event).toBe(undefined);
+    it("reads PreInvocation as no event: no framework script acts before a model call", () => {
+      expect(read("antigravity", { ...ran, hookEventName: "PreInvocation" }).event).toBe(undefined);
     });
 
     it("prints nothing for a PostToolUse answer: agy takes no context from it", () => {

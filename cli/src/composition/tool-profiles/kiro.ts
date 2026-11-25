@@ -19,6 +19,8 @@ import {
 
 const DIRECTORY = ".kiro/";
 const TOOL_SUFFIX = ".kiro.md";
+/** Kiro's project MCP servers file, an `mcpServers` object (https://kiro.dev/docs/mcp/configuration/). */
+const MCP_PATH = `${DIRECTORY}settings/mcp.json`;
 
 /** An agent file may be Markdown with YAML front matter, its name derived from the filename when
  * absent and `*` meaning every tool (https://kiro.dev/docs/custom-agents/configuration-reference/).
@@ -58,11 +60,16 @@ const MATCHER_TOOLS: ReadonlyMap<string, string> = new Map([
 const hooks = declareHooks(
   { toolId: "kiro", directory: DIRECTORY, adapter },
   {
-    // Only SessionStart, PostToolUse and Stop have a payload captured from kiro-cli V3 (the kiro-*
-    // hook-payload fixtures); https://kiro.dev/docs/hooks/types/ names the triggers. Every other
-    // event is dropped from the merge with a warning.
+    // Only SessionStart, PreToolUse, PostToolUse and Stop have a payload captured from kiro-cli V3
+    // (the kiro-* hook-payload fixtures); https://kiro.dev/docs/hooks/types/ names the triggers.
+    // Every other event is dropped from the merge with a warning.
     undeclaredEvents: "skipped",
-    events: { SessionStart: "SessionStart", PostToolUse: "PostToolUse", Stop: "Stop" },
+    events: {
+      SessionStart: "SessionStart",
+      PreToolUse: "PreToolUse",
+      PostToolUse: "PostToolUse",
+      Stop: "Stop",
+    },
     toolNames: MATCHER_TOOLS,
     // Kiro loads every `.kiro/hooks/*.json` of a project, and CLI V3 those of `~/.kiro/hooks/`
     // too (https://kiro.dev/docs/hooks/): every plugin's entries share one file of AIDD's own.
@@ -84,7 +91,12 @@ export const kiro = defineAiTool({
   signalDir: null,
   hooks,
   buildContracts: {
-    flat: contract(buildKiroFlatContract, hooks, KIRO_FLAT_LAYOUT, AGENT_MARKDOWN),
+    flat: contract(
+      buildKiroFlatContract,
+      hooks,
+      { layout: KIRO_FLAT_LAYOUT, mcpPath: MCP_PATH },
+      AGENT_MARKDOWN
+    ),
   },
 
   capabilities: {

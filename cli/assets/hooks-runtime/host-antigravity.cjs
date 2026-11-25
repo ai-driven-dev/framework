@@ -9,8 +9,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const HOST = "antigravity";
-// PreToolUse stays unmapped: no framework script acts before a tool.
-const EVENTS = new Set(["SessionStart", "PostToolUse", "Stop"]);
+const EVENTS = new Set(["SessionStart", "PreToolUse", "PostToolUse", "Stop"]);
 // `agy` names its tools in snake case, and their arguments in Pascal case.
 const WRITES = new Set(["write_file"]);
 // An edit names the text it replaces and the text that replaces it, never the whole file.
@@ -47,6 +46,12 @@ function writtenFiles(tool, args, cwd) {
   return [file];
 }
 
+/** Before a tool runs nothing is written yet: only where it is about to write is known, so a file
+ * carries its path and no text. */
+function filesOf(event, files) {
+  return event === "PreToolUse" ? files.map(({ path }) => ({ path })) : files;
+}
+
 function readEvent() {
   current = undefined;
   const raw = readPayload();
@@ -54,12 +59,12 @@ function readEvent() {
   const event = EVENTS.has(raw.hookEventName) ? raw.hookEventName : undefined;
   if (event === undefined || typeof raw.conversationId !== "string") return undefined;
   const cwd = folderOf(raw);
-  const tool = event === "PostToolUse" ? raw.toolCall?.name : undefined;
+  const tool = event === "PostToolUse" || event === "PreToolUse" ? raw.toolCall?.name : undefined;
   const args = raw.toolCall?.args;
   current = {
     host: HOST,
     event,
-    files: writtenFiles(tool, args, cwd),
+    files: filesOf(event, writtenFiles(tool, args, cwd)),
     ...(SHELLS.has(tool) && typeof args?.CommandLine === "string"
       ? { command: args.CommandLine }
       : {}),
@@ -93,4 +98,13 @@ function answer({ text } = {}) {
   print({ injectSteps: [{ systemMessage: { systemMessage: text } }] });
 }
 
-module.exports = { readEvent, answer, continueTurn };
+/** Refuses the tool call about to run, with `reason` as what the model is told. Does nothing at any
+ * other event: a hook that refuses is written once and is harmless where nothing can be refused.
+ * `agy` runs the tool on `allow` and on no answer, and denies on an empty object, so only an
+ * explicit deny refuses. */
+function refuse(reason) {
+  if (current?.event !== "PreToolUse" || typeof reason !== "string" || reason === "") return;
+  print({ decision: "deny", reason });
+}
+
+module.exports = { readEvent, answer, continueTurn, refuse };

@@ -110,7 +110,7 @@ describe("reading Kiro hook payloads", () => {
   it("reads no event from any other event name", () => {
     const { payload } = sample("kiro-SessionStart.json", 0);
 
-    expect(read("kiro", { ...payload, hook_event_name: "PreToolUse" }).event).toBe(undefined);
+    expect(read("kiro", { ...payload, hook_event_name: "PreCompact" }).event).toBe(undefined);
   });
 });
 
