@@ -234,8 +234,7 @@ async function runStop(sessionId, directory, { client, method, show }) {
  * how the host stops the call.
  *
  * Limit: a hook throws into the host only on input no capture shows, such as a message with no
- * part. A PostToolUse failure is reported: OpenCode's V2 adapter hands a client with no
- * `promptAsync`.
+ * part. A PostToolUse failure is reported, such as a client with no `promptAsync`.
  * Limit: every idle is a turn end. No capture shows a host idle twice in one turn; were it to,
  * the second Stop would run told the turn continues when the first blocked, and as a fresh one
  * when it did not. */
