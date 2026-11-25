@@ -1,22 +1,22 @@
 # 02 - Refine
 
-Rewrite an existing spec in place to address review findings.
+Update an existing spec in place from findings.
 
 ## Input
 
-The spec's path, and the findings.
+The spec's path, and the findings: review findings or answers to its open questions.
 
 ## Process
 
-1. Read the spec, and when its status is `locked`, say so and write nothing.
+1. Read the spec.
 2. Pair each finding with the section it touches.
 3. Apply each finding in its section, and leave every other section as it is.
-4. Update each gap per [tbd-marker.md](../references/tbd-marker.md):
+4. Update each gap per [spec-content.md](../references/spec-content.md):
    - Resolved by a finding: drop it.
    - Half answered: narrow it.
    - Still open, or a finding that cannot be resolved: list it.
 5. Overwrite the spec, run [validate-spec.cjs](../scripts/validate-spec.cjs) on it, fix, repeat until it passes.
-6. Report its path and each change as `before -> after`.
+6. Answer with its path and each change as `before -> after`.
    - Nothing changed: say nothing was written.
 
 ## Output
