@@ -18,17 +18,6 @@
 - Every `--scope user` call passes `--no-default-marketplace`, or each host registers the reserved name.
 - A tool absent from `PATH` is skipped, never failed.
 
-## Phases
-
-1. Files-only `setup`.
-2. Native registration and `plugin install` under the project name, checked in each host's inventory, then `doctor`.
-3. A host-side `claude plugin uninstall --scope local`, then the `sync --force` that repairs it.
-4. Opencode's bridge.
-5. Two `marketplace add` guards: another catalog under one name, and an alias diverging from the catalog's.
-6. `setup --scope user`: the project stays clean per `git status --porcelain`, `doctor --scope user` is healthy.
-7. Two projects sharing one machine-scope marketplace.
-8. `clean --force` in the first, then `clean --scope user --force` and its no-user-manifest variant.
-
 ## Trap
 
 - However the run ends, a trap runs `clean --force` per project, then `clean --scope user --force`.
