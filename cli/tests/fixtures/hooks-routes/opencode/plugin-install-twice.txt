@@ -116,17 +116,19 @@ targets: [{{host tools}}]
   "targets": "plugins/*/agents/*.md",
   "scope": [
     ".claude/agents/*.md",
-    ".cursor/agents/*.md"
+    ".cursor/agents/*.md",
+    ".github/agents/*.agent.md",
+    ".agents/agents/*/agent.md",
+    ".opencode/agents/*.md",
+    ".kilo/agents/*.md"
   ],
   "shell": false,
   "rules": {
     "AGENT-02": {
-      "op": "equals",
+      "op": "custom",
       "in": "*.md",
-      "field": "name",
-      "to": "basename",
-      "why": "hosts resolve the agent by file name",
-      "fix": "set name to {expected}"
+      "check": "name",
+      "why": "hosts resolve the agent by file name"
     },
     "AGENT-03": {
       "op": "pattern",
@@ -164,6 +166,9 @@ targets: [{{host tools}}]
   }
 }
 
+
+## project/.opencode/hooks/aidd-context/lib/contracts/06-agent-generate/scripts/custom/name.cjs
+script, identical to the plugin source
 
 ## project/.opencode/hooks/aidd-context/lib/contracts/07-command-generate/assets/command-template.md
 ---
@@ -778,7 +783,7 @@ export default {
 }
 
 # recorded
-project opencode aidd-context scope=project: 19 hook files
+project opencode aidd-context scope=project: 20 hook files
   .opencode/hooks/aidd-context/artifacts.cjs
   .opencode/hooks/aidd-context/lib/contracts/04-skill-generate/scripts/contract.json
   .opencode/hooks/aidd-context/lib/contracts/04-skill-generate/scripts/custom/mermaid.cjs
@@ -789,6 +794,7 @@ project opencode aidd-context scope=project: 19 hook files
   .opencode/hooks/aidd-context/lib/contracts/05-rule-generate/assets/rule-template.md
   .opencode/hooks/aidd-context/lib/contracts/05-rule-generate/scripts/contract.json
   .opencode/hooks/aidd-context/lib/contracts/06-agent-generate/scripts/contract.json
+  .opencode/hooks/aidd-context/lib/contracts/06-agent-generate/scripts/custom/name.cjs
   .opencode/hooks/aidd-context/lib/contracts/07-command-generate/assets/command-template.md
   .opencode/hooks/aidd-context/lib/contracts/07-command-generate/scripts/contract.json
   .opencode/hooks/aidd-context/lib/contracts/lib/engine.cjs
