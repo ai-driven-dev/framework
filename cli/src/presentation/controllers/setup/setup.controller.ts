@@ -14,11 +14,7 @@ import { reportNativeActivation } from "../../presenters/setup/sync.presenter.js
 import { reportAgentModels } from "../../presenters/tools/agent-models.presenter.js";
 import type { Output } from "../../terminal/output.model.js";
 import { type ContainerFactory, parseGlobalOptions } from "../menu/global-options.controller.js";
-import {
-  declareAgentModelOptions,
-  requireAgentHosts,
-  requireProviderForAgentsOnly,
-} from "./setup-agent-flags.controller.js";
+import { declareAgentModelOptions, requireAgentHosts } from "./setup-agent-flags.controller.js";
 import {
   declareSetupOptions,
   globalSetupHelp,
@@ -48,8 +44,10 @@ type AgentModelsChoice = Pick<ReturnType<typeof agentModelsRequest>, "hosts" | "
 function parseAgentModels(run: SetupRun, aiTools: readonly string[]): AgentModelsChoice {
   const { cmdOptions, catalog } = run;
   const { runnable, ...agents } = agentModelsRequest(cmdOptions.provider, aiTools, catalog);
-  requireProviderForAgentsOnly(cmdOptions.agentsOnly, cmdOptions.provider);
-  requireAgentHosts(cmdOptions.provider, { hosts: agents.hosts, runnable });
+  const asked = cmdOptions.provider === undefined ? "--agents-only" : "--provider";
+  if (cmdOptions.provider !== undefined || cmdOptions.agentsOnly === true) {
+    requireAgentHosts(asked, { hosts: agents.hosts, runnable });
+  }
   return agents;
 }
 
@@ -62,13 +60,15 @@ async function setAgentModels(
 ): Promise<void> {
   const { output, projectRoot, catalog, cmdOptions } = run;
   const { agentsOnly } = cmdOptions;
+  const keepSaved = agentsOnly === true && cmdOptions.provider === undefined;
   const main = await container.agentModels.setAgentModels.execute({
     projectRoot,
     ...agents,
     scope: scope ?? "project",
     agentsOnly,
+    ...(keepSaved ? { keepSaved } : {}),
   });
-  reportAgentModels({ output, catalog, ...agents, main, agentsOnly });
+  reportAgentModels({ output, catalog, ...agents, main, agentsOnly, keepSaved });
 }
 
 async function runSetupAction(run: SetupRun): Promise<void> {
@@ -87,7 +87,9 @@ async function runSetupAction(run: SetupRun): Promise<void> {
     printDetectedContext(output, result.context.describe());
   }
   printSetupOutcome(output, result, verbose);
-  if (cmdOptions.provider !== undefined) await setAgentModels(run, container, { agents, scope });
+  if (cmdOptions.provider !== undefined || cmdOptions.agentsOnly === true) {
+    await setAgentModels(run, container, { agents, scope });
+  }
   if (interactive) printNextSteps(output, result.install.results.length > 0);
   reportNativeActivation(output, result.activation);
 }

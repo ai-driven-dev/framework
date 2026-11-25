@@ -62,7 +62,7 @@ describe("aidd setup - the help surface", () => {
       ],
       [
         "--agents-only",
-        "Update the agents' models without changing the main session's settings (requires --provider)",
+        "Update the agents' models without changing the main session's settings; without --provider, each tool keeps its saved provider",
       ],
     ]);
     expect(

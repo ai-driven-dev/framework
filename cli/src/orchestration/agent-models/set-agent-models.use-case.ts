@@ -19,11 +19,15 @@ export interface SetAgentModelsRequest {
   /** Refreshes the agents alone: the main session's model and the record of what it replaced
    * are left as they are. */
   readonly agentsOnly?: boolean;
+  /** No provider named: each host keeps the one saved for it, else its tool's first. */
+  readonly keepSaved?: boolean;
 }
 
 export interface SetAgentModelsResult extends MainSessionModelsResult {
   /** Plugins this project re-installed with the new models. */
   readonly reinstalled: readonly string[];
+  /** The provider each host's agents now run on, for the hosts that run one. */
+  readonly chosen: ReadonlyMap<string, string>;
 }
 
 export interface SetAgentModelsDeps {
@@ -54,6 +58,7 @@ export class SetAgentModels {
     }
     return {
       reinstalled,
+      chosen,
       ...(options.agentsOnly === true
         ? { changed: [], skipped: [] }
         : await this.deps.mainSessions.execute({ hosts: options.hosts, chosen })),

@@ -10,28 +10,18 @@ export function declareAgentModelOptions(command: Command, catalog: ToolCatalog)
     )
     .option(
       "--agents-only",
-      "Update the agents' models without changing the main session's settings (requires --provider)"
+      "Update the agents' models without changing the main session's settings; without --provider, each tool keeps its saved provider"
     );
 }
 
-/** `--provider` names a tool that runs the agents, through `--ide`. */
+/** `--provider` and `--agents-only` name a tool that runs the agents, through `--ide`. */
 export function requireAgentHosts(
-  provider: string | undefined,
+  flag: string,
   request: { hosts: readonly string[]; runnable: readonly string[] }
 ): void {
-  if (provider !== undefined && request.hosts.length === 0) {
+  if (request.hosts.length === 0) {
     throw new Error(
-      `--provider needs --ide with a tool that runs the framework's agents: ${request.runnable.join(", ")}.`
+      `${flag} needs --ide with a tool that runs the framework's agents: ${request.runnable.join(", ")}.`
     );
-  }
-}
-
-/** `--agents-only` changes the agents' models, so it names the provider they take, or none. */
-export function requireProviderForAgentsOnly(
-  agentsOnly: boolean | undefined,
-  provider: string | undefined
-): void {
-  if (agentsOnly === true && provider === undefined) {
-    throw new Error("--agents-only needs --provider, a provider or none.");
   }
 }

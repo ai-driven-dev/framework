@@ -9,6 +9,9 @@ export interface RecordAgentProvidersRequest {
   readonly hosts: readonly AiToolId[];
   /** Absent, every host forgets its provider. */
   readonly provider?: string;
+  /** Each host keeps the provider saved for it, or takes its tool's first where none is saved.
+   * Wins over an absent `provider`, which would make every host forget its own. */
+  readonly keepSaved?: boolean;
 }
 
 export interface RecordAgentProvidersResult {
@@ -29,9 +32,10 @@ export class RecordAgentProviders {
   async execute({
     hosts,
     provider,
+    keepSaved,
   }: RecordAgentProvidersRequest): Promise<RecordAgentProvidersResult> {
-    const chosen = this.chosenProviders(hosts, provider);
     const before = await this.store.loadProviders();
+    const chosen = this.chosenProviders(hosts, keepSaved === true ? before : provider);
     const providers = { ...before };
     for (const host of hosts) {
       const one = chosen.get(host);
@@ -42,16 +46,18 @@ export class RecordAgentProviders {
     return { chosen, before };
   }
 
-  /** Each host's provider, refused where the host does not run it. */
+  /** Each host's provider, refused where the host does not run it: the one provider named, or,
+   * given the saved ones, each host's own, else its tool's first. */
   private chosenProviders(
     hosts: readonly AiToolId[],
-    provider: string | undefined
+    named: string | Providers | undefined
   ): Map<string, string> {
     const chosen = new Map<string, string>();
-    if (provider === undefined) return chosen;
+    if (named === undefined) return chosen;
     for (const host of hosts) {
       const models = this.tools.aiProfile(host).agentModels();
       if (models === null) throw new Error(`No agent provider is supported for "${host}".`);
+      const provider = typeof named === "string" ? named : (named[host] ?? models.providers()[0]);
       chosen.set(host, models.supportedProvider(provider));
     }
     return chosen;

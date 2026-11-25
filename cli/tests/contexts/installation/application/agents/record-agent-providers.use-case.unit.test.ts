@@ -31,6 +31,31 @@ describe("recording the agent provider of each host", () => {
     expect(chosen.size).toBe(0);
   });
 
+  it("keeps the saved provider of each host and gives the others their tool's first", async () => {
+    const { store, record } = recorder({ opencode: "mistral" });
+
+    const { chosen, before } = await record.execute({
+      hosts: [TOOL.opencode, TOOL.claude],
+      keepSaved: true,
+    });
+
+    expect([...chosen]).toStrictEqual([
+      ["opencode", "mistral"],
+      ["claude", "anthropic"],
+    ]);
+    expect(store.providers).toStrictEqual({ opencode: "mistral", claude: "anthropic" });
+    expect(before).toStrictEqual({ opencode: "mistral" });
+  });
+
+  it("refuses a saved provider its host no longer runs before writing anything", async () => {
+    const { store, record } = recorder({ claude: "mistral" });
+
+    await expect(record.execute({ hosts: [TOOL.claude], keepSaved: true })).rejects.toThrow(
+      'Provider "mistral" is not supported for "claude". Use: anthropic.'
+    );
+    expect(store.providers).toStrictEqual({ claude: "mistral" });
+  });
+
   it("refuses a provider one host cannot run before writing anything", async () => {
     const { store, record } = recorder({ cursor: "anthropic" });
 
