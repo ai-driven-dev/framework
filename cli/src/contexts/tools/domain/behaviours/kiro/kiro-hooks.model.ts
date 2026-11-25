@@ -99,6 +99,8 @@ function toKiroHooks(
   { trigger, item }: { trigger: string; item: PluginHookItem }
 ): KiroHook[] {
   return bridgeHookCalls([{ hooks: [item] }]).map((call) => ({
+    // `name` is the hook's "identifier" (https://kiro.dev/docs/hooks/); whether Kiro requires it unique
+    // is unprobed, so each trigger of a script gets its own. Ownership is matched by command, not name.
     name: `${plugin}-${trigger}-${call.script}`,
     trigger,
     action: { type: "command", command: launcher(scriptsDir, plugin, call) },

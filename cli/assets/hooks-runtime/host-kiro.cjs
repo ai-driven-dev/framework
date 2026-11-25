@@ -43,7 +43,7 @@ function readEvent() {
   current = {
     host: HOST,
     event,
-    files: event === "PostToolUse" ? writtenFiles(raw.tool_name, raw.tool_input, cwd) : [],
+    files: writtenFiles(raw.tool_name, raw.tool_input, cwd),
     stopActive: false, // kiro-cli V3 payloads carry no continuation marker
     sessionId: typeof raw.session_id === "string" ? raw.session_id : null,
     cwd,
