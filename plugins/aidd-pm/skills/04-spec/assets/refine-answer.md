@@ -1,4 +1,4 @@
-<!-- Repeat the two diff lines per changed line, drop the last line when every other section holds to spec-content.md, then strip this comment. -->
+<!-- Repeat the diff pair per changed line and the question line per open gap, drop a line with nothing to hold, then strip this comment. -->
 
 {{Spec path}}
 
@@ -8,3 +8,5 @@
 ```
 
 Unchanged, breaking spec-content.md: {{Section}}
+
+- TBD: {{Question}}
