@@ -7,6 +7,4 @@
 + {{New line}}
 ```
 
-Unchanged, breaking spec-content.md: {{Section}}
-
 - TBD: {{Question}}
