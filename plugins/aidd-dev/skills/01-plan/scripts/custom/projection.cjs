@@ -5,7 +5,10 @@ const path = require("node:path");
 const { phaseRows, section } = require("./plan-model.cjs");
 
 const MARK = /✅|✏|❌/u;
-const LINE = /^([\s│├└─|]*)(\S+)/u;
+// A name is words joined by single spaces: a run of two or more spaces starts an annotation.
+// Limit: a single-spaced note made only of path characters ("composition wiring") reads as part of the name.
+const LINE = /^([\s│├└─|]*)(\S+(?: \S+)*)/u;
+const PATH = /^[\w@./ -]+$/u;
 
 module.exports = (ctx) => {
   const found = [];
@@ -24,8 +27,11 @@ module.exports = (ctx) => {
     for (const raw of block.split("\n")) {
       const mark = (raw.match(MARK) ?? [""])[0];
       const m = raw.replace(/[✅✏❌️]/gu, " ").match(LINE);
-      if (!m || m[2] === "." || !/^[\w@./-]+$/u.test(m[2])) continue;
-      const [, indent, name] = m;
+      if (!m) continue;
+      // A single-spaced note after the name ("a.js (note)") makes the whole run no path: read the first word, as before spaces were allowed.
+      const name = PATH.test(m[2]) ? m[2] : m[2].split(" ")[0];
+      if (name === "." || !PATH.test(name)) continue;
+      const indent = m[1];
       const parents = folders.filter((f) => f.indent < indent.length);
       const rel = [...parents.map((f) => f.name), name].join("/").replace(/\/+/gu, "/");
       folders = name.endsWith("/") ? [...parents, { indent: indent.length, name: name.replace(/\/$/u, "") }] : parents;
