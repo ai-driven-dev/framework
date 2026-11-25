@@ -94,6 +94,12 @@ test("lets a write through to a draft spec, a new spec, or a file outside the sp
   }
 });
 
+test("refuses a call writing several files when any one is a locked spec", () => {
+  const root = project({ "docs/notes.md": "notes\n", [SPEC]: spec("locked") });
+  const payload = { event: "PreToolUse", files: [{ path: path.join(root, "docs/notes.md") }, { path: path.join(root, SPEC) }], cwd: root };
+  assert.equal(run(hooksWith(NEUTRAL_HOST), root, payload).status, 2);
+});
+
 test("does nothing on another event", () => {
   const root = project({ [SPEC]: spec("locked") });
   const result = run(hooksWith(NEUTRAL_HOST), root, { ...before(root, SPEC), event: "PostToolUse" });
