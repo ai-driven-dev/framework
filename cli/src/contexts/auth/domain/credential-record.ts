@@ -22,7 +22,7 @@ export const LEVELS_BY_PRECEDENCE: readonly AuthLevel[] = ["project", "user"];
 /** The provider of a record written before records named one. */
 const DEFAULT_PROVIDER = "gh";
 
-/** A value is a record only with every invariant held; anything else reads as no record, so a
+/** A value is a record only with every invariant held; anything else is null, so a
  * hand-written or foreign file authenticates nobody. */
 export function parseCredentialRecord(value: unknown): CredentialRecord | null {
   return holdsTheInvariants(value) ? value : null;
