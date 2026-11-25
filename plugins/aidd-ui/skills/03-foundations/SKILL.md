@@ -21,6 +21,7 @@ flowchart LR
 ## Transversal rules
 
 - Read each box's file, then do what it says.
+- The project is the working directory the session started in, never this skill's folder: look for its files and write them there.
 - Call tools, speaking only to ask or to give the final reply.
 - After asking, wait for the answer.
 - Write every reply, question, option and label in the language the person writes in, even when the project's own files use another.
