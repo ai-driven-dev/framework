@@ -21,21 +21,24 @@ export interface FlatArtifactLayout {
   readonly skillsDir: string;
   readonly agentsDir: string;
   readonly skills: "nested" | "single-level";
-  /** A rule under its plugin's folder, or at the top of the rules folder named by its plugin, for
-   * a tool that reads no frontmatter and so applies every rule to every file. */
-  readonly rules: "nested" | "top-level-no-frontmatter";
+  readonly rulesDir: string;
+  /** Rules under each plugin's folder, or at the top of `rulesDir` (`rules/` unless named) as
+   * `<plugin>-<name>`: for a tool reading no frontmatter, or one whose build contract's `ruleMarkdown`
+   * writes the frontmatter it reads. */
+  readonly rules: "nested" | "top-level-no-frontmatter" | "top-level";
   readonly agent: { readonly ext: string } | { readonly folderFile: string };
 }
 
 export function flatArtifactLayout(
   directory: string,
   parts: Pick<FlatArtifactLayout, "skills" | "agent"> &
-    Partial<Pick<FlatArtifactLayout, "skillsDir" | "agentsDir" | "rules">>
+    Partial<Pick<FlatArtifactLayout, "skillsDir" | "agentsDir" | "rulesDir" | "rules">>
 ): FlatArtifactLayout {
   return {
     directory,
     skillsDir: parts.skillsDir ?? `${directory}skills/`,
     agentsDir: parts.agentsDir ?? `${directory}agents/`,
+    rulesDir: parts.rulesDir ?? `${directory}rules/`,
     skills: parts.skills,
     rules: parts.rules ?? "nested",
     agent: parts.agent,
@@ -80,14 +83,12 @@ export const statesRuleScope = ({ rules }: Pick<FlatArtifactLayout, "rules">): b
 export function flatSectionPath(
   layout: FlatArtifactLayout,
   section: "commands" | "agents" | "rules" | "skills",
-  file: { readonly plugin: string; readonly name: string }
+  { plugin, name }: { readonly plugin: string; readonly name: string }
 ): string {
-  const { plugin, name } = file;
   if (section === "skills") return flatSkillPath(layout, plugin, name);
   if (section === "agents") return flatAgentFilePath(layout, plugin, name);
-  if (section === "rules" && statesRuleScope(layout)) {
-    return `${layout.directory}rules/${plugin}-${name.replaceAll("/", "-")}`;
-  }
+  const top = flatRulesPlacement(layout, plugin);
+  if (section === "rules" && top !== null) return `${top.prefix}${name.replaceAll("/", "-")}`;
   return `${layout.directory}${section}/${plugin}/${name}`;
 }
 
@@ -97,8 +98,8 @@ export function flatRulesPlacement(
   layout: FlatArtifactLayout,
   plugin: string
 ): { readonly prefix: string; readonly glob: string } | null {
-  if (!statesRuleScope(layout)) return null;
-  const prefix = `${layout.directory}rules/${plugin}-`;
+  if (layout.rules === "nested") return null;
+  const prefix = `${layout.rulesDir}${plugin}-`;
   return { prefix, glob: `${prefix}*.md` };
 }
 

@@ -15,17 +15,59 @@ exports[`the data each registered profile declares > antigravity 1`] = `
   "frontmatter": {
     "agents": null,
     "commands": null,
-    "rules": null,
+    "rules": {
+      "a description alone": {
+        "description": "d",
+        "trigger": "always_on",
+      },
+      "a description that opts out of always-apply": {
+        "description": "d",
+        "trigger": "always_on",
+      },
+      "a paths list": {
+        "globs": "a, b",
+        "trigger": "glob",
+      },
+      "an always-apply rule": {
+        "description": "d",
+        "trigger": "always_on",
+      },
+      "an empty paths list": {
+        "trigger": "always_on",
+      },
+      "an opt-out with no description": {
+        "trigger": "always_on",
+      },
+      "globs that apply on request": {
+        "description": "d",
+        "trigger": "always_on",
+      },
+      "paths beside a description": {
+        "description": "d",
+        "globs": "a",
+        "trigger": "glob",
+      },
+    },
   },
   "hooksRootToken": null,
-  "installs": {},
+  "installs": {
+    "rules": {
+      "00-architecture/.gitkeep": ".agents/rules/00-architecture/.gitkeep",
+      "01-standards/1-mermaid.md": ".agents/rules/01-standards/1-mermaid.md",
+      "01-standards/10-mermaid.md": ".agents/rules/01-standards/10-mermaid.md",
+      "01-standards/naming-2-rules.md": ".agents/rules/01-standards/naming-2-rules.md",
+      "01-standards/naming.md": ".agents/rules/01-standards/naming.md",
+      "04-tooling/ide-mapping.antigravity.md": ".agents/rules/04-tooling/ide-mapping.md",
+      "standards.antigravity.md": ".agents/rules/standards.md",
+    },
+  },
   "kind": "ai",
   "plugins": {
     "acceptsHooks": true,
     "deliversHooksToProject": true,
     "flatLayout": {
       "namespacePrefix": "aidd-",
-      "rules": "nested",
+      "rules": "top-level",
       "skillLayout": "single-level",
     },
     "kind": "flat",
@@ -33,6 +75,7 @@ exports[`the data each registered profile declares > antigravity 1`] = `
   "projectHooks": ".agents/hooks.json",
   "sections": [
     "skills",
+    "rules",
     "hooks",
     "layout",
   ],
@@ -594,7 +637,39 @@ exports[`the data each registered profile declares > kiro 1`] = `
       ],
     },
     "commands": null,
-    "rules": null,
+    "rules": {
+      "a description alone": {
+        "inclusion": "always",
+      },
+      "a description that opts out of always-apply": {
+        "inclusion": "always",
+      },
+      "a paths list": {
+        "fileMatchPattern": [
+          "a",
+          "b",
+        ],
+        "inclusion": "fileMatch",
+      },
+      "an always-apply rule": {
+        "inclusion": "always",
+      },
+      "an empty paths list": {
+        "inclusion": "always",
+      },
+      "an opt-out with no description": {
+        "inclusion": "always",
+      },
+      "globs that apply on request": {
+        "inclusion": "always",
+      },
+      "paths beside a description": {
+        "fileMatchPattern": [
+          "a",
+        ],
+        "inclusion": "fileMatch",
+      },
+    },
   },
   "hooksRootToken": null,
   "installs": {
@@ -605,6 +680,15 @@ exports[`the data each registered profile declares > kiro 1`] = `
       "reviewer.md": ".kiro/agents/reviewer.md",
       "team/sub/reviewer.md": ".kiro/agents/reviewer.md",
     },
+    "rules": {
+      "00-architecture/.gitkeep": ".kiro/steering/00-architecture/.gitkeep",
+      "01-standards/1-mermaid.md": ".kiro/steering/01-standards/1-mermaid.md",
+      "01-standards/10-mermaid.md": ".kiro/steering/01-standards/10-mermaid.md",
+      "01-standards/naming-2-rules.md": ".kiro/steering/01-standards/naming-2-rules.md",
+      "01-standards/naming.md": ".kiro/steering/01-standards/naming.md",
+      "04-tooling/ide-mapping.kiro.md": ".kiro/steering/04-tooling/ide-mapping.md",
+      "standards.kiro.md": ".kiro/steering/standards.md",
+    },
   },
   "kind": "ai",
   "plugins": {
@@ -612,7 +696,7 @@ exports[`the data each registered profile declares > kiro 1`] = `
     "deliversHooksToProject": true,
     "flatLayout": {
       "namespacePrefix": "aidd-",
-      "rules": "nested",
+      "rules": "top-level",
       "skillLayout": "single-level",
     },
     "kind": "flat",
@@ -621,6 +705,7 @@ exports[`the data each registered profile declares > kiro 1`] = `
   "sections": [
     "agents",
     "skills",
+    "rules",
     "hooks",
     "layout",
   ],

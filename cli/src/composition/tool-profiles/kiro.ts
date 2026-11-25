@@ -8,8 +8,10 @@ import {
   flatHooksSupport,
   flatProjectHooksDelivery,
 } from "../../contexts/tools/domain/formats/hooks/flat-routes.js";
+import { inclusionModesRule } from "../../contexts/tools/domain/formats/rule-frontmatter.js";
 import { contract } from "../../contexts/tools/domain/profile/contract-builders.js";
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
+import { installUnder } from "../../contexts/tools/domain/profile/tool-suffix.js";
 import { flatPlacement } from "../../contexts/tools/domain/sections/layout-section.js";
 import type { AgentMarkdown } from "../../shared/domain/materialization/build-contract.js";
 import {
@@ -36,10 +38,14 @@ const AGENT_MARKDOWN: AgentMarkdown = {
   pluginPrefixedName: true,
 };
 
-/** Skills and agents live under `.kiro/skills/` and `.kiro/agents/` (https://kiro.dev/docs/configuration/);
- * a skill's `name` must equal its folder (https://kiro.dev/docs/skills/), so the folder carries the plugin. */
+/** Skills, agents and rules live under `.kiro/skills/`, `.kiro/agents/` and `.kiro/steering/`
+ * (https://kiro.dev/docs/configuration/); a skill's `name` must equal its folder
+ * (https://kiro.dev/docs/skills/), so the folder carries the plugin. A rule is a steering file
+ * scoped by its `inclusion` front matter (https://kiro.dev/docs/steering/). */
 const KIRO_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(DIRECTORY, {
   skills: "single-level",
+  rules: "top-level",
+  rulesDir: `${DIRECTORY}steering/`,
   agent: { ext: ".md" },
 });
 
@@ -102,6 +108,10 @@ export const kiro = defineAiTool({
   capabilities: {
     agents: { format: "markdown", frontmatter: AGENT_FRONTMATTER },
     skills: { directory: DIRECTORY },
+    rules: {
+      buildInstallPath: installUnder(DIRECTORY, TOOL_SUFFIX, "steering/"),
+      convertFrontmatter: inclusionModesRule,
+    },
     hooks: { delivery: hooksDelivery },
     layout: flatPlacement({ namespacePrefix: "aidd-", artifacts: KIRO_FLAT_LAYOUT }),
   },

@@ -47,6 +47,13 @@ export interface AgentMarkdown {
   readonly quote?: "double";
 }
 
+/** How a tool keeps a rule's frontmatter: the keys it reads, from the rule's own. */
+export interface RuleMarkdown {
+  readonly frontmatter: (frontmatter: Record<string, unknown>) => Record<string, unknown>;
+  /** `double` for a reader that keeps single quotes literally. */
+  readonly quote?: "double";
+}
+
 /** Where an artifact's files land, as data: a skills or agents layout, the path a file has in its
  * plugin, one shared file, or a hooks route. */
 export type ArtifactPlacement =
@@ -85,6 +92,9 @@ export type ArtifactContract =
       readonly agentMarkdown?: AgentMarkdown;
       /** A skill entry's frontmatter, as the tool keeps it: absent, the entry is a byte-copy. */
       readonly skillFrontmatter?: (frontmatter: Record<string, unknown>) => Record<string, unknown>;
+      /** A rule's markdown, as the tool keeps it for the scope it reads: absent, the rule is
+       * carried as shipped. */
+      readonly ruleMarkdown?: RuleMarkdown;
       /** Defaults to identity, a byte-copy. For an agent whose file is no markdown (Codex's
        * TOML), the whole conversion. */
       readonly transform?: (content: string, plugin: string, basename: string) => string;
