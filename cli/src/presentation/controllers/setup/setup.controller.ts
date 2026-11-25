@@ -66,7 +66,7 @@ async function setAgentModels(
     ...agents,
     scope: scope ?? "project",
     agentsOnly,
-    ...(keepSaved ? { keepSaved } : {}),
+    keepSaved,
   });
   reportAgentModels({ output, catalog, ...agents, main, agentsOnly, keepSaved });
 }

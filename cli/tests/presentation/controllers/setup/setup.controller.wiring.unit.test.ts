@@ -218,6 +218,7 @@ describe("aidd setup - the agents' provider", () => {
       hosts: [SECOND_SYNTHETIC_TOOL],
       provider: "openai",
       scope: "project",
+      keepSaved: false,
     });
     expect(setAgentModel.mock.invocationCallOrder[0]).toBeGreaterThan(
       resolveSourceIfNeeded.mock.invocationCallOrder[0]
@@ -239,6 +240,7 @@ describe("aidd setup - the agents' provider", () => {
       provider: "openai",
       scope: "project",
       agentsOnly: true,
+      keepSaved: false,
     });
     expect(lines).toContain(
       "Models on openai, for every project on this machine; main session unchanged:"
