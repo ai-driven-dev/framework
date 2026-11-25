@@ -1,5 +1,4 @@
 {
-  "version": 1,
   "kind": "repo",
   "unit": "file",
   "targets": ".claude-plugin/marketplace.json",

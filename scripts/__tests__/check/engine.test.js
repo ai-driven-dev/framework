@@ -18,7 +18,7 @@ const write = (file, text) => {
   fs.mkdirSync(path.dirname(path.join(dir, file)), { recursive: true });
   fs.writeFileSync(path.join(dir, file), text);
 };
-const contract = (rules, extra = {}) => write("contract.json", JSON.stringify({ version: 1, kind: "demo", unit: "file", rules, ...extra }));
+const contract = (rules, extra = {}) => write("contract.json", JSON.stringify({ kind: "demo", unit: "file", rules, ...extra }));
 const validate = (...targets) => lint(path.join(dir, "contract.json"), ...targets.map((t) => path.join(dir, t)));
 const snapshot = () => fs.readdirSync(dir, { recursive: true }).sort().map((f) => `${f}:${fs.statSync(path.join(dir, f)).isFile() ? fs.readFileSync(path.join(dir, f), "utf8") : ""}`);
 
@@ -122,6 +122,26 @@ describe("engine", () => {
     fs.mkdirSync(path.join(dir, "unit"));
     assert.equal(validate().status, 2);
     assert.match(validate("unit").err, /MAIN\.md: missing/u);
+  });
+
+  it("rejects version and the required op, which carry nothing", () => {
+    write("a.md", "x\n");
+    contract({ "DEMO-01": { op: "links", in: "*.md", fix: "f" } }, { version: 1 });
+    assert.match(validate("a.md").err, /unknown key version/u);
+    contract({ "DEMO-01": { op: "required", in: "*.md", field: "name", fix: "f" } });
+    assert.match(validate("a.md").err, /unknown op required/u);
+  });
+
+  it("needs no why, and for a file unit no in: the rule then judges the file", () => {
+    contract({ "DEMO-01": { op: "forbidden", regex: "TODO", fix: "remove the marker" } });
+    write("a.md", "TODO\n");
+    assert.match(validate("a.md").out, /DEMO-01 remove the marker/u);
+  });
+
+  it("still needs in for a folder unit, where it picks the files a rule judges", () => {
+    contract({ "DEMO-01": { op: "links", fix: "f" } }, { unit: "folder", marker: "MAIN.md" });
+    write("unit/MAIN.md", "x\n");
+    assert.match(validate("unit").err, /DEMO-01: in is required/u);
   });
 
   it("exits 2 on a folder contract without a marker", () => {
