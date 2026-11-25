@@ -80,7 +80,7 @@ export function buildKiloFlatContract(
         source: { kind: "fullTree", srcDir: "rules" },
         placement: rulesIn(layout),
       },
-      mcp: { supported: false, reason: "carried by the config artifact, not a file of its own" },
+      mcp: { supported: false, carriedByConfig: true, reason: "carried by the config artifact" },
       hooks: flatHooksArtifact(hooks, { bridge: generateKiloHooksBridge }),
     },
     buildMarketplaceCatalog: null,

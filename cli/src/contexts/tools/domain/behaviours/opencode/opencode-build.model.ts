@@ -95,7 +95,11 @@ export function buildOpencodeFlatContract(
         placement: agentsIn(layout),
         agentMarkdown,
       },
-      mcp: { supported: false, reason: "carried by the config artifact (opencode.json mcp)" },
+      mcp: {
+        supported: false,
+        carriedByConfig: true,
+        reason: "carried by the config artifact (opencode.json mcp)",
+      },
       hooks: flatHooksArtifact(hooks, { bridge: generateOpencodeHooksBridge }),
     },
     buildMarketplaceCatalog: null,

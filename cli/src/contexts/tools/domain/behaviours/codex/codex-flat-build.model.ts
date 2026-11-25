@@ -56,7 +56,11 @@ function codexFlatArtifacts(
       placement: agentsIn(layout),
       transform: tomlAgentMarkdownToToml(toml),
     },
-    mcp: { supported: false, reason: "carried by the config artifact (config.toml mcp_servers)" },
+    mcp: {
+      supported: false,
+      carriedByConfig: true,
+      reason: "carried by the config artifact (config.toml mcp_servers)",
+    },
     hooks: flatHooksArtifact(hooks, { tool: "codex" }),
   };
 }

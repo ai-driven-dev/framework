@@ -13,7 +13,7 @@ const SNAPSHOT_FILE = join(REPOSITORY_ROOT, "cli/tests/golden/snapshots/tool-sup
 const SURFACES = ["skills", "agents", "mcp", "hooks", "rules", "commands"] as const;
 type Surface = (typeof SURFACES)[number];
 
-/** `no` is a surface the build contract declares unsupported or does not name; `bridge` is a hooks surface a
+/** `no` is a surface neither the build contract nor the install profile carries; `bridge` is a hooks surface a
  * tool reaches through a generated event bridge instead of a hooks file of its own. */
 type Support = "yes" | "bridge" | "no";
 
@@ -28,7 +28,14 @@ interface ToolSupport {
   builds: Record<string, Record<Surface, Support>>;
 }
 
-function supportOf(surface: Surface, contract: ArtifactContract | undefined): Support {
+/** What a user gets: a build file, the tool's config artifact, or (rules) an install section. */
+function supportOf(
+  surface: Surface,
+  contract: ArtifactContract | undefined,
+  installsRules: boolean
+): Support {
+  if (surface === "rules" && installsRules) return "yes";
+  if (contract?.supported === false && contract.carriedByConfig === true) return "yes";
   if (!contract?.supported) return "no";
   if (surface === "hooks" && contract.skipHooksJson === true && contract.hooksBridge) {
     return "bridge";
@@ -48,7 +55,10 @@ function capture(): ToolSupport[] {
         if (contract === null) continue;
         const declared: Partial<Record<string, ArtifactContract>> = contract.artifacts;
         builds[mode] = Object.fromEntries(
-          SURFACES.map((surface) => [surface, supportOf(surface, declared[surface])])
+          SURFACES.map((surface) => [
+            surface,
+            supportOf(surface, declared[surface], tool.section("rules") !== null),
+          ])
         ) as Record<Surface, Support>;
       }
       return {

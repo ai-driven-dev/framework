@@ -75,6 +75,8 @@ export type ArtifactContract =
       readonly supported: false;
       /** Why the tool ships none: what a reader of the profile needs to know. */
       readonly reason: string;
+      /** The tool still carries it, in its config artifact instead of a file of its own. */
+      readonly carriedByConfig?: true;
     }
   | {
       readonly supported: true;
