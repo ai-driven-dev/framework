@@ -6,7 +6,7 @@
 
 ## Run
 
-- Run the engine from the project root, and never read its source.
+- The project root is the working directory the session started in, never this skill's folder. Run the engine from it, and never read its source.
 - After each write, fix what the hook or the validation reports.
 - Never bypass a hook.
 - Record the history without asking, and change only what was named.
