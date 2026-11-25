@@ -72,17 +72,22 @@ the host's version. Exit 0: every moment matches. 1: a payload drifted or a hook
 host could not be run.
 
 It is local and opt-in: it runs the hosts under your own login and spends their quota, so no
-workflow calls it. `--write` adds each drifted payload as a new `log` sample, scrubbed, and removes
-nothing. Review the diff, then re-run the tests that read the fixtures.
+workflow calls it. OpenCode and Kilo run under a throwaway home, with a plugin that records the
+arguments they hand it. `--write` adds each payload whose shape no committed sample has, once,
+scrubbed (paths, ids, email, ISO timestamps and dated session-file names; a timestamp that is a
+bare number is fixed by hand), and removes nothing. Review the diff, then re-run the tests that
+read the fixtures.
 
 Limits:
 
-- OpenCode and Kilo are not covered: a plugin receives arguments, and their fixtures hold what a
-  capture plugin shaped from them.
-- Cursor's `stop` fires only in an interactive session, so it reports `not-fired` here; its other
-  moments report `not-fired` too once the account is out of quota.
-- Codex and Copilot run on the host's default model unless `--model` names one, and their capture
-  declaration has not been run against a live host.
+- Codex and Copilot are not covered: a capture declaration for them was never run against a live
+  host.
+- Cursor's `stop` fires only in an interactive session, so it is reported as expected and not
+  counted; its other moments report `not-fired` once the account is out of quota.
 - Claude Code, Cursor and Kiro leave nothing the tool does not delete from the host's session store,
   except a folder Cursor may recreate under `~/.cursor/projects` named after the throwaway project.
-  Antigravity, Codex and Copilot keep their sessions where this tool does not look.
+  Antigravity keeps its sessions where this tool does not look.
+- OpenCode and Kilo tool arguments are filled by the model, so an optional key (a `bash` call's
+  `description`) may drift with the model and not with the host.
+- A host's hook declaration is written here by hand, in the form the host documents; the tool names
+  a matcher lists come from these fixtures.

@@ -7,15 +7,16 @@
  *
  * Local and opt-in: it calls real hosts under your own login and spends their quota, so no
  * workflow runs it. Each host runs headless in a throwaway project under a throwaway directory,
- * with a hook that only records its stdin. Fixtures are left alone unless `--write` is given, and
- * even then a payload is only added as a new sample, never replacing one.
+ * with a hook that only records its stdin (OpenCode and Kilo, which hand a plugin arguments and no
+ * stdin, run under a throwaway home with a plugin that records them). Fixtures are left alone
+ * unless `--write` is given, and even then a payload is only added as a new sample, never
+ * replacing one.
  *
  * Exit codes:
  *   0  every moment run still has the committed shape
- *   1  a host changed: a payload drifted, or a hook never fired
+ *   1  a host changed: a payload drifted, or a hook that should fire never did
  *   2  nothing could be judged: a host could not be run
  */
-const { spawnSync } = require("node:child_process");
 const crypto = require("node:crypto");
 const fs = require("node:fs");
 const os = require("node:os");
@@ -26,26 +27,39 @@ const {
   scrub,
   withFreshSamples,
 } = require("./lib/hook-fixture-shape.cjs");
+const {
+  cleanEnv,
+  createSandbox,
+  nodeCommand,
+  readJsonLines,
+  runHeadless,
+  versionOf,
+} = require("./lib/hook-sandbox.cjs");
 
 const FIXTURES = path.join(__dirname, "__tests__", "fixtures", "hook-payloads");
 const RUN_TIMEOUT_MS = 240_000;
 const SETTLE_MS = 3000;
 const DRIFT = 1;
 const UNJUDGED = 2;
+const CAPTURE_OUT_VARIABLE = "AIDD_CAPTURE_OUT";
 
 const PROMPT =
   "Create a file named notes.md containing the word hello, then run the shell command `echo done`, then reply with the single word OK.";
 
-/** One hook that appends what it is handed on stdin, with the event it was registered for. */
-const CAPTURE_HOOK = `const fs = require("node:fs");
-let raw = "";
-process.stdin.setEncoding("utf8");
-process.stdin.on("data", (chunk) => { raw += chunk; });
-process.stdin.on("end", () => {
-  let payload = null;
-  try { payload = JSON.parse(raw); } catch {}
-  fs.appendFileSync(process.argv[2], JSON.stringify({ event: process.argv[3], payload }) + "\\n");
-});
+/** What a plugin hands OpenCode and Kilo is arguments, not stdin: this plugin records them under
+ * the names the fixtures carry. */
+const CAPTURE_PLUGIN = `import { appendFileSync } from "node:fs";
+const record = (event, payload) =>
+  appendFileSync(process.env.${CAPTURE_OUT_VARIABLE}, JSON.stringify({ event, payload }) + "\\n");
+export default async (input) => {
+  record("server-init", { inputKeys: Object.keys(input), directory: input.directory });
+  return {
+    "tool.execute.after": async (call, output) => record("tool.execute.after", { call, output }),
+    event: async ({ event }) => {
+      if (event.type === "session.created" || event.type === "session.idle") record(event.type, event);
+    },
+  };
+};
 `;
 
 const writeJson = (file, value) => {
@@ -53,20 +67,59 @@ const writeJson = (file, value) => {
   fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`);
 };
 
-/** `{ Event: [{ hooks: [{ type, command }] }] }`, the form Claude Code and Codex read. */
+/** `{ Event: [{ hooks: [{ type, command }] }] }`, the form Claude Code reads. */
 const nested = (hooks) =>
   Object.fromEntries(hooks.map(({ event, command }) => [event, [{ hooks: [{ type: "command", command }] }]]));
 
+const isToolEvent = (event) => /ToolUse$/i.test(event);
+
+/** The matcher that names every tool the committed fixtures of `host` were captured from, so a
+ * host that matches by tool name delivers each of them. */
+function toolMatcher(fixtures, toolName) {
+  const names = fixtures
+    .filter(({ event }) => isToolEvent(event))
+    .flatMap(({ samples }) => samples.map(({ payload }) => toolName(payload)));
+  return [...new Set(names)].join("|");
+}
+
+/** A home that holds nothing of the user's, so the sessions a run creates die with it. */
+function throwawayHome(root) {
+  const home = path.join(root, "home");
+  for (const dir of [".config", ".local/share", ".local/state", ".cache"]) {
+    fs.mkdirSync(path.join(home, dir), { recursive: true });
+  }
+  return {
+    HOME: home,
+    USERPROFILE: home,
+    XDG_CONFIG_HOME: path.join(home, ".config"),
+    XDG_DATA_HOME: path.join(home, ".local", "share"),
+    XDG_STATE_HOME: path.join(home, ".local", "state"),
+    XDG_CACHE_HOME: path.join(home, ".cache"),
+    AIDD_USER_CONFIG_DIR: path.join(home, ".config", "aidd"),
+  };
+}
+
+/** OpenCode and Kilo differ in their name, plugin directory and free model. */
+const pluginHost = ({ bin, directory, model, flags }) => ({
+  bin,
+  model,
+  configure: ({ project }) => {
+    fs.mkdirSync(path.join(project, directory, "plugin"), { recursive: true });
+    fs.writeFileSync(path.join(project, directory, "plugin", "capture.js"), CAPTURE_PLUGIN);
+  },
+  env: ({ root, out }) => ({ ...throwawayHome(root), [CAPTURE_OUT_VARIABLE]: out }),
+  argv: ({ model: id }) => ["run", "-m", id, ...flags, PROMPT],
+});
+
 /** What differs per host: how to declare the capture hook, and how to run it headless. The
- * invocations are those the fixtures README records; a host with no verified default model runs
- * only when `--model host=id` names one. OpenCode and Kilo are absent on purpose: a plugin
- * receives arguments, not stdin, and the committed fixtures hold arguments shaped by a capture
- * plugin that is not part of this repository. */
+ * invocations are those the fixtures README records. `neverFires` names the moments the host does
+ * not deliver headless, which are reported and not counted as a change. Codex and Copilot are
+ * absent on purpose: their capture was never run against a live host. */
 const HOSTS = {
   claude: {
     bin: "claude",
     model: "haiku",
-    configure: (project, hooks) =>
+    configure: ({ project, hooks }) =>
       writeJson(path.join(project, ".claude", "settings.local.json"), { hooks: nested(hooks) }),
     argv: ({ model }) => [
       "-p", "--model", model, "--output-format", "stream-json", "--verbose",
@@ -77,39 +130,18 @@ const HOSTS = {
       path.join(os.homedir(), ".claude", "projects", project.replace(/[^A-Za-z0-9]/g, "-")),
     ],
   },
-  codex: {
-    bin: "codex",
-    configure: (project, hooks) => {
-      fs.mkdirSync(path.join(project, ".codex"), { recursive: true });
-      fs.writeFileSync(path.join(project, ".codex", "config.toml"), "[features]\nhooks = true\n");
-      writeJson(path.join(project, ".codex", "hooks.json"), { hooks: nested(hooks) });
-    },
-    argv: ({ model, project }) => [
-      "exec", "--dangerously-bypass-hook-trust", "--skip-git-repo-check", "--ephemeral",
-      "-s", "workspace-write", "-C", project, ...(model ? ["-m", model] : []), PROMPT,
-    ],
-  },
-  copilot: {
-    bin: "copilot",
-    configure: (project, hooks) =>
-      writeJson(path.join(project, ".github", "hooks", "capture.hooks.json"), {
-        version: 1,
-        hooks: Object.fromEntries(
-          hooks.map(({ event, command }) => [event, [{ type: "command", command, timeout: 5 }]])
-        ),
-      }),
-    argv: ({ model }) => ["-p", PROMPT, "--allow-all", ...(model ? ["--model", model] : [])],
-  },
   cursor: {
     bin: "cursor-agent",
     model: "auto",
-    configure: (project, hooks) =>
+    neverFires: ["stop"],
+    toolName: (payload) => payload.tool_name,
+    configure: ({ project, hooks, tools }) =>
       writeJson(path.join(project, ".cursor", "hooks.json"), {
         version: 1,
         hooks: Object.fromEntries(
           hooks.map(({ event, command }) => [
             event,
-            [{ command, timeout: 5, ...(event === "postToolUse" ? { matcher: "Write|Edit|Bash|Shell|Delete" } : {}) }],
+            [{ command, timeout: 5, ...(isToolEvent(event) ? { matcher: tools } : {}) }],
           ])
         ),
       }),
@@ -125,14 +157,15 @@ const HOSTS = {
   antigravity: {
     bin: "agy",
     model: "gemini-3.8-flash-low",
-    configure: (project, hooks) =>
+    toolName: (payload) => payload.toolCall.name,
+    configure: ({ project, hooks, tools }) =>
       writeJson(path.join(project, ".agents", "hooks.json"), {
         // A tool event is delivered only to a matcher naming the tools `agy` calls.
         capture: Object.fromEntries(
           hooks.map(({ event, command }) => [
             event,
-            event.endsWith("ToolUse")
-              ? [{ matcher: "write_file|edit_file|run_command", hooks: [{ type: "command", command, timeout: 5 }] }]
+            isToolEvent(event)
+              ? [{ matcher: tools, hooks: [{ type: "command", command, timeout: 5 }] }]
               : [{ type: "command", command, timeout: 5 }],
           ])
         ),
@@ -142,7 +175,7 @@ const HOSTS = {
   kiro: {
     bin: "kiro-cli",
     model: "qwen3-coder-next",
-    configure: (project, hooks) =>
+    configure: ({ project, hooks }) =>
       writeJson(path.join(project, ".kiro", "hooks", "capture.json"), {
         version: "v1",
         hooks: hooks.map(({ event, command }) => ({
@@ -156,16 +189,23 @@ const HOSTS = {
       "--trust-tools=fs_write,fs_read,execute_bash", "--model", model, PROMPT,
     ],
   },
+  opencode: pluginHost({ bin: "opencode", directory: ".opencode", model: "opencode/deepseek-v4.1-flash-free", flags: [] }),
+  kilo: pluginHost({ bin: "kilo", directory: ".kilo", model: "kilo/kilo-auto/free", flags: ["--auto"] }),
 };
 
 function parseArgs(argv) {
+  const valueOf = (index, flag) => {
+    if (argv[index + 1] === undefined) throw new Error(`missing value for ${flag}`);
+    return argv[index + 1];
+  };
   const options = { hosts: Object.keys(HOSTS), models: {}, write: false };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === "--write") options.write = true;
-    else if (arg === "--host") options.hosts = argv[++i].split(",");
+    else if (arg === "--host") options.hosts = valueOf(i++, arg).split(",");
     else if (arg === "--model") {
-      const [host, id] = argv[++i].split("=");
+      const [host, id] = valueOf(i++, arg).split("=");
+      if (!id) throw new Error("--model takes host=id");
       options.models[host] = id;
     } else throw new Error(`unknown argument: ${arg}`);
   }
@@ -174,59 +214,35 @@ function parseArgs(argv) {
   return options;
 }
 
-function versionOf(bin) {
-  const run = spawnSync(bin, ["--version"], { encoding: "utf8" });
-  return run.error ? null : `${run.stdout}${run.stderr}`.trim().split("\n")[0];
-}
-
-function readCaptured(file) {
-  if (!fs.existsSync(file)) return [];
-  return fs
-    .readFileSync(file, "utf8")
-    .split("\n")
-    .filter((line) => line.trim() !== "")
-    .map((line) => JSON.parse(line));
-}
-
 /** Runs one host in a throwaway project and returns the payloads it delivered, per event. */
 function capture(name, fixtures, model) {
   const spec = HOSTS[name];
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), `aidd-fixture-${name}-`));
-  const project = path.join(root, "project");
+  const env = cleanEnv(["CLAUDE", "OPENCODE", "KILO"]);
+  const { root, project, witness } = createSandbox(`aidd-fixture-${name}-`, env);
   const out = path.join(root, "captured.jsonl");
-  const script = path.join(root, "capture.cjs");
   try {
-    fs.mkdirSync(project);
-    fs.writeFileSync(script, CAPTURE_HOOK);
-    // A `GIT_DIR` inherited from a git hook would point `init` at the repository running it.
-    const env = Object.fromEntries(
-      Object.entries(process.env).filter(([key]) => !/^(GIT_|CLAUDE|OPENCODE|KILO)/.test(key))
-    );
-    spawnSync("git", ["init", "-q", project], { env });
-    const hooks = fixtures.map(({ event }) => ({
-      event,
-      command: [process.execPath, script, out, event].map((word) => JSON.stringify(word)).join(" "),
-    }));
-    spec.configure(project, hooks);
-    const run = spawnSync(spec.bin, spec.argv({ model, project }), {
+    const hooks = fixtures.map(({ event }) => ({ event, command: nodeCommand(witness, out, event) }));
+    const tools = spec.toolName ? toolMatcher(fixtures, spec.toolName) : "";
+    spec.configure({ project, hooks, tools });
+    // `PWD` is what a Bun-based host reads for its directory: left as ours, it would work in the
+    // repository running this tool, not the throwaway project.
+    const runEnv = { ...env, PWD: project, ...spec.env?.({ root, out }) };
+    const run = runHeadless(spec.bin, spec.argv({ model, project }), {
       cwd: project,
-      encoding: "utf8",
+      env: runEnv,
       timeout: RUN_TIMEOUT_MS,
-      killSignal: "SIGKILL",
-      stdio: ["ignore", "pipe", "pipe"],
-      env,
     });
-    if (run.error && run.error.code !== "ETIMEDOUT") return { error: run.error.code ?? run.error.message };
-    const lines = readCaptured(out).map(({ event, payload }) => ({
+    if (run.error !== null) return { error: run.error };
+    const real = fs.realpathSync(project);
+    const lines = (readJsonLines(out) ?? []).map(({ event, payload }) => ({
       event,
-      payload: scrub(payload, { home: os.homedir(), project: fs.realpathSync(project) }),
+      payload: scrub(payload, { home: runEnv.HOME ?? os.homedir(), project: real }),
     }));
     // A host keeps the session it ran under the project's path, some of it written after it
     // exits; none of it is worth keeping.
-    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, SETTLE_MS);
-    for (const store of spec.sessionStores?.(fs.realpathSync(project)) ?? []) {
-      fs.rmSync(store, { recursive: true, force: true });
-    }
+    const stores = spec.sessionStores?.(real) ?? [];
+    if (stores.length > 0) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, SETTLE_MS);
+    for (const store of stores) fs.rmSync(store, { recursive: true, force: true });
     return { lines, said: (run.stderr.trim() || run.stdout.trim()).split("\n").pop() };
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
@@ -256,10 +272,11 @@ function main(argv, log) {
     for (const fixture of fixtures) {
       const fresh = result.lines.filter((line) => line.event === fixture.event).map((line) => line.payload);
       const verdict = compareMoment(fixture, fresh);
-      log(`  ${fixture.event}: ${verdict.status}\n`);
-      if (verdict.status === "not-fired") log(`    the host's last line: ${result.said.slice(0, 200)}\n`);
+      const expected = verdict.status === "not-fired" && spec.neverFires?.includes(fixture.event);
+      log(`  ${fixture.event}: ${verdict.status}${expected ? " (expected: the host does not fire it headless)" : ""}\n`);
+      if (verdict.status === "not-fired" && !expected) log(`    the host's last line: ${result.said.slice(0, 200)}\n`);
       for (const line of verdict.differences) log(`    ${line}\n`);
-      if (verdict.status !== "match") code = Math.max(code, DRIFT);
+      if (verdict.status !== "match" && !expected) code = Math.max(code, DRIFT);
       if (options.write && verdict.status === "drift") {
         const { file, ...committed } = fixture;
         writeJson(path.join(FIXTURES, file), withFreshSamples(committed, fresh));
@@ -270,7 +287,7 @@ function main(argv, log) {
   return code;
 }
 
-module.exports = { main, HOSTS, parseArgs };
+module.exports = { main, HOSTS, parseArgs, toolMatcher };
 
 if (require.main === module) {
   try {

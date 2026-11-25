@@ -98,6 +98,26 @@ describe("scrub", () => {
   });
 });
 
+describe("scrub timestamps", () => {
+  const opts = { home: "/h", project: "/h/p" };
+
+  it("fixes an ISO timestamp and a dated session file name to the epoch", () => {
+    assert.deepEqual(
+      scrub(
+        {
+          title: "New session - 2026-11-06T09:30:12.345Z",
+          file: ["/h/.codex", "sessions", "2026/11/06", ["rollout", "2026-11-06T09-30-12", "9b2c6f1e-1111-4222-8333-444455556666.jsonl"].join("-")].join("/"),
+        },
+        opts
+      ),
+      {
+        title: "New session - 1970-01-01T00:00:00.000Z",
+        file: `/Users/user/.codex/sessions/1970/01/01/rollout-1970-01-01T00-00-00-${SESSION}.jsonl`,
+      }
+    );
+  });
+});
+
 describe("readHostFixtures", () => {
   it("reads one fixture per moment of the host and none of another host", () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "fixtures-"));
@@ -117,12 +137,22 @@ describe("readHostFixtures", () => {
 });
 
 describe("withFreshSamples", () => {
-  it("adds each fresh payload as a logged sample and keeps every committed one", () => {
+  it("adds a fresh payload of a new shape as a logged sample and keeps every committed one", () => {
     const old = committed({ a: "x" });
     old.samples.push({ run: "deny", payload: { a: "y" }, hookAnswer: { decision: "block" } });
     const next = withFreshSamples(old, [{ a: "x", b: 1 }]);
     assert.deepEqual(next.samples.slice(0, 2), old.samples);
     assert.deepEqual(next.samples[2], { run: "log", payload: { a: "x", b: 1 }, hookAnswer: null });
     assert.equal(old.samples.length, 2);
+  });
+
+  it("adds nothing for a payload whose shape a committed sample already has", () => {
+    const old = committed({ a: "x" });
+    assert.equal(withFreshSamples(old, [{ a: "other" }]).samples.length, 1);
+  });
+
+  it("adds a new shape once, however many payloads carry it", () => {
+    const old = committed({ a: "x" });
+    assert.equal(withFreshSamples(old, [{ a: 1 }, { a: 2 }]).samples.length, 2);
   });
 });

@@ -9,6 +9,8 @@ const path = require("node:path");
 const SESSION_ID = "00000000-0000-4000-8000-000000000000";
 const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g;
 const EMAIL = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g;
+const ISO_TIME = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z/g;
+const DATED_SESSION_FILE = /sessions\/\d{4}\/\d{2}\/\d{2}\/rollout-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}/g;
 
 function typeOf(value) {
   return value === null ? "null" : typeof value;
@@ -75,8 +77,9 @@ function compareMoment(fixture, freshPayloads) {
   return { status: differences.length === 0 ? "match" : "drift", differences };
 }
 
-/** Puts a captured payload in the committed form: the home and project paths, every session id
- * and the account email replaced by the placeholders the fixtures README names. */
+/** Puts a captured payload in the committed form: the home and project paths, every session id,
+ * the account email and every ISO timestamp or dated session-file name replaced by the
+ * placeholders the fixtures README names. A timestamp that is a bare number is left alone. */
 function scrub(value, { home, project }) {
   if (typeof value === "string") {
     return value
@@ -84,6 +87,8 @@ function scrub(value, { home, project }) {
       .join("/Users/user/project")
       .split(home)
       .join("/Users/user")
+      .replace(DATED_SESSION_FILE, "sessions/1970/01/01/rollout-1970-01-01T00-00-00")
+      .replace(ISO_TIME, "1970-01-01T00:00:00.000Z")
       .replace(UUID, SESSION_ID)
       .replace(EMAIL, "user@example.com");
   }
@@ -103,10 +108,18 @@ function readHostFixtures(dir, host) {
     .map((name) => ({ file: name, ...JSON.parse(fs.readFileSync(path.join(dir, name), "utf8")) }));
 }
 
-/** The fixture with each fresh payload added as a logged sample. Nothing committed is removed:
- * the samples that carry an answer or a refusal were captured by hand and no run reproduces them. */
+/** The fixture with each fresh payload whose shape no committed sample has, added once as a
+ * logged sample. Nothing committed is removed: the samples that carry an answer or a refusal were
+ * captured by hand and no run reproduces them. */
 function withFreshSamples(fixture, payloads) {
-  const added = payloads.map((payload) => ({ run: "log", payload, hookAnswer: null }));
+  const seen = new Set(fixture.samples.map((sample) => JSON.stringify(shapeOf(sample.payload))));
+  const added = [];
+  for (const payload of payloads) {
+    const key = JSON.stringify(shapeOf(payload));
+    if (seen.has(key)) continue;
+    seen.add(key);
+    added.push({ run: "log", payload, hookAnswer: null });
+  }
   return { ...fixture, samples: [...fixture.samples, ...added] };
 }
 
