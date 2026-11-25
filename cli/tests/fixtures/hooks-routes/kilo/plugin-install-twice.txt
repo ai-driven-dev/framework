@@ -290,13 +290,14 @@ const POST_TOOL_USE = [{"script":"artifacts.cjs","args":["mark"],"matcher":"Writ
 
 // Exit 2 puts the answer on stderr; exit 0 puts it in additionalContext on stdout.
 function answerFrom(code, stdout, stderr) {
-  if (code === 2) return stderr.trim();
-  if (code !== 0) return "";
+  if (code === 2) return { text: stderr.trim(), required: false };
+  if (code !== 0) return { text: "", required: false };
   try {
     const output = JSON.parse(stdout);
-    return String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim();
+    const text = String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim();
+    return { text, required: output?.required === true };
   } catch {
-    return "";
+    return { text: "", required: false };
   }
 }
 
@@ -340,7 +341,7 @@ function answerOf(script, args, payload, directory) {
       if (failed) return;
       failed = true;
       reportHookFailure(script, error);
-      resolve("");
+      resolve({ text: "", required: false });
     };
     child.stdout.on("data", (chunk) => { stdout += chunk; });
     child.stderr.on("data", (chunk) => { stderr += chunk; });
@@ -411,7 +412,7 @@ const AiddContextKiloHooks = async ({ directory, client }) => {
       if (calls.length > 0) {
         session.context = Promise.all(
           calls.map((call) => answerOf(call.script, call.args, call.payload, call.payload.cwd))
-        ).then((answers) => answers.filter(Boolean).join("\n\n"));
+        ).then((answers) => answers.map((answer) => answer.text).filter(Boolean).join("\n\n"));
       }
     } catch (error) {
       console.warn("[aidd] Kilo hook dispatch failed: " + String(error));
@@ -437,8 +438,15 @@ const AiddContextKiloHooks = async ({ directory, client }) => {
       const args = call?.args;
       const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;
       for (const hook of POST_TOOL_USE.filter(hook => !hook.matcher || hook.matcher.split("|").some(name => name.toLowerCase() === tool.toLowerCase()))) {
-        const answer = await answerOf(hook.script, hook.args, { hook_event_name: "PostToolUse", session_id: call?.sessionID ?? null, cwd, tool_name: tool, tool_input: toolInput }, cwd);
+        const { text: answer, required } = await answerOf(hook.script, hook.args, { hook_event_name: "PostToolUse", session_id: call?.sessionID ?? null, cwd, tool_name: tool, tool_input: toolInput }, cwd);
         if (answer) output.output = `${output.output ?? ""}\n\n${answer}`;
+        // A required finding is also the session's next prompt, which the model takes up after this
+        // step. Not awaited: the host's prompt call returns at once and must not hold the tool.
+        if (answer && required) {
+          client.session
+            .promptAsync({ path: { id: call?.sessionID }, body: { parts: [{ type: "text", text: answer, metadata: FOLLOW_UP }] } })
+            .catch((error) => reportHookFailure(hook.script, "finding not queued: " + String(error)));
+        }
       }
     } catch (error) {
       console.warn("[aidd] Kilo hook dispatch failed: " + String(error));
@@ -464,13 +472,14 @@ const POST_TOOL_USE = [];
 
 // Exit 2 puts the answer on stderr; exit 0 puts it in additionalContext on stdout.
 function answerFrom(code, stdout, stderr) {
-  if (code === 2) return stderr.trim();
-  if (code !== 0) return "";
+  if (code === 2) return { text: stderr.trim(), required: false };
+  if (code !== 0) return { text: "", required: false };
   try {
     const output = JSON.parse(stdout);
-    return String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim();
+    const text = String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim();
+    return { text, required: output?.required === true };
   } catch {
-    return "";
+    return { text: "", required: false };
   }
 }
 
@@ -514,7 +523,7 @@ function answerOf(script, args, payload, directory) {
       if (failed) return;
       failed = true;
       reportHookFailure(script, error);
-      resolve("");
+      resolve({ text: "", required: false });
     };
     child.stdout.on("data", (chunk) => { stdout += chunk; });
     child.stderr.on("data", (chunk) => { stderr += chunk; });
@@ -585,7 +594,7 @@ const AiddTelemetryKiloHooks = async ({ directory, client }) => {
       if (calls.length > 0) {
         session.context = Promise.all(
           calls.map((call) => answerOf(call.script, call.args, call.payload, call.payload.cwd))
-        ).then((answers) => answers.filter(Boolean).join("\n\n"));
+        ).then((answers) => answers.map((answer) => answer.text).filter(Boolean).join("\n\n"));
       }
     } catch (error) {
       console.warn("[aidd] Kilo hook dispatch failed: " + String(error));
@@ -611,8 +620,15 @@ const AiddTelemetryKiloHooks = async ({ directory, client }) => {
       const args = call?.args;
       const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;
       for (const hook of POST_TOOL_USE.filter(hook => !hook.matcher || hook.matcher.split("|").some(name => name.toLowerCase() === tool.toLowerCase()))) {
-        const answer = await answerOf(hook.script, hook.args, { hook_event_name: "PostToolUse", session_id: call?.sessionID ?? null, cwd, tool_name: tool, tool_input: toolInput }, cwd);
+        const { text: answer, required } = await answerOf(hook.script, hook.args, { hook_event_name: "PostToolUse", session_id: call?.sessionID ?? null, cwd, tool_name: tool, tool_input: toolInput }, cwd);
         if (answer) output.output = `${output.output ?? ""}\n\n${answer}`;
+        // A required finding is also the session's next prompt, which the model takes up after this
+        // step. Not awaited: the host's prompt call returns at once and must not hold the tool.
+        if (answer && required) {
+          client.session
+            .promptAsync({ path: { id: call?.sessionID }, body: { parts: [{ type: "text", text: answer, metadata: FOLLOW_UP }] } })
+            .catch((error) => reportHookFailure(hook.script, "finding not queued: " + String(error)));
+        }
       }
     } catch (error) {
       console.warn("[aidd] Kilo hook dispatch failed: " + String(error));

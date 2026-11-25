@@ -15,7 +15,9 @@
  * - `Stop` maps to V1's `session.idle` or V2's execution terminal, once per turn.
  * - `PostToolUse` maps to V1's `tool.execute.after`, the one hook that waits for the script and
  *   can append its exit-2 stderr to the tool's output, which is how a problem reaches the model.
- *   V2's adapter calls the same hook from a successful tool call, without that answer.
+ *   V2's adapter calls the same hook from a successful tool call, without that answer. An answer
+ *   the script marks required is also queued as the session's next prompt through V1's
+ *   `promptAsync`; V2's adapter has no such method, so a V2 host only gets the appended answer.
  *
  * A `matcher` on a `PostToolUse` group filters by tool name, exact or pipe-separated
  * alternation, ignoring case: OpenCode names its tools in lowercase. Absent, every tool matches.
@@ -122,6 +124,8 @@ function postToolUseCallsFor(call, directory) {
   }));
 }
 
+const FOLLOW_UP = { aidd: "stop-follow-up" };
+
 // Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
 // Module-level: the host creates the plugin again, and a fresh set would forget a continuation.
 const continued = new Set();
@@ -145,7 +149,7 @@ export const ${parts.identifier} = async (input) => {
       )
     )
   )
-    .then((answers) => answers.filter(Boolean).join("\\n\\n"))
+    .then((answers) => answers.map((answer) => answer.text).filter(Boolean).join("\\n\\n"))
     .catch(() => "");
   return {
     dispose: async () => {
@@ -190,8 +194,15 @@ export const ${parts.identifier} = async (input) => {
     "tool.execute.after": async (call, output) => {
       try {
         for (const hook of postToolUseCallsFor(call, input.directory)) {
-          const answer = await answerOf(hook.script, hook.args, hook.payload, input.directory);
+          const { text: answer, required } = await answerOf(hook.script, hook.args, hook.payload, input.directory);
           ${parts.appendAnswer}
+          // A required finding is also the session's next prompt, which the model takes up after this
+          // step. Not awaited: the host's prompt call returns at once and must not hold the tool.
+          if (answer && required) {
+            input.client.session
+              .promptAsync({ path: { id: call.sessionID }, body: { parts: [{ type: "text", text: answer, metadata: FOLLOW_UP }] } })
+              .catch((error) => reportHookFailure(hook.script, "finding not queued: " + String(error)));
+          }
         }
       } catch {
         // Silent on purpose - see above.

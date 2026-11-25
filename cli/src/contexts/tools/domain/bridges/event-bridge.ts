@@ -32,16 +32,18 @@ export function parseHooksJsonForBridge(rawHooksJson: string): BridgeHookTable {
 }
 
 /** The generated modules' reading of a finished script: exit 2 puts the answer on stderr, exit 0
- * puts it in `additionalContext` on stdout, anything else says nothing. Written once here, so
+ * puts it in `additionalContext` on stdout, anything else says nothing. `required` is what the
+ * adapter prints for a finding the model must deal with before going on. Written once here, so
  * both hosts' bridges tell the model the same thing. */
 const ANSWER_FROM_SOURCE = `function answerFrom(code, stdout, stderr) {
-  if (code === 2) return stderr.trim();
-  if (code !== 0) return "";
+  if (code === 2) return { text: stderr.trim(), required: false };
+  if (code !== 0) return { text: "", required: false };
   try {
     const output = JSON.parse(stdout);
-    return String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim();
+    const text = String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim();
+    return { text, required: output?.required === true };
   } catch {
-    return "";
+    return { text: "", required: false };
   }
 }`;
 
@@ -121,7 +123,7 @@ export interface BridgeParts {
   readonly nodeImports: string;
   readonly hooksDir: string;
   readonly callTables: string;
-  /** The generated `answerFrom`: exit 2 puts the answer on stderr, exit 0 in `additionalContext`. */
+  /** The generated `answerFrom`: `{ text, required }`, the text from stderr at exit 2 or `additionalContext` at exit 0. */
   readonly answerFrom: string;
   readonly toolInput: string;
   readonly stopReason: string;

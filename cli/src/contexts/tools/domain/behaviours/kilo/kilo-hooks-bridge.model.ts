@@ -4,7 +4,8 @@
  * replayable commands into that native module. Kilo 7.7.5 delivers session.created and
  * session.idle through its event hook; a SessionStart answer reaches the model through
  * experimental.chat.system.transform; PostToolUse runs from tool.execute.after, which waits
- * for the script and appends its exit-2 stderr to the tool's output for the model to read.
+ * for the script and appends its exit-2 stderr to the tool's output for the model to read; an
+ * answer the script marks required is also queued as the session's next prompt.
  * Matchers ignore case, since Kilo names its tools in lowercase.
  */
 
@@ -52,7 +53,7 @@ ${parts.spawnHook(4, '["pipe", "pipe", "pipe"]')}
       if (failed) return;
       failed = true;
       reportHookFailure(script, error);
-      resolve("");
+      resolve({ text: "", required: false });
     };
     child.stdout.on("data", (chunk) => { stdout += chunk; });
     child.stderr.on("data", (chunk) => { stderr += chunk; });
@@ -122,7 +123,7 @@ const ${parts.identifier} = async ({ directory, client }) => {
       if (calls.length > 0) {
         session.context = Promise.all(
           calls.map((call) => answerOf(call.script, call.args, call.payload, call.payload.cwd))
-        ).then((answers) => answers.filter(Boolean).join("\\n\\n"));
+        ).then((answers) => answers.map((answer) => answer.text).filter(Boolean).join("\\n\\n"));
       }
     } catch (error) {
       console.warn("[aidd] Kilo hook dispatch failed: " + String(error));
@@ -148,8 +149,15 @@ const ${parts.identifier} = async ({ directory, client }) => {
       const args = call?.args;
       ${parts.toolInput}
       for (const hook of POST_TOOL_USE.filter(hook => !hook.matcher || hook.matcher.split("|").some(name => name.toLowerCase() === tool.toLowerCase()))) {
-        const answer = await answerOf(hook.script, hook.args, { hook_event_name: "PostToolUse", session_id: call?.sessionID ?? null, cwd, tool_name: tool, tool_input: toolInput }, cwd);
+        const { text: answer, required } = await answerOf(hook.script, hook.args, { hook_event_name: "PostToolUse", session_id: call?.sessionID ?? null, cwd, tool_name: tool, tool_input: toolInput }, cwd);
         ${parts.appendAnswer}
+        // A required finding is also the session's next prompt, which the model takes up after this
+        // step. Not awaited: the host's prompt call returns at once and must not hold the tool.
+        if (answer && required) {
+          client.session
+            .promptAsync({ path: { id: call?.sessionID }, body: { parts: [{ type: "text", text: answer, metadata: FOLLOW_UP }] } })
+            .catch((error) => reportHookFailure(hook.script, "finding not queued: " + String(error)));
+        }
       }
     } catch (error) {
       console.warn("[aidd] Kilo hook dispatch failed: " + String(error));

@@ -108,12 +108,16 @@ function continueTurn(text) {
   print({ decision: "block", reason: text });
 }
 
-/** Both levels inform: the bridge appends the text to the tool's result, which is all a
- * block would do there. At Stop, any answer continues the turn. */
-function answer({ text } = {}) {
+/** Both levels inform: the bridge appends the text to the tool's result. Level 2 after a write
+ * also marks it required, and the bridge queues it as the session's next prompt. At Stop, any
+ * answer continues the turn. */
+function answer({ level, text } = {}) {
   if (current === undefined || typeof text !== "string" || text === "") return;
   if (current.event === "Stop") return continueTurn(text);
-  print({ additionalContext: text });
+  print({
+    additionalContext: text,
+    ...(level === 2 && current.event === "PostToolUse" ? { required: true } : {}),
+  });
 }
 
 module.exports = { readEvent, answer, continueTurn };

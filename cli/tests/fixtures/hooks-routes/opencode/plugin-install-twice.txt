@@ -389,13 +389,14 @@ function stopCallsFor(event, directory) {
 // Awaited: the script has something the model must read.
 // Exit 2 puts it on stderr; exit 0 puts it in additionalContext on stdout.
 function answerFrom(code, stdout, stderr) {
-  if (code === 2) return stderr.trim();
-  if (code !== 0) return "";
+  if (code === 2) return { text: stderr.trim(), required: false };
+  if (code !== 0) return { text: "", required: false };
   try {
     const output = JSON.parse(stdout);
-    return String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim();
+    const text = String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim();
+    return { text, required: output?.required === true };
   } catch {
-    return "";
+    return { text: "", required: false };
   }
 }
 
@@ -466,6 +467,8 @@ function postToolUseCallsFor(call, directory) {
   }));
 }
 
+const FOLLOW_UP = { aidd: "stop-follow-up" };
+
 // Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
 // Module-level: the host creates the plugin again, and a fresh set would forget a continuation.
 const continued = new Set();
@@ -489,7 +492,7 @@ export const AiddContextHooks = async (input) => {
       )
     )
   )
-    .then((answers) => answers.filter(Boolean).join("\n\n"))
+    .then((answers) => answers.map((answer) => answer.text).filter(Boolean).join("\n\n"))
     .catch(() => "");
   return {
     dispose: async () => {
@@ -534,8 +537,15 @@ export const AiddContextHooks = async (input) => {
     "tool.execute.after": async (call, output) => {
       try {
         for (const hook of postToolUseCallsFor(call, input.directory)) {
-          const answer = await answerOf(hook.script, hook.args, hook.payload, input.directory);
+          const { text: answer, required } = await answerOf(hook.script, hook.args, hook.payload, input.directory);
           if (answer) output.output = `${output.output ?? ""}\n\n${answer}`;
+          // A required finding is also the session's next prompt, which the model takes up after this
+          // step. Not awaited: the host's prompt call returns at once and must not hold the tool.
+          if (answer && required) {
+            input.client.session
+              .promptAsync({ path: { id: call.sessionID }, body: { parts: [{ type: "text", text: answer, metadata: FOLLOW_UP }] } })
+              .catch((error) => reportHookFailure(hook.script, "finding not queued: " + String(error)));
+          }
         }
       } catch {
         // Silent on purpose - see above.
@@ -588,13 +598,14 @@ function stopCallsFor(event, directory) {
 // Awaited: the script has something the model must read.
 // Exit 2 puts it on stderr; exit 0 puts it in additionalContext on stdout.
 function answerFrom(code, stdout, stderr) {
-  if (code === 2) return stderr.trim();
-  if (code !== 0) return "";
+  if (code === 2) return { text: stderr.trim(), required: false };
+  if (code !== 0) return { text: "", required: false };
   try {
     const output = JSON.parse(stdout);
-    return String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim();
+    const text = String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim();
+    return { text, required: output?.required === true };
   } catch {
-    return "";
+    return { text: "", required: false };
   }
 }
 
@@ -665,6 +676,8 @@ function postToolUseCallsFor(call, directory) {
   }));
 }
 
+const FOLLOW_UP = { aidd: "stop-follow-up" };
+
 // Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
 // Module-level: the host creates the plugin again, and a fresh set would forget a continuation.
 const continued = new Set();
@@ -688,7 +701,7 @@ export const AiddTelemetryHooks = async (input) => {
       )
     )
   )
-    .then((answers) => answers.filter(Boolean).join("\n\n"))
+    .then((answers) => answers.map((answer) => answer.text).filter(Boolean).join("\n\n"))
     .catch(() => "");
   return {
     dispose: async () => {
@@ -733,8 +746,15 @@ export const AiddTelemetryHooks = async (input) => {
     "tool.execute.after": async (call, output) => {
       try {
         for (const hook of postToolUseCallsFor(call, input.directory)) {
-          const answer = await answerOf(hook.script, hook.args, hook.payload, input.directory);
+          const { text: answer, required } = await answerOf(hook.script, hook.args, hook.payload, input.directory);
           if (answer) output.output = `${output.output ?? ""}\n\n${answer}`;
+          // A required finding is also the session's next prompt, which the model takes up after this
+          // step. Not awaited: the host's prompt call returns at once and must not hold the tool.
+          if (answer && required) {
+            input.client.session
+              .promptAsync({ path: { id: call.sessionID }, body: { parts: [{ type: "text", text: answer, metadata: FOLLOW_UP }] } })
+              .catch((error) => reportHookFailure(hook.script, "finding not queued: " + String(error)));
+          }
         }
       } catch {
         // Silent on purpose - see above.

@@ -38,7 +38,7 @@ const event = host.readEvent();
 if (event !== undefined) {
   fs.appendFileSync(process.env.AIDD_RECORD, JSON.stringify(event) + "\\n");
   if (event.event === "SessionStart" && process.env.AIDD_START === "answer") host.answer({ level: 1, text: "start note" });
-  if (event.event === "PostToolUse") host.answer({ level: 2, text: "finding" });
+  if (event.event === "PostToolUse") host.answer({ level: process.env.AIDD_LEVEL === "1" ? 1 : 2, text: "finding" });
   if (event.event === "Stop" && process.env.AIDD_STOP === "answer") host.answer({ level: 1, text: "go on" });
   else if (event.event === "Stop") host.continueTurn("go on");
 }
@@ -172,8 +172,11 @@ async function start(ws: Workspace, input: Record<string, unknown>, refusal?: Er
     prompts.push(request);
     return refusal === undefined ? Promise.resolve() : Promise.reject(refusal);
   };
-  // Each host calls its own method: OpenCode `prompt`, Kilo `promptAsync`.
-  const client = { session: ws.host === "opencode" ? { prompt: send } : { promptAsync: send } };
+  // A turn end continues through OpenCode's `prompt` or Kilo's `promptAsync`; a required finding
+  // is queued through `promptAsync` on both, which never waits for the turn it interrupts.
+  const client = {
+    session: ws.host === "opencode" ? { prompt: send, promptAsync: send } : { promptAsync: send },
+  };
   const mod = (await import(
     pathToFileURL(join(ws.dir, "plugin", "aidd-sample-hooks.mjs")).href
   )) as { default?: { server?: (input: unknown) => Promise<Plugin> } };
@@ -209,6 +212,14 @@ function patched(project: string) {
 }
 
 const CONTINUED = [{ path: { id: SESSION }, body: { parts: [{ type: "text", text: "go on" }] } }];
+
+/** A required finding is queued as the session's next prompt, marked as the bridge's own. */
+const REQUIRED = [
+  {
+    path: { id: SESSION },
+    body: { parts: [{ type: "text", text: "finding", metadata: { aidd: "stop-follow-up" } }] },
+  },
+];
 
 function opencodeBridge(): string {
   const bridge = generateOpencodeHooksBridge(HOOKS_JSON, "aidd-sample");
@@ -367,6 +378,44 @@ describe("OpenCode, through its bridge", () => {
     ]);
     expect(prompts).toStrictEqual(CONTINUED);
   });
+
+  it("queues a required finding as the session's next prompt, beside the tool's result", async () => {
+    const ws = await workspace("opencode", opencodeBridge());
+    const write = await toolCall("opencode", 0, ws.project);
+    const { plugin, prompts } = await start(ws, { directory: ws.project });
+    await plugin["tool.execute.after"](write.call, write.output);
+
+    expect(prompts).toStrictEqual(REQUIRED);
+    expect(write.output.output).toBe("Wrote file successfully.\n\nfinding");
+  });
+
+  it("only informs the tool's result for a finding that is not required", async () => {
+    const ws = await workspace("opencode", opencodeBridge());
+    vi.stubEnv("AIDD_LEVEL", "1");
+    const write = await toolCall("opencode", 0, ws.project);
+    const { plugin, prompts } = await start(ws, { directory: ws.project });
+    await plugin["tool.execute.after"](write.call, write.output);
+
+    expect(prompts).toStrictEqual([]);
+    expect(write.output.output).toBe("Wrote file successfully.\n\nfinding");
+  });
+
+  it("reports a required finding the host refused, and still answers in the tool's result", async () => {
+    const ws = await workspace("opencode", opencodeBridge());
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const write = await toolCall("opencode", 0, ws.project);
+    const { plugin } = await start(ws, { directory: ws.project }, new Error("refused"));
+    await plugin["tool.execute.after"](write.call, write.output);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringMatching(
+        /^\[aidd\] OpenCode hook .*record\.cjs failed: .*finding not queued.*refused/
+      )
+    );
+    expect(write.output.output).toBe("Wrote file successfully.\n\nfinding");
+    warn.mockRestore();
+  });
 });
 
 describe("Kilo, through its bridge", () => {
@@ -514,6 +563,44 @@ describe("Kilo, through its bridge", () => {
       { host: "kilo", event: "Stop", stopActive: true, sessionId: SESSION, cwd: ws.project },
     ]);
     expect(prompts).toMatchObject(CONTINUED);
+  });
+
+  it("queues a required finding as the session's next prompt, beside the tool's result", async () => {
+    const ws = await workspace("kilo", kiloBridge());
+    const write = await toolCall("kilo", 0, ws.project);
+    const { plugin, prompts } = await start(ws, { directory: ws.project });
+    await plugin["tool.execute.after"](write.call, write.output);
+
+    expect(prompts).toStrictEqual(REQUIRED);
+    expect(write.output.output).toBe("Wrote file successfully.\n\nfinding");
+  });
+
+  it("only informs the tool's result for a finding that is not required", async () => {
+    const ws = await workspace("kilo", kiloBridge());
+    vi.stubEnv("AIDD_LEVEL", "1");
+    const write = await toolCall("kilo", 0, ws.project);
+    const { plugin, prompts } = await start(ws, { directory: ws.project });
+    await plugin["tool.execute.after"](write.call, write.output);
+
+    expect(prompts).toStrictEqual([]);
+    expect(write.output.output).toBe("Wrote file successfully.\n\nfinding");
+  });
+
+  it("reports a required finding the host refused, and still answers in the tool's result", async () => {
+    const ws = await workspace("kilo", kiloBridge());
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const write = await toolCall("kilo", 0, ws.project);
+    const { plugin } = await start(ws, { directory: ws.project }, new Error("refused"));
+    await plugin["tool.execute.after"](write.call, write.output);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringMatching(
+        /^\[aidd\] Kilo hook .*record\.cjs failed: .*finding not queued.*refused/
+      )
+    );
+    expect(write.output.output).toBe("Wrote file successfully.\n\nfinding");
+    warn.mockRestore();
   });
 });
 
