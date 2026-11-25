@@ -372,6 +372,8 @@ async function captureAll(projectDir: string, fakeHome: string): Promise<Command
   }
 }
 
+const TWO_CAPTURES_TIMEOUT_MS = 240_000;
+
 const captures = twoCaptures("golden-det", async (env) =>
   normalizeSnapshot(await captureAll(env.projectDir, env.fakeHome))
 );
@@ -379,11 +381,16 @@ const captures = twoCaptures("golden-det", async (env) =>
 describe.concurrent("Golden baseline - command matrix", () => {
   afterAll(captures.cleanup);
 
-  it("snapshot is deterministic (two captures are byte-identical)", async () => {
-    const capture1 = await captures.first();
-    const capture2 = await captures.second();
-    expect(JSON.stringify(capture1, null, 2)).toStrictEqual(JSON.stringify(capture2, null, 2));
-  });
+  // Two sequential full captures, about 25 spawned CLI runs each: the project timeout fits one.
+  it(
+    "snapshot is deterministic (two captures are byte-identical)",
+    async () => {
+      const capture1 = await captures.first();
+      const capture2 = await captures.second();
+      expect(JSON.stringify(capture1, null, 2)).toStrictEqual(JSON.stringify(capture2, null, 2));
+    },
+    TWO_CAPTURES_TIMEOUT_MS
+  );
 
   it("snapshot matches stored baseline (behavior-preserving gate)", async () => {
     const captured = await captures.first();
