@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 "use strict";
 // Usage: node write-agent.cjs --project <abs dir> --tools <ids> --input <agent.json> [--plan] [--force]
-// Tool ids: claude,cursor,copilot,antigravity,codex,opencode,kilo.
+// Tool ids: claude,cursor,copilot,antigravity,codex,opencode,kilo,kiro,kimi.
 // Renders one canonical agent as each host's native file, with the key mapping of the aidd CLI.
 // Exit 0 ok, 1 refusal, 2 usage error, 3 filesystem error. Prints one JSON object on stdout.
 const fs = require("node:fs");
@@ -80,6 +80,18 @@ const HOSTS = {
     fields: (a) => ({ description: a.description, model: a.model, variant: a.effort, mode: "subagent" }),
     uses: ["model", "effort"],
   },
+  // Kiro's model ids and tool names are not Claude's, so neither is written; `tools` is always `*`, as in the CLI's Kiro profile.
+  kiro: {
+    path: (name) => `.kiro/agents/${name}.md`,
+    fields: (a) => ({ name: a.name, description: a.description, tools: ["*"] }),
+    uses: [],
+  },
+  // Kimi documents no `model`. A tool with no Kimi name is left out, as in the CLI's Kimi profile.
+  kimi: {
+    path: (name) => `.kimi-code/agents/${name}.md`,
+    fields: (a) => ({ name: a.name, description: a.description, tools: kimiTools(a.tools) }),
+    uses: ["tools"],
+  },
 };
 const TOOLS = Object.keys(HOSTS);
 
@@ -152,6 +164,23 @@ function toolList(tools) {
   return list.length ? list : undefined;
 }
 
+// Kimi's own name for each Claude tool, per https://www.kimi.com/code/docs/en/kimi-code-cli/reference/tools.html.
+const KIMI_TOOLS = new Map([
+  ["Read", "Read"], ["Write", "Write"], ["Edit", "Edit"], ["Grep", "Grep"], ["Glob", "Glob"], ["Bash", "Bash"],
+  ["WebFetch", "FetchURL"], ["WebSearch", "WebSearch"], ["Task", "Agent"], ["Agent", "Agent"], ["TodoWrite", "TodoList"],
+  ["AskUserQuestion", "AskUserQuestion"], ["Skill", "Skill"], ["ExitPlanMode", "ExitPlanMode"], ["TaskOutput", "TaskOutput"], ["TaskStop", "TaskStop"],
+]);
+
+// Kimi gives every tool to an agent with no `tools`, so none is written then; a declared list that maps to nothing stays `[]`, which narrows and never widens. An MCP tool keeps its name.
+const MCP_PREFIX = "mcp__";
+
+function kimiTools(tools) {
+  const declared = toolList(tools);
+  if (!declared) return undefined;
+  const named = declared.flatMap((tool) => (tool.startsWith(MCP_PREFIX) ? tool : (KIMI_TOOLS.get(tool) ?? [])));
+  return [...new Set(named)];
+}
+
 function yamlScalar(value) {
   if (typeof value === "boolean") return String(value);
   const plain = PLAIN_SCALAR.test(value) && !value.endsWith(" ") && !YAML_KEYWORD.test(value);
@@ -160,6 +189,7 @@ function yamlScalar(value) {
 
 function yamlLine([key, value]) {
   if (!Array.isArray(value)) return `${key}: ${yamlScalar(value)}`;
+  if (!value.length) return `${key}: []`;
   return `${key}:\n${value.map((item) => `  - ${yamlScalar(item)}`).join("\n")}`;
 }
 
@@ -262,4 +292,6 @@ function run() {
   }
 }
 
-run();
+if (require.main === module) run();
+
+module.exports = { TOOLS, KIMI_TOOLS };

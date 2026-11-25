@@ -171,7 +171,8 @@ targets: [{{host tools}}]
     ".agents/agents/*/agent.md",
     ".opencode/agents/*.md",
     ".kilo/agents/*.md",
-    ".kiro/agents/*.md"
+    ".kiro/agents/*.md",
+    ".kimi-code/agents/*.md"
   ],
   "shell": false,
   "rules": {

@@ -8,7 +8,7 @@ Where each host AI tool keeps a project's slash commands, and how to tell it is 
 | Cursor / `cursor` | `.cursor/` | `.cursor/commands/<name>.md` |
 | GitHub Copilot / `copilot` | `.github/copilot-instructions.md`, `.github/instructions/` or `.github/prompts/` | `.github/prompts/<name>.prompt.md` |
 | OpenCode / `opencode` | `.opencode/`, `opencode.json` or `opencode.jsonc` | `.opencode/commands/<name>.md` |
-| Kilo Code / `kilo` | `.kilo/` | `.kilo/commands/<name>.md` |
+| Kilo Code / `kilo` | `.kilo/`, `kilo.json` or `kilo.jsonc` | `.kilo/commands/<name>.md` |
 
 Every host reads `AGENTS.md`, so it signals none. When no signal matches, confirm the host.
 
