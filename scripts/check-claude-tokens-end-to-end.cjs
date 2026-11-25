@@ -291,12 +291,12 @@ async function checkIn({ root, cli, api, log, attended }) {
   fs.mkdirSync(path.join(home, ".claude"), { recursive: true });
   fs.mkdirSync(path.join(project, ".claude"), { recursive: true });
   // Shaped like the shipped hooks.json, `node <script>`, with the plugin root spelled out.
-  const hook = (script, goal, extra = {}) => ({
-    hooks: [{ type: "command", command: [process.execPath, path.join(HOOKS, script), goal].map((word) => JSON.stringify(word.replaceAll("\\", "/"))).join(" "), ...extra }],
+  const hook = (script, goal) => ({
+    hooks: [{ type: "command", command: [process.execPath, path.join(HOOKS, script), goal].map((word) => JSON.stringify(word.replaceAll("\\", "/"))).join(" ") }],
   });
   fs.writeFileSync(
     path.join(project, ".claude", "settings.local.json"),
-    `${JSON.stringify({ hooks: { SessionStart: [hook("task.cjs", "remind"), hook("ledger.cjs", "ingest", { async: true })] } })}\n`
+    `${JSON.stringify({ hooks: { SessionStart: [hook("task.cjs", "remind"), hook("ledger.cjs", "ingest")] } })}\n`
   );
   // What a person already answered once: onboarding done, this folder trusted, this key approved.
   const answered = {
