@@ -1,5 +1,6 @@
 import { artifactPath } from "../../../../shared/domain/materialization/artifact-path.js";
 import type { SupportedArtifact } from "../../../../shared/domain/materialization/build-contract.js";
+import { belowSection } from "../../../../shared/domain/materialization/flat-paths.js";
 import type {
   PluginComponentFile,
   PluginDistribution,
@@ -102,7 +103,7 @@ function sectionPlan(
   const agent = section === "agents" ? agentPlan(file, at) : null;
   if (agent !== null) return { ...agent, links: chainLinks(links, agent.links) };
   if (!declared) return null;
-  const path = tool.flatInstallPath(section, pluginName, source.slice(`${section}/`.length));
+  const path = tool.flatInstallPath(section, pluginName, belowSection(section, source));
   return {
     source,
     path,

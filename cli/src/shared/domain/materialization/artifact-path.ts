@@ -1,5 +1,6 @@
 import type { ArtifactPlacement, FlatHooksBridge, SupportedArtifact } from "./build-contract.js";
 import {
+  belowSection,
   flatAgentFilePath,
   flatHooksRoutePath,
   flatRulesPlacement,
@@ -58,7 +59,7 @@ function layoutPath(
 ): string {
   if (of === "agent") return flatAgentFilePath(layout, plugin, relPath);
   if (of === "rule") {
-    return flatSectionPath(layout, "rules", { plugin, name: relPath.replace(/^rules\//, "") });
+    return flatSectionPath(layout, "rules", { plugin, name: belowSection("rules", relPath) });
   }
   return flatSkillPath(layout, plugin, relPath);
 }

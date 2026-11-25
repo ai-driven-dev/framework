@@ -1,4 +1,5 @@
 import { reshapeFrontmatter } from "../../../../shared/domain/markdown.js";
+import { statesRuleScope } from "../../../../shared/domain/materialization/flat-paths.js";
 import type {
   PluginComponentFile,
   PluginDistribution,
@@ -13,7 +14,7 @@ export function ruleScopesOf(
   dist: PluginDistribution,
   plugins: TranslatedFlatPlugin
 ): ReadonlyMap<PluginComponentFile, readonly unknown[]> {
-  if (plugins.flatLayout().rules !== "top-level-no-frontmatter") return new Map();
+  if (!statesRuleScope(plugins.flatLayout())) return new Map();
   return new Map(dist.components.rules.map((file) => [file, ruleScope(file.content)]));
 }
 

@@ -66,6 +66,15 @@ export function flatAgentFilePath(
     : `${layout.agentsDir}${name}${layout.agent.ext}`;
 }
 
+/** A file's path below its section folder: the path itself when it sits outside it. */
+export function belowSection(section: string, path: string): string {
+  return path.startsWith(`${section}/`) ? path.slice(section.length + 1) : path;
+}
+
+/** Whether a layout's tool reads no rule frontmatter, so a rule's scope is stated in its body. */
+export const statesRuleScope = ({ rules }: Pick<FlatArtifactLayout, "rules">): boolean =>
+  rules === "top-level-no-frontmatter";
+
 /** Where a file of a section lands: skills and agents as a build places them, every other section
  * nested under its plugin. */
 export function flatSectionPath(
@@ -76,7 +85,7 @@ export function flatSectionPath(
   const { plugin, name } = file;
   if (section === "skills") return flatSkillPath(layout, plugin, name);
   if (section === "agents") return flatAgentFilePath(layout, plugin, name);
-  if (section === "rules" && layout.rules === "top-level-no-frontmatter") {
+  if (section === "rules" && statesRuleScope(layout)) {
     return `${layout.directory}rules/${plugin}-${name.replaceAll("/", "-")}`;
   }
   return `${layout.directory}${section}/${plugin}/${name}`;
@@ -88,7 +97,7 @@ export function flatRulesPlacement(
   layout: FlatArtifactLayout,
   plugin: string
 ): { readonly prefix: string; readonly glob: string } | null {
-  if (layout.rules !== "top-level-no-frontmatter") return null;
+  if (!statesRuleScope(layout)) return null;
   const prefix = `${layout.directory}rules/${plugin}-`;
   return { prefix, glob: `${prefix}*.md` };
 }

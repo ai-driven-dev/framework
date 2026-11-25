@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { kilo as kiloTool } from "../../../../../src/composition/tool-profiles/kilo.js";
+import { flatRules } from "../../../../../src/contexts/translate/domain/layouts/build-flat-rules.js";
+import { rulesIn } from "../../../../../src/shared/domain/materialization/artifact-path.js";
+import { flatArtifactLayout } from "../../../../../src/shared/domain/materialization/flat-paths.js";
 import { translateBuildLayout } from "../../../../shared/testing/build-files.builder.js";
 import { present } from "../../../../shared/testing/present.builder.js";
 import { aCanon } from "../../testing/canon-distribution.builder.js";
@@ -16,12 +19,12 @@ const RULES = {
 };
 
 function built(files: Record<string, string>): Record<string, string> {
-  const files_ = translateBuildLayout(
+  const written = translateBuildLayout(
     aCanon("aidd-craft", files),
     present(kiloTool.buildContracts.flat)(),
     "flat"
   );
-  return Object.fromEntries(files_.map((file) => [file.relativePath, file.content]));
+  return Object.fromEntries(written.map((file) => [file.relativePath, file.content]));
 }
 
 describe("the rules of a flat build for a tool that reads no frontmatter", () => {
@@ -49,5 +52,22 @@ describe("the rules of a flat build for a tool that reads no frontmatter", () =>
     );
 
     expect(built(RULES)).toEqual(installed);
+  });
+});
+
+describe("the rules of a flat build for a tool that keeps each plugin's rules under its own folder", () => {
+  const nested = flatArtifactLayout(".tool/", { skills: "nested", agent: { ext: ".md" } });
+
+  it("carries a rule as shipped, its scope in its frontmatter", () => {
+    const [plan] = flatRules(aCanon("aidd-craft", { "rules/01-standards/2-ts.md": SCOPED }), {
+      supported: true,
+      source: { kind: "filteredTree", srcDir: "rules", inputExt: ".md" },
+      placement: rulesIn(nested),
+    });
+
+    expect([plan.path, plan.shape]).toEqual([
+      ".tool/rules/aidd-craft/01-standards/2-ts.md",
+      undefined,
+    ]);
   });
 });

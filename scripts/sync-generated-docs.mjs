@@ -21,7 +21,7 @@ const SURFACES = [
   ["agents", "Agents"],
   ["mcp", "MCP"],
   ["hooks", "Hooks"],
-  ["rules", "Rules"],
+  ["rules", "Rules in a build"],
   ["commands", "Commands"],
 ];
 

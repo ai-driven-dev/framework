@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  belowSection,
   flatAgentFilePath,
   flatArtifactLayout,
   flatHooksPathWithLoaderEntry,
@@ -9,6 +10,7 @@ import {
   genericFlatHooksScriptPath,
   ownsFlatArtifact,
   rulesGlobOf,
+  statesRuleScope,
 } from "../../../../src/shared/domain/materialization/flat-paths.js";
 
 const nested = flatArtifactLayout(".opencode/", { skills: "nested", agent: { ext: ".md" } });
@@ -221,5 +223,26 @@ describe("prefixing a plugin's MCP keys", () => {
 
   it("uses the full plugin name", () => {
     expect(flatMcpKeyPrefix("my-awesome-plugin")).toBe("my-awesome-plugin-");
+  });
+});
+
+describe("the name a section file carries", () => {
+  it("is its path below the section, the path itself when it sits outside", () => {
+    expect([belowSection("rules", "rules/a/b.md"), belowSection("rules", "a/b.md")]).toStrictEqual([
+      "a/b.md",
+      "a/b.md",
+    ]);
+  });
+});
+
+describe("a layout that states a rule's scope", () => {
+  it("is the one whose tool reads no frontmatter", () => {
+    const flat = flatArtifactLayout(".k/", {
+      skills: "nested",
+      agent: { ext: ".md" },
+      rules: "top-level-no-frontmatter",
+    });
+
+    expect([statesRuleScope(flat), statesRuleScope(nested)]).toStrictEqual([true, false]);
   });
 });
