@@ -40,13 +40,11 @@ const AGENT_TOOLS: ReadonlyMap<string, string> = new Map([
 
 /** The tool each Claude tool a plugin's hook matcher names is, as `agy` calls it in a hook's
  * `toolCall`: captured from real runs of write_file, edit_file and run_command. `agy` matches a
- * whole name as a regular expression: measured live, `write_file|edit_file|run_command` fired for
- * all three, `write_.*` for write_file only, and `write_f` for none. The plugin's matcher is read
- * by hostToolNamesMatching as a list of names, not a regex. A name with no entry, such as another
- * host's `Shell` or `PowerShell`, is dropped from the matcher. This differs from AGENT_TOOLS on
- * purpose: that one is the name a subagent's `tools` field takes, as its docs spell it
- * (replace_file_content for an edit), while a hook sees the name a run called, and a real edit
- * arrived as edit_file. */
+ * whole name as a regular expression: measured live, `write_file|edit_file|run_command` fired for all
+ * three, `write_.*` for write_file only, and `write_f` for none. A name with no entry, such as another host's `Shell`
+ * or `PowerShell`, is dropped from the matcher. This differs from AGENT_TOOLS on purpose: that
+ * one is the name a subagent's `tools` field takes, as its docs spell it (replace_file_content for
+ * an edit), while a hook sees the name a run called, and a real edit arrived as edit_file. */
 const MATCHER_TOOLS: ReadonlyMap<string, string> = new Map([
   ["Write", "write_file"],
   ["Edit", "edit_file"],
@@ -59,13 +57,13 @@ const hooks = declareHooks(
     // `agy` fires none of UserPromptSubmit, SubagentStop and SessionEnd.
     events: {
       SessionStart: "SessionStart",
+      PreToolUse: "PreToolUse",
       PostToolUse: "PostToolUse",
       Stop: "Stop",
     },
-    // PostToolUse handlers stay grouped under the plugin's matcher, its tools renamed to the ones
-    // `agy` calls. A PostToolUse answer cannot inject; PreInvocation and PostInvocation answers
-    // can, and neither is relayed, nor is PreToolUse. A model acting on an injection mid-loop
-    // depends on the model.
+    // Tool event handlers stay grouped under the plugin's matcher, its tools renamed to the ones
+    // `agy` calls. A PostToolUse answer injects nothing: only PostInvocation can, and it is not
+    // relayed. A PreToolUse deny reaches the model, and a silent handler answers `allow`.
     toolNames: MATCHER_TOOLS,
     // `agy` reads hooks only from the project's `.agents/hooks.json`, keyed by hook name, and runs
     // each handler from `<repo>/.agents`.

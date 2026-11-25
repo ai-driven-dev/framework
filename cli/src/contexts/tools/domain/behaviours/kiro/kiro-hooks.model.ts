@@ -3,10 +3,12 @@
  * merge is Kiro's own.
  *
  * Only a command of the form `node ${CLAUDE_PLUGIN_ROOT}/hooks/...` is delivered; any other is
- * dropped, and no plugin ships one. Only `SessionStart`, `PostToolUse` and `Stop` are delivered.
- * A PostToolUse matcher names Claude Code's tools; Kiro selects by a tool's tag
+ * dropped, and no plugin ships one. Only `SessionStart`, `PreToolUse`, `PostToolUse` and `Stop` are
+ * delivered. A PostToolUse matcher names Claude Code's tools; Kiro selects by a tool's tag
  * (https://kiro.dev/docs/hooks/types/), and a matcher with `|` is a regex there, never a selector,
- * so each tag gets its own hook. Stop takes no matcher, and SessionStart none a plugin ships. */
+ * so each tag gets its own hook. PreToolUse takes none: it runs for every tool, and its script
+ * tells a write by the files it reads. Stop takes no matcher, and SessionStart none a plugin
+ * ships. */
 
 import type { ShippedHooks } from "../../../../../shared/domain/materialization/build-contract.js";
 import { genericFlatHooksScriptPath } from "../../../../../shared/domain/materialization/flat-paths.js";
@@ -39,7 +41,10 @@ interface KiroHook {
 const VERSION = "v1";
 
 /** Kiro names no variable for where a hooks file lives, so a command finds its script itself.
- * The home copy wins: a repository must not have its script run by a hook installed in the home. */
+ * The home copy wins: a repository must not have its script run by a hook installed in the home.
+ * Exit 0 and exit 2 pass through: 2 is a refusal, its reason on stderr. Any other status, or a
+ * signal, is a crash and exits 0, because Kiro continues a Stop turn on exit 1. A deliberate
+ * continuation is the block decision printed on stdout. */
 function launcher(scriptsDir: string, plugin: string, call: BridgeHookCall): string {
   const relative = genericFlatHooksScriptPath(scriptsDir, plugin, call.script);
   const program = [
@@ -48,7 +53,8 @@ function launcher(scriptsDir: string, plugin: string, call: BridgeHookCall): str
     "const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));",
     "if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}",
     "const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});",
-    "process.exit(c.status===null?1:c.status)",
+    "if(c.status===0||c.status===2)process.exit(c.status);",
+    "console.error('aidd: hook script failed: '+r);process.exit(0)",
   ].join("");
   return [`node -e "${program}" --`, ...call.args].join(" ");
 }

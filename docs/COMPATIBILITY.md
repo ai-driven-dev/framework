@@ -13,7 +13,7 @@ What each AI tool receives from the framework.
 | Kilo Code | `.kilo/` | ❌ | ✅ | ✅ | ✅ | ❌ | Some events | ✅ |
 | Codex | `.codex/` | ✅ | ✅ | ✅ | ✅ | Marketplace only | ✅ | ❌ |
 | Antigravity CLI | `.agents/` | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
-| Kiro | `.kiro/` | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
+| Kiro | `.kiro/` | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
 | Kimi Code CLI | `.kimi-code/` | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
 
 <!--support:end-->
@@ -37,8 +37,8 @@ Facts below were measured on the host versions named in [the payload fixtures](.
 | Cursor | yes | yes | yes | yes | yes, not headless | no | yes |
 | OpenCode | yes | no | no | yes | yes | no | no |
 | Kilo Code | yes | no | no | yes | yes | no | no |
-| Antigravity CLI | yes | no | no | yes | yes | no | no |
-| Kiro | yes | no | no | yes, matcher mapped | yes | no | no |
+| Antigravity CLI | yes | no | yes | yes | yes | no | no |
+| Kiro | yes | no | yes | yes, matcher mapped | yes | no | no |
 | Kimi Code CLI | no | no | no | no | no | no | no |
 
 yes: the CLI writes the event to the host's hook file or bridge. no: it drops the event, and a build warns where it can.
@@ -47,9 +47,9 @@ Sources: [Claude Code](https://code.claude.com/docs/en/hooks), [Codex](https://l
 
 ## Antigravity limits
 
-- `agy` has no prompt-submitted event, and `PreToolUse` is not relayed.
+- `agy` has no prompt-submitted event; a silent `PreToolUse` script answers `allow`, because `{}` denies.
 - A matcher is an anchored regular expression over `agy`'s tool names (`edit_file`, not `write_file`); the CLI reads it as a `|` list of names, so a regular-expression part selects nothing.
-- No `PostToolUse` answer shape reached the model; `{}` denies in `PreToolUse`.
+- No `PostToolUse` answer shape reached the model.
 - A hook runs from `.agents/`; a user-level hooks file also runs alongside the project one.
 
 ## Cursor limits
@@ -67,9 +67,9 @@ Sources: [Claude Code](https://code.claude.com/docs/en/hooks), [Codex](https://l
 
 ## Kiro limits
 
-- Only `SessionStart`, `PostToolUse` and `Stop` are written; a `PostToolUse` matcher becomes Kiro's tool tags, one hook per tag.
+- Only `SessionStart`, `PreToolUse`, `PostToolUse` and `Stop` are written; a matcher becomes Kiro's tool tags, one hook per tag.
 - Text a `PostToolUse` command prints was not seen reaching the model.
-- `Stop` with `{"decision":"block"}` starts another turn, and so does a crashing script; it fires once per prompt.
+- `Stop` with `{"decision":"block"}` starts another turn; the CLI ends the turn when a script crashes. `Stop` fires once per prompt.
 
 ## Kimi Code CLI limits
 

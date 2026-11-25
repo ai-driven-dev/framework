@@ -5,14 +5,14 @@
  * build puts one such adapter per tool at `hooks/lib/host.cjs`; the plugin tree ships Claude
  * Code's. Node built-ins only; anything unreadable is no event, and prints nothing.
  *
- * SessionStart, PostToolUse and Stop are delivered to Kiro: they are the events whose payload was
- * captured, so a payload naming any other event is read as no event.
+ * SessionStart, PreToolUse, PostToolUse and Stop are delivered to Kiro: they are the events whose
+ * payload was captured, so a payload naming any other event is read as no event.
  */
 const fs = require("node:fs");
 const path = require("node:path");
 
 const HOST = "kiro";
-const EVENTS = new Set(["SessionStart", "PostToolUse", "Stop"]);
+const EVENTS = new Set(["SessionStart", "PreToolUse", "PostToolUse", "Stop"]);
 /** The write tools a capture shows: `fs_write` takes `{ path, text }`, `str_replace` takes
  * `{ path, oldStr, newStr, replace_all }`. */
 const WRITES = new Set(["fs_write", "str_replace"]);
@@ -39,6 +39,12 @@ function writtenFiles(tool, input, cwd) {
   return [file];
 }
 
+/** Before a tool runs nothing is written yet: only where it is about to write is known, so a file
+ * carries its path and no text. */
+function filesOf(event, files) {
+  return event === "PreToolUse" ? files.map(({ path }) => ({ path })) : files;
+}
+
 function readEvent() {
   current = undefined;
   const raw = readPayload();
@@ -48,7 +54,7 @@ function readEvent() {
   current = {
     host: HOST,
     event,
-    files: writtenFiles(raw.tool_name, raw.tool_input, cwd),
+    files: filesOf(event, writtenFiles(raw.tool_name, raw.tool_input, cwd)),
     ...(SHELLS.has(raw.tool_name) && typeof raw.tool_input?.command === "string"
       ? { command: raw.tool_input.command }
       : {}),
@@ -77,4 +83,14 @@ function answer({ text } = {}) {
   if (current.event === "SessionStart") process.stdout.write(`${text}\n`);
 }
 
-module.exports = { readEvent, answer, continueTurn };
+/** Refuses the tool call about to run, with `reason` as what the model is told: exit code 2 with
+ * the reason on standard error, seen on kiro-cli V3 to stop the tool and hand the reason to the
+ * model. Does nothing at any other event: a hook that refuses is written once and is harmless
+ * where nothing can be refused. */
+function refuse(reason) {
+  if (current?.event !== "PreToolUse" || typeof reason !== "string" || reason === "") return;
+  process.stderr.write(reason);
+  process.exitCode = 2;
+}
+
+module.exports = { readEvent, answer, continueTurn, refuse };

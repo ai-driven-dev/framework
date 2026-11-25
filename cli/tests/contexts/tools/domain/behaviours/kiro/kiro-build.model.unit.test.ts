@@ -30,7 +30,11 @@ describe("building Kiro's flat contract", () => {
     expect(hooks.hooksFile?.at).toEqual({ shared: ".kiro/hooks/aidd.json" });
   });
 
-  it("delivers no MCP", () => {
-    expect(artifacts.mcp.supported).toBe(false);
+  it("copies the servers of a plugin's .mcp.json to .kiro/settings/mcp.json under mcpServers", () => {
+    const mcp = supported(artifacts.mcp);
+
+    expect(mcp.source).toEqual({ kind: "configFile", srcPath: ".mcp.json" });
+    expect(mcp.placement).toEqual({ kind: "file", at: ".kiro/settings/mcp.json" });
+    expect(mcp.mcpServersKey).toBe("mcpServers");
   });
 });

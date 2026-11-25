@@ -11,6 +11,7 @@ const path = require("node:path");
 const HOST = "codex";
 const EVENTS = new Map([
   ["SessionStart", "SessionStart"],
+  ["PreToolUse", "PreToolUse"],
   ["PostToolUse", "PostToolUse"],
   ["Stop", "Stop"],
 ]);
@@ -64,18 +65,24 @@ function writtenFiles(_tool, input, cwd) {
   return typeof input?.command === "string" ? patchedFiles(input.command, cwd) : [];
 }
 
+/** Before a tool runs nothing is written yet: only where it is about to write is known, so a file
+ * carries its path and no text. */
+function filesOf(event, files) {
+  return event === "PreToolUse" ? files.map(({ path }) => ({ path })) : files;
+}
+
 function readEvent() {
   current = undefined;
   const raw = readPayload();
   const event = raw === undefined ? undefined : EVENTS.get(raw.hook_event_name);
   if (event === undefined) return undefined;
   const cwd = typeof raw.cwd === "string" && raw.cwd !== "" ? raw.cwd : process.cwd();
-  const tool = event === "PostToolUse" ? raw.tool_name : undefined;
+  const tool = event === "PostToolUse" || event === "PreToolUse" ? raw.tool_name : undefined;
   const input = raw.tool_input;
   current = {
     host: HOST,
     event,
-    files: writtenFiles(tool, input, cwd),
+    files: filesOf(event, writtenFiles(tool, input, cwd)),
     ...(SHELLS.has(tool) && typeof input?.command === "string" ? { command: input.command } : {}),
     stopActive: raw.stop_hook_active === true,
     sessionId: typeof raw.session_id === "string" ? raw.session_id : null,
@@ -114,4 +121,17 @@ function answer({ level, text, person } = {}) {
   print({ hookSpecificOutput: { hookEventName: current.event, additionalContext: text } });
 }
 
-module.exports = { readEvent, answer, continueTurn };
+/** Refuses the tool call about to run, with `reason` as what the model is told. Does nothing at any
+ * other event: a hook that refuses is written once and is harmless where nothing can be refused. */
+function refuse(reason) {
+  if (current?.event !== "PreToolUse" || typeof reason !== "string" || reason === "") return;
+  print({
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: "deny",
+      permissionDecisionReason: reason,
+    },
+  });
+}
+
+module.exports = { readEvent, answer, continueTurn, refuse };
