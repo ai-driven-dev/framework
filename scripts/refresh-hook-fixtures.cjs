@@ -1,22 +1,10 @@
 #!/usr/bin/env node
 /**
  * Re-runs, by hand, what the committed hook-payload fixtures were captured from, and says per
- * host and moment whether the host still sends the same shape (keys and types, never values).
- *
- *   node scripts/refresh-hook-fixtures.cjs [--host claude,kiro] [--model host=id] [--write]
- *
- * Local and opt-in: it calls real hosts under your own login and spends their quota, so no
- * workflow runs it. Each host runs headless in a throwaway project under a throwaway directory,
- * with a hook that only records its stdin (OpenCode and Kilo, which hand a plugin arguments and no
- * stdin, run under a throwaway home with a plugin that records them). Fixtures are left alone
- * unless `--write` is given, and even then a payload is only added as a new sample, never
- * replacing one.
- *
- * Exit codes:
- *   0  every moment run still has the committed shape
- *   1  a host changed: a payload drifted, or a hook that should fire never did
- *   2  nothing could be judged: a host could not be run
+ * host and moment whether the host still sends the same shape. Usage, exit codes and limits:
+ * `__tests__/fixtures/hook-payloads/README.md`.
  */
+const { spawnSync } = require("node:child_process");
 const crypto = require("node:crypto");
 const fs = require("node:fs");
 const os = require("node:os");
@@ -32,7 +20,9 @@ const {
   createSandbox,
   nodeCommand,
   readJsonLines,
+  pause,
   runHeadless,
+  throwawayHome,
   versionOf,
 } = require("./lib/hook-sandbox.cjs");
 
@@ -82,22 +72,14 @@ function toolMatcher(fixtures, toolName) {
   return [...new Set(names)].join("|");
 }
 
-/** A home that holds nothing of the user's, so the sessions a run creates die with it. */
-function throwawayHome(root) {
-  const home = path.join(root, "home");
-  for (const dir of [".config", ".local/share", ".local/state", ".cache"]) {
-    fs.mkdirSync(path.join(home, dir), { recursive: true });
-  }
-  return {
-    HOME: home,
-    USERPROFILE: home,
-    XDG_CONFIG_HOME: path.join(home, ".config"),
-    XDG_DATA_HOME: path.join(home, ".local", "share"),
-    XDG_STATE_HOME: path.join(home, ".local", "state"),
-    XDG_CACHE_HOME: path.join(home, ".cache"),
-    AIDD_USER_CONFIG_DIR: path.join(home, ".config", "aidd"),
-  };
-}
+const removeAll = (paths) => {
+  for (const target of paths) fs.rmSync(target, { recursive: true, force: true });
+};
+
+/** What a headless run saved under the user's own home, found by the throwaway project's path
+ * or by the id the host printed, and deleted once the run is judged. */
+const ANTIGRAVITY_HOME = path.join(os.homedir(), ".gemini", "antigravity-cli");
+const conversationIds = (output) => [...new Set([...output.matchAll(/"conversation_id":"([0-9a-f-]{36})"/g)].map((match) => match[1]))];
 
 /** OpenCode and Kilo differ in their name, plugin directory and free model. */
 const pluginHost = ({ bin, directory, model, flags }) => ({
@@ -107,7 +89,7 @@ const pluginHost = ({ bin, directory, model, flags }) => ({
     fs.mkdirSync(path.join(project, directory, "plugin"), { recursive: true });
     fs.writeFileSync(path.join(project, directory, "plugin", "capture.js"), CAPTURE_PLUGIN);
   },
-  env: ({ root, out }) => ({ ...throwawayHome(root), [CAPTURE_OUT_VARIABLE]: out }),
+  env: ({ root, out }) => ({ ...throwawayHome(path.join(root, "home")), [CAPTURE_OUT_VARIABLE]: out }),
   argv: ({ model: id }) => ["run", "-m", id, ...flags, PROMPT],
 });
 
@@ -126,9 +108,8 @@ const HOSTS = {
       "--permission-mode", "acceptEdits", "--allowedTools", "Bash(echo:*)",
       "--setting-sources", "project,local", "--", PROMPT,
     ],
-    sessionStores: (project) => [
-      path.join(os.homedir(), ".claude", "projects", project.replace(/[^A-Za-z0-9]/g, "-")),
-    ],
+    forget: ({ project }) =>
+      removeAll([path.join(os.homedir(), ".claude", "projects", project.replace(/[^A-Za-z0-9]/g, "-"))]),
   },
   cursor: {
     bin: "cursor-agent",
@@ -149,10 +130,14 @@ const HOSTS = {
       "-p", "--output-format", "stream-json", "--model", model, "--force", "--trust",
       "--workspace", project, "--", PROMPT,
     ],
-    sessionStores: (project) => [
-      path.join(os.homedir(), ".cursor", "projects", project.replace(/[^A-Za-z0-9]/g, "-").replace(/^-/, "")),
-      path.join(os.homedir(), ".cursor", "chats", crypto.createHash("md5").update(project).digest("hex")),
-    ],
+    // Cursor names its folders after the workspace as it was given and as it resolves.
+    forget: ({ project, given }) =>
+      removeAll(
+        [...new Set([project, given])].flatMap((workspace) => [
+          path.join(os.homedir(), ".cursor", "projects", workspace.replace(/[^A-Za-z0-9]/g, "-").replace(/^-/, "")),
+          path.join(os.homedir(), ".cursor", "chats", crypto.createHash("md5").update(workspace).digest("hex")),
+        ])
+      ),
   },
   antigravity: {
     bin: "agy",
@@ -171,6 +156,16 @@ const HOSTS = {
         ),
       }),
     argv: ({ model }) => ["--model", model, "--output-format", "stream-json", "--dangerously-skip-permissions", `-p=${PROMPT}`],
+    // `cache/last_conversations.json` keeps a pointer to the throwaway project; it is shared with
+    // every other run, so it is left.
+    forget: ({ output }) =>
+      removeAll(
+        conversationIds(output).flatMap((id) => [
+          path.join(ANTIGRAVITY_HOME, "conversations", `${id}.db`),
+          path.join(ANTIGRAVITY_HOME, "brain", id),
+          path.join(ANTIGRAVITY_HOME, "presence", `${id}.lock`),
+        ])
+      ),
   },
   kiro: {
     bin: "kiro-cli",
@@ -188,6 +183,11 @@ const HOSTS = {
       "chat", "--v3", "--no-interactive", "--trust-workspace",
       "--trust-tools=fs_write,fs_read,execute_bash", "--model", model, PROMPT,
     ],
+    forget: ({ project, env }) => {
+      const kiro = (...args) => spawnSync("kiro-cli", ["chat", ...args], { cwd: project, env, encoding: "utf8" });
+      const listed = JSON.parse(kiro("--list-sessions", "--format", "json").stdout || "[]");
+      for (const { sessions } of listed) for (const { sessionId } of sessions) kiro("--delete-session", sessionId);
+    },
   },
   opencode: pluginHost({ bin: "opencode", directory: ".opencode", model: "opencode/deepseek-v4.1-flash-free", flags: [] }),
   kilo: pluginHost({ bin: "kilo", directory: ".kilo", model: "kilo/kilo-auto/free", flags: ["--auto"] }),
@@ -238,48 +238,79 @@ function capture(name, fixtures, model) {
       event,
       payload: scrub(payload, { home: runEnv.HOME ?? os.homedir(), project: real }),
     }));
-    // A host keeps the session it ran under the project's path, some of it written after it
-    // exits; none of it is worth keeping.
-    const stores = spec.sessionStores?.(real) ?? [];
-    if (stores.length > 0) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, SETTLE_MS);
-    for (const store of stores) fs.rmSync(store, { recursive: true, force: true });
-    return { lines, said: (run.stderr.trim() || run.stdout.trim()).split("\n").pop() };
+    const output = `${run.stdout}\n${run.stderr}`;
+    // A host keeps the session it ran under the user's home, some of it written after it exits;
+    // none of it is worth keeping.
+    if (spec.forget) {
+      pause(SETTLE_MS);
+      spec.forget({ project: real, given: project, output, env: runEnv });
+    }
+    return { lines, output };
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
 }
 
-function main(argv, log) {
+const ANSI = /\u001b\[[0-9;]*m/g;
+const REFUSAL = /usage limit/i;
+
+/** What a host printed: its last line that says something, and the line where it refuses the run. */
+function readHostOutput(text) {
+  const lines = text.replace(ANSI, "").split("\n").map((line) => line.trim()).filter((line) => line !== "");
+  return { last: lines.at(-1) ?? "", refusal: lines.find((line) => REFUSAL.test(line)) ?? null };
+}
+
+/** Judges a run: not at all (`unjudged`, the reason) when the host refused it or delivered no
+ * hook, otherwise each committed moment against what the host delivered. */
+function judgeRun(spec, fixtures, { lines, output }) {
+  const said = readHostOutput(output);
+  if (said.refusal !== null) return { unjudged: `the host refused the run: ${said.refusal.slice(0, 200)}`, moments: [] };
+  if (lines.length === 0) return { unjudged: `the host delivered no hook; its last line: ${said.last.slice(0, 200)}`, moments: [] };
+  const moments = fixtures.map((fixture) => {
+    const fresh = lines.filter((line) => line.event === fixture.event).map((line) => line.payload);
+    const verdict = compareMoment(fixture, fresh);
+    const expected = verdict.status === "not-fired" && Boolean(spec.neverFires?.includes(fixture.event));
+    return { fixture, fresh, event: fixture.event, status: verdict.status, differences: verdict.differences, expected, last: said.last };
+  });
+  return { unjudged: null, moments };
+}
+
+/** The exit code of two outcomes together: a drift outranks a host that could not be run. */
+function combine(code, next) {
+  return code === DRIFT || next === DRIFT ? DRIFT : Math.max(code, next);
+}
+
+function main(argv, log, now = new Date()) {
   const options = parseArgs(argv);
   let code = 0;
+  log(`run ${now.toISOString()}\n`);
   for (const name of options.hosts) {
     const spec = HOSTS[name];
-    const version = versionOf(spec.bin);
+    const version = versionOf(spec.bin, os.tmpdir());
     const model = options.models[name] ?? spec.model;
     if (version === null) {
       log(`${name}: UNJUDGED ${spec.bin} is not installed\n`);
-      code = Math.max(code, UNJUDGED);
+      code = combine(code, UNJUDGED);
       continue;
     }
     const fixtures = readHostFixtures(FIXTURES, name);
     const result = capture(name, fixtures, model);
-    if (result.error) {
-      log(`${name} (${version}): UNJUDGED could not run (${result.error})\n`);
-      code = Math.max(code, UNJUDGED);
+    const judged = result.error ? { unjudged: `could not run (${result.error})`, moments: [] } : judgeRun(spec, fixtures, result);
+    if (judged.unjudged !== null) {
+      log(`${name} (${version}): UNJUDGED ${judged.unjudged}\n`);
+      code = combine(code, UNJUDGED);
       continue;
     }
     log(`${name} (${version})\n`);
-    for (const fixture of fixtures) {
-      const fresh = result.lines.filter((line) => line.event === fixture.event).map((line) => line.payload);
-      const verdict = compareMoment(fixture, fresh);
-      const expected = verdict.status === "not-fired" && spec.neverFires?.includes(fixture.event);
-      log(`  ${fixture.event}: ${verdict.status}${expected ? " (expected: the host does not fire it headless)" : ""}\n`);
-      if (verdict.status === "not-fired" && !expected) log(`    the host's last line: ${result.said.slice(0, 200)}\n`);
-      for (const line of verdict.differences) log(`    ${line}\n`);
-      if (verdict.status !== "match" && !expected) code = Math.max(code, DRIFT);
-      if (options.write && verdict.status === "drift") {
-        const { file, ...committed } = fixture;
-        writeJson(path.join(FIXTURES, file), withFreshSamples(committed, fresh));
+    for (const moment of judged.moments) {
+      const note = moment.expected ? " (expected: the host does not fire it headless)" : "";
+      log(`  ${moment.event}: ${moment.status}${note}\n`);
+      if (moment.status === "not-fired" && !moment.expected) log(`    the host's last line: ${moment.last.slice(0, 200)}\n`);
+      for (const line of moment.differences) log(`    ${line}\n`);
+      if (moment.status !== "match" && !moment.expected) code = combine(code, DRIFT);
+      if (options.write && moment.status === "drift") {
+        const { file, ...committed } = moment.fixture;
+        writeJson(path.join(FIXTURES, file), withFreshSamples(committed, moment.fresh));
         log(`    added the fresh payloads to ${file}\n`);
       }
     }
@@ -287,7 +318,7 @@ function main(argv, log) {
   return code;
 }
 
-module.exports = { main, HOSTS, parseArgs, toolMatcher };
+module.exports = { main, HOSTS, parseArgs, toolMatcher, readHostOutput, judgeRun, combine };
 
 if (require.main === module) {
   try {

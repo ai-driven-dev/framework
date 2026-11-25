@@ -66,10 +66,14 @@ Antigravity's `PostToolUse` (a `write_file`, a `run_command`, then an `edit_file
 ## Checking the fixtures against the hosts
 
 `node scripts/refresh-hook-fixtures.cjs [--host claude,kiro] [--model host=id] [--write]` runs each
-host headless in a throwaway project, with a hook that only records its stdin, and prints per host
-and moment whether the payload still has the committed shape (keys and types, never values), under
-the host's version. Exit 0: every moment matches. 1: a payload drifted or a hook never fired. 2: a
-host could not be run.
+host headless in a throwaway project, with a hook that only records its stdin, and prints the run
+time, then per host and moment whether the payload still has the committed shape (keys and types,
+never values), under the host's version. Exit codes:
+
+- 0: every moment matches.
+- 1: a payload drifted or a hook never fired. It wins over 2.
+- 2: a host could not be judged: not installed, it refused the run (a usage limit), or it delivered
+  no hook at all.
 
 It is local and opt-in: it runs the hosts under your own login and spends their quota, so no
 workflow calls it. OpenCode and Kilo run under a throwaway home, with a plugin that records the
@@ -83,11 +87,13 @@ Limits:
 - Codex and Copilot are not covered: a capture declaration for them was never run against a live
   host.
 - Cursor's `stop` fires only in an interactive session, so it is reported as expected and not
-  counted; its other moments report `not-fired` once the account is out of quota.
-- Claude Code, Cursor and Kiro leave nothing the tool does not delete from the host's session store,
-  except a folder Cursor may recreate under `~/.cursor/projects` named after the throwaway project.
-  Antigravity keeps its sessions where this tool does not look.
+  counted.
+- Each run deletes the sessions it created: Claude Code's and Cursor's folders, Antigravity's
+  conversation, brain and presence entries, Kiro's through `kiro-cli chat --delete-session`.
+  Left behind: Antigravity's `cache/last_conversations.json` pointer and logs, and a socket-only
+  folder Cursor creates under `~/.cursor/projects` with a shortened name.
 - OpenCode and Kilo tool arguments are filled by the model, so an optional key (a `bash` call's
   `description`) may drift with the model and not with the host.
-- A host's hook declaration is written here by hand, in the form the host documents; the tool names
-  a matcher lists come from these fixtures.
+- A host's hook declaration is written here, in the form the host documents, and not installed with
+  the built CLI, which declares each hook as a plugin's own script; the tool matchers come from
+  these fixtures. The tool checks what a host sends, not what aidd declares.

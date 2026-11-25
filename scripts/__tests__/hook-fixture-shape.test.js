@@ -98,6 +98,16 @@ describe("scrub", () => {
   });
 });
 
+describe("scrub the folder a host names after the project", () => {
+  it("replaces the dash-encoded project path a transcript lives under", () => {
+    const transcript = "/home/me/store/-home-me-box-project/00000000-1111-4222-8333-444444444444.jsonl";
+    assert.equal(
+      scrub(transcript, { home: "/home/me", project: "/home/me/box/project" }),
+      `/Users/user/store/-Users-user-project/${SESSION}.jsonl`
+    );
+  });
+});
+
 describe("scrub timestamps", () => {
   const opts = { home: "/h", project: "/h/p" };
 
@@ -105,8 +115,8 @@ describe("scrub timestamps", () => {
     assert.deepEqual(
       scrub(
         {
-          title: "New session - 2026-11-06T09:30:12.345Z",
-          file: ["/h/.codex", "sessions", "2026/11/06", ["rollout", "2026-11-06T09-30-12", "9b2c6f1e-1111-4222-8333-444455556666.jsonl"].join("-")].join("/"),
+          title: "New session - 2000-01-01T09:30:12.345Z",
+          file: ["/h/.codex", "sessions", "2000/01/01", ["rollout", "2000-01-01T09-30-12", "9b2c6f1e-1111-4222-8333-444455556666.jsonl"].join("-")].join("/"),
         },
         opts
       ),

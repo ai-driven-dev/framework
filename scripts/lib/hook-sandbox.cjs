@@ -76,10 +76,43 @@ function runHeadless(bin, args, { cwd, env, timeout }) {
   return { ...run, error: failed ? (run.error.code ?? run.error.message) : null };
 }
 
-/** The first line of `bin --version`, or null when `bin` is not installed. */
-function versionOf(bin) {
-  const run = spawnSync(bin, ["--version"], { encoding: "utf8" });
+/** The first line of `bin --version`, or null when `bin` is not installed. A host is asked from
+ * `cwd`, so it is never asked from the repository running us. */
+function versionOf(bin, cwd) {
+  const run = spawnSync(bin, ["--version"], { encoding: "utf8", cwd });
   return run.error ? null : `${run.stdout}${run.stderr}`.trim().split("\n")[0];
 }
 
-module.exports = { CAPTURE_HOOK, nodeCommand, readJsonLines, cleanEnv, createSandbox, runHeadless, versionOf };
+/** Blocks this process for `ms`, for the callers that wait on a host's files and are synchronous. */
+function pause(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
+/** Creates `home` with the folders a host keeps its state in, and returns the variables that aim
+ * a run at it, so what the run creates dies with the directory. */
+function throwawayHome(home) {
+  for (const dir of [".config", ".local/share", ".local/state", ".cache"]) {
+    fs.mkdirSync(path.join(home, dir), { recursive: true });
+  }
+  return {
+    HOME: home,
+    USERPROFILE: home,
+    XDG_CONFIG_HOME: path.join(home, ".config"),
+    XDG_DATA_HOME: path.join(home, ".local", "share"),
+    XDG_STATE_HOME: path.join(home, ".local", "state"),
+    XDG_CACHE_HOME: path.join(home, ".cache"),
+    AIDD_USER_CONFIG_DIR: path.join(home, ".config", "aidd"),
+  };
+}
+
+module.exports = {
+  CAPTURE_HOOK,
+  nodeCommand,
+  readJsonLines,
+  cleanEnv,
+  createSandbox,
+  runHeadless,
+  versionOf,
+  pause,
+  throwawayHome,
+};

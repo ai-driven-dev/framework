@@ -77,12 +77,15 @@ function compareMoment(fixture, freshPayloads) {
   return { status: differences.length === 0 ? "match" : "drift", differences };
 }
 
-/** Puts a captured payload in the committed form: the home and project paths, every session id,
+/** Puts a captured payload in the committed form: the home and project paths (and the project
+ * path a host folds into a folder name), every session id,
  * the account email and every ISO timestamp or dated session-file name replaced by the
  * placeholders the fixtures README names. A timestamp that is a bare number is left alone. */
 function scrub(value, { home, project }) {
   if (typeof value === "string") {
     return value
+      .split(project.replace(/[^A-Za-z0-9]/g, "-"))
+      .join("-Users-user-project")
       .split(project)
       .join("/Users/user/project")
       .split(home)

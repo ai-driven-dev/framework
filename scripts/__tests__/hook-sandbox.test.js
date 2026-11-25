@@ -5,7 +5,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 
-const { cleanEnv, createSandbox, nodeCommand, readJsonLines, runHeadless } = require("../lib/hook-sandbox.cjs");
+const { cleanEnv, createSandbox, nodeCommand, pause, readJsonLines, runHeadless, throwawayHome } = require("../lib/hook-sandbox.cjs");
 
 function withTempDir(run) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "hook-sandbox-"));
@@ -104,5 +104,27 @@ describe("runHeadless", () => {
       timeout: 200,
     });
     assert.equal(run.error, null);
+  });
+});
+
+describe("throwawayHome", () => {
+  it("creates the folders a host keeps state in and aims every variable at them", () => {
+    withTempDir((dir) => {
+      const home = path.join(dir, "home");
+      const env = throwawayHome(home);
+      assert.equal(env.HOME, home);
+      assert.equal(env.USERPROFILE, home);
+      assert.equal(env.XDG_STATE_HOME, path.join(home, ".local", "state"));
+      assert.equal(env.AIDD_USER_CONFIG_DIR, path.join(home, ".config", "aidd"));
+      assert.ok(fs.statSync(env.XDG_CACHE_HOME).isDirectory());
+    });
+  });
+});
+
+describe("pause", () => {
+  it("blocks for at least the time asked", () => {
+    const start = Date.now();
+    pause(60);
+    assert.ok(Date.now() - start >= 55);
   });
 });
