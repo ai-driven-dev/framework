@@ -15,7 +15,7 @@
       "scope": "nofence",
       "regex": "\\bnpx\\b",
       "why": "a project may use npx, pnpm dlx or bunx, and its lockfile says which; recipe-contract.md defines the placeholder. The two aidd-qa files still hardcode the runner and await a follow-up that resolves it. Only prose and inline code are read, not fenced blocks",
-      "fix": "write <runner> for the project's package runner instead of a literal one"
+      "fix": "write {runner} for the project's package runner instead of a literal one"
     }
   }
 }

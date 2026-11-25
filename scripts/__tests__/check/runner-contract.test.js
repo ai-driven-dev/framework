@@ -12,7 +12,7 @@ let dir;
 beforeEach(() => {
   dir = fs.mkdtempSync(path.join(os.tmpdir(), "runner-contract-"));
   fs.mkdirSync(path.join(dir, "references"));
-  fs.writeFileSync(path.join(dir, "SKILL.md"), "# Skill\n\nRun `<runner> tool` here.\n");
+  fs.writeFileSync(path.join(dir, "SKILL.md"), "# Skill\n\nRun `{runner} tool` here.\n");
 });
 afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
 
@@ -27,7 +27,7 @@ describe("runner contract", () => {
   });
 
   it("RUNNER-01 lets the one file that defines the runner name the alternatives", () => {
-    write("references/recipe-contract.md", "`<runner>` is `npx`, `pnpm dlx` or `bunx`.\n");
+    write("references/recipe-contract.md", "`{runner}` is `npx`, `pnpm dlx` or `bunx`.\n");
     assert.deepEqual(ids(), []);
   });
 });

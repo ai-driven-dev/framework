@@ -20,7 +20,7 @@ A recipe analysis and, on the user's choice, completed steps with a report of re
    - Never mutate before this answer.
 4. **Execute.** Carry out the chosen agent-doable steps as a tracked todo list.
    - Pause for confirmation on any step that changes a file.
-   - Replace `<runner>` in a command as [recipe-contract.md](../references/recipe-contract.md) defines it.
+   - Replace `{runner}` in a command as [recipe-contract.md](../references/recipe-contract.md) defines it.
    - Leave human-only steps untouched.
 5. **Report.** Report what was done, list the human-only steps as instructions for the user, and run any `## Verify` checks.
 

@@ -73,7 +73,7 @@ Use local logs when one session counter is insufficient.
 
 | Need | Tool | Command |
 | --- | --- | --- |
-| Aggregate supported coding agents | [`ccusage`](https://github.com/ccusage/ccusage) | `<runner> ccusage@latest` |
+| Aggregate supported coding agents | [`ccusage`](https://github.com/ccusage/ccusage) | `{runner} ccusage@latest` |
 | Inspect individual Claude Code prompts | [`prompt-analytics-for-claude-code`](https://github.com/romainfjgaspard/prompt-analytics-for-claude-code) | `uvx --from prompt-analytics-for-claude-code prompt-analytics summary` |
 
 Local logs can contain prompt text. Treat exports as sensitive.
@@ -194,7 +194,7 @@ claude plugin install caveman@caveman
 # Invoke: /caveman-compress CLAUDE.md
 
 # Codex
-<runner> skills add JuliusBrussee/caveman -a codex
+{runner} skills add JuliusBrussee/caveman -a codex
 # Invoke: $caveman-compress AGENTS.md
 ```
 
