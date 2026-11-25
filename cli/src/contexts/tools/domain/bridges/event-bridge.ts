@@ -1,6 +1,8 @@
 /**
  * What the generated event bridges of the loaders that read no hooks file (Kilo, OpenCode) share:
- * the three hook events a bridge replays and how a plugin's name becomes its module's identifier.
+ * the three hook events a bridge replays, how a plugin's name becomes its module's identifier,
+ * how a hook script is run and its answer read, how a SessionStart answer reaches the model,
+ * and how a finished tool call becomes the PostToolUse hooks it triggers.
  */
 
 import type { FlatHooksLoaderEntry } from "../../../../shared/domain/materialization/flat-paths.js";
@@ -46,8 +48,22 @@ const ANSWER_FROM_SOURCE = `function answerFrom(code, stdout, stderr) {
 }`;
 
 /** What SessionStart answered, as the model reads it: every script's answer in one block, added to
- * the system prompt of each turn. Written once here, so both hosts hand it over the same way. */
-const SESSION_CONTEXT_SOURCE = `function joinAnswers(answers) {
+ * the system prompt of each turn. A session's id and directory -> every SessionStart hook's call,
+ * then the calls -> their joined answer. Written once here, so both hosts hand it over the same
+ * way and differ only in the session and directory they pass. */
+const SESSION_CONTEXT_SOURCE = `function sessionStartCallsFor(sessionId, directory) {
+  return SESSION_START.map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: { hook_event_name: "SessionStart", session_id: sessionId ?? null, cwd: directory },
+  }));
+}
+
+function sessionContextOf(calls) {
+  return Promise.all(calls.map((call) => answerOf(call.script, call.args, call.payload, call.payload.cwd))).then(joinAnswers);
+}
+
+function joinAnswers(answers) {
   return answers.filter(Boolean).join("\\n\\n");
 }
 
@@ -128,12 +144,16 @@ const CAPTURE_HOOK_SOURCE = `function captureHook(script, args, payload, directo
 /** How a host's module runs a hook script: what a script answers, and the reason a Stop script
  * gives to keep working. Written once here, so both hosts read a script the same way; only
  * whether a failed script is reported differs. */
-function hookRunnersSource(host: BridgeHostNaming): string {
+function hookRunnersSource(host: BridgeHost): string {
   const report = host.reportsFailures ? "reportHookFailure(script, run.failure);\n      " : "";
   return `${CAPTURE_HOOK_SOURCE}
 
 function reportHookFailure(script, error) {
   console.warn("[aidd] ${host.name} hook " + script + " failed: " + String(error));
+}
+
+function reportDispatchFailure(error) {
+  console.warn("[aidd] ${host.name} hook dispatch failed: " + String(error));
 }
 
 /** A Stop follow-up the host refused: reported like a failed script, never thrown into the host. */
@@ -193,7 +213,7 @@ const APPEND_ANSWER_SOURCE = `if (answer) output.output = \`$${"{"}output.output
 
 /** What a host says about itself: the name its warnings carry, and whether a script that
  * failed is reported or left silent. */
-export interface BridgeHostNaming {
+export interface BridgeHost {
   readonly name: string;
   readonly reportsFailures: boolean;
 }
@@ -209,9 +229,9 @@ export interface BridgeParts {
   readonly callTables: string;
   /** The generated `answerFrom`: exit 2 puts the answer on stderr, exit 0 in `additionalContext`. */
   readonly answerFrom: string;
-  /** The generated `answerOf`, `stopReasonOf`, `reportHookFailure` and `reportFollowUpFailure`, over one spawn of a script. */
+  /** The generated `answerOf`, `stopReasonOf`, `reportHookFailure`, `reportDispatchFailure` and `reportFollowUpFailure`, over one spawn of a script. */
   readonly hookRunners: string;
-  /** The generated `joinAnswers` and `addToSystem`: how a SessionStart answer reaches the model. */
+  /** The generated `sessionStartCallsFor`, `sessionContextOf`, `joinAnswers` and `addToSystem`: how a SessionStart answer reaches the model. */
   readonly sessionContext: string;
   /** The generated `postToolUseCallsFor`: a finished tool call to the hooks it triggers. */
   readonly postToolUseCalls: string;
@@ -221,7 +241,7 @@ export interface BridgeParts {
 /** A plugin's raw hooks.json for one host, or `null` when no mapped event names anything
  * replayable: a bridge with nothing to spawn is not a file worth writing. */
 export function generateBridge<R>(
-  host: BridgeHostNaming & { readonly identifierSuffix: string; render(parts: BridgeParts): R },
+  host: BridgeHost & { readonly identifierSuffix: string; render(parts: BridgeParts): R },
   rawHooksJson: string,
   plugin: string
 ): R | null {

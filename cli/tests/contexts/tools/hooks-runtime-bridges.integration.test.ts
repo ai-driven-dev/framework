@@ -71,6 +71,7 @@ const ADAPTERS = {
 
 afterEach(async () => {
   vi.unstubAllEnvs();
+  vi.restoreAllMocks();
   // A SessionStart hook runs detached in `project/`; Windows refuses to remove a live process's cwd (EBUSY).
   await Promise.all(
     created
@@ -273,19 +274,17 @@ describe.each(["opencode", "kilo"] as const)("SessionStart answers on %s", (host
   });
 
   it("adds nothing, and does not throw, when a script cannot be spawned", async () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const { added } = await startedWith(host, startingWith(UNSPAWNABLE, RECORD));
 
     expect(added).toStrictEqual(["start note"]);
-    warn.mockRestore();
   });
 
   it("keeps the answer of the scripts that ran when another one fails", async () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const { added } = await startedWith(host, startingWith(FAILING, RECORD));
 
     expect(added).toStrictEqual(["start note"]);
-    warn.mockRestore();
   });
 });
 
@@ -297,7 +296,6 @@ describe("a failed SessionStart script", () => {
     expect(warn.mock.calls.map(([line]) => String(line))).toStrictEqual([
       expect.stringMatching(/^\[aidd\] Kilo hook .*fail\.cjs failed: exited with code 1$/),
     ]);
-    warn.mockRestore();
   });
 
   it("stays silent on OpenCode", async () => {
@@ -305,7 +303,6 @@ describe("a failed SessionStart script", () => {
     await startedWith("opencode", startingWith(FAILING));
 
     expect(warn).not.toHaveBeenCalled();
-    warn.mockRestore();
   });
 });
 
@@ -325,18 +322,6 @@ describe("OpenCode, through its bridge", () => {
         cwd: ws.project,
       },
     ]);
-  });
-
-  it("hands a SessionStart answer to the model through the system prompt", async () => {
-    const ws = await workspace("opencode", opencodeBridge());
-    vi.stubEnv("AIDD_START", "answer");
-    const [init] = await captured<Record<string, unknown>>("opencode-server-init.json", ws.project);
-    const { input, output } = await systemTransform("opencode", ws.project);
-    const before = [...output.system];
-    const { plugin } = await start(ws, init);
-    await plugin["experimental.chat.system.transform"](input, output);
-
-    expect(output.system).toStrictEqual([...before, "start note"]);
   });
 
   it("adds nothing to the system prompt when SessionStart answers nothing", async () => {
@@ -438,7 +423,6 @@ describe("OpenCode, through its bridge", () => {
     expect(warn).toHaveBeenCalledWith(
       expect.stringMatching(/^\[aidd\] OpenCode hook .*record\.cjs failed: .*follow-up.*refused/)
     );
-    warn.mockRestore();
   });
 
   it("reads an idle session as Stop, continues it once, and reads the next one as a continuation", async () => {
@@ -473,19 +457,6 @@ describe("Kilo, through its bridge", () => {
         cwd: ws.project,
       },
     ]);
-  });
-
-  it("hands a created session's SessionStart answer to the model through that session's system prompt", async () => {
-    const ws = await workspace("kilo", kiloBridge());
-    vi.stubEnv("AIDD_START", "answer");
-    const [created] = await captured("kilo-session.created.json", ws.project);
-    const { input, output } = await systemTransform("kilo", ws.project);
-    const before = [...output.system];
-    const { plugin } = await start(ws, { directory: ws.dir });
-    await plugin.event({ event: created });
-    await plugin["experimental.chat.system.transform"](input, output);
-
-    expect(output.system).toStrictEqual([...before, "start note"]);
   });
 
   it("leaves another session's system prompt alone", async () => {
@@ -579,7 +550,6 @@ describe("Kilo, through its bridge", () => {
     expect(warn).toHaveBeenCalledWith(
       expect.stringMatching(/^\[aidd\] Kilo hook .*record\.cjs failed: .*follow-up.*refused/)
     );
-    warn.mockRestore();
   });
 
   // The bridge ends a turn at the next idle only after the session went busy again: that

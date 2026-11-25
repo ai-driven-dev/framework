@@ -29,15 +29,6 @@ ${parts.hookRunners}
 
 ${parts.postToolUseCalls}
 
-function sessionStartCallsFor(event, directory) {
-  if (event?.type !== "session.created") return [];
-  return SESSION_START.map((hook) => ({
-    script: hook.script,
-    args: hook.args,
-    payload: { hook_event_name: "SessionStart", session_id: event.properties?.sessionID ?? null, cwd: event.properties?.info?.directory ?? directory },
-  }));
-}
-
 const FOLLOW_UP = { aidd: "stop-follow-up" };
 
 const ${parts.identifier} = async ({ directory, client }) => {
@@ -55,7 +46,7 @@ const ${parts.identifier} = async ({ directory, client }) => {
       if (event?.type === "session.created" && !session.started) {
         session.started = true;
         session.directory = properties?.info?.directory ?? directory;
-        calls = sessionStartCallsFor(event, session.directory);
+        calls = sessionStartCallsFor(id, session.directory);
       } else if (event?.type === "session.status" && properties?.status?.type === "busy") {
         session.idle = false;
       } else if (event?.type === "session.idle" && !session.idle) {
@@ -77,12 +68,10 @@ const ${parts.identifier} = async ({ directory, client }) => {
       }
       // Not awaited: this handler must not hold the host's events. The session's first turn awaits it.
       if (calls.length > 0) {
-        session.context = Promise.all(
-          calls.map((call) => answerOf(call.script, call.args, call.payload, call.payload.cwd))
-        ).then(joinAnswers);
+        session.context = sessionContextOf(calls);
       }
     } catch (error) {
-      console.warn("[aidd] Kilo hook dispatch failed: " + String(error));
+      reportDispatchFailure(error);
     }
   },
   // What SessionStart answered reaches the model through its session's system prompt, every turn.
@@ -104,7 +93,7 @@ const ${parts.identifier} = async ({ directory, client }) => {
         ${parts.appendAnswer}
       }
     } catch (error) {
-      console.warn("[aidd] Kilo hook dispatch failed: " + String(error));
+      reportDispatchFailure(error);
     }
   },
   };

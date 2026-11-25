@@ -300,6 +300,18 @@ function answerFrom(code, stdout, stderr) {
   }
 }
 
+function sessionStartCallsFor(sessionId, directory) {
+  return SESSION_START.map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: { hook_event_name: "SessionStart", session_id: sessionId ?? null, cwd: directory },
+  }));
+}
+
+function sessionContextOf(calls) {
+  return Promise.all(calls.map((call) => answerOf(call.script, call.args, call.payload, call.payload.cwd))).then(joinAnswers);
+}
+
 function joinAnswers(answers) {
   return answers.filter(Boolean).join("\n\n");
 }
@@ -344,6 +356,10 @@ function captureHook(script, args, payload, directory) {
 
 function reportHookFailure(script, error) {
   console.warn("[aidd] Kilo hook " + script + " failed: " + String(error));
+}
+
+function reportDispatchFailure(error) {
+  console.warn("[aidd] Kilo hook dispatch failed: " + String(error));
 }
 
 /** A Stop follow-up the host refused: reported like a failed script, never thrown into the host. */
@@ -393,15 +409,6 @@ function postToolUseCallsFor(call, directory) {
   }));
 }
 
-function sessionStartCallsFor(event, directory) {
-  if (event?.type !== "session.created") return [];
-  return SESSION_START.map((hook) => ({
-    script: hook.script,
-    args: hook.args,
-    payload: { hook_event_name: "SessionStart", session_id: event.properties?.sessionID ?? null, cwd: event.properties?.info?.directory ?? directory },
-  }));
-}
-
 const FOLLOW_UP = { aidd: "stop-follow-up" };
 
 const AiddContextKiloHooks = async ({ directory, client }) => {
@@ -419,7 +426,7 @@ const AiddContextKiloHooks = async ({ directory, client }) => {
       if (event?.type === "session.created" && !session.started) {
         session.started = true;
         session.directory = properties?.info?.directory ?? directory;
-        calls = sessionStartCallsFor(event, session.directory);
+        calls = sessionStartCallsFor(id, session.directory);
       } else if (event?.type === "session.status" && properties?.status?.type === "busy") {
         session.idle = false;
       } else if (event?.type === "session.idle" && !session.idle) {
@@ -441,12 +448,10 @@ const AiddContextKiloHooks = async ({ directory, client }) => {
       }
       // Not awaited: this handler must not hold the host's events. The session's first turn awaits it.
       if (calls.length > 0) {
-        session.context = Promise.all(
-          calls.map((call) => answerOf(call.script, call.args, call.payload, call.payload.cwd))
-        ).then(joinAnswers);
+        session.context = sessionContextOf(calls);
       }
     } catch (error) {
-      console.warn("[aidd] Kilo hook dispatch failed: " + String(error));
+      reportDispatchFailure(error);
     }
   },
   // What SessionStart answered reaches the model through its session's system prompt, every turn.
@@ -468,7 +473,7 @@ const AiddContextKiloHooks = async ({ directory, client }) => {
         if (answer) output.output = `${output.output ?? ""}\n\n${answer}`;
       }
     } catch (error) {
-      console.warn("[aidd] Kilo hook dispatch failed: " + String(error));
+      reportDispatchFailure(error);
     }
   },
   };
@@ -501,6 +506,18 @@ function answerFrom(code, stdout, stderr) {
   }
 }
 
+function sessionStartCallsFor(sessionId, directory) {
+  return SESSION_START.map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: { hook_event_name: "SessionStart", session_id: sessionId ?? null, cwd: directory },
+  }));
+}
+
+function sessionContextOf(calls) {
+  return Promise.all(calls.map((call) => answerOf(call.script, call.args, call.payload, call.payload.cwd))).then(joinAnswers);
+}
+
 function joinAnswers(answers) {
   return answers.filter(Boolean).join("\n\n");
 }
@@ -545,6 +562,10 @@ function captureHook(script, args, payload, directory) {
 
 function reportHookFailure(script, error) {
   console.warn("[aidd] Kilo hook " + script + " failed: " + String(error));
+}
+
+function reportDispatchFailure(error) {
+  console.warn("[aidd] Kilo hook dispatch failed: " + String(error));
 }
 
 /** A Stop follow-up the host refused: reported like a failed script, never thrown into the host. */
@@ -594,15 +615,6 @@ function postToolUseCallsFor(call, directory) {
   }));
 }
 
-function sessionStartCallsFor(event, directory) {
-  if (event?.type !== "session.created") return [];
-  return SESSION_START.map((hook) => ({
-    script: hook.script,
-    args: hook.args,
-    payload: { hook_event_name: "SessionStart", session_id: event.properties?.sessionID ?? null, cwd: event.properties?.info?.directory ?? directory },
-  }));
-}
-
 const FOLLOW_UP = { aidd: "stop-follow-up" };
 
 const AiddTelemetryKiloHooks = async ({ directory, client }) => {
@@ -620,7 +632,7 @@ const AiddTelemetryKiloHooks = async ({ directory, client }) => {
       if (event?.type === "session.created" && !session.started) {
         session.started = true;
         session.directory = properties?.info?.directory ?? directory;
-        calls = sessionStartCallsFor(event, session.directory);
+        calls = sessionStartCallsFor(id, session.directory);
       } else if (event?.type === "session.status" && properties?.status?.type === "busy") {
         session.idle = false;
       } else if (event?.type === "session.idle" && !session.idle) {
@@ -642,12 +654,10 @@ const AiddTelemetryKiloHooks = async ({ directory, client }) => {
       }
       // Not awaited: this handler must not hold the host's events. The session's first turn awaits it.
       if (calls.length > 0) {
-        session.context = Promise.all(
-          calls.map((call) => answerOf(call.script, call.args, call.payload, call.payload.cwd))
-        ).then(joinAnswers);
+        session.context = sessionContextOf(calls);
       }
     } catch (error) {
-      console.warn("[aidd] Kilo hook dispatch failed: " + String(error));
+      reportDispatchFailure(error);
     }
   },
   // What SessionStart answered reaches the model through its session's system prompt, every turn.
@@ -669,7 +679,7 @@ const AiddTelemetryKiloHooks = async ({ directory, client }) => {
         if (answer) output.output = `${output.output ?? ""}\n\n${answer}`;
       }
     } catch (error) {
-      console.warn("[aidd] Kilo hook dispatch failed: " + String(error));
+      reportDispatchFailure(error);
     }
   },
   };

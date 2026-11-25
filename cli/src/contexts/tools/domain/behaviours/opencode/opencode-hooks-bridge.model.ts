@@ -78,16 +78,7 @@ export const ${parts.identifier} = async (input) => {
   // SessionStart's own approximation: fired once here, never per session. Its answer is what
   // the model reads on every turn, through the system prompt. A script that fails answers
   // nothing: a memory refresh that breaks OpenCode's own startup is worse than one that never ran.
-  const started = Promise.all(
-    SESSION_START.map((hook) =>
-      answerOf(
-        hook.script,
-        hook.args,
-        { hook_event_name: "SessionStart", session_id: null, cwd: input.directory },
-        input.directory
-      )
-    )
-  ).then(joinAnswers);
+  const started = sessionContextOf(sessionStartCallsFor(null, input.directory));
   return {
     dispose: async () => {
       disposed = true;

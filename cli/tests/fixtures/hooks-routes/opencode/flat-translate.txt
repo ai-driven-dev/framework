@@ -395,6 +395,18 @@ function answerFrom(code, stdout, stderr) {
   }
 }
 
+function sessionStartCallsFor(sessionId, directory) {
+  return SESSION_START.map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: { hook_event_name: "SessionStart", session_id: sessionId ?? null, cwd: directory },
+  }));
+}
+
+function sessionContextOf(calls) {
+  return Promise.all(calls.map((call) => answerOf(call.script, call.args, call.payload, call.payload.cwd))).then(joinAnswers);
+}
+
 function joinAnswers(answers) {
   return answers.filter(Boolean).join("\n\n");
 }
@@ -439,6 +451,10 @@ function captureHook(script, args, payload, directory) {
 
 function reportHookFailure(script, error) {
   console.warn("[aidd] OpenCode hook " + script + " failed: " + String(error));
+}
+
+function reportDispatchFailure(error) {
+  console.warn("[aidd] OpenCode hook dispatch failed: " + String(error));
 }
 
 /** A Stop follow-up the host refused: reported like a failed script, never thrown into the host. */
@@ -499,16 +515,7 @@ export const AiddContextHooks = async (input) => {
   // SessionStart's own approximation: fired once here, never per session. Its answer is what
   // the model reads on every turn, through the system prompt. A script that fails answers
   // nothing: a memory refresh that breaks OpenCode's own startup is worse than one that never ran.
-  const started = Promise.all(
-    SESSION_START.map((hook) =>
-      answerOf(
-        hook.script,
-        hook.args,
-        { hook_event_name: "SessionStart", session_id: null, cwd: input.directory },
-        input.directory
-      )
-    )
-  ).then(joinAnswers);
+  const started = sessionContextOf(sessionStartCallsFor(null, input.directory));
   return {
     dispose: async () => {
       disposed = true;
@@ -613,6 +620,18 @@ function answerFrom(code, stdout, stderr) {
   }
 }
 
+function sessionStartCallsFor(sessionId, directory) {
+  return SESSION_START.map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: { hook_event_name: "SessionStart", session_id: sessionId ?? null, cwd: directory },
+  }));
+}
+
+function sessionContextOf(calls) {
+  return Promise.all(calls.map((call) => answerOf(call.script, call.args, call.payload, call.payload.cwd))).then(joinAnswers);
+}
+
 function joinAnswers(answers) {
   return answers.filter(Boolean).join("\n\n");
 }
@@ -657,6 +676,10 @@ function captureHook(script, args, payload, directory) {
 
 function reportHookFailure(script, error) {
   console.warn("[aidd] OpenCode hook " + script + " failed: " + String(error));
+}
+
+function reportDispatchFailure(error) {
+  console.warn("[aidd] OpenCode hook dispatch failed: " + String(error));
 }
 
 /** A Stop follow-up the host refused: reported like a failed script, never thrown into the host. */
@@ -717,16 +740,7 @@ export const AiddTelemetryHooks = async (input) => {
   // SessionStart's own approximation: fired once here, never per session. Its answer is what
   // the model reads on every turn, through the system prompt. A script that fails answers
   // nothing: a memory refresh that breaks OpenCode's own startup is worse than one that never ran.
-  const started = Promise.all(
-    SESSION_START.map((hook) =>
-      answerOf(
-        hook.script,
-        hook.args,
-        { hook_event_name: "SessionStart", session_id: null, cwd: input.directory },
-        input.directory
-      )
-    )
-  ).then(joinAnswers);
+  const started = sessionContextOf(sessionStartCallsFor(null, input.directory));
   return {
     dispose: async () => {
       disposed = true;
