@@ -462,8 +462,8 @@ test("aidd-context answers the four context artifacts in one answer", () => {
 
 // Only the hosts whose writer output passes the shared contract unchanged are in scope.
 test("aidd-context: answers an agent or command written for another host in scope, not one out of scope", () => {
-  const inScope = [".cursor/agents/a.md", ".github/prompts/c.prompt.md", ".opencode/commands/c.md", ".kilo/commands/c.md"];
-  const outOfScope = [".opencode/agents/a.md", ".cursor/commands/c.md", ".cursor/rules/x.mdc", ".github/agents/a.agent.md", ".codex/prompts/p.toml"];
+  const inScope = [".cursor/agents/a.md", ".opencode/agents/a.md", ".kilo/agents/a.md", ".github/agents/a.agent.md", ".agents/agents/a/agent.md", ".github/prompts/c.prompt.md", ".opencode/commands/c.md", ".kilo/commands/c.md"];
+  const outOfScope = [".cursor/commands/c.md", ".cursor/rules/x.mdc", ".codex/agents/a.toml", ".codex/prompts/p.toml"];
   const all = [...inScope, ...outOfScope];
   const s = session("aidd-context", "claude", contextFiles(Object.fromEntries(all.map((rel) => [rel, "# nope\n"]))));
   s.start();
