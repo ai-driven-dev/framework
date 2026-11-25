@@ -10,16 +10,17 @@
  * - `SessionStart` runs once per server/directory at factory initialization and requires
  *   idempotent commands. What it answers reaches the model through V1's
  *   `experimental.chat.system.transform`, added to every turn's system prompt. V2's adapter
- *   carries no such hook, so a V2 host reads nothing from it. V1 did not deliver `session.created` to this event hook;
- *   the V2 adapter delivers it.
+ *   carries no such hook, so a V2 host reads nothing from it. V1 did not deliver
+ *   `session.created` to this event hook; the V2 adapter delivers it.
  * - `Stop` maps to V1's `session.idle` or V2's execution terminal, once per turn.
  * - `PostToolUse` maps to V1's `tool.execute.after`, the one hook that waits for the script and
  *   can append its exit-2 stderr to the tool's output, which is how a problem reaches the model.
  *   V2's adapter calls the same hook from a successful tool call, without that answer. An answer
  *   the script marks required is also queued as the session's next prompt through V1's
  *   `promptAsync`; V2's adapter has no such method: there, a required answer throws inside the loop, the
- *   catch below swallows it, and the call's remaining PostToolUse hooks are skipped. Never observed:
- *   V2 does not run on 1.19.3. On 1.19.3 the model took the queued prompt up and dropped the
+ *   catch below swallows it, and the call's remaining PostToolUse hooks are skipped. V2 does not
+ *   run past its guard on 1.19.3; on 2.4.1 (a separate package, `@opencode/cli`) it runs, and this
+ *   path was not probed there. On 1.19.3 the model took the queued prompt up and dropped the
  *   original request's last step; whether it resumes that request was not probed.
  *
  * A `matcher` on a `PostToolUse` group filters by tool name, exact or pipe-separated
@@ -64,6 +65,8 @@ function stopCallsFor(event, directory) {
 // Awaited: the script has something the model must read.
 // Exit 2 puts it on stderr; exit 0 puts it in additionalContext on stdout.
 ${parts.answerFrom}
+
+${parts.sessionContext}
 
 /** Runs one hook script with its payload on stdin and collects what it wrote. */
 function runCapture(script, args, payload, directory) {
@@ -136,7 +139,7 @@ export const ${parts.identifier} = async (input) => {
   let pending = Promise.resolve();
   // OpenCode keeps delivering events to an instance it disposed once it has created the next one.
   let disposed = false;
-  // SessionStart's own approximation (module doc comment above): fired once here, never
+  // SessionStart's own approximation: fired once here, never
   // per session. Its answer is what the model reads on every turn, through the system prompt.
   // Silent on purpose: a memory refresh that breaks OpenCode's own startup is worse than one
   // that never ran.
@@ -150,7 +153,7 @@ export const ${parts.identifier} = async (input) => {
       )
     )
   )
-    .then((answers) => answers.map((answer) => answer.text).filter(Boolean).join("\\n\\n"))
+    .then(joinAnswers)
     .catch(() => "");
   return {
     dispose: async () => {
@@ -158,8 +161,7 @@ export const ${parts.identifier} = async (input) => {
       await pending;
     },
     "experimental.chat.system.transform": async (_input, output) => {
-      const context = await started;
-      if (context) output.system.push(context);
+      addToSystem(output, await started);
     },
     event: async ({ event }) => {
       if (disposed) return;

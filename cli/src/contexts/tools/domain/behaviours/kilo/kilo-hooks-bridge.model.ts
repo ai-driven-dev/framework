@@ -23,6 +23,8 @@ ${parts.callTables}
 // Exit 2 puts the answer on stderr; exit 0 puts it in additionalContext on stdout.
 ${parts.answerFrom}
 
+${parts.sessionContext}
+
 /** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
 function stopReasonOf(script, args, payload, directory) {
   return new Promise((resolve) => {
@@ -122,7 +124,7 @@ ${parts.sendPrompt(12, { client: "client", method: "promptAsync", session: "id",
       if (calls.length > 0) {
         session.context = Promise.all(
           calls.map((call) => answerOf(call.script, call.args, call.payload, call.payload.cwd))
-        ).then((answers) => answers.map((answer) => answer.text).filter(Boolean).join("\\n\\n"));
+        ).then(joinAnswers);
       }
     } catch (error) {
       console.warn("[aidd] Kilo hook dispatch failed: " + String(error));
@@ -130,8 +132,7 @@ ${parts.sendPrompt(12, { client: "client", method: "promptAsync", session: "id",
   },
   // What SessionStart answered reaches the model through its session's system prompt, every turn.
   "experimental.chat.system.transform": async (input, output) => {
-    const context = await sessions.get(input?.sessionID)?.context;
-    if (context) output.system.push(context);
+    addToSystem(output, await sessions.get(input?.sessionID)?.context);
   },
   // A user's message starts a new turn. Kilo hands every plugin every message, so a prompt a
   // bridge sent (a Stop continuation or a queued finding), this one's or another plugin's, is

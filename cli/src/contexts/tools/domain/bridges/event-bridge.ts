@@ -57,6 +57,16 @@ const ANSWER_FROM_SOURCE = `function answerFrom(code, stdout, stderr) {
   }
 }`;
 
+/** What SessionStart answered, as the model reads it: every script's answer in one block, added to
+ * the system prompt of each turn. Written once here, so both hosts hand it over the same way. */
+const SESSION_CONTEXT_SOURCE = `function joinAnswers(answers) {
+  return answers.map((answer) => answer.text).filter(Boolean).join("\\n\\n");
+}
+
+function addToSystem(output, context) {
+  if (context) output.system.push(context);
+}`;
+
 /** A bridge with nothing to spawn is not a file worth writing. */
 export function replaysNothing(table: BridgeHookTable): boolean {
   return table.sessionStart.length + table.stop.length + table.postToolUse.length === 0;
@@ -98,6 +108,8 @@ export interface BridgeParts {
   readonly callTables: string;
   /** The generated `answerFrom`: `{ text, required }`, the text from stderr at exit 2 or `additionalContext` at exit 0. */
   readonly answerFrom: string;
+  /** The generated `joinAnswers` and `addToSystem`: how a SessionStart answer reaches the model. */
+  readonly sessionContext: string;
   readonly toolInput: string;
   readonly stopReason: string;
   readonly appendAnswer: string;
@@ -123,6 +135,7 @@ export function generateBridge<R>(
     hooksDir: hooksDirDeclaration(plugin),
     callTables: callTableDeclarations(table),
     answerFrom: ANSWER_FROM_SOURCE,
+    sessionContext: SESSION_CONTEXT_SOURCE,
     toolInput: TOOL_INPUT_SOURCE,
     stopReason: STOP_REASON_SOURCE,
     appendAnswer: APPEND_ANSWER_SOURCE,
