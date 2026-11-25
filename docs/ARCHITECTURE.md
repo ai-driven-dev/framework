@@ -89,20 +89,22 @@ A level is what a finding demands; a moment is when the artifact is final.
 | --- | --- | --- | --- |
 | 1. Inform | the model reads the finding and decides | `additionalContext` | the rule is certain but a deviation can be legitimate |
 | 2. Require | the model must fix before going on | `decision: "block"` with `reason` | the rule is certain, has no false positive on real data, and the fix is local |
+| 3. Refuse | the write does not happen | the host's deny, through `refuse(reason)` | the file on disk declares itself frozen, such as a spec whose status is `locked` |
 
 | Moment | Event | For |
 | --- | --- | --- |
+| Before the write | PreToolUse | refusing a write to a frozen file, judged on the file already on disk |
 | After the write | PostToolUse | an artifact final in one write: a memory file, a frontmatter |
 | At the turn end | Stop, once per turn | an artifact final only after several writes; asks once to fix the errors on the lines the turn changed |
 
-SessionStart keeps a generated state true, silently. No level stops a write: PreToolUse sees an `Edit` fragment and would block drafts.
+SessionStart keeps a generated state true, silently. A refusal never judges the content being written: PreToolUse sees only an `Edit` fragment, and judging it would block drafts.
 
 Placing a gap: judgment needed, no hook; one write, after the write, several, at the turn end; any false positive on real data, level 1.
 
 ### Rules
 
 1. **Owner scope.** A hook checks the paths its plugin owns and exits before reading anything else. `aidd-context` also owns the layout of `aidd_docs/`; `aidd-dev` and `aidd-pm` own the artifacts their skills' contracts name.
-2. **One neutral interface.** A hook reads and answers through `hooks/lib/host.cjs`, never a host's payload. `readEvent()` returns the event with its `files` (each with `written`, the text put in the file, and `replaced`, the text it replaced, either absent where the host gives none); `answer({ level, text, person })` informs or requires, `continueTurn(text, person)` asks once; the optional `person` text is shown to the person by hosts that can, and ignored elsewhere. A `files` entry may name a deleted file: tolerate `ENOENT`. `scripts/check/engine/sync.cjs` writes `hooks/lib/host.cjs` from `cli/assets/hooks-runtime/host-claude.cjs`. Shared rules live in `hooks/lib/common-rules.cjs`; copies are held identical by the `hook-rule-copies` check of `scripts/check/run.cjs`.
+2. **One neutral interface.** A hook reads and answers through `hooks/lib/host.cjs`, never a host's payload. `readEvent()` returns the event with its `files` (each with `written`, the text put in the file, and `replaced`, the text it replaced, either absent where the host gives none); `answer({ level, text, person })` informs or requires, `continueTurn(text, person)` asks once; `refuse(reason)` denies the tool call about to run, and does nothing on any other event or under an adapter that does not report that moment; the optional `person` text is shown to the person by hosts that can, and ignored elsewhere. A `files` entry may name a deleted file: tolerate `ENOENT`. `scripts/check/engine/sync.cjs` writes `hooks/lib/host.cjs` from `cli/assets/hooks-runtime/host-claude.cjs`. Shared rules live in `hooks/lib/common-rules.cjs`; copies are held identical by the `hook-rule-copies` check of `scripts/check/run.cjs`.
 3. **Findings only.** Report what this write or turn produced, never standing errors: every error on the whole lines of `written` not in `replaced`, counted as a multiset, one line each. When those lines are unknown (a shell write, an edit without `written`, a write that only removed lines), a file's errors are grouped under its name, or under `<folder>/*` across several files, and only inform. A whole-file write without `replaced` counts every line as written, informs only and is never required. Never a missing file; an error in another file is rule 7's. Warnings follow, capped at 10. Silent when clean. Format:
 
    ```
