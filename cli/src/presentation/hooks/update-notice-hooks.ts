@@ -26,6 +26,7 @@ const ONLINE_COMMAND_PATHS = new Set([
 /** The container a hook reads, or nothing when it cannot be built: a hook never fails the command. */
 function containerBuilt(program: Command, containerOf: ContainerFactory<UpdateNoticeContainer>) {
   const { verbose } = program.opts<{ verbose?: boolean }>();
+  // biome-ignore lint/plugin: a hook never fails the command
   return containerOf(process.cwd(), { verbose: verbose ?? false }, outputOf(program)).catch(
     () => null
   );

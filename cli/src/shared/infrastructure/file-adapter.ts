@@ -10,6 +10,7 @@ import { atomicWriteFile } from "./atomic-write.js";
 
 export class FileAdapter implements FileReader, FileWriter {
   async isDirectory(path: string): Promise<boolean> {
+    // biome-ignore lint/plugin: the port answers false for a path that cannot be probed
     try {
       return (await stat(path)).isDirectory();
     } catch {
@@ -18,6 +19,7 @@ export class FileAdapter implements FileReader, FileWriter {
   }
 
   async isExecutable(path: string): Promise<boolean> {
+    // biome-ignore lint/plugin: the port answers false for a file that cannot be probed
     try {
       await access(path, constants.X_OK);
       return true;
@@ -90,6 +92,7 @@ export class FileAdapter implements FileReader, FileWriter {
   }
 
   async fileExists(path: string): Promise<boolean> {
+    // biome-ignore lint/plugin: the port answers false for a path that cannot be probed
     try {
       await stat(path);
       return true;
@@ -103,10 +106,12 @@ export class FileAdapter implements FileReader, FileWriter {
   }
 
   async readFileIfReadable(path: string): Promise<string | undefined> {
+    // biome-ignore lint/plugin: the port answers undefined for a file that cannot be read, for any reason
     return readFile(path, "utf-8").catch(() => undefined);
   }
 
   async realpathIfResolvable(path: string): Promise<string | undefined> {
+    // biome-ignore lint/plugin: the port answers undefined for a path that cannot be resolved, for any reason
     return realpath(path).catch(() => undefined);
   }
 

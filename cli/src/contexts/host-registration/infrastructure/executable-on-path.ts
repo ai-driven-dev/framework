@@ -70,6 +70,7 @@ export function hostExecutableLookup(): ExecutableLookup {
     pathExt: process.env.PATHEXT,
     platform: process.platform,
     isExecutable: (path) => {
+      // biome-ignore lint/plugin: a file that cannot be probed is not an executable
       try {
         accessSync(path, constants.X_OK);
         return true;

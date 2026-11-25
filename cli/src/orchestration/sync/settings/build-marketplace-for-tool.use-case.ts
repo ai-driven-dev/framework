@@ -24,6 +24,7 @@ export class BuildMarketplaceForTool {
   ): Promise<string | null> {
     if (!this.tools.isAiTool(toolId)) return null;
     // @policy report-and-continue: a tree that cannot be built skips that marketplace only.
+    // biome-ignore lint/plugin: a tree that cannot be built skips that marketplace and says so
     try {
       const { builtDir } = await this.ensureBuilt.execute({
         projectRoot,

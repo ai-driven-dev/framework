@@ -30,6 +30,7 @@ export function parseFrontmatter(content: string): {
 
 function isJsonArray(s: string): boolean {
   if (!s.startsWith("[")) return false;
+  // biome-ignore lint/plugin: text that is no JSON is no array
   try {
     return Array.isArray(JSON.parse(s));
   } catch {

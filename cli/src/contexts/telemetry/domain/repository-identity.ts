@@ -17,6 +17,7 @@ export function addressOf(url: string): RemoteAddress | null {
   const text = url.trim();
   if (SCHEME.test(text)) {
     let parsed: URL;
+    // biome-ignore lint/plugin: a remote that is no URL has no address to read
     try {
       parsed = new URL(text);
     } catch {
