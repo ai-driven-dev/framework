@@ -10,8 +10,8 @@
  * - `SessionStart` runs once per server/directory at factory initialization and requires
  *   idempotent commands. What it answers reaches the model through V1's
  *   `experimental.chat.system.transform`, added to every turn's system prompt. V2's adapter
- *   carries no such hook, so a V2 host reads nothing from it. V1 did not deliver `session.created` to this event hook;
- *   the V2 adapter delivers it.
+ *   carries no such hook, so a V2 host reads nothing from it. V1 did not deliver
+ *   `session.created` to this event hook; the V2 adapter delivers it.
  * - `Stop` maps to V1's `session.idle` or V2's execution terminal, once per turn.
  * - `PostToolUse` maps to V1's `tool.execute.after`, the one hook that waits for the script and
  *   can append its exit-2 stderr to the tool's output, which is how a problem reaches the model.
@@ -64,6 +64,8 @@ function stopCallsFor(event, directory) {
 // Awaited: the script has something the model must read.
 // Exit 2 puts it on stderr; exit 0 puts it in additionalContext on stdout.
 ${parts.answerFrom}
+
+${parts.sessionContext}
 
 /** Runs one hook script with its payload on stdin and collects what it wrote. */
 function runCapture(script, args, payload, directory) {
@@ -148,7 +150,7 @@ export const ${parts.identifier} = async (input) => {
   let pending = Promise.resolve();
   // OpenCode keeps delivering events to an instance it disposed once it has created the next one.
   let disposed = false;
-  // SessionStart's own approximation (module doc comment above): fired once here, never
+  // SessionStart's own approximation: fired once here, never
   // per session. Its answer is what the model reads on every turn, through the system prompt.
   // Silent on purpose: a memory refresh that breaks OpenCode's own startup is worse than one
   // that never ran.
@@ -163,8 +165,8 @@ export const ${parts.identifier} = async (input) => {
     )
   )
     .then((results) => ({
-      context: results.map(({ answer }) => answer).filter(Boolean).join("\\n\\n"),
-      person: results.map(({ person }) => person).filter(Boolean).join("\\n\\n"),
+      context: joinAnswers(results.map(({ answer }) => answer)),
+      person: joinAnswers(results.map(({ person }) => person)),
     }))
     .catch(() => ({ context: "", person: "" }));
   // The person's message goes to the TUI's toast. Never awaited: the call comes back only once the
@@ -185,7 +187,7 @@ export const ${parts.identifier} = async (input) => {
     },
     "experimental.chat.system.transform": async (_input, output) => {
       const { context, person } = await started;
-      if (context) output.system.push(context);
+      addToSystem(output, context);
       if (!startShown) {
         startShown = true;
         show(person);
