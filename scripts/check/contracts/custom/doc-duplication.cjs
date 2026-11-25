@@ -6,7 +6,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 /** Only prose this repository writes and can keep in one home. */
-const SCANNED_DIRECTORIES = ["docs", "aidd_docs/memory", "cli/aidd_docs/memory"];
+const SCANNED_DIRECTORIES = ["docs", "aidd_docs/memory", ".claude/skills/working-on-cli"];
 const SCANNED_FILES = ["README.md", "cli/README.md"];
 const SCANNED_GLOBS = ["plugins/*/README.md"];
 

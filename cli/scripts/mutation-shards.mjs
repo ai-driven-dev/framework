@@ -2,6 +2,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { Instrumenter } from "@stryker-mutator/instrumenter";
 
 const CLI_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -19,9 +20,27 @@ export function sourceFiles() {
   return out.sort();
 }
 
-/** A file's weight in a shard: its line count, which the number of its mutants follows. */
-export function linesOf(path) {
-  return readFileSync(join(CLI_ROOT, path), "utf8").split("\n").length;
+const SILENT = { debug() {}, info() {}, warn() {}, error() {}, isDebugEnabled: () => false };
+
+/** The mutants Stryker generates in `content`: what a shard pays for. A line count says nothing
+ * of it, since a long comment has none and a declaration table has one per literal. */
+export async function mutantCountOf(content, name = "file.ts") {
+  const { mutants } = await new Instrumenter(SILENT).instrument([{ name, mutate: true, content }], {
+    plugins: null,
+    excludedMutations: [],
+    ignorers: [],
+  });
+  return mutants.length;
+}
+
+/** What each file of the scope weighs, its mutant count, as a lookup: partition stays synchronous.
+ * The one weight a shard run and the scoring of its scope both cut by. */
+export async function scopeWeights(mutate, files) {
+  const counts = new Map();
+  for (const path of scopeFiles(mutate, files)) {
+    counts.set(path, await mutantCountOf(readFileSync(join(CLI_ROOT, path), "utf8"), path));
+  }
+  return (path) => counts.get(path) ?? 0;
 }
 
 /** A `mutate` glob as `mutation-scopes.json` writes them: `**` crosses directories, `*` does not. */
@@ -54,7 +73,7 @@ export function scopeFiles(mutate, files) {
 /** The scope's files cut into `of` shards of about the same weight: heaviest file first, each
  * to the lightest shard so far, ties broken by path and by shard number. The same files at the
  * same weights give the same shards on every machine. */
-export function partition(mutate, files, of, weightOf = linesOf) {
+export function partition(mutate, files, of, weightOf) {
   const weighted = scopeFiles(mutate, files)
     .map((path) => ({ path, weight: weightOf(path) }))
     .sort((a, b) => b.weight - a.weight || (a.path < b.path ? -1 : 1));
@@ -67,8 +86,13 @@ export function partition(mutate, files, of, weightOf = linesOf) {
   return shards.map((shard) => shard.files.sort());
 }
 
+/** The scope's files cut into `of` shards by what they cost to mutate. */
+export async function cutScope(mutate, files, of) {
+  return partition(mutate, files, of, await scopeWeights(mutate, files));
+}
+
 /** The files shard `shard` (from 1) of `of` mutates. */
-export function shardFiles(mutate, files, shard, of, weightOf = linesOf) {
+export function shardFiles(mutate, files, shard, of, weightOf) {
   return partition(mutate, files, of, weightOf)[shard - 1];
 }
 
@@ -80,7 +104,7 @@ export function mergeReports(reports) {
 /** Why a sharded scope cannot be scored, or null. Every shard must be there, each must have
  * mutated exactly what the partition gives it at this commit, and something must have been
  * mutated: a missing or drifted shard would lift the score by leaving mutants out. */
-export function aggregateVerdict({ mutate, files, of, shards, weightOf = linesOf }) {
+export function aggregateVerdict({ mutate, files, of, shards, weightOf }) {
   for (let shard = 1; shard <= of; shard += 1) {
     const found = shards.find((candidate) => candidate.manifest.shard === shard);
     if (found === undefined) return `shard ${shard} of ${of} is missing`;

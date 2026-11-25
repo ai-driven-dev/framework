@@ -1,0 +1,15 @@
+language js
+
+// A reader outside the tools context names the sections of a tool it reads, never the whole
+// profile. Where a file hands the profile on, write `biome-ignore lint/plugin: <reason>` above
+// the import.
+or {
+  `import { $names } from $source`,
+  `import type { $names } from $source`,
+  `export { $names } from $source`,
+  `export type { $names } from $source`
+} as $statement where {
+  $source <: r".*tools/contract/tool-profile\.js.*",
+  $names <: r"(?s).*\b(?:Ai|Ide)?ToolProfile\b.*",
+  register_diagnostic(span=$statement, message="name the sections this file reads (PluginAnswers, ConfigWrite, ...) in its own ports/, not the whole tool profile", severity="error")
+}

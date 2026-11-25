@@ -1,25 +1,63 @@
 /**
- * A tool identifier may only appear in that tool's own profile and in the shared vocabulary.
- * Everywhere else behaviour is read from the profile rather than branched on the name, or a
- * sixth tool means editing N files again. Scope is `src/`: a test naming the tool it tests is
- * not coupling. Comments are stripped first — prose about a tool's layout is documentation.
+ * Adding a tool costs one profile file in `composition/tool-profiles/` and one line in the
+ * registration list beside it. A tool identifier may appear only there and in the tool's own
+ * behaviour folder; everywhere else behaviour is read from the profile rather than branched on the
+ * name, or the next tool means editing N files again. Scope is `src/`: a test naming the tool it
+ * tests is not coupling. Comments are stripped first - prose about a tool's layout is documentation.
  */
 import { describe, expect, it } from "vitest";
-import { expectRatchet, read, sourceFiles } from "./helpers.js";
+import { REGISTERED_PROFILES } from "../../src/composition/tool-profiles/index.js";
+import { present } from "../shared/testing/present.builder.js";
+import {
+  DESCRIPTOR_TYPES,
+  descriptorKeys,
+  factsOutsideDescriptor,
+  hooksFacts,
+  PROFILE_FILE,
+} from "./hooks-facts.js";
+import { read, sourceFiles } from "./source-graph.js";
 
-/** The tools, from the tree: a hand-written list leaves the rule blind to the next tool. */
+const PROFILES = "src/composition/tool-profiles/";
+const REGISTRATION = `${PROFILES}index.ts`;
+const BEHAVIOURS = "src/contexts/tools/domain/behaviours/";
+
+/** The tools, from the profile files: a hand-written list leaves the rule blind to the next tool. */
 function toolIds(files: readonly string[]): string[] {
   const ids = new Set<string>();
   for (const file of files) {
-    const match = /^src\/contexts\/tools\/domain\/profiles\/([^/]+)\//.exec(file);
-    if (match) ids.add(match[1] as string);
+    const match = /^src\/composition\/tool-profiles\/([^/]+)\.ts$/.exec(file);
+    if (match && file !== REGISTRATION) ids.add(present(match[1]));
   }
   return [...ids].sort();
 }
 
-function isAllowed(file: string, ids: readonly string[]): boolean {
-  if (file === "src/kernel/tool.ts") return true;
-  return ids.some((id) => file.startsWith(`src/contexts/tools/domain/profiles/${id}/`));
+/** The profile files the list does not register, then the ids it registers with no file. */
+function registrationGaps(ids: readonly string[], registered: readonly string[]): string[] {
+  return [
+    ...ids.filter((id) => !registered.includes(id)).map((id) => `unregistered: ${id}`),
+    ...registered.filter((id) => !ids.includes(id)).map((id) => `no profile file: ${id}`),
+  ];
+}
+
+/**
+ * `usage-record.ts` is the one permanent exemption: `USAGE_TOOLS` is the vocabulary of tools
+ * stored in a user's ledger, kept by telemetry apart from `tools` so that a reader of one tool
+ * needs no edit to the record. It names `codex` once and is held to that count; a new tool's
+ * reader adds a value to it, which is the stored data changing, not a branch on the name.
+ */
+const STORED_VOCABULARY = { path: "src/contexts/telemetry/contract/usage-record.ts", named: 1 };
+
+/** A folder named for one tool, a behaviour or a telemetry source, names that tool alone. */
+const OWN_FOLDERS = [BEHAVIOURS, "src/contexts/telemetry/infrastructure/sources/"];
+
+function isAllowed(file: string, ids: readonly string[], named: readonly string[] = []): boolean {
+  if (file === REGISTRATION || file === STORED_VOCABULARY.path) return true;
+  return ids.some(
+    (id) =>
+      file === `${PROFILES}${id}.ts` ||
+      (OWN_FOLDERS.some((folder) => file.startsWith(`${folder}${id}/`)) &&
+        named.every((name) => name === id))
+  );
 }
 
 const BLOCK_COMMENT = /\/\*[\s\S]*?\*\//g;
@@ -29,74 +67,45 @@ function code(source: string): string {
   return source.replace(BLOCK_COMMENT, "").replace(LINE_COMMENT, "");
 }
 
+/** Composition registers a measured tool once, by importing its adapter from its own folder. */
+const SOURCE_IMPORT_PATH = /(["'])[^"']*\/telemetry\/infrastructure\/sources\/[^"']*\1/g;
+
 /**
- * Five forms force an edit: a quoted literal, an object key, a profile's import path, a
- * dotfile directory literal (`".cursor"`, which the exact-match form misses), and a string
- * enumerating two or more tools. A string naming one tool is not a list a sixth must join.
+ * Six forms force an edit: a quoted literal, an object key, a profile's import path, a
+ * dotfile directory literal (`".cursor"`, which the exact-match form misses), a file suffix
+ * literal (`".cursor.md"`), and a string enumerating two or more tools. A string naming one tool
+ * is not a list a sixth must join.
  */
-function toolsNamedIn(source: string, ids: readonly string[]): string[] {
+function namedByForms(body: string, ids: readonly string[]): string[] {
   const alternation = ids.join("|");
-  const named = new Set<string>();
-  const body = code(source);
   const forms = [
     new RegExp(`["'\`](${alternation})["'\`]`, "g"),
     new RegExp(`(?:^|[\\s{,(])(${alternation})\\s*:`, "gm"),
     new RegExp(`["'][^"']*/(${alternation})/[^"']*["']`, "g"),
     new RegExp(`["'\`]\\.(${alternation})["'\`]`, "g"),
+    new RegExp(`["'\`]\\.(${alternation})\\.md["'\`]`, "g"),
   ];
-  for (const form of forms) {
-    for (const match of body.matchAll(form)) named.add(match[1] as string);
-  }
-  for (const literal of body.matchAll(/(["'`])((?:(?!\1).)*)\1/gs)) {
-    const inside = literal[2] as string;
-    const listed = ids.filter((id) => new RegExp(`\\b${id}\\b`).test(inside));
-    if (listed.length >= 2) for (const id of listed) named.add(id);
-  }
-  return [...named].sort();
+  return forms.flatMap((form) => [...body.matchAll(form)].map((match) => present(match[1])));
 }
 
-/**
- * Files naming a tool outside its profile today, with how many they name; the list may only
- * shrink, and a listed file may not take on another tool. Three are not debt:
- * `tool-recommendations.ts`, `config-refs.ts` and `plugins-capability.ts`, each naming a tool
- * for a reason no profile carries. The rest is registration and words shown to a user.
- */
-const BASELINE: readonly { readonly path: string; readonly named: number }[] = [
-  { path: "src/contexts/framework/domain/tool-recommendations.ts", named: 4 },
-  { path: "src/contexts/tools/domain/capabilities/config-refs.ts", named: 1 },
-  { path: "src/contexts/tools/domain/capabilities/plugins-capability.ts", named: 3 },
-  { path: "src/presentation/commands/setup.ts", named: 2 },
-  { path: "src/presentation/commands/translate.ts", named: 7 },
-  { path: "src/presentation/prompts/menu-use-case.ts", named: 8 },
-  { path: "src/runtime/assets/asset-loader.ts", named: 8 },
-  { path: "src/runtime/wiring/framework.ts", named: 8 },
-  { path: "src/runtime/wiring/tools.ts", named: 8 },
-  { path: "src/runtime/wiring/translate.ts", named: 8 },
-  // Which file each host keeps its plugin registry in, called from the composition root
-  // alone; the reader classes beside it name no tool.
-  {
-    path: "src/contexts/tools/infrastructure/host-plugin-registry-reader-adapter.ts",
-    named: 3,
-  },
-  // The record's tool vocabulary is the contract's: `codex` is admitted so a second tool's
-  // reader needs no change to the record, and is not a list a new tool joins.
-  { path: "src/contexts/telemetry/domain/usage-record.ts", named: 1 },
-  // Where Claude Code keeps its transcripts, named for the one tool whose directory it is.
-  { path: "src/contexts/telemetry/domain/claude-projects-root.ts", named: 1 },
-  // Codex's own session-file format and where Codex keeps those files, each named for the one
-  // tool whose files it reads: a tool measured is its reader, not a list a new tool joins.
-  { path: "src/contexts/telemetry/domain/formats/codex-transcript-usage.ts", named: 1 },
-  {
-    path: "src/contexts/telemetry/infrastructure/transcripts/codex-transcript-source-adapter.ts",
-    named: 1,
-  },
-  // Claude Code's own settings files, read to say how long it keeps a transcript.
-  { path: "src/contexts/telemetry/infrastructure/switch/claude-settings-adapter.ts", named: 1 },
-];
+/** A string naming two or more tools is a list a sixth must join. */
+function namedByEnumeration(body: string, ids: readonly string[]): string[] {
+  return [...body.matchAll(/(["'`])((?:(?!\1).)*)\1/gs)].flatMap((literal) => {
+    const inside = present(literal[2]);
+    const listed = ids.filter((id) => new RegExp(`\\b${id}\\b`).test(inside));
+    return listed.length >= 2 ? listed : [];
+  });
+}
+
+function toolsNamedIn(source: string, ids: readonly string[]): string[] {
+  const body = code(source).replace(SOURCE_IMPORT_PATH, '""');
+  return [...new Set([...namedByForms(body, ids), ...namedByEnumeration(body, ids)])].sort();
+}
 
 const STRING_LITERAL = /(["'`])(?:(?!\1)[^\\\n]|\\.)*\1/g;
 const IDENTIFIER = /[A-Za-z_$][A-Za-z0-9_$]*/g;
-const ISOLATED_FROM_TOOLS = /^src\/contexts\/[^/]+\/(?:application\/|domain\/formats\/)/;
+const ISOLATED_FROM_TOOLS =
+  /^src\/(?:orchestration\/|contexts\/(?:[^/]+\/(?:application\/|domain\/formats\/)|tools\/domain\/(?:(?:sections|hooks|bridges|native-registration|profile)\/|profile\.ts$|marketplace-(?:catalog|entry)\.ts$)|tools\/contract\/))/;
 
 function words(identifier: string): string[] {
   return identifier
@@ -121,81 +130,78 @@ function toolIdentifiersIn(source: string, ids: readonly string[]): string[] {
   return [...named].sort();
 }
 
-/**
- * Files under `application/` or `domain/formats/` still naming a tool in an identifier, with
- * how many distinct identifiers; the list may only shrink, and a listed file may not take on
- * another.
- */
-const IDENTIFIER_BASELINE: readonly { readonly path: string; readonly named: number }[] = [
-  { path: "src/contexts/distribution/application/fetch-marketplace-source-use-case.ts", named: 1 },
-  { path: "src/contexts/distribution/application/marketplace-refresh-use-case.ts", named: 1 },
-  { path: "src/contexts/framework/application/clean/clean-user-scope-use-case.ts", named: 1 },
-  {
-    path: "src/contexts/framework/application/framework/translator/flat-mcp-materializer.ts",
-    named: 1,
-  },
-  {
-    path: "src/contexts/framework/application/framework/translator/mode-b-flat-materialization-translator.ts",
-    named: 1,
-  },
-  {
-    path: "src/contexts/framework/application/install/install-runtime-config-use-case.ts",
-    named: 1,
-  },
-  { path: "src/contexts/framework/application/ownership/project-plugin-cleanup.ts", named: 1 },
-  { path: "src/contexts/framework/application/plugin/plugin-remove-use-case.ts", named: 1 },
-  { path: "src/contexts/framework/application/restore/restore-use-case.ts", named: 4 },
-  { path: "src/contexts/telemetry/application/switch/telemetry-on-use-case.ts", named: 2 },
-  { path: "src/contexts/telemetry/domain/formats/claude-transcript-usage.ts", named: 2 },
-  { path: "src/contexts/telemetry/domain/formats/codex-transcript-usage.ts", named: 2 },
-  { path: "src/contexts/tools/domain/formats/opencode-mcp-merge.ts", named: 4 },
-  { path: "src/contexts/tools/domain/formats/plugin-root-token.ts", named: 2 },
-  { path: "src/contexts/tools/domain/formats/vscode-mcp-merge.ts", named: 1 },
-  { path: "src/contexts/translate/application/strategies/flat-build-strategy.ts", named: 1 },
-  { path: "src/contexts/translate/domain/formats/plugin-root-token-rewrite.ts", named: 1 },
-];
-
 describe("a tool identifier stays inside its own profile", () => {
+  it("registers every profile file once, and no tool without one", () => {
+    const registered = REGISTERED_PROFILES.map((profile) => profile.toolId);
+
+    expect(
+      registrationGaps(toolIds(sourceFiles()), registered),
+      "a profile file and the registration list disagree - add the line, or the file"
+    ).toEqual([]);
+  });
+
   it("no file outside a profile names a tool in a form a new tool would have to join", () => {
     const files = sourceFiles();
     const ids = toolIds(files);
     expect(
       ids.length,
-      "no profile directory found — the scope of this rule is stale"
+      "no profile directory found - the scope of this rule is stale"
     ).toBeGreaterThan(1);
 
-    const violations = files
-      .filter((file) => !isAllowed(file, ids))
-      .filter((file) => toolsNamedIn(read(file), ids).length > 0);
+    const violations = files.filter((file) => {
+      const named = toolsNamedIn(read(file), ids);
+      return named.length > 0 && !isAllowed(file, ids, named);
+    });
 
-    const { added, fixed } = expectRatchet(
-      violations,
-      BASELINE.map((entry) => entry.path)
+    expect(violations, "tool named outside its profile - read it from the profile instead").toEqual(
+      []
     );
-    expect(added, "tool named outside its profile — read it from the profile instead").toEqual([]);
-    expect(fixed, "fixed — remove these from BASELINE").toEqual([]);
   });
 
-  it("holds each admitted file to the number of tools its reason was written around", () => {
+  it("holds the admitted file to the number of tools its reason was written around", () => {
     const ids = toolIds(sourceFiles());
-    const recorded = BASELINE.map(({ path, named }) => `${path}: ${named}`);
-    const actual = BASELINE.map(({ path }) => `${path}: ${toolsNamedIn(read(path), ids).length}`);
+    const { path, named } = STORED_VOCABULARY;
 
-    expect(actual, "an admitted file took on another tool — fix the count and its reason").toEqual(
-      recorded
-    );
+    expect(
+      toolsNamedIn(read(path), ids).length,
+      "the admitted file took on another tool - fix the count and its reason"
+    ).toBe(named);
   });
 });
 
 describe("the guard itself", () => {
-  it("derives the tools from the profiles, so a new one is subject to the rule at once", () => {
-    const ids = toolIds(["src/contexts/tools/domain/profiles/frobnicator/profile.ts"]);
+  it("derives the tools from the profile files, so a new one is subject to the rule at once", () => {
+    const ids = toolIds([`${PROFILES}frobnicator.ts`, REGISTRATION]);
 
-    expect(ids, "a directory under profiles/ is a tool").toEqual(["frobnicator"]);
+    expect(ids, "a profile file is a tool, the registration list is none").toEqual(["frobnicator"]);
     expect(
       toolsNamedIn('const target = "frobnicator";', ids),
       "and the rule matches it without anyone editing a list"
     ).toEqual(["frobnicator"]);
+  });
+
+  it("reports a profile file the list does not register, and a line with no file", () => {
+    expect(registrationGaps(["claude", "frobnicator"], ["claude"])).toEqual([
+      "unregistered: frobnicator",
+    ]);
+    expect(registrationGaps(["claude"], ["claude", "frobnicator"])).toEqual([
+      "no profile file: frobnicator",
+    ]);
+  });
+
+  it("admits a tool's own profile and behaviour folder, never a shared format or a neighbour", () => {
+    const ids = ["claude", "codex"];
+
+    expect(isAllowed(`${PROFILES}codex.ts`, ids, ["codex", "claude"]), "its profile").toBe(true);
+    expect(isAllowed(`${BEHAVIOURS}codex/codex-build.model.ts`, ids, ["codex"])).toBe(true);
+    expect(
+      isAllowed(`${BEHAVIOURS}codex/codex-build.model.ts`, ids, ["claude"]),
+      "a neighbour named in a behaviour folder"
+    ).toBe(false);
+    expect(
+      isAllowed("src/contexts/tools/domain/formats/command.ts", ids, ["codex"]),
+      "a shared format"
+    ).toBe(false);
   });
 
   it("sees the four forms a quoted-literal match missed, and ignores prose", () => {
@@ -205,7 +211,10 @@ describe("the guard itself", () => {
       "codex",
     ]);
     expect(
-      toolsNamedIn('import "../../src/contexts/tools/domain/profiles/codex/build.js";', ids),
+      toolsNamedIn(
+        'import "../../src/contexts/tools/domain/behaviours/codex/codex-build.model.js";',
+        ids
+      ),
       "an import path"
     ).toEqual(["codex"]);
     expect(
@@ -223,9 +232,31 @@ describe("the guard itself", () => {
     ).toEqual(["cursor"]);
   });
 
+  it("admits a telemetry source naming only its own tool, and no other file there", () => {
+    const ids = ["claude", "codex"];
+    const own = "src/contexts/telemetry/infrastructure/sources/codex/codex-session-roots.ts";
+
+    expect(isAllowed(own, ids, ["codex"]), "its own tool").toBe(true);
+    expect(isAllowed(own, ids, ["claude", "codex"]), "a neighbour's too").toBe(false);
+    expect(
+      isAllowed("src/contexts/telemetry/infrastructure/sources/transcript-files.ts", ids, [
+        "codex",
+      ]),
+      "outside any tool's folder"
+    ).toBe(false);
+  });
+
+  it("lets composition register a telemetry source by its import, and nothing else of the tool", () => {
+    const ids = ["claude", "codex"];
+    const path = "../contexts/telemetry/infrastructure/sources/codex/codex-session-roots.js";
+
+    expect(toolsNamedIn(`import { roots } from "${path}";`, ids), "the registration").toEqual([]);
+    expect(toolsNamedIn(`roots("codex");`, ids), "a literal beside it").toEqual(["codex"]);
+  });
+
   it("flags a planted dotfile literal outside the baseline the way a real one would be", () => {
     const ids = ["cursor"];
-    const file = "src/contexts/framework/application/some-new-helper.ts";
+    const file = "src/contexts/framework/application/some-new-module.ts";
     const content = 'const hooksPath = join(projectRoot, ".cursor", "hooks.json");';
 
     expect(isAllowed(file, ids), "the planted file is not inside cursor's own profile").toBe(false);
@@ -236,32 +267,21 @@ describe("the guard itself", () => {
   });
 });
 
-describe("a tool never names an identifier in application or format code", () => {
+describe("a tool never names an identifier outside its profile, in the code every tool shares", () => {
   const scoped = () => sourceFiles().filter((file) => ISOLATED_FROM_TOOLS.test(file));
 
-  it("no application or format file declares or imports an identifier carrying a tool name", () => {
+  it("no shared file declares or imports an identifier carrying a tool name", () => {
     const ids = toolIds(sourceFiles());
     const violations = scoped().filter((file) => toolIdentifiersIn(read(file), ids).length > 0);
 
-    const { added, fixed } = expectRatchet(
-      violations,
-      IDENTIFIER_BASELINE.map((entry) => entry.path)
-    );
     expect(
-      added,
-      "tool-named identifier outside its profile — read it from the capability"
+      violations,
+      "tool-named identifier outside its profile - read it from the capability"
     ).toEqual([]);
-    expect(fixed, "fixed — remove these from IDENTIFIER_BASELINE").toEqual([]);
   });
 
-  it("holds each listed file to the identifiers it was measured with", () => {
-    const ids = toolIds(sourceFiles());
-    const recorded = IDENTIFIER_BASELINE.map(({ path, named }) => `${path}: ${named}`);
-    const actual = IDENTIFIER_BASELINE.map(
-      ({ path }) => `${path}: ${toolIdentifiersIn(read(path), ids).length}`
-    );
-
-    expect(actual, "a listed file took on another tool-named identifier").toEqual(recorded);
+  it("scopes the scenarios of src/orchestration", () => {
+    expect(ISOLATED_FROM_TOOLS.test("src/orchestration/setup/setup.ts")).toBe(true);
   });
 
   it("sees a tool as one word of a camelCase, PascalCase or upper-case identifier", () => {
@@ -277,5 +297,72 @@ describe("a tool never names an identifier in application or format code", () =>
       toolIdentifiersIn('// mergeCursorX\nthrow new Error("Cursor is missing");', ids),
       "a comment and a message"
     ).toEqual([]);
+  });
+});
+
+const PROFILE = `${PROFILES}claude.ts`;
+
+/** A planted profile source, then ` → ` and the facts it declares, which none must be. */
+const PLANTED = [
+  "const p = new HooksConfigPart({ a: X }); → HooksConfigPart",
+  "const c = {\n  hooks: { supported: true },\n  hooksBridge: true,\n}; → hooks hooksBridge",
+  'const HOOK_TIMEOUT = 30;\nconst EVENT_ON = false;\nconst HOOK_FIELDS = ["a"]; → HOOK_TIMEOUT EVENT_ON HOOK_FIELDS',
+  'const HOOK_NAME =\n  "a" + "b"; → HOOK_NAME',
+  'const A_HOOKS = new Map([["a", "b"]]);\nexport const EVENTS = new Set(["Stop"]); → A_HOOKS EVENTS',
+  'const HOOK_F = Object.freeze(["c"]); → HOOK_F',
+  'const DEST = ".codex/hooks.json";\nconst DIR = `.cursor/hooks/`; → DEST DIR',
+  'const NEXT =\n  ".codex/hooks.json"; → NEXT',
+  'const i = { hooks: flatHooksArtifact({ scriptsDir: ".c/hooks/", sharedFile: ".c/s.json" }) }; → scriptsDir sharedFile',
+  'const b = { project: { sharedFile: ".cursor/hooks.json" } }; → project sharedFile',
+  'const d = { rootToken: "ROOT", eventMap: { Stop: ["stop"] } }; → rootToken eventMap',
+  'const s = {\n  hooksBridge: { ...C.hooksBridge },\n  x: f({ ...C.flat, scriptsDir: ".x/" }),\n}; → hooksBridge scriptsDir',
+  "const c = {\n  hooksBridge: C.hooksBridge,\n  hooks: build(),\n  flat: f(C.flat, {}),\n  hooksMerge,\n  x: { ...C.flat },\n}; →",
+  'function f(): void {\n  const localHooks = { a: "hooks/" };\n} →',
+  'const a = { scopeArgs: { project: ["--scope", "local"] }, features: { hooks: true } }; →',
+  'const U = ".codex/config.toml"; →',
+  "const s = {\n  config: [new ConfigSection({ a: X })],\n}; →",
+  "const s = {\n  hooks: { config: part(D), delivery: d.delivery },\n}; →",
+  "const c = {\n  config: { outputPath: X },\n}; → config",
+  'const p = {\n  acceptsHooks: false,\n  hooksUnsupportedReason: "runs no plugin hooks",\n}; →',
+  "const c = {\n  hooks: { supported: true },\n  acceptsHooks: true,\n}; → hooks acceptsHooks",
+  "const c = {\n  hooks: { delivery: { kind: X } },\n}; → hooks",
+  'const c = {\n  hooks: { delivery: { kind: "none", reason: WHY } },\n}; →',
+  'const c = {\n  hooks: { delivery: { kind: "install", reason: WHY } },\n}; → hooks',
+  'const c = {\n  hooks: { delivery: { kind: "none", reason: WHY, pluginFile: "a.json" } },\n}; → hooks pluginFile',
+  "const c = {\n  skills: { supported: true },\n  hooks: { supported: false },\n}; →",
+  'type Shape = {\n  hooks: Array<string>;\n};\n// hooks: { not: code },\nconst BRIDGE = `\nconst HOOKS_DIR = "../hooks/";\n  hooks: [1],\n`; →',
+];
+
+describe("a tool's hooks facts live in its descriptor", () => {
+  it("no profile file declares a hooks fact outside its declareHooks call", () => {
+    const bodies = new Map(sourceFiles().map((file) => [file, read(file)]));
+    const keys = descriptorKeys(read(DESCRIPTOR_TYPES));
+
+    expect(
+      factsOutsideDescriptor(bodies),
+      "a hooks fact declared outside the profile's declareHooks call - declare it in the descriptor and read it from there"
+    ).toEqual([]);
+    expect(sourceFiles().filter((file) => PROFILE_FILE.test(file)).length).toBeGreaterThan(20);
+    expect(
+      ["scriptsDir", "pluginFile", "eventMap", "flat", "project"].map((key) => keys.get(key)),
+      "DESCRIPTOR_TYPES is stale"
+    ).toEqual([false, false, false, true, true]);
+  });
+
+  it("names the file, and reads no fact inside the profile's own declareHooks call", () => {
+    const fact = "new HooksConfigPart({})";
+    const inside = `const hooks = declareHooks(owner, {\n  rootToken: "R",\n  events: { Stop: "stop(" },\n  x: ${fact},\n});`;
+    const bodies = new Map([[PROFILE, `${inside}\nconst p = ${fact};`]]);
+
+    expect(factsOutsideDescriptor(bodies)).toEqual([`${PROFILE} (1)`]);
+    expect(factsOutsideDescriptor(new Map([[PROFILE, inside]]))).toEqual([]);
+  });
+
+  it.each(PLANTED)("reads %s", (row) => {
+    const [source = "", facts = ""] = row.split(" →");
+
+    expect(hooksFacts(source, descriptorKeys(read(DESCRIPTOR_TYPES)))).toEqual(
+      facts.split(" ").filter(Boolean)
+    );
   });
 });

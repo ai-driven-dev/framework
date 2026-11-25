@@ -4,6 +4,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+const { readOrNull } = require("../read-or-null.cjs");
 
 const SUMMARIZE = path.resolve(__dirname, "..", "..", "summarize-markdown.js");
 
@@ -34,7 +35,7 @@ module.exports = {
     for (const entry of fs.readdirSync(plugins, { withFileTypes: true }).filter((e) => e.isDirectory()).sort((a, b) => a.name.localeCompare(b.name))) {
       const file = path.join(plugins, entry.name, "CATALOG.md");
       const text = render(path.join(plugins, entry.name), entry.name);
-      if (fs.existsSync(file) && fs.readFileSync(file, "utf8") === text) continue;
+      if (readOrNull(file, "utf8") === text) continue;
       if (write) fs.writeFileSync(file, text);
       stale.push(`plugins/${entry.name}/CATALOG.md`);
     }

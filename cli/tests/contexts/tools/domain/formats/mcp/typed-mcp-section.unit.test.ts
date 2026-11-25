@@ -1,0 +1,69 @@
+import { describe, expect, it } from "vitest";
+import {
+  collectTypedMcp,
+  toTypedMcpSection,
+} from "../../../../../../src/contexts/tools/domain/formats/mcp/typed-mcp-section.js";
+import { saying } from "../../../../../shared/testing/saying.builder.js";
+
+describe("turning an mcp server into a typed one", () => {
+  it("turns a command server into a local one, its arguments folded into the command line", () => {
+    const converted = toTypedMcpSection(
+      JSON.stringify({
+        mcpServers: { context: { command: "npx", args: ["-y", "server"], env: { KEY: "v" } } },
+      })
+    );
+
+    expect(JSON.parse(converted)).toStrictEqual({
+      mcp: {
+        context: {
+          type: "local",
+          command: ["npx", "-y", "server"],
+          enabled: true,
+          environment: { KEY: "v" },
+        },
+      },
+    });
+  });
+
+  it("turns a url server into a remote one, and a disabled server into a disabled one", () => {
+    const converted = toTypedMcpSection(
+      JSON.stringify({ mcpServers: { hosted: { url: "https://example.test", disabled: true } } })
+    );
+
+    expect(JSON.parse(converted)).toStrictEqual({
+      mcp: { hosted: { type: "remote", url: "https://example.test", enabled: false } },
+    });
+  });
+
+  it("refuses a server that names neither a command nor a url", () => {
+    expect(() => toTypedMcpSection(JSON.stringify({ mcpServers: { broken: {} } }))).toThrow(
+      expect.objectContaining({ serverName: "broken" })
+    );
+  });
+
+  it("refuses a config that is not a JSON object", () => {
+    expect(() => toTypedMcpSection("[]")).toThrow(saying("MCP config must be a JSON object"));
+    expect(() => toTypedMcpSection("{ not json")).toThrow(saying(/Cannot parse MCP config/));
+  });
+
+  it("refuses a config that is null or a bare value", () => {
+    expect(() => toTypedMcpSection("null")).toThrow(saying("MCP config must be a JSON object"));
+    expect(() => toTypedMcpSection("42")).toThrow(saying("MCP config must be a JSON object"));
+  });
+});
+
+describe("collecting the typed servers of built plugins", () => {
+  it("gathers the typed servers of the built plugins that ship an mcp file, later plugins winning", () => {
+    const raw = (command: string) => JSON.stringify({ mcpServers: { shared: { command } } });
+    const mcp = new Map([
+      ["alpha", raw("first")],
+      ["gamma", raw("last")],
+    ]);
+
+    const collected = collectTypedMcp(["alpha", "beta", "gamma"], mcp);
+
+    expect(collected).toStrictEqual({
+      shared: { type: "local", command: ["last"], enabled: true },
+    });
+  });
+});

@@ -1,14 +1,12 @@
-import { shiftDay } from "../stored-usage.js";
+import type { Period, PeriodOutcome } from "../../contract/period.js";
 
-/** A span of whole UTC days, both ends included; `null` is open. */
-export interface Period {
-  readonly from: string | null;
-  readonly to: string | null;
+const DAY_MS = 86_400_000;
+
+/** The UTC day `days` after a `YYYY-MM-DD` day, as `toISOString` writes its first ten
+ * characters: a day past four-digit years comes out in a shape no `YYYY-MM-DD` test accepts. */
+export function shiftDay(day: string, days: number): string {
+  return new Date(Date.parse(`${day}T00:00:00.000Z`) + days * DAY_MS).toISOString().slice(0, 10);
 }
-
-export type PeriodOutcome =
-  | { readonly ok: true; readonly period: Period }
-  | { readonly ok: false; readonly message: string };
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -58,25 +56,25 @@ function isCalendarDay(text: string): boolean {
   );
 }
 
-/** The days a report covers, from what was asked: nothing is every day, `days` is the last
- * n UTC days ending today, and `from`/`to` are calendar days. */
-export function periodOf(
-  asked: { readonly from?: string; readonly to?: string; readonly days?: string },
-  now: Date
-): PeriodOutcome {
-  if (asked.days !== undefined) {
-    if (asked.from !== undefined || asked.to !== undefined) {
-      return { ok: false, message: "--days cannot be combined with --from or --to." };
-    }
-    const days = /^[1-9]\d*$/.test(asked.days) ? Number(asked.days) : 0;
-    if (days === 0) return { ok: false, message: "--days takes a positive whole number." };
-    const today = dayOf(now.toISOString());
-    const first = shift(today, 1 - days);
-    if (first === null) {
-      return { ok: false, message: "--days reaches before the year 0000: give fewer days." };
-    }
-    return { ok: true, period: { from: first, to: today } };
+type AskedPeriod = { readonly from?: string; readonly to?: string; readonly days?: string };
+
+/** The last n UTC days ending today. */
+function lastDays(asked: AskedPeriod & { readonly days: string }, now: Date): PeriodOutcome {
+  if (asked.from !== undefined || asked.to !== undefined) {
+    return { ok: false, message: "--days cannot be combined with --from or --to." };
   }
+  const days = /^[1-9]\d*$/.test(asked.days) ? Number(asked.days) : 0;
+  if (days === 0) return { ok: false, message: "--days takes a positive whole number." };
+  const today = dayOf(now.toISOString());
+  const first = shift(today, 1 - days);
+  if (first === null) {
+    return { ok: false, message: "--days reaches before the year 0000: give fewer days." };
+  }
+  return { ok: true, period: { from: first, to: today } };
+}
+
+/** The calendar days `from` and `to`, each optional, in order. */
+function calendarRange(asked: AskedPeriod): PeriodOutcome {
   for (const [flag, value] of [
     ["--from", asked.from],
     ["--to", asked.to],
@@ -90,4 +88,12 @@ export function periodOf(
     return { ok: false, message: "--from is after --to." };
   }
   return { ok: true, period: { from, to } };
+}
+
+/** The days a report covers, from what was asked: nothing is every day, `days` is the last
+ * n UTC days ending today, and `from`/`to` are calendar days. */
+export function periodOf(asked: AskedPeriod, now: Date): PeriodOutcome {
+  return asked.days === undefined
+    ? calendarRange(asked)
+    : lastDays({ ...asked, days: asked.days }, now);
 }

@@ -1,8 +1,11 @@
 export interface MutationScope {
   readonly mutate: string | readonly string[];
-  readonly break: number;
+  /** The floor the score must hold; a scope without one never fails on its score. */
+  readonly break?: number;
   /** CI legs the scope is split into; one when absent. */
   readonly shards?: number;
+  /** Test paths whose change runs the scope per change, like its source. */
+  readonly tests?: readonly string[];
 }
 
 export interface MutationReport {
@@ -34,7 +37,6 @@ export function strykerArgs(
 ): string[];
 export function scoreOf(report: MutationReport): number;
 export function breakVerdict(score: number, declared: MutationScope): string | null;
-export function canarySelectionVerdict(report: MutationReport): string | null;
 export function changedRanges(diff: string): string[];
 export function changedArgs(ranges: readonly string[]): string[];
 export function survivorsOf(report: MutationReport): string[];

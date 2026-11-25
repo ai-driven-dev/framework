@@ -1,0 +1,138 @@
+{
+  "host": "copilot",
+  "version": "1.0.114",
+  "steps": [
+    {
+      "id": "add-first-source",
+      "args": [
+        "plugin",
+        "marketplace",
+        "add",
+        "<markets>/a"
+      ],
+      "status": 0,
+      "stdout": "Marketplace \"mk-one\" added successfully.\n",
+      "stderr": "",
+      "files": {
+        ".copilot/settings.json": "{\n  \"extraKnownMarketplaces\": {\n    \"mk-one\": {\n      \"source\": {\n        \"source\": \"directory\",\n        \"path\": \"<markets>/a\"\n      }\n    }\n  }\n}\n"
+      }
+    },
+    {
+      "id": "add-second-source",
+      "args": [
+        "plugin",
+        "marketplace",
+        "add",
+        "<markets>/b"
+      ],
+      "status": 1,
+      "stdout": "",
+      "stderr": "Failed to add marketplace: Marketplace \"mk-one\" already registered\n",
+      "files": {
+        ".copilot/settings.json": "{\n  \"extraKnownMarketplaces\": {\n    \"mk-one\": {\n      \"source\": {\n        \"source\": \"directory\",\n        \"path\": \"<markets>/a\"\n      }\n    }\n  }\n}\n"
+      }
+    },
+    {
+      "id": "marketplace-list",
+      "args": [
+        "plugin",
+        "marketplace",
+        "list",
+        "--json"
+      ],
+      "status": 0,
+      "stdout": "[\n  {\n    \"name\": \"mk-one\",\n    \"source\": \"Local: <markets>/a\",\n    \"isDefault\": false\n  },\n  {\n    \"name\": \"awesome-copilot\",\n    \"source\": \"GitHub: github/awesome-copilot\",\n    \"isDefault\": true\n  }\n]\n",
+      "stderr": "",
+      "files": {
+        ".copilot/settings.json": "{\n  \"extraKnownMarketplaces\": {\n    \"mk-one\": {\n      \"source\": {\n        \"source\": \"directory\",\n        \"path\": \"<markets>/a\"\n      }\n    }\n  }\n}\n"
+      }
+    },
+    {
+      "id": "install",
+      "args": [
+        "plugin",
+        "install",
+        "p@mk-one"
+      ],
+      "status": 0,
+      "stdout": "Plugin \"p\" installed successfully. Installed 1 skill.\nEnabled \"p@mk-one\". It is loaded live from <markets>/a/plugins/p, so edits take effect on the next session — nothing was copied.\n",
+      "stderr": "",
+      "files": {
+        ".copilot/settings.json": "{\n  \"extraKnownMarketplaces\": {\n    \"mk-one\": {\n      \"source\": {\n        \"source\": \"directory\",\n        \"path\": \"<markets>/a\"\n      }\n    }\n  },\n  \"enabledPlugins\": {\n    \"p@mk-one\": true\n  }\n}\n"
+      }
+    },
+    {
+      "id": "update-plugin",
+      "args": [
+        "plugin",
+        "update",
+        "p@mk-one"
+      ],
+      "status": 0,
+      "stdout": "Plugin \"p@mk-one\" is always loaded live from <markets>/a; there is nothing to update.\n",
+      "stderr": "",
+      "files": {
+        ".copilot/settings.json": "{\n  \"extraKnownMarketplaces\": {\n    \"mk-one\": {\n      \"source\": {\n        \"source\": \"directory\",\n        \"path\": \"<markets>/a\"\n      }\n    }\n  },\n  \"enabledPlugins\": {\n    \"p@mk-one\": true\n  }\n}\n"
+      }
+    },
+    {
+      "id": "update-marketplace-present",
+      "args": [
+        "plugin",
+        "marketplace",
+        "update",
+        "mk-one"
+      ],
+      "status": 0,
+      "stdout": "Updating marketplace \"mk-one\"...\nMarketplace \"mk-one\" updated successfully.\n",
+      "stderr": "",
+      "files": {
+        ".copilot/settings.json": "{\n  \"extraKnownMarketplaces\": {\n    \"mk-one\": {\n      \"source\": {\n        \"source\": \"directory\",\n        \"path\": \"<markets>/a\"\n      }\n    }\n  },\n  \"enabledPlugins\": {\n    \"p@mk-one\": true\n  }\n}\n"
+      }
+    },
+    {
+      "id": "update-marketplace-vanished",
+      "args": [
+        "plugin",
+        "marketplace",
+        "update",
+        "mk-one"
+      ],
+      "status": 1,
+      "stdout": "Updating marketplace \"mk-one\"...\n",
+      "stderr": "Failed to update marketplace \"mk-one\": Local marketplace path does not exist: <markets>/a\n",
+      "files": {
+        ".copilot/settings.json": "{\n  \"extraKnownMarketplaces\": {\n    \"mk-one\": {\n      \"source\": {\n        \"source\": \"directory\",\n        \"path\": \"<markets>/a\"\n      }\n    }\n  },\n  \"enabledPlugins\": {\n    \"p@mk-one\": true\n  }\n}\n"
+      }
+    },
+    {
+      "id": "uninstall",
+      "args": [
+        "plugin",
+        "uninstall",
+        "p@mk-one"
+      ],
+      "status": 0,
+      "stdout": "Plugin \"p@mk-one\" disabled. It is still on disk at <markets>/a — nothing was removed.\n",
+      "stderr": "",
+      "files": {
+        ".copilot/settings.json": "{\n  \"extraKnownMarketplaces\": {\n    \"mk-one\": {\n      \"source\": {\n        \"source\": \"directory\",\n        \"path\": \"<markets>/a\"\n      }\n    }\n  },\n  \"enabledPlugins\": {\n    \"p@mk-one\": false\n  }\n}\n"
+      }
+    },
+    {
+      "id": "remove-marketplace",
+      "args": [
+        "plugin",
+        "marketplace",
+        "remove",
+        "mk-one"
+      ],
+      "status": 0,
+      "stdout": "Marketplace \"mk-one\" removed successfully.\n",
+      "stderr": "",
+      "files": {
+        ".copilot/settings.json": "{\n  \"extraKnownMarketplaces\": {},\n  \"enabledPlugins\": {\n    \"p@mk-one\": false\n  }\n}\n"
+      }
+    }
+  ]
+}

@@ -67,6 +67,13 @@ Release rules: [Release](../RELEASE.md#rules).
 | A rule | `/aidd-context:05-rule-generate` |
 | A command | `/aidd-context:07-command-generate` |
 | A hook | [Hooks](ARCHITECTURE.md#hooks) |
+| A kind of artifact the content checks validate | the steps below |
+
+To validate a new kind of artifact:
+
+1. Copy `plugins/aidd-pm/skills/02-user-stories/scripts/` (`contract.json`, `validate-story.cjs`) beside the skill that writes it.
+2. Add `scope` for the turn-end check, with `"shell": false` when an install writes the kind: a shell turn then judges only the files a command names.
+3. Run `node scripts/check/engine/sync.cjs`.
 
 ## Create a plugin
 
@@ -85,6 +92,25 @@ Release rules: [Release](../RELEASE.md#rules).
 | Back-merge fails | It opens an issue. Resync with a `main` to `next` pull request. |
 | `next` is missing | `git push origin main:next` |
 | Change the protection | Edit `.github/rulesets/main.json`, then an admin runs `gh api -X PUT repos/ai-driven-dev/framework/rulesets/<id> --input .github/rulesets/main.json` |
+
+## Writing docs
+
+Applies to authored Markdown: READMEs, `docs/`, `ARCHITECTURE.md`, `CONTRIBUTING.md`. Memory has its own rules: [memory rules](../plugins/aidd-context/skills/02-project-memory/references/memory-rules.md).
+
+| Page | Holds |
+| --- | --- |
+| A README | purpose, usage, limits; it links to the detail |
+| An architecture page | components, boundaries, flows, invariants |
+
+- Tables, lists, diagrams and code; no prose paragraphs.
+- One sentence per bullet or cell, 25 words at most.
+- A table for roles, a diagram for relationships.
+- Each fact lives in one file; others link to it.
+- Keep contracts, decisions, reasons, limits, procedures, anchors, generator markers, required versions and constants.
+- Drop filler, history, plans, snapshots, measured timings, and any count no generator keeps.
+- Never invent a performance requirement.
+- Give each action its verification command.
+- Before you finish, reread the scope, the facts kept, every command and every link.
 
 ## Do not edit by hand
 

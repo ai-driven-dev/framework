@@ -1,0 +1,740 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`the data each registered profile declares > antigravity 1`] = `
+{
+  "builds": [
+    "flat",
+  ],
+  "configFiles": {},
+  "directory": ".agents/",
+  "displayName": "Antigravity CLI",
+  "distribution": {
+    "manifest": [],
+    "marketplace": [],
+  },
+  "frontmatter": {
+    "agents": null,
+    "commands": null,
+    "rules": null,
+  },
+  "hooksRootToken": null,
+  "installs": {},
+  "kind": "ai",
+  "plugins": {
+    "acceptsHooks": true,
+    "deliversHooksToProject": true,
+    "flatLayout": {
+      "namespacePrefix": "aidd-",
+      "rules": "nested",
+      "skillLayout": "single-level",
+    },
+    "kind": "flat",
+  },
+  "projectHooks": ".agents/hooks.json",
+  "sections": [
+    "skills",
+    "hooks",
+    "layout",
+  ],
+  "signalDir": null,
+  "toolId": "antigravity",
+  "toolSuffix": ".antigravity.md",
+}
+`;
+
+exports[`the data each registered profile declares > claude 1`] = `
+{
+  "builds": [
+    "flat",
+    "marketplace",
+  ],
+  "configFiles": {
+    "settings.json": ".claude/settings.json",
+  },
+  "directory": ".claude/",
+  "displayName": "Claude Code",
+  "distribution": {
+    "manifest": [
+      ".claude-plugin/plugin.json",
+    ],
+    "marketplace": [
+      ".claude-plugin/marketplace.json",
+    ],
+  },
+  "frontmatter": {
+    "agents": {
+      "description": "Review code",
+      "effort": "high",
+      "model": "sonnet",
+      "name": "reviewer",
+    },
+    "commands": {
+      "argument-hint": "<name>",
+      "description": "Greet someone",
+      "name": "aidd:01:greet",
+    },
+    "rules": {
+      "a description alone": {},
+      "a description that opts out of always-apply": {
+        "description": "d",
+      },
+      "a paths list": {
+        "paths": [
+          "a",
+          "b",
+        ],
+      },
+      "an always-apply rule": {},
+      "an empty paths list": {},
+      "an opt-out with no description": {},
+      "globs that apply on request": {
+        "paths": [
+          "a",
+        ],
+      },
+      "paths beside a description": {
+        "paths": [
+          "a",
+        ],
+      },
+    },
+  },
+  "hooksRootToken": "\${CLAUDE_PLUGIN_ROOT}",
+  "installs": {
+    "agents": {
+      ".gitkeep": ".claude/agents/.gitkeep",
+      "helper.txt": ".claude/agents/helper.txt",
+      "reviewer.claude.md": ".claude/agents/reviewer.md",
+      "reviewer.md": ".claude/agents/reviewer.md",
+      "team/sub/reviewer.md": ".claude/agents/reviewer.md",
+    },
+    "commands": {
+      "00_behavior/auto_accept.md": ".claude/commands/aidd/00/auto_accept.md",
+      "01-plan/greet.md": ".claude/commands/aidd/01/greet.md",
+      "01_plan/02_steps/review.md": ".claude/commands/aidd/01/02_steps/review.md",
+      "04_code/implement.md": ".claude/commands/aidd/04/implement.md",
+      "commit": ".claude/commands/commit",
+      "commit.md": ".claude/commands/commit.md",
+      "review.prompt.md": ".claude/commands/review.prompt.md",
+      "v2-tools/x.md": ".claude/commands/v2-tools/x.md",
+    },
+    "rules": {
+      "00-architecture/.gitkeep": ".claude/rules/00-architecture/.gitkeep",
+      "01-standards/1-mermaid.md": ".claude/rules/01-standards/1-mermaid.md",
+      "01-standards/10-mermaid.md": ".claude/rules/01-standards/10-mermaid.md",
+      "01-standards/naming-2-rules.md": ".claude/rules/01-standards/naming-2-rules.md",
+      "01-standards/naming.md": ".claude/rules/01-standards/naming.md",
+      "04-tooling/ide-mapping.claude.md": ".claude/rules/04-tooling/ide-mapping.md",
+      "standards.claude.md": ".claude/rules/standards.md",
+    },
+  },
+  "kind": "ai",
+  "plugins": {
+    "acceptsHooks": true,
+    "deliversHooksToProject": false,
+    "kind": "native",
+    "rootToken": "\${CLAUDE_PLUGIN_ROOT}",
+  },
+  "projectHooks": null,
+  "sections": [
+    "agents",
+    "skills",
+    "commands",
+    "rules",
+    "mcp",
+    "hooks",
+    "layout",
+    "manifest",
+    "models",
+  ],
+  "signalDir": ".claude/commands",
+  "toolId": "claude",
+  "toolSuffix": ".claude.md",
+}
+`;
+
+exports[`the data each registered profile declares > codex 1`] = `
+{
+  "builds": [
+    "flat",
+    "marketplace",
+  ],
+  "configFiles": {
+    "config.toml": ".codex/config.toml",
+  },
+  "directory": ".codex/",
+  "displayName": "Codex",
+  "distribution": {
+    "manifest": [
+      ".codex-plugin/plugin.json",
+    ],
+    "marketplace": [
+      ".agents/plugins/marketplace.json",
+    ],
+  },
+  "frontmatter": {
+    "agents": {
+      "description": "Review code",
+      "model": "sonnet",
+      "model_reasoning_effort": "high",
+      "name": "reviewer",
+    },
+    "commands": null,
+    "rules": null,
+  },
+  "hooksRootToken": "\${PLUGIN_ROOT}",
+  "installs": {
+    "agents": {
+      ".gitkeep": ".codex/agents/.gitkeep.toml",
+      "helper.txt": ".codex/agents/helper.txt.toml",
+      "reviewer.codex.md": ".codex/agents/reviewer.toml",
+      "reviewer.md": ".codex/agents/reviewer.toml",
+      "team/sub/reviewer.md": ".codex/agents/reviewer.toml",
+    },
+  },
+  "kind": "ai",
+  "plugins": {
+    "acceptsHooks": true,
+    "deliversHooksToProject": false,
+    "kind": "native",
+    "rootToken": "\${PLUGIN_ROOT}",
+  },
+  "projectHooks": null,
+  "sections": [
+    "agents",
+    "skills",
+    "mcp",
+    "hooks",
+    "layout",
+    "manifest",
+    "models",
+  ],
+  "signalDir": null,
+  "toolId": "codex",
+  "toolSuffix": ".codex.md",
+}
+`;
+
+exports[`the data each registered profile declares > copilot 1`] = `
+{
+  "builds": [
+    "flat",
+    "marketplace",
+  ],
+  "configFiles": {},
+  "directory": ".github/",
+  "displayName": "GitHub Copilot",
+  "distribution": {
+    "manifest": [
+      ".plugin/plugin.json",
+      ".github/plugin/plugin.json",
+      "plugin.json",
+    ],
+    "marketplace": [
+      ".plugin/marketplace.json",
+    ],
+  },
+  "frontmatter": {
+    "agents": {
+      "description": "Review code",
+      "include-custom-instructions": true,
+      "model": "sonnet",
+      "name": "reviewer",
+      "reasoningEffort": "high",
+    },
+    "commands": {
+      "argument-hint": "<name>",
+      "description": "Greet someone",
+      "name": "aidd:01:greet",
+    },
+    "rules": {
+      "a description alone": {},
+      "a description that opts out of always-apply": {
+        "description": "d",
+      },
+      "a paths list": {
+        "applyTo": "a,b",
+      },
+      "an always-apply rule": {},
+      "an empty paths list": {},
+      "an opt-out with no description": {},
+      "globs that apply on request": {
+        "applyTo": "a",
+      },
+      "paths beside a description": {
+        "applyTo": "a",
+      },
+    },
+  },
+  "hooksRootToken": "\${PLUGIN_ROOT}",
+  "installs": {
+    "agents": {
+      ".gitkeep": null,
+      "helper.txt": ".github/agents/helper.txt",
+      "reviewer.copilot.md": ".github/agents/reviewer.copilot.agent.md",
+      "reviewer.md": ".github/agents/reviewer.agent.md",
+      "team/sub/reviewer.md": ".github/agents/reviewer.agent.md",
+    },
+    "commands": {
+      "00_behavior/auto_accept.md": ".github/prompts/00-auto-accept.prompt.md",
+      "01-plan/greet.md": ".github/prompts/01-greet.prompt.md",
+      "01_plan/02_steps/review.md": ".github/prompts/01-02-review.prompt.md",
+      "04_code/implement.md": ".github/prompts/04-implement.prompt.md",
+      "commit": ".github/prompts/commit.prompt.md",
+      "commit.md": ".github/prompts/commit.prompt.md",
+      "review.prompt.md": ".github/prompts/review.prompt.md",
+      "v2-tools/x.md": ".github/prompts/v2-tools-x.prompt.md",
+    },
+    "rules": {
+      "00-architecture/.gitkeep": null,
+      "01-standards/1-mermaid.md": ".github/instructions/01-mermaid.instructions.md",
+      "01-standards/10-mermaid.md": ".github/instructions/01-mermaid.instructions.md",
+      "01-standards/naming-2-rules.md": ".github/instructions/01-naming-2-rules.instructions.md",
+      "01-standards/naming.md": ".github/instructions/01-naming.instructions.md",
+      "04-tooling/ide-mapping.copilot.md": ".github/instructions/04-ide-mapping.instructions.md",
+      "standards.copilot.md": ".github/instructions/standards.instructions.md",
+    },
+  },
+  "kind": "ai",
+  "plugins": {
+    "acceptsHooks": true,
+    "deliversHooksToProject": false,
+    "kind": "native",
+    "rootToken": "\${PLUGIN_ROOT}",
+  },
+  "projectHooks": null,
+  "sections": [
+    "agents",
+    "skills",
+    "commands",
+    "rules",
+    "mcp",
+    "hooks",
+    "layout",
+    "manifest",
+    "config",
+    "models",
+  ],
+  "signalDir": ".github/prompts",
+  "toolId": "copilot",
+  "toolSuffix": ".copilot.md",
+}
+`;
+
+exports[`the data each registered profile declares > cursor 1`] = `
+{
+  "builds": [
+    "flat",
+    "marketplace",
+  ],
+  "configFiles": {
+    "settings.json": ".cursor/settings.json",
+  },
+  "directory": ".cursor/",
+  "displayName": "Cursor",
+  "distribution": {
+    "manifest": [
+      ".cursor-plugin/plugin.json",
+    ],
+    "marketplace": [
+      ".cursor-plugin/marketplace.json",
+    ],
+  },
+  "frontmatter": {
+    "agents": {
+      "description": "Review code",
+      "model": "sonnet[effort=high]",
+      "name": "reviewer",
+    },
+    "commands": {
+      "argument-hint": "<name>",
+      "description": "Greet someone",
+      "name": "aidd:01:greet",
+    },
+    "rules": {
+      "a description alone": {},
+      "a description that opts out of always-apply": {
+        "alwaysApply": false,
+        "description": "d",
+      },
+      "a paths list": {
+        "alwaysApply": false,
+        "globs": "["a", "b"]",
+      },
+      "an always-apply rule": {},
+      "an empty paths list": {},
+      "an opt-out with no description": {},
+      "globs that apply on request": {
+        "alwaysApply": false,
+        "description": "d",
+        "globs": "["a"]",
+      },
+      "paths beside a description": {
+        "alwaysApply": false,
+        "description": "d",
+        "globs": "["a"]",
+      },
+    },
+  },
+  "hooksRootToken": "\${CURSOR_PLUGIN_ROOT}",
+  "installs": {
+    "agents": {
+      ".gitkeep": ".cursor/agents/.gitkeep",
+      "helper.txt": ".cursor/agents/helper.txt",
+      "reviewer.cursor.md": ".cursor/agents/reviewer.md",
+      "reviewer.md": ".cursor/agents/reviewer.md",
+      "team/sub/reviewer.md": ".cursor/agents/reviewer.md",
+    },
+    "commands": {
+      "00_behavior/auto_accept.md": ".cursor/commands/aidd/00/auto_accept.md",
+      "01-plan/greet.md": ".cursor/commands/aidd/01/greet.md",
+      "01_plan/02_steps/review.md": ".cursor/commands/aidd/01/02_steps/review.md",
+      "04_code/implement.md": ".cursor/commands/aidd/04/implement.md",
+      "commit": ".cursor/commands/aidd/commit",
+      "commit.md": ".cursor/commands/aidd/commit.md",
+      "review.prompt.md": ".cursor/commands/aidd/review.prompt.md",
+      "v2-tools/x.md": ".cursor/commands/aidd/x.md",
+    },
+    "rules": {
+      "00-architecture/.gitkeep": ".cursor/rules/00-architecture/.gitkeep",
+      "01-standards/1-mermaid.md": ".cursor/rules/01-standards/1-mermaid.mdc",
+      "01-standards/10-mermaid.md": ".cursor/rules/01-standards/10-mermaid.mdc",
+      "01-standards/naming-2-rules.md": ".cursor/rules/01-standards/naming-2-rules.mdc",
+      "01-standards/naming.md": ".cursor/rules/01-standards/naming.mdc",
+      "04-tooling/ide-mapping.cursor.md": ".cursor/rules/04-tooling/ide-mapping.mdc",
+      "standards.cursor.md": ".cursor/rules/standards.mdc",
+    },
+  },
+  "kind": "ai",
+  "plugins": {
+    "acceptsHooks": true,
+    "deliversHooksToProject": true,
+    "kind": "native",
+    "rootToken": "\${CURSOR_PLUGIN_ROOT}",
+  },
+  "projectHooks": ".cursor/hooks.json",
+  "sections": [
+    "agents",
+    "skills",
+    "commands",
+    "rules",
+    "mcp",
+    "hooks",
+    "layout",
+    "manifest",
+    "models",
+  ],
+  "signalDir": ".cursor/commands",
+  "toolId": "cursor",
+  "toolSuffix": ".cursor.md",
+}
+`;
+
+exports[`the data each registered profile declares > kilo 1`] = `
+{
+  "builds": [
+    "flat",
+  ],
+  "configFiles": {
+    "kilo.json": ".kilo/kilo.jsonc",
+  },
+  "directory": ".kilo/",
+  "displayName": "Kilo Code",
+  "distribution": {
+    "manifest": [],
+    "marketplace": [
+      "kilo.json",
+    ],
+  },
+  "frontmatter": {
+    "agents": {
+      "description": "Review code",
+      "mode": "subagent",
+      "model": "sonnet",
+      "variant": "high",
+    },
+    "commands": {
+      "description": "Greet someone",
+      "name": "aidd:01:greet",
+    },
+    "rules": {
+      "a description alone": {},
+      "a description that opts out of always-apply": {
+        "description": "d",
+      },
+      "a paths list": {},
+      "an always-apply rule": {},
+      "an empty paths list": {},
+      "an opt-out with no description": {},
+      "globs that apply on request": {
+        "description": "d",
+      },
+      "paths beside a description": {
+        "description": "d",
+      },
+    },
+  },
+  "hooksRootToken": null,
+  "installs": {
+    "agents": {
+      ".gitkeep": ".kilo/agents/.gitkeep",
+      "helper.txt": ".kilo/agents/helper.txt",
+      "reviewer.kilo.md": ".kilo/agents/reviewer.md",
+      "reviewer.md": ".kilo/agents/reviewer.md",
+      "team/sub/reviewer.md": ".kilo/agents/reviewer.md",
+    },
+    "commands": {
+      "00_behavior/auto_accept.md": ".kilo/commands/aidd/00/auto_accept.md",
+      "01-plan/greet.md": ".kilo/commands/aidd/01/greet.md",
+      "01_plan/02_steps/review.md": ".kilo/commands/aidd/01/02_steps/review.md",
+      "04_code/implement.md": ".kilo/commands/aidd/04/implement.md",
+      "commit": ".kilo/commands/aidd/commit",
+      "commit.md": ".kilo/commands/aidd/commit.md",
+      "review.prompt.md": ".kilo/commands/aidd/review.prompt.md",
+      "v2-tools/x.md": ".kilo/commands/aidd/x.md",
+    },
+    "rules": {
+      "00-architecture/.gitkeep": ".kilo/rules/00-architecture/.gitkeep",
+      "01-standards/1-mermaid.md": ".kilo/rules/01-standards/1-mermaid.md",
+      "01-standards/10-mermaid.md": ".kilo/rules/01-standards/10-mermaid.md",
+      "01-standards/naming-2-rules.md": ".kilo/rules/01-standards/naming-2-rules.md",
+      "01-standards/naming.md": ".kilo/rules/01-standards/naming.md",
+      "04-tooling/ide-mapping.kilo.md": ".kilo/rules/04-tooling/ide-mapping.md",
+      "standards.kilo.md": ".kilo/rules/standards.md",
+    },
+  },
+  "kind": "ai",
+  "plugins": {
+    "acceptsHooks": true,
+    "deliversHooksToProject": false,
+    "flatLayout": {
+      "namespacePrefix": "aidd-",
+      "rules": "top-level-no-frontmatter",
+      "skillLayout": "nested",
+    },
+    "kind": "flat",
+  },
+  "projectHooks": null,
+  "sections": [
+    "agents",
+    "skills",
+    "commands",
+    "rules",
+    "mcp",
+    "hooks",
+    "layout",
+    "models",
+  ],
+  "signalDir": ".kilo/commands",
+  "toolId": "kilo",
+  "toolSuffix": ".kilo.md",
+}
+`;
+
+exports[`the data each registered profile declares > kimi 1`] = `
+{
+  "builds": [
+    "flat",
+  ],
+  "configFiles": {},
+  "directory": ".kimi-code/",
+  "displayName": "Kimi Code CLI",
+  "distribution": {
+    "manifest": [],
+    "marketplace": [],
+  },
+  "frontmatter": {
+    "agents": null,
+    "commands": null,
+    "rules": null,
+  },
+  "hooksRootToken": null,
+  "installs": {},
+  "kind": "ai",
+  "plugins": {
+    "acceptsHooks": false,
+    "deliversHooksToProject": false,
+    "flatLayout": {
+      "namespacePrefix": "aidd-",
+      "rules": "nested",
+      "skillLayout": "single-level",
+    },
+    "kind": "flat",
+  },
+  "projectHooks": null,
+  "sections": [
+    "skills",
+    "hooks",
+    "layout",
+  ],
+  "signalDir": null,
+  "toolId": "kimi",
+  "toolSuffix": ".kimi.md",
+}
+`;
+
+exports[`the data each registered profile declares > kiro 1`] = `
+{
+  "builds": [
+    "flat",
+  ],
+  "configFiles": {},
+  "directory": ".kiro/",
+  "displayName": "Kiro",
+  "distribution": {
+    "manifest": [],
+    "marketplace": [],
+  },
+  "frontmatter": {
+    "agents": {
+      "description": "Review code",
+      "name": "reviewer",
+      "tools": [
+        "*",
+      ],
+    },
+    "commands": null,
+    "rules": null,
+  },
+  "hooksRootToken": null,
+  "installs": {
+    "agents": {
+      ".gitkeep": ".kiro/agents/.gitkeep",
+      "helper.txt": ".kiro/agents/helper.txt",
+      "reviewer.kiro.md": ".kiro/agents/reviewer.md",
+      "reviewer.md": ".kiro/agents/reviewer.md",
+      "team/sub/reviewer.md": ".kiro/agents/reviewer.md",
+    },
+  },
+  "kind": "ai",
+  "plugins": {
+    "acceptsHooks": true,
+    "deliversHooksToProject": true,
+    "flatLayout": {
+      "namespacePrefix": "aidd-",
+      "rules": "nested",
+      "skillLayout": "single-level",
+    },
+    "kind": "flat",
+  },
+  "projectHooks": ".kiro/hooks/aidd.json",
+  "sections": [
+    "agents",
+    "skills",
+    "hooks",
+    "layout",
+  ],
+  "signalDir": null,
+  "toolId": "kiro",
+  "toolSuffix": ".kiro.md",
+}
+`;
+
+exports[`the data each registered profile declares > opencode 1`] = `
+{
+  "builds": [
+    "flat",
+  ],
+  "configFiles": {
+    "opencode-events.js": ".opencode/hooks/opencode-events.js",
+    "opencode.json": "opencode.json",
+  },
+  "directory": ".opencode/",
+  "displayName": "OpenCode",
+  "distribution": {
+    "manifest": [],
+    "marketplace": [
+      "opencode.json",
+    ],
+  },
+  "frontmatter": {
+    "agents": {
+      "description": "Review code",
+      "mode": "subagent",
+      "model": "sonnet#high",
+    },
+    "commands": {
+      "description": "Greet someone",
+      "name": "aidd:01:greet",
+    },
+    "rules": {
+      "a description alone": {},
+      "a description that opts out of always-apply": {
+        "description": "d",
+      },
+      "a paths list": {},
+      "an always-apply rule": {},
+      "an empty paths list": {},
+      "an opt-out with no description": {},
+      "globs that apply on request": {
+        "description": "d",
+      },
+      "paths beside a description": {
+        "description": "d",
+      },
+    },
+  },
+  "hooksRootToken": null,
+  "installs": {
+    "agents": {
+      ".gitkeep": ".opencode/agents/.gitkeep",
+      "helper.txt": ".opencode/agents/helper.txt",
+      "reviewer.md": ".opencode/agents/reviewer.md",
+      "reviewer.opencode.md": ".opencode/agents/reviewer.md",
+      "team/sub/reviewer.md": ".opencode/agents/reviewer.md",
+    },
+    "commands": {
+      "00_behavior/auto_accept.md": ".opencode/commands/aidd/00/auto_accept.md",
+      "01-plan/greet.md": ".opencode/commands/aidd/01/greet.md",
+      "01_plan/02_steps/review.md": ".opencode/commands/aidd/01/02_steps/review.md",
+      "04_code/implement.md": ".opencode/commands/aidd/04/implement.md",
+      "commit": ".opencode/commands/aidd/commit",
+      "commit.md": ".opencode/commands/aidd/commit.md",
+      "review.prompt.md": ".opencode/commands/aidd/review.prompt.md",
+      "v2-tools/x.md": ".opencode/commands/aidd/x.md",
+    },
+    "rules": {
+      "00-architecture/.gitkeep": ".opencode/rules/00-architecture/.gitkeep",
+      "01-standards/1-mermaid.md": ".opencode/rules/01-standards/1-mermaid.md",
+      "01-standards/10-mermaid.md": ".opencode/rules/01-standards/10-mermaid.md",
+      "01-standards/naming-2-rules.md": ".opencode/rules/01-standards/naming-2-rules.md",
+      "01-standards/naming.md": ".opencode/rules/01-standards/naming.md",
+      "04-tooling/ide-mapping.opencode.md": ".opencode/rules/04-tooling/ide-mapping.md",
+      "standards.opencode.md": ".opencode/rules/standards.md",
+    },
+  },
+  "kind": "ai",
+  "plugins": {
+    "acceptsHooks": true,
+    "deliversHooksToProject": false,
+    "flatLayout": {
+      "namespacePrefix": "aidd-",
+      "rules": "nested",
+      "skillLayout": "nested",
+    },
+    "kind": "flat",
+  },
+  "projectHooks": null,
+  "sections": [
+    "agents",
+    "skills",
+    "commands",
+    "rules",
+    "mcp",
+    "hooks",
+    "layout",
+    "models",
+  ],
+  "signalDir": ".opencode/commands",
+  "toolId": "opencode",
+  "toolSuffix": ".opencode.md",
+}
+`;
+
+exports[`the data each registered profile declares > vscode 1`] = `
+{
+  "directory": ".vscode/",
+  "kind": "ide",
+  "toolId": "vscode",
+}
+`;

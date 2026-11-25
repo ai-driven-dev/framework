@@ -9,11 +9,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { KILO_HOOKS } from "../../../src/contexts/tools/domain/profiles/kilo/hooks.js";
-import { generateKiloHooksBridge } from "../../../src/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.js";
-import { OPENCODE_HOOKS } from "../../../src/contexts/tools/domain/profiles/opencode/hooks.js";
-import { generateOpencodeHooksBridge } from "../../../src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.js";
-import { REPOSITORY_ROOT } from "../../helpers/repository-root.js";
+import { kilo } from "../../../src/composition/tool-profiles/kilo.js";
+import { opencode } from "../../../src/composition/tool-profiles/opencode.js";
+import { generateKiloHooksBridge } from "../../../src/contexts/tools/domain/behaviours/kilo/kilo-hooks-bridge.model.js";
+import { generateOpencodeHooksBridge } from "../../../src/contexts/tools/domain/behaviours/opencode/opencode-hooks-bridge.model.js";
+import { present } from "../../shared/testing/present.builder.js";
+import { REPOSITORY_ROOT } from "../../shared/testing/repository-root.builder.js";
 
 const PAYLOADS = join(REPOSITORY_ROOT, "scripts", "__tests__", "fixtures", "hook-payloads");
 const SCRUBBED_PROJECT = "/Users/user/project";
@@ -56,12 +57,16 @@ interface Workspace {
   readonly dir: string;
   readonly project: string;
   readonly record: string;
+  readonly host: "opencode" | "kilo";
 }
 
 const created: string[] = [];
 
 /** The adapter each build puts at `hooks/lib/host.cjs`. */
-const ADAPTERS = { opencode: OPENCODE_HOOKS.runtime.adapter, kilo: KILO_HOOKS.runtime.adapter };
+const ADAPTERS = {
+  opencode: present(present(opencode.hooks).runtime).adapter,
+  kilo: present(present(kilo.hooks).runtime).adapter,
+};
 
 afterEach(async () => {
   vi.unstubAllEnvs();
@@ -112,7 +117,7 @@ async function workspace(host: "opencode" | "kilo", bridge: string): Promise<Wor
   await writeFile(join(dir, "plugin", "aidd-sample-hooks.mjs"), bridge);
   const record = join(dir, "record.jsonl");
   vi.stubEnv("AIDD_RECORD", record);
-  return { dir, project, record };
+  return { dir, project, record, host };
 }
 
 async function recorded(ws: Workspace, count: number): Promise<readonly Recorded[]> {
@@ -135,21 +140,20 @@ function afterStart(calls: readonly Recorded[]): readonly Recorded[] {
 type Handler = (...args: unknown[]) => Promise<void>;
 
 interface Plugin {
+  readonly dispose?: () => Promise<void>;
   readonly event: Handler;
   readonly "tool.execute.after": Handler;
 }
 
 /** Loads the bridge as the host does: its default descriptor's `server`. */
-async function start(ws: Workspace, input: Record<string, unknown>) {
+async function start(ws: Workspace, input: Record<string, unknown>, refusal?: Error) {
   const prompts: unknown[] = [];
-  const client = {
-    session: {
-      promptAsync: (request: unknown) => {
-        prompts.push(request);
-        return Promise.resolve();
-      },
-    },
+  const send = (request: unknown) => {
+    prompts.push(request);
+    return refusal === undefined ? Promise.resolve() : Promise.reject(refusal);
   };
+  // Each host calls its own method: OpenCode `prompt`, Kilo `promptAsync`.
+  const client = { session: ws.host === "opencode" ? { prompt: send } : { promptAsync: send } };
   const mod = (await import(
     pathToFileURL(join(ws.dir, "plugin", "aidd-sample-hooks.mjs")).href
   )) as { default?: { server?: (input: unknown) => Promise<Plugin> } };
@@ -216,6 +220,18 @@ describe("OpenCode, through its bridge", () => {
     ]);
   });
 
+  it("leaves OpenCode 1.19's early V2 setup context alone, which has no location", async () => {
+    const ws = await workspace("opencode", opencodeBridge());
+    const mod = await import(pathToFileURL(join(ws.dir, "plugin", "aidd-sample-hooks.mjs")).href);
+    const early = Object.fromEntries(
+      "options agent aisdk catalog command integration plugin reference skill"
+        .split(" ")
+        .map((key) => [key, {}])
+    );
+
+    await expect(mod.default.setup(early)).resolves.toBeUndefined();
+  });
+
   it("reads a write as its file and content, and appends the answer to the tool's result", async () => {
     const ws = await workspace("opencode", opencodeBridge());
     const [write] = (await captured("opencode-tool.execute.after.json", ws.project)) as {
@@ -279,6 +295,20 @@ describe("OpenCode, through its bridge", () => {
     await plugin.event({ event: idle });
 
     expect(prompts).toStrictEqual(CONTINUED);
+  });
+
+  it("reports a follow-up the host refused, without throwing into it", async () => {
+    const ws = await workspace("opencode", opencodeBridge());
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const [, idle] = await captured("opencode-session.idle.json", ws.project);
+    const { plugin } = await start(ws, { directory: ws.project }, new Error("refused"));
+    await plugin.event({ event: idle });
+    await plugin.dispose?.();
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringMatching(/^\[aidd\] OpenCode hook .*record\.cjs failed: .*follow-up.*refused/)
+    );
+    warn.mockRestore();
   });
 
   it("reads an idle session as Stop, continues it once, and reads the next one as a continuation", async () => {
@@ -379,7 +409,21 @@ describe("Kilo, through its bridge", () => {
     const { plugin, prompts } = await start(ws, { directory: ws.project });
     await plugin.event({ event: idle });
 
-    expect(prompts).toStrictEqual(CONTINUED);
+    expect(prompts).toMatchObject(CONTINUED);
+  });
+
+  it("reports a follow-up the host refused, without throwing into it", async () => {
+    const ws = await workspace("kilo", kiloBridge());
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const [idle] = await captured("kilo-session.idle.json", ws.project);
+    const { plugin } = await start(ws, { directory: ws.project }, new Error("refused"));
+    await plugin.event({ event: idle });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringMatching(/^\[aidd\] Kilo hook .*record\.cjs failed: .*follow-up.*refused/)
+    );
+    warn.mockRestore();
   });
 
   // The bridge ends a turn at the next idle only after the session went busy again: that
@@ -400,7 +444,7 @@ describe("Kilo, through its bridge", () => {
       { host: "kilo", event: "Stop", stopActive: false, sessionId: SESSION, cwd: ws.project },
       { host: "kilo", event: "Stop", stopActive: true, sessionId: SESSION, cwd: ws.project },
     ]);
-    expect(prompts).toStrictEqual(CONTINUED);
+    expect(prompts).toMatchObject(CONTINUED);
   });
 });
 
