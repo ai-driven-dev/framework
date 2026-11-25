@@ -1,18 +1,18 @@
 ---
 name: 04-spec
-description: Creates a feature's spec, the contract it is built to, or updates one, when the user brings a request, a document, review findings or answers.
-argument-hint: request | document | spec and findings
+description: Creates or updates a feature's spec, the contract it is built to, when the user brings a need or changes to an existing spec.
+argument-hint: need | spec and changes
 ---
 
 # Spec
 
 ```mermaid
 flowchart LR
-  source([request or document]) --> build["actions/01-build.md"]
+  source([need]) --> build["actions/01-build.md"]
   build -->|"too vague"| asked((one question, no write))
   build --> spec((spec.md, its gaps as questions))
-  spec -->|"answers"| refine
-  findings([spec and findings]) --> refine["actions/02-refine.md"]
+  spec -->|"changes"| refine
+  changes([spec and changes]) --> refine["actions/02-refine.md"]
   refine --> spec
   refine -->|"locked, or nothing to change"| unchanged((no write))
 ```

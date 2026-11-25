@@ -1,14 +1,14 @@
 # 01 - Build
 
-Create a new spec from a request or a document.
+Create a new spec from a need.
 
 ## Input
 
-A request, or a path to a document.
+The need: the user's message, or the file it points to.
 
 ## Process
 
-1. Read the request or the document.
+1. Read the need.
    - Too vague to draft: ask one clarifying question and stop.
 2. Fill [spec-template.md](../assets/spec-template.md) per [spec-content.md](../references/spec-content.md).
 3. Write it to `spec.md` in this feature's task folder, else in a new `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<slug>/`.

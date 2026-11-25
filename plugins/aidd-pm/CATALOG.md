@@ -98,7 +98,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [spec-content.md](skills/04-spec/references/spec-content.md) | - |
 | `scripts` | [contract.json](skills/04-spec/scripts/contract.json) | - |
 | `scripts` | [validate-spec.cjs](skills/04-spec/scripts/validate-spec.cjs) | - |
-| `-` | [SKILL.md](skills/04-spec/SKILL.md) | `Creates a feature's spec, the contract it is built to, or updates one, when the user brings a request, a document, review findings or answers.` |
+| `-` | [SKILL.md](skills/04-spec/SKILL.md) | `Creates or updates a feature's spec, the contract it is built to, when the user brings a need or changes to an existing spec.` |
 
 #### `skills/05-spike`
 
