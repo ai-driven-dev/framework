@@ -19,6 +19,8 @@ import {
 
 const DIRECTORY = ".kiro/";
 const TOOL_SUFFIX = ".kiro.md";
+/** Kiro's project MCP servers file, an `mcpServers` object (https://kiro.dev/docs/mcp/configuration/). */
+const MCP_PATH = `${DIRECTORY}settings/mcp.json`;
 
 /** An agent file may be Markdown with YAML front matter, its name derived from the filename when
  * absent and `*` meaning every tool (https://kiro.dev/docs/custom-agents/configuration-reference/).
@@ -89,7 +91,12 @@ export const kiro = defineAiTool({
   signalDir: null,
   hooks,
   buildContracts: {
-    flat: contract(buildKiroFlatContract, hooks, KIRO_FLAT_LAYOUT, AGENT_MARKDOWN),
+    flat: contract(
+      buildKiroFlatContract,
+      hooks,
+      { layout: KIRO_FLAT_LAYOUT, mcpPath: MCP_PATH },
+      AGENT_MARKDOWN
+    ),
   },
 
   capabilities: {
