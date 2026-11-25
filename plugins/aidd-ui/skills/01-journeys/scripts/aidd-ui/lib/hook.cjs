@@ -288,11 +288,20 @@ function consumeMark(mark) {
   return turn;
 }
 
+// What a reply never shows the person, as each skill rules: a colour code, a size in pixels, the word token.
+const JARGON = /#[0-9a-f]{6}\b|\b\d+(?:[.,]\d+)?\s?px\b|\btokens?\b/gi;
+
+/** The jargon a reply shows, each once, as a line that asks for plain words; empty when there is none. */
+function jargonIn(reply) {
+  const found = typeof reply === "string" ? [...new Set(reply.match(JARGON))] : [];
+  return found.length ? `${PLUGIN}: the reply shows ${found.join(", ")}. Say it in plain words: a colour by its name, a size by what it looks like, never a code, a unit or the word token.` : "";
+}
+
 /** Holds the turn's end once on the errors it produced: those on the lines its writes changed, net,
- * and, when a baseline exists, past what it counts. Nothing else is ever required, no line being
- * proof of nothing. The baseline then takes the project's errors as they stand, so what was asked
- * once is never asked again. */
-function atStop(project, mark, turn) {
+ * and, when a baseline exists, past what it counts. No error left, it holds it on the jargon its reply
+ * shows. Nothing else is ever required, no line being proof of nothing. The baseline then takes the
+ * project's errors as they stand, so what was asked once is never asked again. */
+function atStop(project, mark, turn, reply) {
   const baseline = readBaseline(mark);
   project.scope = new Set([...readCode(baseline), ...turn.code]);
   const problems = problemsOf(project);
@@ -309,7 +318,7 @@ function atStop(project, mark, turn) {
     candidates.push(...problems.filter((problem) => problem.file === file && isError(problem) && touched.has(findingOf(problem).line)));
   }
   const required = baseline ? newErrors(candidates, baseline) : candidates;
-  const reason = formatFindings(PLUGIN, { errors: required.map(findingOf) });
+  const reason = formatFindings(PLUGIN, { errors: required.map(findingOf) }) || jargonIn(reply);
   if (reason) continueTurn(reason);
   leaveBaseline(mark, problems, project.scope);
   return EXIT_SILENT;
@@ -334,7 +343,7 @@ function run() {
   const project = load(event.cwd);
   if (project === null) return EXIT_SILENT;
   if (event.event === POST_TOOL_USE) return afterWrite(project, event);
-  return atStop(project, mark, turn);
+  return atStop(project, mark, turn, event.raw?.last_assistant_message);
 }
 
 function hook() {

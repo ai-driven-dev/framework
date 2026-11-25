@@ -114,7 +114,7 @@ const marked = () => fs.existsSync(markPath(sid));
 const sessionStart = () => JSON.stringify({ hook_event_name: "SessionStart", cwd: tmp, source: "startup" });
 /** Starts the session: the hook notes the errors the project holds now, which no turn then answers for. */
 const begin = () => hook(JSON.stringify({ hook_event_name: "SessionStart", cwd: tmp, session_id: sid, source: "startup" }));
-const stop = (active = false) => JSON.stringify({ hook_event_name: "Stop", cwd: tmp, session_id: sid, stop_hook_active: active });
+const stop = (active = false, reply) => JSON.stringify({ hook_event_name: "Stop", cwd: tmp, session_id: sid, stop_hook_active: active, ...(reply === undefined ? {} : { last_assistant_message: reply }) });
 const silent = { code: 0, out: "", err: "" };
 /** The one text every host gets: the count line, then the lines. */
 const counted = (count, noun) => `${count} ${noun}${count === 1 ? "" : "s"}`;
@@ -785,6 +785,42 @@ describe("aidd-ui validator entries", () => {
 
   // Stop is the one answer that keeps the person waiting: it names what the turn produced, never
   // an error the project held before the turn began.
+  describe("E14 Stop holds a reply that shows the person a code, a unit or the word token", () => {
+    const JARGON = "Le fond passe en #0a0a0a et le chrono à 240 px, comme le disent les tokens : #0a0a0a partout.";
+    const wrote = () => {
+      begin();
+      hook(editTool(BUTTON, "Any action a person starts; never for navigation.", "Any action a person starts, never for navigation."));
+    };
+
+    it("holds the turn once, naming what the reply shows", () => {
+      wrote();
+      assert.deepEqual(hook(stop(false, JARGON)), finish("aidd-ui: the reply shows #0a0a0a, 240 px, tokens. Say it in plain words: a colour by its name, a size by what it looks like, never a code, a unit or the word token."));
+    });
+
+    it("ends the turn on a plain reply", () => {
+      wrote();
+      assert.deepEqual(hook(stop(false, "Le fond passe au noir profond et le chrono double de taille.")), silent);
+    });
+
+    it("ends the turn once it held it", () => {
+      wrote();
+      assert.deepEqual(hook(stop(true, JARGON)), silent);
+    });
+
+    it("leaves a turn that wrote no design file alone", () => {
+      begin();
+      assert.deepEqual(hook(stop(false, JARGON)), silent);
+    });
+
+    it("names the errors first, the reply waiting for the next Stop", () => {
+      begin();
+      const before = rendered();
+      littering(1, 0);
+      hook(postToolUse(path.join(tmp, RENDER), before));
+      assert.deepEqual(hook(stop(false, JARGON)), finish(errorsText([literal(28)])));
+    });
+  });
+
   describe("E13 Stop never holds the turn on a standing error", () => {
     for (const command of [`node ${ENGINE} validate ${tmp}`, `node ${ENGINE} impact button --root ${tmp}`, `node ${ENGINE} publish button --root ${tmp}`]) {
       it(`does not mark the turn when the engine only reads: ${command.replace(tmp, "<root>").replace(ENGINE, "aidd-ui.cjs")}`, () => {
