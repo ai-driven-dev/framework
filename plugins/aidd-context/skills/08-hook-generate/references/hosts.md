@@ -1,6 +1,6 @@
 # Hosts
 
-The hosts that carry a hook: how to detect each, the event for a moment, and what the script reads and answers there. Which events the `aidd` CLI itself delivers to each host is in the repository's `docs/COMPATIBILITY.md`, section Hook events, not here.
+The hosts that carry a hook: how to detect each, the event for a moment, and what the script reads and answers there.
 
 Detect by listing the project root with hidden entries, since a file search misses an empty marker. Test each listed path itself, never its parent: `.agents/skills/` alone signals no host.
 
@@ -36,14 +36,12 @@ A matcher is a pattern on the tool's name, on tool events only, never on Copilot
 | Intent | Claude | Codex | Cursor | Copilot | Antigravity | OpenCode, Kilo |
 | --- | --- | --- | --- | --- | --- | --- |
 | inform the model | `additionalContext` | `additionalContext`, not at `Stop` | `additional_context` | `additionalContext` | `injectSteps` with a `systemMessage`, at `SessionStart` or `PreInvocation` | - |
-| block before a tool runs | exit 2 or `deny` | exit 2 or `deny` | exit 2 or `permission: deny` | exit 2 | `decision: deny`, with its `reason`; `decision: block` is refused | exit 2, reason on stderr |
+| block before a tool runs | exit 2 or `deny` | exit 2 or `deny` | exit 2 or `permission: deny` | exit 2 | `decision: deny`, with its `reason` | exit 2, reason on stderr |
 | ask before a tool runs | `ask` | - | - | `ask` | `decision: ask` | - |
 | require a fix after a write | `decision: block` | `decision: block` | - | - | - | - |
 | keep the turn going at stop | `decision: block` | `decision: block` | `followup_message` | - | `decision: continue` | - |
 
 Claude and Codex read decisions under `hookSpecificOutput`. Antigravity reads JSON on stdout only, and blocks when the script fails.
-
-Antigravity has no event for a submitted prompt: `PreInvocation` fires before every model call, and an injection there is repeated each time. Its matcher is an anchored regular expression over the whole tool name, and its tools are `write_file`, `edit_file` and `run_command`. Measured on `agy` 1.5.17, vendor reference <https://antigravity.google/docs/hooks>; whether a model acts on a mid-loop message depends on the model, see Compatibility.
 
 ## Teammates
 
