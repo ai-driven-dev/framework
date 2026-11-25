@@ -26,7 +26,7 @@ The recipe file at `aidd_docs/recipes/<slug>.md`, filled from the template.
    - On any `high`, recommend updating that recipe instead and ask update-or-create before scaffolding.
 6. **Scaffold.** Use [recipe-template.md](../assets/recipe-template.md) when needed and apply [recipe-contract.md](../references/recipe-contract.md).
    - Preserve verified useful content on updates.
-7. **Fill.** Fill every placeholder and save the recipe.
+7. **Fill.** Fill every placeholder except `{runner}`, which stays as written, and save the recipe.
    - On validation findings, resume at Scaffold and Fill, reusing verified research until both checks pass.
 
 ## Test
@@ -37,5 +37,6 @@ The recipe file at `aidd_docs/recipes/<slug>.md`, filled from the template.
 | Project recipe written | `aidd_docs/recipes/<slug>.md` exists and passes the recipe contract |
 | Update or validation repair | Verified useful content and research results are preserved |
 | Validation after writing | Both checks pass and no finding is silently waived |
+| Command with `{runner}` | The placeholder is kept unfilled in the saved recipe |
 | Bundled recipe selected | It is overwritten only on an explicit bundled/framework change request |
 | High overlap with an existing recipe | An update-or-create prompt precedes scaffolding |

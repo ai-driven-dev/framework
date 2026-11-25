@@ -31,4 +31,5 @@ A recipe analysis and, on the user's choice, completed steps with a report of re
 | Recipe selected | Each step is classified and the user chooses what to run before any change |
 | Numeric selection | It matches the latest list row; a missing current list is refreshed and the user selects again |
 | Chosen agent-doable steps | They run as a tracked todo list, with confirmation before each file-changing step |
+| Command with `{runner}` | It runs with the package runner the project's lockfile points to, or the user's own without a lockfile, never a literal one left in the recipe |
 | Human-only steps | They are reported as instructions and never executed |

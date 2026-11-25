@@ -48,8 +48,8 @@ const ops = {
     return targets(ctx, rule).filter(({ value }) => !regex.test(value)).map(({ line, value }) => at(line, value));
   },
   forbidden(ctx, rule) {
-    if (rule.scope === "nofence") {
-      const mask = fenceMask(ctx.text);
+    if (rule.scope === "nofence" || rule.scope === "text") {
+      const mask = rule.scope === "nofence" ? fenceMask(ctx.text) : [];
       const found = [];
       for (const match of ctx.text.matchAll(new RegExp(rule.regex, "gu"))) {
         const line = ctx.text.slice(0, match.index).split("\n").length;

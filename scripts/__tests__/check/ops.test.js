@@ -43,6 +43,12 @@ describe("ops", () => {
     assert.deepEqual(lines(findings({ ...rule, scope: "nofence" }, "BAD\n```\nBAD\n```\n")), [1]);
   });
 
+  it("forbidden reads fences too under the text scope", () => {
+    const rule = { op: "forbidden", regex: "BAD", scope: "text" };
+    assert.deepEqual(lines(findings(rule, "BAD\n```\nBAD\n```\n")), [1, 3]);
+    assert.deepEqual(lines(findings(rule, "ok `BAD`\n")), [1]);
+  });
+
   it("sections restricts names, order and required ones", () => {
     const rule = { op: "sections", allowed: ["A", "B"], order: true, required: ["A"] };
     assert.deepEqual(findings(rule, "## A\n\n## B\n"), []);

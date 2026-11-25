@@ -78,7 +78,7 @@ Memory links open the AIDD templates for the corresponding files in your project
 
 | Service | CLI | MCP or native tool |
 | --- | --- | --- |
-| Playwright | [`playwright-cli`](https://playwright.dev/agent-cli/installation); [`{runner} playwright test`](https://playwright.dev/docs/test-cli) for tests | [Playwright MCP](https://playwright.dev/docs/getting-started-mcp) |
+| Playwright | [`playwright-cli`](https://playwright.dev/agent-cli/installation); [`playwright test`](https://playwright.dev/docs/test-cli) for tests | [Playwright MCP](https://playwright.dev/docs/getting-started-mcp) |
 | Claude in Chrome | — | [Chrome extension](https://support.claude.com/en/articles/12012173-get-started-with-claude-in-chrome) |
 | Cursor Browser | — | [Built-in browser](https://cursor.com/docs/agent/tools/browser) |
 

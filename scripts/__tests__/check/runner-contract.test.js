@@ -26,6 +26,11 @@ describe("runner contract", () => {
     assert.deepEqual(ids(), ["RUNNER-01"]);
   });
 
+  it("RUNNER-01 flags a hardcoded npx inside a fenced block", () => {
+    write("references/setup.md", "Install:\n\n```bash\nnpx tool@latest\n```\n");
+    assert.deepEqual(ids(), ["RUNNER-01"]);
+  });
+
   it("RUNNER-01 lets the one file that defines the runner name the alternatives", () => {
     write("references/recipe-contract.md", "`{runner}` is `npx`, `pnpm dlx` or `bunx`.\n");
     assert.deepEqual(ids(), []);
