@@ -1,8 +1,8 @@
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { InspectCandidateHostsRequest } from "../../contract/inspect-host-registration-request.js";
-import type { InspectHostRegistrationResult } from "../../contract/inspect-host-registration-result.js";
 import type { InspectHostMarketplaceSources } from "./inspect-host-marketplace-sources.use-case.js";
 import type { InspectHostPlugins } from "./inspect-host-plugins.use-case.js";
+import type { InspectHostRegistrationResult } from "./inspect-host-registration-result.js";
 
 /**
  * Asks each host's own registries whether they carry what aidd asked them to register, and
