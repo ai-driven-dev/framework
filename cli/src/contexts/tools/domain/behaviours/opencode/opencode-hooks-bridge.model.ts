@@ -34,7 +34,8 @@
  * - `UserPromptSubmit` on the `prompt` hook; its answers join the system prompt of each request
  *   until the next prompt, not the message itself.
  * - `PreToolUse` on `execute.before`, whose throw refuses the call; `PostToolUse` on
- *   `execute.after`. A V2 tool names its file `path`, read as `filePath`.
+ *   `execute.after`. A V2 tool names its file `path`, read as `filePath`, and its shell tool
+ *   `shell`, read as `bash`.
  * - `Stop` on `experimental.idle`; the follow-up is a steering `synthetic` message, admitted before
  *   the hook returns, which runs in the same execution. A synthetic message reaches no `prompt`
  *   hook, so only the person's next prompt starts a fresh turn.
@@ -45,7 +46,8 @@
  * - Its client has no toast and no `promptAsync`: a script's message for the person is not
  *   shown, and a required finding is reported as the call's PostToolUse failure, the call's later
  *   PostToolUse hooks skipped.
- * - Its shell tool is `shell`, which a `Bash` matcher and the adapter's shell reading do not name.
+ * - It goes through the V1 entrypoint, whose `dispose` it never calls: the Stop handlings that
+ *   entrypoint tracks are never drained, and nothing reads them.
  * - A call made through Code Mode (`codemode: true`) was not observed reaching a hook.
  * - A child session's prompt, the one its parent wrote, reaches UserPromptSubmit too.
  */

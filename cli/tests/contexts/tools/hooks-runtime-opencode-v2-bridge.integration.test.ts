@@ -6,7 +6,7 @@
 
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { hooksOf, jsonLines, ROOT } from "./testing/bridged-hosts.builder.js";
+import { command, hooksOf, jsonLines, ROOT } from "./testing/bridged-hosts.builder.js";
 import { type Call, recordingScript, SCRIPTS } from "./testing/event-bridge-host.builder.js";
 import {
   capturedRunOf,
@@ -98,6 +98,37 @@ describe("OpenCode 2, through its bridge's setup", () => {
     expect((await recorded(ws, 1))[0]?.files).toStrictEqual([
       { path: join(ws.project, "a.md"), written: "bye", replaced: "hello" },
     ]);
+  });
+
+  it("runs a Bash-matched PreToolUse script for the shell call, handed its command", async () => {
+    const hooksJson = JSON.stringify({
+      hooks: { PreToolUse: [{ matcher: "Bash", ...command("refuse.cjs") }] },
+    });
+    const ws = await workspace("opencode", bridgeOf("opencode", hooksJson), {
+      "refuse.cjs": REFUSE,
+    });
+    const { call } = await setupV2(ws);
+
+    await expect(
+      call("tool.execute.before", tool("execute.before", "shell", ws.project))
+    ).rejects.toThrow("fix it");
+    const [refused] = await jsonLines<Call>(join(ws.dir, "calls.jsonl"));
+    expect(refused?.payload).toMatchObject({
+      tool_name: "bash",
+      tool_input: { command: "echo hi" },
+    });
+  });
+
+  it("hands a Bash-matched PostToolUse script the shell call's command", async () => {
+    const hooksJson = JSON.stringify({
+      hooks: { PostToolUse: [{ matcher: "Bash", ...command("record.cjs") }] },
+    });
+    const ws = await workspace("opencode", bridgeOf("opencode", hooksJson));
+    vi.stubEnv("AIDD_LEVEL", "1");
+    const { call } = await setupV2(ws);
+    await call("tool.execute.after", tool("execute.after", "shell", ws.project));
+
+    expect(await recorded(ws, 1)).toMatchObject([{ event: "PostToolUse", command: "echo hi" }]);
   });
 
   it("reports a required finding it cannot queue, and still adds it to the result", async () => {

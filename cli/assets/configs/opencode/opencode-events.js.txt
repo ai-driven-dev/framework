@@ -6,17 +6,17 @@ function argsOf(input) {
   return typeof input?.path === "string" ? { ...input, filePath: input.path } : input;
 }
 
-// A string result takes the answer after a blank line; a list of parts takes a text part.
-function withAnswer(content, answer) {
-  if (Array.isArray(content)) return [...content, { type: "text", text: answer }];
-  return content ? `${content}\n\n${answer}` : answer;
+// The V2 shell tool is `shell`; the bridge's matchers and its adapter name OpenCode 1's `bash`.
+function toolOf(name) {
+  return name === "shell" ? "bash" : name;
 }
 
 export async function setupOpencodeEvents(ctx, factory) {
   // OpenCode 1.19 also calls setup with its early V2 context, which has no location, while
   // server() already serves that host.
   if (ctx.location === undefined) return;
-  // The follow-ups a Stop sent, settled: the bridge reports a refused one.
+  // The follow-ups a Stop sent, settled: the bridge reports a refused one. Shared by every
+  // session, so an idle also waits for another session's follow-ups.
   const followUps = [];
   const client = {
     session: {
@@ -41,7 +41,7 @@ export async function setupOpencodeEvents(ctx, factory) {
     const { sessionID } = prompt;
     const session = await ctx.session.get({ sessionID });
     await hooks.event({
-      event: { type: "session.created", properties: { sessionID, info: { parentID: session?.parentID } } },
+      event: { type: "session.created", properties: { sessionID, info: { parentID: session.parentID } } },
     });
     const output = {
       message: { id: prompt.messageID },
@@ -62,17 +62,17 @@ export async function setupOpencodeEvents(ctx, factory) {
 
   // A throw from this hook alone refuses the call.
   await ctx.tool.hook("execute.before", (call) =>
-    hooks["tool.execute.before"]({ tool: call.tool, sessionID: call.sessionID }, { args: argsOf(call.input) })
+    hooks["tool.execute.before"]({ tool: toolOf(call.tool), sessionID: call.sessionID }, { args: argsOf(call.input) })
   );
 
   // The tool hook is where a finished call's result can change, so a hook's answer lands in the
   // result the model reads.
   await ctx.tool.hook("execute.after", async (call) => {
-    if (call.status !== "completed" || !call.result) return;
+    if (call.status !== "completed") return;
     const output = { output: "" };
-    await hooks["tool.execute.after"]({ tool: call.tool, sessionID: call.sessionID, args: argsOf(call.input) }, output);
+    await hooks["tool.execute.after"]({ tool: toolOf(call.tool), sessionID: call.sessionID, args: argsOf(call.input) }, output);
     const answer = output.output.trim();
-    if (answer) call.result.content = withAnswer(call.result.content, answer);
+    if (answer) call.result.content.push({ type: "text", text: answer });
   });
 
   // The session goes idle unless input waits once this hook returns, so the follow-ups land first.
