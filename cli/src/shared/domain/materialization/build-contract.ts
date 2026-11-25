@@ -1,3 +1,4 @@
+import type { FrontmatterShape } from "../markdown.js";
 import type { SourceMarketplaceRef, SourcePluginEntryRef } from "../plugin/source-refs.js";
 import type { ConfigAsset, SchemaName } from "../reading/config-asset.js";
 import type { FlatArtifactLayout, FlatHooksLoaderEntry } from "./flat-paths.js";
@@ -48,11 +49,7 @@ export interface AgentMarkdown {
 }
 
 /** How a tool keeps a rule's frontmatter: the keys it reads, from the rule's own. */
-export interface RuleMarkdown {
-  readonly frontmatter: (frontmatter: Record<string, unknown>) => Record<string, unknown>;
-  /** `double` for a reader that keeps single quotes literally. */
-  readonly quote?: "double";
-}
+export type RuleMarkdown = Pick<FrontmatterShape, "frontmatter" | "quote">;
 
 /** Where an artifact's files land, as data: a skills or agents layout, the path a file has in its
  * plugin, one shared file, or a hooks route. */

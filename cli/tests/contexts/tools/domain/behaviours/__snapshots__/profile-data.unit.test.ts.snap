@@ -40,7 +40,8 @@ exports[`the data each registered profile declares > antigravity 1`] = `
       },
       "globs that apply on request": {
         "description": "d",
-        "trigger": "always_on",
+        "globs": "a",
+        "trigger": "glob",
       },
       "paths beside a description": {
         "description": "d",
@@ -661,7 +662,10 @@ exports[`the data each registered profile declares > kiro 1`] = `
         "inclusion": "always",
       },
       "globs that apply on request": {
-        "inclusion": "always",
+        "fileMatchPattern": [
+          "a",
+        ],
+        "inclusion": "fileMatch",
       },
       "paths beside a description": {
         "fileMatchPattern": [

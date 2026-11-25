@@ -93,7 +93,10 @@ export function flatSectionPath(
 }
 
 /** Where a plugin's rules sit at the top of the rules folder: the path prefix of each and the glob
- * naming them all. Null where rules sit under the plugin's own folder and need no listing. */
+ * naming them all. Null where rules sit under the plugin's own folder and need no listing.
+ *
+ * Limit: a tool whose rules carry their own frontmatter (`top-level`) gets a glob too, which a
+ * config lists as `instructions` only if the tool declares a config artifact; neither does. */
 export function flatRulesPlacement(
   layout: FlatArtifactLayout,
   plugin: string

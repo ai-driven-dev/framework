@@ -21,6 +21,7 @@ import {
 
 const DIRECTORY = ".kiro/";
 const TOOL_SUFFIX = ".kiro.md";
+const STEERING = "steering/";
 /** Kiro's project MCP servers file, an `mcpServers` object (https://kiro.dev/docs/mcp/configuration/). */
 const MCP_PATH = `${DIRECTORY}settings/mcp.json`;
 
@@ -45,7 +46,7 @@ const AGENT_MARKDOWN: AgentMarkdown = {
 const KIRO_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(DIRECTORY, {
   skills: "single-level",
   rules: "top-level",
-  rulesDir: `${DIRECTORY}steering/`,
+  rulesDir: `${DIRECTORY}${STEERING}`,
   agent: { ext: ".md" },
 });
 
@@ -109,7 +110,7 @@ export const kiro = defineAiTool({
     agents: { format: "markdown", frontmatter: AGENT_FRONTMATTER },
     skills: { directory: DIRECTORY },
     rules: {
-      buildInstallPath: installUnder(DIRECTORY, TOOL_SUFFIX, "steering/"),
+      buildInstallPath: installUnder(DIRECTORY, TOOL_SUFFIX, STEERING),
       convertFrontmatter: inclusionModesRule,
     },
     hooks: { delivery: hooksDelivery },
