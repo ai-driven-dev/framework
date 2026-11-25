@@ -32,7 +32,7 @@ describe("a task request", () => {
 
 describe("a declaration", () => {
   it("is stamped with the moment and the declarer it was made by", () => {
-    expect(declarationOf({ kind: "task", task: "t", ticket: "P-1" }, NOW, "command")).toEqual({
+    expect(declarationOf({ kind: "task", task: "t", ticket: "P-1" }, NOW)).toEqual({
       task: "t",
       ticket: "P-1",
       none: false,
@@ -42,7 +42,7 @@ describe("a declaration", () => {
   });
 
   it("declares no task as none, with neither task nor ticket", () => {
-    expect(declarationOf({ kind: "none" }, NOW, "command")).toEqual({
+    expect(declarationOf({ kind: "none" }, NOW)).toEqual({
       task: null,
       ticket: null,
       none: true,
@@ -53,8 +53,7 @@ describe("a declaration", () => {
 });
 
 describe("a session declaration line", () => {
-  const declaration = () =>
-    declarationOf({ kind: "task", task: "t", ticket: null }, NOW, "command");
+  const declaration = () => declarationOf({ kind: "task", task: "t", ticket: null }, NOW);
 
   it("is written with the fields of the format, in order, and read back whole", () => {
     const line = renderSessionDeclaration("s-1", declaration());

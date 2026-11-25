@@ -50,11 +50,8 @@ export interface SessionCarry {
   readonly at: string;
 }
 
-export function declarationOf(
-  request: DeclarationRequest,
-  now: Date,
-  by: "command"
-): TaskDeclaration {
+export function declarationOf(request: DeclarationRequest, now: Date): TaskDeclaration {
+  const by = "command" as const;
   return request.kind === "none"
     ? { task: null, ticket: null, none: true, declared_at: now.toISOString(), by }
     : {

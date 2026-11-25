@@ -54,7 +54,7 @@ export class DeclareTask {
   async execute(input: DeclareTaskRequest): Promise<DeclareTaskResult> {
     const repository = await this.deps.repositories.execute(input.cwd);
     if (repository.status === "refused") return repository;
-    const declaration = declarationOf(input.request, this.deps.now(), "command");
+    const declaration = declarationOf(input.request, this.deps.now());
     const { sessionId } = this.deps;
     if (sessionId !== null) await this.deps.bindSession(sessionId, declaration);
     const branch = await this.deps.branches.execute({

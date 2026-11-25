@@ -33,13 +33,13 @@ export function describeBranchBindingStoreContract(
         await store.declare(
           root,
           branch,
-          declarationOf({ kind: "task", task: "ship it", ticket: "ABC-1" }, AT, "command")
+          declarationOf({ kind: "task", task: "ship it", ticket: "ABC-1" }, AT)
         );
         await expect(
           store.declare(
             root,
             branch,
-            declarationOf({ kind: "task", task: "ship it", ticket: null }, AT, "command")
+            declarationOf({ kind: "task", task: "ship it", ticket: null }, AT)
           )
         ).resolves.toBeUndefined();
       });

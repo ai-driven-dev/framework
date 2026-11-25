@@ -135,7 +135,7 @@ describe("the shared fixture of task bindings", () => {
   it("is written with the fields the CLI writes: a renamed field turns this red", () => {
     const written = renderSessionDeclaration(
       "s",
-      declarationOf({ kind: "task", task: "t", ticket: "P-1" }, new Date(0), "command")
+      declarationOf({ kind: "task", task: "t", ticket: "P-1" }, new Date(0))
     );
     const writtenKeys = Object.keys(JSON.parse(written)).sort();
     expect(writtenKeys).toEqual([...SESSION_DECLARATION_FIELDS].sort());

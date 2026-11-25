@@ -102,8 +102,7 @@ describe("reporting usage", () => {
       "s-1",
       declarationOf(
         { kind: "task", task: "early", ticket: null },
-        new Date("2026-09-30T00:00:00.000Z"),
-        "command"
+        new Date("2026-09-30T00:00:00.000Z")
       )
     );
     expect(await rows(s, "task", { from: "2026-10-07", to: "2026-10-07" })).toEqual([
@@ -173,8 +172,7 @@ describe("reporting usage", () => {
       "s-1",
       declarationOf(
         { kind: "task", task: "kept", ticket: null },
-        new Date("2026-10-07T09:00:00.000Z"),
-        "command"
+        new Date("2026-10-07T09:00:00.000Z")
       )
     );
     s.sessions.carried.push({
