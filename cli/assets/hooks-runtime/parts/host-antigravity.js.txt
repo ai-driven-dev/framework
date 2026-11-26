@@ -93,4 +93,6 @@ function refuse(reason) {
   print({ decision: "deny", reason });
 }
 
-module.exports = { readEvent, answer, continueTurn, refuse };
+// @part own-folder
+
+module.exports = { readEvent, answer, continueTurn, refuse, ownFolder, hooksFolder };

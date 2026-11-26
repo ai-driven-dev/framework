@@ -163,6 +163,7 @@ A check that needs judgment gets no hook: the skill's check and CI hold it.
 | `answer({ level, text, person })` | informs or requires; with no `text`, shows only `person`, at any event |
 | `continueTurn(text, person)` | asks once at the turn end |
 | `refuse(reason)` | denies the tool call about to run; does nothing on any other event or adapter |
+| `hooksFolder(name, create)` | `<tmpdir>/aidd-hooks-<uid>/<name>` when it and the folder above it are this user's alone (a real directory, owned by this uid, closed to others), else null; created with mode 0700 when `create` |
 | `person` argument | for the person, never the model: Claude Code and Codex show it as `systemMessage`; beside a `text`, Claude Code's `continueTurn` at Stop. OpenCode 1's bridge shows a `person` alone as a TUI toast at SessionStart (held to the session's first turn), PostToolUse and Stop, and beside a `text` at Stop; OpenCode 2's, Kilo's bridge and the other hosts ignore it |
 
 ### What the CLI carries

@@ -88,4 +88,6 @@ function answer({ level, text, person } = {}) {
 
 // @part refuse-in-hook-output
 
-module.exports = { readEvent, answer, continueTurn, refuse };
+// @part own-folder
+
+module.exports = { readEvent, answer, continueTurn, refuse, ownFolder, hooksFolder };
