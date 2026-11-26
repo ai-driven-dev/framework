@@ -15,4 +15,4 @@ open: {{open gap count}}
 
 - {{question}}
 
-> Fill every `{{...}}` and delete this line. Repeat a category with its gaps, and a quote per passage. Omit a category without gaps, and Closed when no gap closed. With no gap at all, the report ends at its title.
+> Fill every `{{...}}`, then delete this line. Repeat sections, gaps and quotes as needed. Omit empty sections. With no gap, the report ends at its title.
