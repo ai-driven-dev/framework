@@ -33,7 +33,8 @@ interface ToolSupport {
   /** The directory of the project where the tool loads each plugin's tree that `aidd` writes there
    * itself, a native plugin install and no marketplace the tool could register; or null. */
   pluginTree: string | null;
-  /** What a user gets per output layout the tool supports: build output, plus the rules and commands the install profile ships. */
+  /** What a user gets per output layout the tool supports: build output, plus the rules the install profile ships and,
+   * for the marketplace layout, its commands. */
   builds: Record<string, Record<Surface, Support>>;
 }
 
@@ -52,7 +53,7 @@ function carriesMcpInManifest(build: ToolBuildContract): boolean {
 }
 
 /** What a user gets through `aidd` for one layout: a build file, the config artifact the build folds MCP
- * into, the manifest that carries it, or the rules or commands section the install profile ships. */
+ * into, the manifest that carries it, or a section the install profile ships. */
 function supportOf(
   surface: Surface,
   build: ToolBuildContract,
@@ -69,10 +70,16 @@ function supportOf(
   return "yes";
 }
 
-function installedSurfaces(tool: AiToolProfile): ReadonlySet<Surface> {
+/** A flat layout's commands are those its build writes, so only the marketplace layout reads them from the install profile. */
+function installedSurfaces(
+  tool: AiToolProfile,
+  mode: "marketplace" | "flat"
+): ReadonlySet<Surface> {
   return new Set<Surface>([
     ...(tool.installedRulesLocation() === null ? [] : (["rules"] as const)),
-    ...(tool.markdownSection("commands") === null ? [] : (["commands"] as const)),
+    ...(mode === "marketplace" && tool.markdownSection("commands") !== null
+      ? (["commands"] as const)
+      : []),
   ]);
 }
 
@@ -97,7 +104,7 @@ function capture(): ToolSupport[] {
         builds[mode] = Object.fromEntries(
           SURFACES.map((surface) => [
             surface,
-            supportOf(surface, contract, installedSurfaces(tool)),
+            supportOf(surface, contract, installedSurfaces(tool, mode)),
           ])
         ) as Record<Surface, Support>;
       }

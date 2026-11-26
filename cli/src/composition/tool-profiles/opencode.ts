@@ -41,7 +41,6 @@ const AGENT_FRONTMATTER = agentFrontmatterOf({
 });
 
 const DIRECTORY = ".opencode/";
-const NAMESPACE_PREFIX = "aidd-";
 const TOOL_SUFFIX = ".opencode.md";
 
 /** Where a flat build, and a flat install, put opencode's skills and agents. */
@@ -75,7 +74,7 @@ const OPENCODE_CONFIG_REF: ConfigRef = {
  * project: its global config directory. */
 const FLAT_PLACEMENT = flatPlacement({
   artifacts: OPENCODE_FLAT_LAYOUT,
-  namespacePrefix: NAMESPACE_PREFIX,
+  namespacePrefix: "aidd-",
   globalFiles: {
     dir: "{home}/.config/opencode",
     map: flatGlobalFilePath(DIRECTORY),
@@ -145,7 +144,7 @@ export const opencode = defineAiTool(
       flat: contract(buildOpencodeFlatContract, hooks, OPENCODE_FLAT_LAYOUT, {
         agentMarkdown: { frontmatter: AGENT_FRONTMATTER },
         // Limit: no plugin ships a command, so no command link to a `.opencode/commands/` path is observed.
-        commandMarkdown: { namePrefix: NAMESPACE_PREFIX, linkSyntax: [] },
+        commandMarkdown: { namePrefix: FLAT_PLACEMENT.namespacePrefix, linkSyntax: [] },
         config: FLAT_CONFIG_CANDIDATES,
       }),
     },

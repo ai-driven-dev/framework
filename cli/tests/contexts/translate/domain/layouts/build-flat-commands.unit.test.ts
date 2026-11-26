@@ -4,10 +4,8 @@ import { opencode as opencodeTool } from "../../../../../src/composition/tool-pr
 import { translateBuildLayout } from "../../../../shared/testing/build-files.builder.js";
 import { present } from "../../../../shared/testing/present.builder.js";
 import { aCanon } from "../../testing/canon-distribution.builder.js";
-import { translator } from "../../testing/engine-kit.builder.js";
+import { CLAUDE_ROOT_TOKEN, translator } from "../../testing/engine-kit.builder.js";
 import { opencode } from "../../testing/registered-profiles.builder.js";
-
-const PLUGIN_ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
 
 const COMMAND = [
   "---",
@@ -15,7 +13,7 @@ const COMMAND = [
   "description: Implement a feature.",
   "---",
   "",
-  `Read @${PLUGIN_ROOT}/skills/commit/SKILL.md first.`,
+  `Read @${CLAUDE_ROOT_TOKEN}/skills/commit/SKILL.md first.`,
   "",
 ].join("\n");
 
@@ -74,7 +72,7 @@ describe("the commands of a flat build for OpenCode", () => {
   it("resolves a skill's link to a command to where the command lands", () => {
     const files = built("aidd-craft", {
       ...FILES,
-      "skills/commit/SKILL.md": `---\nname: commit\n---\nRun @${PLUGIN_ROOT}/commands/04_code/implement.md\n`,
+      "skills/commit/SKILL.md": `---\nname: commit\n---\nRun @${CLAUDE_ROOT_TOKEN}/commands/04_code/implement.md\n`,
     });
 
     expect(files[".opencode/skills/aidd-craft/commit/SKILL.md"]).toContain(

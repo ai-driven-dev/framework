@@ -8,7 +8,7 @@ import { nativeOf } from "../../../shared/testing/native-plugin-answers.builder.
 import { registeredTools } from "../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../shared/testing/seed-from-directory.builder.js";
 import { buildTree } from "../testing/build-tree.builder.js";
-import { translator } from "../testing/engine-kit.builder.js";
+import { CLAUDE_ROOT_TOKEN, translator } from "../testing/engine-kit.builder.js";
 import {
   distributionOf,
   FRAMEWORK_SOURCE,
@@ -46,7 +46,6 @@ const DIVERGENCES: readonly Divergence[] = [
 ];
 
 const SOURCES = FRAMEWORK_SOURCES;
-const PLUGIN_ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
 const COMPONENT_FIELDS = ["skills", "agents", "hooks", "mcpServers"];
 /** Every path the manifest lists, as a plugin-relative path. */
 const listedPaths = (json: string): string[] =>
@@ -237,7 +236,7 @@ describe("path B writes the commands of a plugin as path A does, for a tool whos
     await seedFromDirectory(tree, SOURCE, { useAbsolutePaths: true });
     tree.setFile(
       COMMAND,
-      `---\nname: aidd:04:implement\ndescription: Implement.\n---\nRead @${PLUGIN_ROOT}/skills/plan/SKILL.md\n`
+      `---\nname: aidd:04:implement\ndescription: Implement.\n---\nRead @${CLAUDE_ROOT_TOKEN}/skills/plan/SKILL.md\n`
     );
   });
 
