@@ -7,7 +7,7 @@ import {
   symlinkSync,
   writeFileSync,
 } from "node:fs";
-import { tmpdir } from "node:os";
+import os, { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { HOSTS, load } from "./testing/hooks-runtime-host.builder.js";
@@ -83,5 +83,32 @@ describe.each(HOSTS)("%s's adapter, the folder only this user may use", (host) =
     vi.spyOn(process, "getuid").mockReturnValue((process.getuid?.() ?? 0) + 1);
 
     expect(ownFolder(host)(folder, false)).toBe(false);
+  });
+});
+
+describe.each(HOSTS)("%s's adapter, the state folder of a hook", (host) => {
+  const hooksFolder = (name: string, create: boolean) => load(host).hooksFolder(name, create);
+  const uid = process.getuid?.();
+  const hooksName = uid === undefined ? "aidd-hooks" : `aidd-hooks-${uid}`;
+
+  beforeEach(() => {
+    vi.spyOn(os, "tmpdir").mockReturnValue(root);
+  });
+
+  it("is the named folder under this user's hooks folder, both created when asked to", () => {
+    expect(hooksFolder("aidd-ui", true)).toBe(join(root, hooksName, "aidd-ui"));
+    expect(statSync(join(root, hooksName, "aidd-ui")).isDirectory()).toBe(true);
+  });
+
+  it("is none when missing and not asked to create it", () => {
+    expect(hooksFolder("aidd-ui", false)).toBeNull();
+    expect(() => statSync(join(root, hooksName))).toThrow();
+  });
+
+  it("is none when the hooks folder above it is open to others", { skip: !posix }, () => {
+    mkdirSync(join(root, hooksName));
+    chmodSync(join(root, hooksName), 0o755);
+
+    expect(hooksFolder("aidd-ui", true)).toBeNull();
   });
 });

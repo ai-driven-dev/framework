@@ -6,6 +6,7 @@
  * the plugin tree. Node built-ins only; anything unreadable is no event, and prints nothing.
  */
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 
 const HOST = "claude";
@@ -150,4 +151,14 @@ function ownFolder(folder, create) {
   }
 }
 
-module.exports = { readEvent, answer, continueTurn, refuse, ownFolder };
+/** `<tmpdir>/aidd-hooks-<uid>/<name>` when it and the hooks folder above it are this user's alone, else null. */
+function hooksFolder(name, create) {
+  const hooks = path.join(
+    os.tmpdir(),
+    typeof process.getuid === "function" ? `aidd-hooks-${process.getuid()}` : "aidd-hooks"
+  );
+  const own = path.join(hooks, name);
+  return ownFolder(hooks, create) && ownFolder(own, create) ? own : null;
+}
+
+module.exports = { readEvent, answer, continueTurn, refuse, ownFolder, hooksFolder };

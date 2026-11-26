@@ -423,8 +423,7 @@ test("a copied contract made invalid is one line naming it, exit 0", () => {
   }
 });
 
-test("a state folder that is not private is neither written nor read", () => {
-  if (typeof process.getuid !== "function") return;
+test("a state folder that is not private is neither written nor read", { skip: process.platform === "win32" }, () => {
   const s = session("aidd-pm", "claude", { [STORY]: BROKEN_STORY });
   const own = path.join(s.tmp, `aidd-hooks-${process.getuid()}`);
   fs.mkdirSync(own, { mode: 0o755 });
@@ -435,8 +434,7 @@ test("a state folder that is not private is neither written nor read", () => {
   assert.deepEqual(fs.readdirSync(own), []);
 });
 
-test("a state folder that is not a folder is neither written nor replaced", () => {
-  if (typeof process.getuid !== "function") return;
+test("a state folder that is not a folder is neither written nor replaced", { skip: process.platform === "win32" }, () => {
   const s = session("aidd-pm", "claude", { [STORY]: BROKEN_STORY });
   const own = path.join(s.tmp, `aidd-hooks-${process.getuid()}`);
   fs.writeFileSync(own, "keep", { mode: 0o700 });

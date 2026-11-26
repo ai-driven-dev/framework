@@ -2,13 +2,12 @@
 // same short text to every host through its adapter; at session start it sweeps old turn state and
 // notes the errors the project holds.
 const fs = require("node:fs");
-const os = require("node:os");
 const path = require("node:path");
 const { load, relative, isUnder, UI_DIR } = require("./project.cjs");
 const { codeRoots } = require("./code.cjs");
 const { problemsOf, findingOf, isError } = require("../aidd-ui.cjs");
 const { isShellWrite, formatFindings } = require("./common-rules.cjs");
-const { readEvent, answer, continueTurn, ownFolder } = require("./host.cjs");
+const { readEvent, answer, continueTurn, hooksFolder } = require("./host.cjs");
 
 const POST_TOOL_USE = "PostToolUse";
 const SESSION_START = "SessionStart";
@@ -23,8 +22,6 @@ const ENGINE_RUN = /aidd-ui\.cjs["']?\s+(\w+)([^;&|\n]*)/g;
 const ENGINE_WRITES = new Set(["tokens", "extract", "bump", "keep"]);
 const PUBLISH_OPTIONS = /\s--breaking\b|\s--root\s+\S+/g;
 const UI_FOLDER = /aidd_docs\/ui\//;
-// The hooks' state folder: one per user where the system has users, the temp dir being per user elsewhere.
-const HOOKS_FOLDER = typeof process.getuid === "function" ? `aidd-hooks-${process.getuid()}` : "aidd-hooks";
 const PLUGIN = "aidd-ui";
 const STATE_MAX_AGE_MS = 24 * 60 * 60 * 1000; // state no Stop or session start renewed: its session ended
 // The errors the project held at the session's start or at the last turn's end, beside the turn's mark.
@@ -53,9 +50,7 @@ function marksTurn(command) {
 
 /** `<tmpdir>/aidd-hooks-<uid>/aidd-ui`, or null when either folder is not this user's alone. */
 function stateFolder() {
-  const hooks = path.join(os.tmpdir(), HOOKS_FOLDER);
-  const plugin = path.join(hooks, PLUGIN);
-  return ownFolder(hooks, true) && ownFolder(plugin, true) ? plugin : null;
+  return hooksFolder(PLUGIN, true);
 }
 
 /** The mark a turn leaves for its Stop, one file per session in the state folder; its baseline sits

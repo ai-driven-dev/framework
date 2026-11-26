@@ -90,4 +90,4 @@ function answer({ level, text, person } = {}) {
 
 // @part own-folder
 
-module.exports = { readEvent, answer, continueTurn, refuse, ownFolder };
+module.exports = { readEvent, answer, continueTurn, refuse, ownFolder, hooksFolder };

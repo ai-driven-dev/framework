@@ -84,4 +84,4 @@ function answer({ text } = {}) {
 
 // @part own-folder
 
-module.exports = { readEvent, answer, continueTurn, ownFolder };
+module.exports = { readEvent, answer, continueTurn, ownFolder, hooksFolder };
