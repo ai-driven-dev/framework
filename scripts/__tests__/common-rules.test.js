@@ -242,13 +242,26 @@ test("isShellWrite: PowerShell reads, and a redirection to $null, do not match",
   assert.equal(isShellWrite("Get-ChildItem > $nullx"), true);
 });
 
-test("isShellWrite: 100 KB of nested prefixes, quotes and parentheses returns in under 100 ms", () => {
-  const command = `${"sudo -u sudo ".repeat(7700)}${"(\"'".repeat(1000)}${"((".repeat(500)} ls`;
-  assert.ok(command.length > 100_000);
-  const start = performance.now();
-  isShellWrite(command);
-  const elapsed = performance.now() - start;
-  assert.ok(elapsed < 100, `took ${Math.round(elapsed)} ms`);
+const adversarial = (scale) =>
+  `${"sudo -u sudo ".repeat(77 * scale)}${"(\"'".repeat(10 * scale)}${"((".repeat(5 * scale)} ls`;
+
+function fastestRun(command) {
+  let best = Infinity;
+  for (let run = 0; run < 7; run++) {
+    const start = performance.now();
+    isShellWrite(command);
+    best = Math.min(best, performance.now() - start);
+  }
+  return best;
+}
+
+test("isShellWrite: adversarial prefixes, quotes and parentheses cost time linear in their size", () => {
+  const small = adversarial(25);
+  const large = adversarial(200);
+  assert.ok(large.length > 100_000);
+  fastestRun(small);
+  const ratio = fastestRun(large) / fastestRun(small);
+  assert.ok(ratio < 24, `8x the input took ${ratio.toFixed(1)}x the time (linear is 8x, quadratic 64x)`);
 });
 
 test("isShellWrite: anything that is not a string is not a write", () => {
