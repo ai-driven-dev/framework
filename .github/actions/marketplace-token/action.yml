@@ -1,0 +1,42 @@
+name: Marketplace distribution token
+description: A GitHub App token that can write to the distribution repository and nothing else.
+
+inputs:
+  app-id:
+    description: The GitHub App id.
+    required: true
+  private-key:
+    description: The GitHub App private key.
+    required: true
+
+outputs:
+  token:
+    description: The installation token, scoped to the distribution repository with contents write.
+    value: ${{ steps.app-token.outputs.token }}
+  owner:
+    description: The distribution repository owner.
+    value: ${{ steps.destination.outputs.owner }}
+  repo:
+    description: The distribution repository name.
+    value: ${{ steps.destination.outputs.repo }}
+
+runs:
+  using: composite
+  steps:
+    - name: Get distribution repository
+      id: destination
+      shell: bash
+      run: |
+        node <<'NODE' >> "$GITHUB_OUTPUT"
+        const { repository } = require('./scripts/marketplace-distribution.json');
+        const [, owner, repo] = new URL(repository).pathname.replace(/\.git$/, '').split('/');
+        console.log(`owner=${owner}\nrepo=${repo}`);
+        NODE
+    - uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
+      id: app-token
+      with:
+        app-id: ${{ inputs.app-id }}
+        private-key: ${{ inputs.private-key }}
+        owner: ${{ steps.destination.outputs.owner }}
+        repositories: ${{ steps.destination.outputs.repo }}
+        permission-contents: write

@@ -28,3 +28,21 @@ test("the dry run follows the same order", () => {
   const advanced = run.indexOf("publish-marketplace.cjs advance");
   assert.ok(tagged >= 0 && tagged < verified && verified < advanced);
 });
+
+test("the release job and the dry run mint the distribution token from the one shared action", () => {
+  const minted = (steps) => steps.filter((step) => step.uses === "./.github/actions/marketplace-token");
+  assert.equal(minted(workflow("ci.yml").jobs["publish-marketplace"].steps).length, 1);
+  assert.equal(minted(workflow("marketplace-dry-run.yml").jobs.simulate.steps).length, 1);
+});
+
+test("the dry run proves the token reaches every published branch, on a manual run only", () => {
+  const steps = workflow("marketplace-dry-run.yml").jobs.simulate.steps;
+  const probe = steps.find((step) => String(step.run ?? "").includes("ls-remote"));
+  assert.ok(probe, "a step lists the remote");
+  assert.equal(probe.if, "github.event_name == 'workflow_dispatch'");
+  assert.match(probe.run, /publishableTools\(\)/);
+  const mint = steps.find((step) => step.uses === "./.github/actions/marketplace-token");
+  assert.equal(mint.if, "github.event_name == 'workflow_dispatch'");
+  assert.ok(steps.indexOf(mint) < steps.indexOf(probe));
+  assert.ok(!/echo[^\n]*\$\{?TOKEN/.test(probe.run), "the token is never echoed");
+});

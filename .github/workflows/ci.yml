@@ -422,14 +422,6 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "22"
-      - name: Get distribution repository
-        id: destination
-        run: |
-          node <<'NODE' >> "$GITHUB_OUTPUT"
-          const { repository } = require('./scripts/marketplace-distribution.json');
-          const [, owner, repo] = new URL(repository).pathname.replace(/\.git$/, '').split('/');
-          console.log(`owner=${owner}\nrepo=${repo}`);
-          NODE
       - name: Get the release ZIP
         env:
           GH_TOKEN: ${{ github.token }}
@@ -441,14 +433,11 @@ jobs:
           gh release download "$TAG" --pattern "$NAME.zip" --dir "$RUNNER_TEMP"
           unzip -q "$RUNNER_TEMP/$NAME.zip" -d "$RUNNER_TEMP"
           printf 'MARKETPLACE_SOURCE=%s\n' "$RUNNER_TEMP/$NAME" >> "$GITHUB_ENV"
-      - uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
+      - uses: ./.github/actions/marketplace-token
         id: app-token
         with:
           app-id: ${{ secrets.AIDD_BOT_APP_ID }}
           private-key: ${{ secrets.AIDD_BOT_PRIVATE_KEY }}
-          owner: ${{ steps.destination.outputs.owner }}
-          repositories: ${{ steps.destination.outputs.repo }}
-          permission-contents: write
       - name: Tag the release
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}

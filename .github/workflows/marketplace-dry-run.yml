@@ -32,6 +32,21 @@ jobs:
           corepack enable
           pnpm --dir cli install --frozen-lockfile
           pnpm --dir cli build
+      - uses: ./.github/actions/marketplace-token
+        id: app-token
+        if: github.event_name == 'workflow_dispatch'
+        with:
+          app-id: ${{ secrets.AIDD_BOT_APP_ID }}
+          private-key: ${{ secrets.AIDD_BOT_PRIVATE_KEY }}
+      - name: Check the token reaches every published branch
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          HEADS=$(git ls-remote --heads "https://x-access-token:${TOKEN}@github.com/$(node -p "new URL(require('./scripts/marketplace-distribution.json').repository).pathname.slice(1)")")
+          for TOOL in $(node -p "require('./scripts/marketplace-tools.cjs').publishableTools().map((tool) => tool.id).join(' ')"); do
+            grep -q "refs/heads/$TOOL\$" <<<"$HEADS" || { echo "no $TOOL branch on the distribution repository"; exit 1; }
+          done
       - name: Publish and install from an isolated Git remote
         run: |
           REMOTE="$RUNNER_TEMP/marketplace.git"
