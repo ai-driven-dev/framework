@@ -26,19 +26,17 @@ What each AI tool receives from the framework.
 
 ## Hook events
 
-What a project hook can do per host, cited to each host's doc: `node plugins/aidd-context/skills/08-hook-generate/scripts/write-hook.cjs --describe`. The event map is in `cli/src/composition/tool-profiles/`.
-
-| Host | SessionStart | UserPromptSubmit | PreToolUse | PostToolUse | Stop | SessionEnd | SubagentStop | Refuse a write | Person message |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Claude Code | yes | yes | yes | yes | yes | yes | yes | yes | yes, `systemMessage` ([hooks](https://code.claude.com/docs/en/hooks)) |
-| Codex | yes | yes | yes | yes | yes | yes | yes | yes | yes, `systemMessage` as a warning ([hooks](https://learn.chatgpt.com/docs/hooks)) |
-| GitHub Copilot | yes | yes | yes | yes | yes | yes | yes | yes | documented, not wired: a `progress` line, or stderr on exit 2 ([hooks](https://docs.github.com/en/copilot/reference/hooks-configuration)) |
-| Cursor | yes | yes | yes | yes | yes | no | yes | no | no: `user_message` only on a denial ([hooks](https://cursor.com/docs/agent/hooks)) |
-| OpenCode | yes | yes | yes | yes | yes | no | no | yes | yes, a TUI toast from the server plugin, not the V2 plugin or `opencode run` (probed) |
-| Kilo Code | yes | yes | yes | yes | yes | no | no | yes | no: its TUI subscribes to the toast event, not observed (source) |
-| Antigravity CLI | yes | no | yes | yes | yes | no | no | yes | no: `injectSteps` has an `errorMessage`, not used (binary strings) |
-| Kiro | yes | yes | yes | yes | yes | no | yes | yes | no: stderr is a user warning on `AgentSpawn` only ([hooks](https://kiro.dev/docs/hooks/types/)) |
-| Kimi Code CLI | no | no | no | no | no | no | no | no | no: no hook delivered; a hook failure is the only warning ([hooks](https://www.kimi.com/code/docs/en/kimi-code-cli/customization/hooks.html)) |
+| Host | SessionStart | UserPromptSubmit | PreToolUse | PostToolUse | Stop | SessionEnd | SubagentStop | Refuse a write |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code | yes | yes | yes | yes | yes | yes | yes | yes |
+| Codex | yes | yes | yes | yes | yes | yes | yes | yes |
+| GitHub Copilot | yes | yes | yes | yes | yes | yes | yes | yes |
+| Cursor | yes | yes | yes | yes | yes | no | yes | no |
+| OpenCode | yes | yes | yes | yes | yes | no | no | yes |
+| Kilo Code | yes | yes | yes | yes | yes | no | no | yes |
+| Antigravity CLI | yes | no | yes | yes | yes | no | no | yes |
+| Kiro | yes | yes | yes | yes | yes | no | yes | yes |
+| Kimi Code CLI | no | no | no | no | no | no | no | no |
 
 yes: the CLI writes the event to the host's hook file or bridge. no: it drops the event, and a build warns where it can.
 
