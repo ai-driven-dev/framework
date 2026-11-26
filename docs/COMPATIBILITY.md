@@ -57,8 +57,7 @@ Sources: [Claude Code](https://code.claude.com/docs/en/hooks), [Codex](https://l
 
 | Limit | What it means for you |
 | --- | --- |
-| Hooks are read from a plugin's manifest, never from a project | A flat build carries none |
-| Only `SessionStart` and `UserPromptSubmit` are delivered: no tool or `Stop` payload was captured | `PreToolUse`, `PostToolUse` and `Stop` hooks do not run |
+| Only `SessionStart` and `UserPromptSubmit` are delivered | `PreToolUse`, `PostToolUse` and `Stop` hooks do not run |
 | `SessionStart` is observation-only ([hooks](https://www.kimi.com/code/docs/en/kimi-code-cli/customization/hooks.html)) | A `SessionStart` script's output does not reach the model |
 | A subagent's `tools` list keeps only tools with a name on the host | A Claude tool with no host name is dropped from its agent |
 

@@ -1,5 +1,6 @@
 import type { PluginPresence } from "../../../shared/domain/materialization/plugin-presence.js";
 import type { PluginDistribution } from "../../../shared/domain/plugin/plugin-distribution.js";
+import { hookEventsOf } from "../../../shared/domain/reading/hook-events.js";
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import {
   PLUGIN_AGENT_INPUT_EXT,
@@ -16,9 +17,7 @@ function mcpServersOf(dist: PluginDistribution): Readonly<Record<string, unknown
 /** The events the plugin's `hooks.json` declares, none when it ships no such file. */
 function hooksOf(dist: PluginDistribution): Readonly<Record<string, unknown>> {
   const file = dist.components.hooks.find((hooks) => hooks.relativePath === PLUGIN_HOOKS_RELATIVE);
-  return file === undefined
-    ? {}
-    : (asPlainObject(asPlainObject(JSON.parse(file.content))?.hooks) ?? {});
+  return file === undefined ? {} : hookEventsOf(file.content);
 }
 
 /** What a plugin's canon holds, for the manifest a tool synthesizes from it. */
@@ -37,7 +36,9 @@ export function presenceOf(dist: PluginDistribution): PluginPresence {
     agentsList,
     skillsList: [...skillNames].sort(),
     hasHooksJson: dist.components.hooks.some((file) => file.relativePath === PLUGIN_HOOKS_RELATIVE),
-    hooks: hooksOf(dist),
+    get hooks() {
+      return hooksOf(dist);
+    },
     hasMcpJson: dist.components.mcp.length > 0,
     mcpServers: mcpServersOf(dist),
   };

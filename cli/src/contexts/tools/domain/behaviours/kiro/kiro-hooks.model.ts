@@ -13,6 +13,7 @@
 
 import type { ShippedHooks } from "../../../../../shared/domain/materialization/build-contract.js";
 import { genericFlatHooksScriptPath } from "../../../../../shared/domain/materialization/flat-paths.js";
+import { hookEventsOf } from "../../../../../shared/domain/reading/hook-events.js";
 import { asPlainObject } from "../../../../../shared/domain/reading/plain-object.js";
 import type { ProjectHooksFormat } from "../../../contract/tool-vocabulary.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
@@ -150,9 +151,7 @@ export function mergeKiroHooks(
   const kept = hooksOf(existingJson).filter((hook) => !runs(hooks, hook, shipped.plugin));
   const added: KiroHook[] = [];
   const warnings: string[] = [];
-  for (const [event, groups] of matcherGroupsByEvent(
-    asPlainObject(JSON.parse(shipped.json))?.hooks
-  )) {
+  for (const [event, groups] of matcherGroupsByEvent(hookEventsOf(shipped.json))) {
     const trigger = Object.hasOwn(hooks.eventMap, event) ? hooks.eventMap[event] : undefined;
     if (trigger === undefined) {
       warnings.push(unmappedEventWarning(event));

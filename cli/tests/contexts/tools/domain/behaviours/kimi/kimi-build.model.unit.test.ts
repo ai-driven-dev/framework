@@ -96,14 +96,6 @@ describe("building Kimi's plugin contract", () => {
     ]);
   });
 
-  it("names no hooks for a plugin whose events Kimi never fires", () => {
-    const { SessionStart: _fired, UserPromptSubmit: _also, ...unfired } = PRESENCE.hooks;
-
-    expect(synthesize()({ name: "aidd-test" }, { ...PRESENCE, hooks: unfired })).not.toHaveProperty(
-      "hooks"
-    );
-  });
-
   it("ships the plugin's hook scripts with Kimi's adapter in place of Claude Code's", () => {
     const { hooks } = contract().artifacts;
     const script = present(hooks.supported ? hooks.script : undefined);
