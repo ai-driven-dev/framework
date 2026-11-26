@@ -13,10 +13,12 @@ import type {
   PluginTranslationResult,
 } from "../../../ports/plugin/plugin-translation.js";
 import type { AddPluginRequest } from "../add-plugin-request.js";
-import { materializeRequestedMcp } from "../flat-mcp-materializer.js";
+import { materializeRequestedMcp, placedRulesGlob } from "../flat-mcp-materializer.js";
+import { syncPlacedRules } from "../listed-rules/list-placed-rules.js";
 import { deliversHooksToProject } from "../plugin-placement.js";
 import type { ProjectHooksMaterializer } from "../project-hooks-materializer.use-case.js";
 import {
+  pluginRootIn,
   readBuiltFlatFiles,
   readBuiltUserPluginFiles,
   withoutDroppedFiles,
@@ -60,9 +62,11 @@ export async function readTranslatedBuiltTree(request: AddPluginRequest, read: B
     tool: request.tool,
   });
   const { files, hooks } = await readBuiltContent(request, translated, read);
+  const rulesGlob = placedRulesGlob(request, files);
+  await syncPlacedRules(deps.fs, request, files);
   const mcp = await materializeRequestedMcp(deps.fs, request, {
     declaration: translated.installedMcp,
-    rulesGlob: null,
+    rulesGlob,
   });
   return { files, hooks, mcp };
 }
@@ -90,12 +94,13 @@ async function readBuiltContent(
   const name = dist.manifest.name;
   const platform = deps.platform;
   const extraPaths = takesHooks ? new Set<string>() : translated.flatHookPaths;
+  const root = mode === "flat" ? `${name}/` : pluginRootIn(tool, name);
   const builtRead =
     mode === "flat"
       ? await readBuiltFlatFiles(deps.fs, { builtDir, platform }, { name, tool, extraPaths })
-      : await readBuiltUserPluginFiles(deps.fs, { builtDir, name, platform });
-  const files = withoutDroppedFiles(builtRead, name, translated.dropsBuiltFile);
-  if (!takesHooks) return { files, hooks: { skipped: [] } };
+      : await readBuiltUserPluginFiles(deps.fs, { builtDir, name, root, platform });
+  const files = withoutDroppedFiles(builtRead, root, translated.dropsBuiltFile);
+  if (!takesHooks && previousProjectHooks === undefined) return { files, hooks: { skipped: [] } };
   const hooks = await deps.projectHooks.execute({
     dist,
     hooks: translated.projectHooks,

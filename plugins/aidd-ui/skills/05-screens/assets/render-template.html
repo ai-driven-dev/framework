@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="{{BCP 47 language}}" dir="{{ltr or rtl}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{screen id}}</title>
+<link rel="stylesheet" href="../tokens.css">
+<style>
+body {
+  background: var(--{{surface token CSS name}});
+}
+.{{screen id}} {
+  padding-block: var(--{{spacing token CSS name}});
+  color: var(--{{text token CSS name}});
+  background: var(--{{surface token CSS name}});
+}
+.{{screen id}} button {
+  min-height: var(--{{control size token CSS name}});
+  color: var(--{{text on action token CSS name}});
+  background: var(--{{action token CSS name}});
+}
+</style>
+</head>
+<body>
+<section class="{{screen id}}" data-state="{{first state}}">
+<div data-zone="{{first zone}}">{{first zone}}</div>
+<div data-zone="{{next zone}}"><button>{{main action}}</button></div>
+</section>
+<section class="{{screen id}}" data-state="{{next state}}">
+<div data-zone="{{first zone}}">{{first zone}}</div>
+<div data-zone="{{next zone}}"><button>{{main action}}</button></div>
+</section>
+</body>
+</html>
+
+<!--
+- Replace every `{{...}}` and delete every comment.
+- Repeat the section for each state.
+- Show each component the screen uses.
+-->

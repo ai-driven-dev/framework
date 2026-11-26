@@ -1,19 +1,26 @@
 # Engine
 
-| Install | Path |
-| --- | --- |
-| plugin | `../../hooks/aidd-ui.cjs` from this skill's folder |
-| flat | `hooks/aidd-ui/aidd-ui.cjs` under the tool's folder: `.claude`, `.github`, `.kilo`, `.codex`, `.cursor`, `.opencode`, `.agents` |
-
-`<engine>` is that path, run with `node`.
+`<engine>` is `scripts/aidd-ui/aidd-ui.cjs` in this skill's folder, the one holding its `SKILL.md`, named by its full path and run with `node`.
 
 `node <engine> help <command>` says what each does.
 
+## Run
+
+- Run the engine from the project root, and never read its source.
+- After each write, fix what the hook or the validation reports.
+- Never bypass a hook.
+- Record the history without asking, and change only what was named.
+
+## Steps
+
 | Step | Command |
 | --- | --- |
-| propose 4, compare the set | `node <engine> compare brand` |
-| choose 4, keep the chosen variant | `node <engine> keep brand <variant>` |
+| propose 5, write the showcase | `node <engine> showcase --lang <code>` |
+| choose 4, keep the chosen variant; the engine records the others in `choices.md` | `node <engine> keep brand <variant>` |
+| choose 4, raise the brand created | `node <engine> bump --task <task folder> --created brand` |
+| choose 4, raise the brand changed | `node <engine> bump --task <task folder> --change "<one line>" brand` |
 | conclude 1 and 3, validate | `node <engine> validate` |
+| conclude 5, write the showcase | `node <engine> showcase --lang <code>` |
 
 ## Owed
 

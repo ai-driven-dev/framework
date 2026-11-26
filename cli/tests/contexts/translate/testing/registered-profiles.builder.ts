@@ -6,6 +6,7 @@ export const claude = registeredTools().aiProfile(TOOL.claude);
 export const codex = registeredTools().aiProfile(TOOL.codex);
 export const copilot = registeredTools().aiProfile(TOOL.copilot);
 export const cursor = registeredTools().aiProfile(TOOL.cursor);
+export const kiro = registeredTools().aiProfile(TOOL.kiro);
 export const kilo = registeredTools().aiProfile(TOOL.kilo);
 export const opencode = registeredTools().aiProfile(TOOL.opencode);
 export const antigravity = registeredTools().aiProfile(TOOL.antigravity);

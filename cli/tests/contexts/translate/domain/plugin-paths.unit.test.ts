@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  basename,
   isComponentFile,
   isProse,
   parentDirOf,
@@ -15,7 +14,6 @@ describe("plugin paths", () => {
   it("names the directory and the file of a path", () => {
     expect(parentDirOf("a/b/c.md")).toBe("a/b");
     expect(parentDirOf("c.md")).toBe("");
-    expect(basename("a/b/c.md")).toBe("c.md");
   });
 
   it("calls only markdown prose", () => {

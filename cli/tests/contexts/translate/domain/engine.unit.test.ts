@@ -244,16 +244,20 @@ describe("the engine translate()", () => {
       expect(pathsFor(opencode)).toContain(".opencode/skills/sample-plugin/hello/SKILL.md");
     });
 
-    it("emits rules under .opencode/rules/sample-plugin/", () => {
-      expect(pathsFor(opencode)).toContain(".opencode/rules/sample-plugin/standards.md");
+    it("emits a rule at the top of .opencode/rules/, named by its plugin", () => {
+      expect(pathsFor(opencode)).toContain(".opencode/rules/sample-plugin-standards.md");
     });
   });
 
-  describe("antigravity target (flat mode, one-level skills)", () => {
-    it("emits a skill as .agents/skills/<plugin>-<skill>/, never nested under the plugin", () => {
+  describe("antigravity target (a plugin directory of its own)", () => {
+    it("emits each component under .agents/plugins/<plugin>/, its hooks and MCP servers at the root", () => {
       expect(pathsFor(antigravity)).toEqual([
-        ".agents/agents/sample-plugin-reviewer/agent.md",
-        ".agents/skills/sample-plugin-hello/SKILL.md",
+        ".agents/plugins/sample-plugin/agents/reviewer.md",
+        ".agents/plugins/sample-plugin/hooks.json",
+        ".agents/plugins/sample-plugin/mcp_config.json",
+        ".agents/plugins/sample-plugin/plugin.json",
+        ".agents/plugins/sample-plugin/rules/standards.md",
+        ".agents/plugins/sample-plugin/skills/hello/SKILL.md",
       ]);
     });
   });

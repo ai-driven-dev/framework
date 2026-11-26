@@ -1,0 +1,4 @@
+/** Shows the person `person` alone, as the host's warning, and tells the model nothing. */
+function showPerson(person) {
+  if (hasPerson(person)) print({ systemMessage: person });
+}

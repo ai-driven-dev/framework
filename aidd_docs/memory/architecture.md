@@ -8,7 +8,7 @@ CLI internals: [`internal/cli/architecture.md`](internal/cli/architecture.md). P
 | --- | --- |
 | Product | markdown skills, agents, rules and templates; an LLM interprets them, no runtime |
 | Delivery | Node and pnpm; `cli/` is the `aidd` binary, `kanban/` a private package |
-| Manifest | `.claude-plugin/marketplace.json`; plugin versions are release-please's (`internal/deployment.md`) |
+| Manifest | `.claude-plugin/marketplace.json`; plugin versions are release-please's (`deployment.md`) |
 
 ## How it fits together
 
@@ -38,6 +38,6 @@ flowchart LR
 
 ## Gotchas
 
-- Off the curated install path: `aidd-ui` (alpha), `aidd-telemetry` (beta, opt-in), `aidd-qa` (unproven outside this repository).
+- Off the curated install path: `aidd-ui` (beta), `aidd-telemetry` (beta, opt-in), `aidd-qa` (unproven outside this repository).
 - A skill never links outside itself: the tree ships flat and as a marketplace, and no relative path survives both.
 - Bundled hooks run Node: without `node` on `PATH`, no memory refresh and no task question.

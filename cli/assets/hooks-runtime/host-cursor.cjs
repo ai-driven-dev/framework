@@ -6,6 +6,7 @@
  * ships Claude Code's. Node built-ins only; anything unreadable is no event, and prints nothing.
  */
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 
 const HOST = "cursor";
@@ -92,4 +93,35 @@ function answer({ text } = {}) {
   print({ additional_context: text });
 }
 
-module.exports = { readEvent, answer, continueTurn };
+/** Whether `folder` is a folder of this user's alone, created when `create` and missing; its parent must exist. */
+function ownFolder(folder, create) {
+  if (create) {
+    try {
+      fs.mkdirSync(folder, { mode: 0o700 });
+    } catch (error) {
+      if (error.code !== "EEXIST") return false;
+    }
+  }
+  try {
+    const stat = fs.lstatSync(folder);
+    if (!stat.isDirectory()) return false;
+    return (
+      typeof process.getuid !== "function" ||
+      (stat.uid === process.getuid() && (stat.mode & 0o077) === 0)
+    );
+  } catch {
+    return false;
+  }
+}
+
+/** `<tmpdir>/aidd-hooks-<uid>/<name>` when it and the hooks folder above it are this user's alone, else null. */
+function hooksFolder(name, create) {
+  const hooks = path.join(
+    os.tmpdir(),
+    typeof process.getuid === "function" ? `aidd-hooks-${process.getuid()}` : "aidd-hooks"
+  );
+  const own = path.join(hooks, name);
+  return ownFolder(hooks, create) && ownFolder(own, create) ? own : null;
+}
+
+module.exports = { readEvent, answer, continueTurn, ownFolder, hooksFolder };

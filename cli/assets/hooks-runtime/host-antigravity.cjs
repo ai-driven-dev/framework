@@ -6,13 +6,15 @@
  * ships Claude Code's. Node built-ins only; anything unreadable is no event, and prints nothing.
  */
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 
 const HOST = "antigravity";
-// PreToolUse stays unmapped: no framework script acts before a tool.
-const EVENTS = new Set(["SessionStart", "PostToolUse", "Stop"]);
+const EVENTS = new Set(["SessionStart", "PreToolUse", "PostToolUse", "Stop"]);
 // `agy` names its tools in snake case, and their arguments in Pascal case.
 const WRITES = new Set(["write_file"]);
+// An edit names the text it replaces and the text that replaces it, never the whole file.
+const EDITS = new Set(["edit_file"]);
 const SHELLS = new Set(["run_command"]);
 
 /** The event `readEvent` last returned: an answer is printed in its terms. */
@@ -26,17 +28,29 @@ function readPayload() {
   }
 }
 
-/** The session's folder is the first workspace path: `agy` runs a hook from its `.agents`. */
+/** The session's folder is the first workspace path: `agy` runs a hook from its plugin's root. */
 function folderOf(raw) {
   const [root] = Array.isArray(raw.workspacePaths) ? raw.workspacePaths : [];
   return typeof root === "string" && root !== "" ? root : process.cwd();
 }
 
 function writtenFiles(tool, args, cwd) {
-  if (!WRITES.has(tool) || typeof args?.Path !== "string") return [];
+  if (typeof args?.Path !== "string") return [];
   const file = { path: path.resolve(cwd, args.Path) };
+  if (EDITS.has(tool)) {
+    if (typeof args.Replacement === "string") file.written = args.Replacement;
+    if (typeof args.Target === "string") file.replaced = args.Target;
+    return [file];
+  }
+  if (!WRITES.has(tool)) return [];
   if (typeof args.Content === "string") file.content = file.written = args.Content;
   return [file];
+}
+
+/** Before a tool runs nothing is written yet: only where it is about to write is known, so a file
+ * carries its path and no text. */
+function filesOf(event, files) {
+  return event === "PreToolUse" ? files.map(({ path }) => ({ path })) : files;
 }
 
 function readEvent() {
@@ -46,12 +60,12 @@ function readEvent() {
   const event = EVENTS.has(raw.hookEventName) ? raw.hookEventName : undefined;
   if (event === undefined || typeof raw.conversationId !== "string") return undefined;
   const cwd = folderOf(raw);
-  const tool = event === "PostToolUse" ? raw.toolCall?.name : undefined;
+  const tool = event === "PostToolUse" || event === "PreToolUse" ? raw.toolCall?.name : undefined;
   const args = raw.toolCall?.args;
   current = {
     host: HOST,
     event,
-    files: writtenFiles(tool, args, cwd),
+    files: filesOf(event, writtenFiles(tool, args, cwd)),
     ...(SHELLS.has(tool) && typeof args?.CommandLine === "string"
       ? { command: args.CommandLine }
       : {}),
@@ -76,10 +90,53 @@ function continueTurn(text) {
   print({ decision: "continue", reason: text });
 }
 
-// `agy` takes no context from a SessionStart or a PostToolUse answer (an injection goes through
-// PostInvocation, which is not relayed), so only a Stop answers.
+/** A Stop answer continues the turn. A SessionStart answer is an injected system message, which
+ * `agy` hands the model before its first call. A PostToolUse answer is never carried: `agy` takes
+ * no context from it. */
 function answer({ text } = {}) {
-  if (current?.event === "Stop") continueTurn(text);
+  if (current?.event === "Stop") return continueTurn(text);
+  if (current?.event !== "SessionStart" || typeof text !== "string" || text === "") return;
+  print({ injectSteps: [{ systemMessage: { systemMessage: text } }] });
 }
 
-module.exports = { readEvent, answer, continueTurn };
+/** Refuses the tool call about to run, with `reason` as what the model is told. Does nothing at any
+ * other event: a hook that refuses is written once and is harmless where nothing can be refused.
+ * `agy` runs the tool on `allow` and on no answer, and denies on an empty object, so only an
+ * explicit deny refuses. */
+function refuse(reason) {
+  if (current?.event !== "PreToolUse" || typeof reason !== "string" || reason === "") return;
+  print({ decision: "deny", reason });
+}
+
+/** Whether `folder` is a folder of this user's alone, created when `create` and missing; its parent must exist. */
+function ownFolder(folder, create) {
+  if (create) {
+    try {
+      fs.mkdirSync(folder, { mode: 0o700 });
+    } catch (error) {
+      if (error.code !== "EEXIST") return false;
+    }
+  }
+  try {
+    const stat = fs.lstatSync(folder);
+    if (!stat.isDirectory()) return false;
+    return (
+      typeof process.getuid !== "function" ||
+      (stat.uid === process.getuid() && (stat.mode & 0o077) === 0)
+    );
+  } catch {
+    return false;
+  }
+}
+
+/** `<tmpdir>/aidd-hooks-<uid>/<name>` when it and the hooks folder above it are this user's alone, else null. */
+function hooksFolder(name, create) {
+  const hooks = path.join(
+    os.tmpdir(),
+    typeof process.getuid === "function" ? `aidd-hooks-${process.getuid()}` : "aidd-hooks"
+  );
+  const own = path.join(hooks, name);
+  return ownFolder(hooks, create) && ownFolder(own, create) ? own : null;
+}
+
+module.exports = { readEvent, answer, continueTurn, refuse, ownFolder, hooksFolder };

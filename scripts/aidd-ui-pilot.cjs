@@ -22,8 +22,8 @@
  * Usage: node scripts/aidd-ui-pilot.cjs --gouvernail <checkout> --kairos <checkout> [--only blank|gouvernail|kairos]
  *
  * Exit codes:
- *   0  no pilot has an error, every step has its wireframe, the code is untouched and each step stayed in its files
- *   1  any error, a missing wireframe, changed code, or a step outside its files
+ *   0  no pilot has an error, every step has its wireframe, the code is untouched, each step stayed in its files, the showcase is reachable and stable, and no review id holds a date
+ *   1  any error, a missing wireframe, changed code, a step outside its files, an unreached or unstable showcase, or a dated review id
  *   2  a step could not run
  */
 const { spawnSync } = require("node:child_process");
@@ -35,8 +35,11 @@ const path = require("node:path");
 const PLUGIN = path.join(__dirname, "..", "plugins", "aidd-ui");
 const ENGINE = path.join(PLUGIN, "hooks", "aidd-ui.cjs");
 const { load } = require(path.join(PLUGIN, "hooks", "lib", "project.cjs"));
+const { catalog } = require(path.join(PLUGIN, "hooks", "lib", "tokens.cjs"));
 const { table } = require(path.join(PLUGIN, "hooks", "lib", "markdown.cjs"));
 const { STEPS_SECTION } = require(path.join(PLUGIN, "hooks", "lib", "model.cjs"));
+const { isReviewed } = require(path.join(PLUGIN, "hooks", "lib", "history.cjs"));
+const { cleanEnv } = require("./lib/hook-sandbox.cjs");
 
 const UI_DIR = "aidd_docs/ui";
 const GIT_DIR = ".git";
@@ -45,9 +48,6 @@ const RULE_ID = /^[A-Z]\d+$/;
 const STEP_TIMEOUT_MS = 40 * 60_000;
 const ALLOWED_TOOLS = "Read,Write,Edit,Glob,Grep,Skill,Bash(node:*),Bash(ls:*),Bash(git ls-files:*),Bash(rm aidd_docs/ui/*)";
 const GIT = ["-c", "user.name=aidd-ui-pilot", "-c", "user.email=pilot@localhost", "-c", "core.hooksPath=/dev/null"];
-
-/** The environment without a git variable: a hook sets GIT_DIR and GIT_INDEX_FILE, which would aim git at the caller's repository. */
-const cleanEnv = () => Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith("GIT_")));
 
 const sha256 = (file) => crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
 
@@ -83,13 +83,18 @@ const OWNED = {
   "02-brand": ["brand.md"],
   "03-foundations": ["system.md", "tokens.json", "themes/", "platforms/", "breakpoints/"],
   "04-components": ["components/", "assets/"],
+  "05-screens": ["screens/"],
+  "06-review": ["reviews/"],
 };
-// What the engine writes for each skill's step. The history is the engine's, and a model could write it by hand: the snapshot cannot tell the two apart.
+// What the engine writes for each skill's step; a folder ends with `/`. The history is the engine's, and a model could write it by hand: the snapshot cannot tell the two apart.
+// Every step ends by writing the showcase. The review's publication rewrites the status of the records it publishes: the brand, the system, journeys, wireframes and elements. The brand step's first history row is the engine's too, and keeping a variant records the others in choices.md.
 const ENGINE_FILES = {
-  "01-journeys": ["history.md"],
-  "02-brand": ["drafts/.gitignore"],
-  "03-foundations": ["history.md", "code-debt.json", "tokens.css", "tokens.resolver.json"],
-  "04-components": ["history.md", "tokens.css", "tokens.resolver.json"],
+  "01-journeys": ["history.md", "showcase/"],
+  "02-brand": ["history.md", "choices.md", "drafts/.gitignore", "showcase/"],
+  "03-foundations": ["history.md", "choices.md", "code-debt.json", "tokens.css", "tokens.resolver.json", "showcase/"],
+  "04-components": ["history.md", "choices.md", "tokens.css", "tokens.resolver.json", "showcase/"],
+  "05-screens": ["history.md", "choices.md", "drafts/.gitignore", "showcase/"],
+  "06-review": ["history.md", "brand.md", "system.md", "journeys/", "components/", "screens/", "wireframes/", "assets/", "showcase/"],
 };
 
 const isIn = (file, entries) => entries.some((entry) => (entry.endsWith("/") ? file.startsWith(`${UI_DIR}/${entry}`) : file === `${UI_DIR}/${entry}`));
@@ -144,18 +149,93 @@ function stepsWithoutWireframe(root) {
   return steps.length ? steps.filter((step) => !wireframes.has(step.screen)) : null;
 }
 
+/** Each wireframe no screen names by its `wireframe` key, or null when nothing loads or no wireframe exists. */
+function wireframesWithoutScreen(root) {
+  const project = load(root);
+  if (project === null) return null;
+  const ofKind = (kind) => project.records.filter((record) => record.frontMatter.kind === kind);
+  const dressed = new Set(ofKind("screen").map((record) => record.frontMatter.wireframe));
+  const wireframes = ofKind("wireframe").map((record) => record.frontMatter.id);
+  return wireframes.length ? wireframes.filter((id) => !dressed.has(id)) : null;
+}
+
+const kindsOf = (project, kind) => project.records.filter((record) => record.frontMatter.kind === kind);
+const SHOWCASE_PATH = path.join(UI_DIR, "showcase");
+const DATED = /\d{4}-\d{2}-\d{2}|\d{8}/;
+
+/** How many of the reviewable records that hold states are validated, `{ validated, total }`; zero when nothing loads. */
+function publishedOf(root) {
+  const project = load(root);
+  const held = project === null ? [] : project.records.filter((record) => isReviewed(record) && (record.frontMatter.states ?? []).length);
+  return { validated: held.filter((record) => record.frontMatter.status === "validated").length, total: held.length };
+}
+
+/** How many screens with a route hold a `code` link, `{ coded, total }`; zero when nothing loads. */
+function codedOf(root) {
+  const project = load(root);
+  const routed = project === null ? [] : kindsOf(project, "screen").filter((record) => record.frontMatter.route);
+  return { coded: routed.filter((record) => (record.frontMatter.code ?? []).length).length, total: routed.length };
+}
+
+/** How many screens with a render cite a `fontFamily` and a `dimension` token, `{ dressed, total }`; zero when nothing loads. */
+function dressedOf(root) {
+  const project = load(root);
+  const screens = project === null ? [] : kindsOf(project, "screen").filter((record) => project.renders.includes(record.file.replace(/\.md$/, ".html")));
+  const types = project === null ? new Map() : new Map(catalog(project).map((entry) => [entry.name, entry.type]));
+  const cited = (record) => new Set((record.frontMatter.tokens ?? []).map((name) => types.get(name)));
+  return { dressed: screens.filter((record) => cited(record).has("fontFamily") && cited(record).has("dimension")).length, total: screens.length };
+}
+
+/** The ids of the reviews named with a date. */
+function datedReviews(root) {
+  const project = load(root);
+  return project === null ? [] : kindsOf(project, "review").map((record) => record.frontMatter.id).filter((id) => DATED.test(id));
+}
+
+/** The pages under `showcase/` the index does not link, sorted; the index itself when there is no showcase. */
+function unreachedOf(root) {
+  const dir = path.join(root, SHOWCASE_PATH);
+  if (!fs.existsSync(dir)) return ["index.html"];
+  const pages = fs.readdirSync(dir).filter((name) => name.endsWith(".html") && name !== "index.html");
+  const index = fs.existsSync(path.join(dir, "index.html")) ? fs.readFileSync(path.join(dir, "index.html"), "utf8") : "";
+  const linked = new Set([...index.matchAll(/href="([^"#]+\.html)"/g)].map((match) => match[1]));
+  return pages.filter((name) => !linked.has(name)).sort();
+}
+
+/** Writes the showcase of `root` with the engine, in `lang`. */
+function regenerate(root, lang = "en") {
+  const run = spawnSync(process.execPath, [ENGINE, "showcase", "--root", root, "--lang", lang], { encoding: "utf8" });
+  if (run.status !== 0) throw new Error(`showcase failed in the copy: ${run.stdout}${run.stderr}`);
+}
+
+/** Whether two generations, in the language of the index already written, leave the same pages. `run` is how one is made. */
+function stableOf(root, run = regenerate) {
+  const index = path.join(root, SHOWCASE_PATH, "index.html");
+  const lang = (fs.existsSync(index) && fs.readFileSync(index, "utf8").match(/<html lang="([^"]*)"/)?.[1]) || "en";
+  run(root, lang);
+  const first = snapshot(path.join(root, SHOWCASE_PATH));
+  run(root, lang);
+  return JSON.stringify(snapshot(path.join(root, SHOWCASE_PATH))) === JSON.stringify(first);
+}
+
 /** One pilot's result on one line. */
-function reportLine(pilot, { errors, warnings, missing, changed, broken }) {
+function reportLine(pilot, { errors, warnings, missing, unscreened, changed, broken, published, coded, dressed, unreached, stable, dated }) {
   const ids = (list) => (list.length ? list.join(",") : "none");
   const wireframes = missing === null ? "no journey" : missing.length ? `missing ${missing.length}` : "all";
+  const screens = unscreened === null ? "no wireframe" : unscreened.length ? `missing ${unscreened.length}` : "all";
   const code = changed.length ? `changed ${changed.length}` : "untouched";
   const steps = broken.length ? `broken ${broken.length}` : "ok";
-  return `${pilot} errors ${ids(errors)} warnings ${ids(warnings)} wireframes ${wireframes} code ${code} steps ${steps}`;
+  const reach = unreached.length ? `unreached ${unreached.length}` : "reachable";
+  const reviews = dated.length ? `dated ${dated.length}` : "clean";
+  return `${pilot} errors ${ids(errors)} warnings ${ids(warnings)} wireframes ${wireframes} screens ${screens} code ${code} steps ${steps} published ${published.validated}/${published.total} coded ${coded.coded}/${coded.total} dressed ${dressed.dressed}/${dressed.total} showcase ${reach} ${stable ? "stable" : "unstable"} review ids ${reviews}`;
 }
 
 // What each pilot asks, one part per skill of the chain.
 const NON_INTERACTIVE = (part) =>
   `You run non-interactively: whenever the skill would ask the user, take the answer given, or the most reasonable one, state each choice in your final reply, and go on; write no file the skill does not name; the user agrees with what you propose. Never install anything, never run the project's own scripts or package manager; read its files only, and run only node with the aidd-ui engine. Task folder: aidd_docs/tasks/${part}.`;
+
+// The person's paste, stated outright: the pilot cannot answer. A screen coded at its version is refused by the publication for want of a capture, which is expected: no capture is asked.
+const REVIEW = "Review the proposed records. My verdicts, pasted from the home page: All OK for every record listed, no comment, no capture. Language: the one in memory, else en.";
 
 const REQUESTS = {
   blank: {
@@ -165,13 +245,17 @@ const REQUESTS = {
       'Lay the design system of this breathing-exercise app from scratch: no UI code exists. Its journeys and wireframes are already in aidd_docs/ui/. Propose three directions for it, compare them and keep the one that fits. Brand: "Breath", calm, soft, reassuring; for Lea, 34, an office worker new to breathwork who wants to calm down in two minutes between meetings; light theme only; English.',
     foundations: "Write the tokens, for web and mobile.",
     components: "Write the components the wireframes expect.",
+    screens: "Write a screen for each wireframe, with at least two variants of each.",
+    review: REVIEW,
   },
   real: {
     journeys:
       "Map two journeys of this existing app from its real screens, for its main user, with a wireframe per step. Persona: take one a brief under aidd_docs describes, else the app's main user as its README describes.",
     brand: "Lay the design system of this existing app from its code. Write its brand from its README, package manifest and visible copy.",
     foundations: "Write its tokens from its code.",
-    components: "Write the components its screens use, at most eight, the ones the wireframes expect first.",
+    components: "Write the components its screens use, and every one the wireframes expect.",
+    screens: "Write a screen for each wireframe, with at least two variants of each.",
+    review: REVIEW,
   },
 };
 
@@ -181,6 +265,8 @@ const CHAIN = [
   ["02-brand", "brand"],
   ["03-foundations", "foundations"],
   ["04-components", "components"],
+  ["05-screens", "screens"],
+  ["06-review", "review"],
 ];
 
 /** The request of one step: its part, then the non-interactive suffix. */
@@ -271,10 +357,10 @@ function main(argv = process.argv.slice(2), steps = { copyProject, runStep }) {
         broken.push(...stepBreaks(skill, last, now));
         last = now;
       }
-      const result = { ...verdict(dir), missing: stepsWithoutWireframe(dir), changed: changedOutsideUi(before, last), broken };
+      const result = { ...verdict(dir), missing: stepsWithoutWireframe(dir), unscreened: wireframesWithoutScreen(dir), changed: changedOutsideUi(before, last), broken, stable: stableOf(dir), published: publishedOf(dir), coded: codedOf(dir), dressed: dressedOf(dir), unreached: unreachedOf(dir), dated: datedReviews(dir) };
       console.log(reportLine(pilot, result));
       for (const line of broken) console.log(line);
-      if (result.errors.length || result.missing === null || result.missing.length || result.changed.length || broken.length) worst = 1;
+      if (result.errors.length || result.missing === null || result.missing.length || result.unscreened === null || result.unscreened.length || result.changed.length || broken.length || !result.stable || result.unreached.length || result.dated.length) worst = 1;
     }
     return worst;
   } catch (error) {
@@ -285,4 +371,4 @@ function main(argv = process.argv.slice(2), steps = { copyProject, runStep }) {
 
 if (require.main === module) process.exit(main());
 
-module.exports = { copyProject, snapshot, changedOutsideUi, stepBreaks, verdict, stepsWithoutWireframe, reportLine, requestOf, CHAIN, REQUESTS, OWNED, ENGINE_FILES, chatsOf, pilotsOf, main, stepArgs, traceOf, runStep };
+module.exports = { copyProject, snapshot, changedOutsideUi, stepBreaks, verdict, stepsWithoutWireframe, wireframesWithoutScreen, publishedOf, codedOf, dressedOf, unreachedOf, stableOf, datedReviews, regenerate, reportLine, requestOf, CHAIN, REQUESTS, OWNED, ENGINE_FILES, chatsOf, pilotsOf, main, stepArgs, traceOf, runStep };

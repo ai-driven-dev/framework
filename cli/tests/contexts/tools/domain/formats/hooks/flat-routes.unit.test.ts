@@ -21,7 +21,10 @@ function supported(artifact: ArtifactContract): Extract<ArtifactContract, { supp
   return artifact;
 }
 
-const bridge = (raw: string, plugin: string) => `${plugin}:${raw}`;
+const bridge = (raw: string, plugin: string) => ({
+  content: `${plugin}:${raw}`,
+  unrelayed: ["Other"],
+});
 
 const FLAT_FILE = {
   wrapper: { version: 1 },
@@ -143,7 +146,7 @@ describe("a flat build's hooks artifact", () => {
     } as const;
 
     // @ts-expect-error a hooks file is merged for a tool, never fed to a bridge
-    expect(() => flatHooksArtifact(routed(declaresFile), { bridge })).not.toThrow();
+    expect(() => flatHooksArtifact(routed(declaresFile), { tool: "t", bridge })).not.toThrow();
   });
 
   it("writes no hooks file for a tool that reads none", () => {
@@ -171,13 +174,21 @@ describe("a flat build's hooks artifact", () => {
 
   it("replaces the hooks file with a generated bridge for a loader", () => {
     const artifact = supported(
-      flatHooksArtifact(routed({ flat: { scriptsDir: ".tool/hooks/", loaderEntry: LOADER } }), {
-        bridge,
-      })
+      flatHooksArtifact(
+        routed({
+          flat: { scriptsDir: ".tool/hooks/", loaderEntry: LOADER },
+          eventMap: { Start: "start", Stop: "stop" },
+        }),
+        { tool: TOOL.cursor, bridge }
+      )
     );
 
     expect(artifact.skipHooksJson).toBe(true);
-    expect(artifact.hooksBridge?.generate("{}", "aidd-dev")).toBe("aidd-dev:{}");
+    expect(artifact.hooksBridge?.generate("{}", "aidd-dev")).toStrictEqual({
+      content: "aidd-dev:{}",
+      warnings: ["unmapped event 'Other' skipped"],
+    });
+    expect(artifact.hooksBridge?.warning("why")).toBe(`${TOOL.cursor}: why`);
     expect(artifact.hooksBridge?.dir).toBe(".tool/plugin/");
     expect(artifact.hooksBridge?.skipIfSourceHas).toBe("tool-plugin.js");
   });
@@ -196,7 +207,7 @@ describe("a flat build's hooks artifact", () => {
     const noLoader = { flat: { scriptsDir: ".tool/hooks/" } } as const;
 
     // @ts-expect-error a bridge is written beside a loader's module, and there is none
-    expect(() => flatHooksArtifact(routed(noLoader), { bridge })).not.toThrow();
+    expect(() => flatHooksArtifact(routed(noLoader), { tool: "t", bridge })).not.toThrow();
   });
 });
 

@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { rulesGlobOf } from "../../../../shared/domain/materialization/flat-paths.js";
 import type {
   PluginTranslationSkip,
   ReadonlySkipList,
@@ -57,7 +58,7 @@ export async function materializeFlatMcp(materialization: {
     fs.fileExists(join(projectRoot, relativePath))
   );
   const outputPath = join(projectRoot, outputRelPath);
-  const existingContent = await readExistingJson(fs, outputPath);
+  const existingContent = await whenAbsent(() => fs.readFile(outputPath), null);
   const merged = mergedServers(mcpCap, { existingContent, declaration, previousMcpEntries });
   const content =
     rulesGlob === null ? merged.content : mcpCap.withInstruction(merged.content, rulesGlob);
@@ -97,10 +98,6 @@ function mergedServers(
   return { ...merged, content: touched ? merged.mergedContent : existingContent };
 }
 
-async function readExistingJson(fs: FileReader, path: string): Promise<string | null> {
-  return whenAbsent(() => fs.readFile(path), null);
-}
-
 /**
  * Merges the plugin's MCP servers into the tool's flat config, then refreshes the hash the manifest
  * tracks for that config so the merge does not read back as drift.
@@ -127,4 +124,15 @@ export async function materializeRequestedMcp(
     outputRelPath: mcp.outputRelPath,
   });
   return mcp;
+}
+
+/** The glob listing the plugin's rules in the tool's config, when the install placed any under it. */
+export function placedRulesGlob(
+  { dist, tool }: AddPluginRequest,
+  files: readonly { readonly relativePath: string }[]
+): string | null {
+  return rulesGlobOf(
+    tool.flatRulesPlacement(dist.manifest.name),
+    files.map((file) => file.relativePath)
+  );
 }

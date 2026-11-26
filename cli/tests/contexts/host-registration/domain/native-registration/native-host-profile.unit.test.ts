@@ -59,6 +59,25 @@ describe("a content profile assembled with its native-registration section", () 
     ).toBe(false);
   });
 
+  it("answers the server a tool takes plugins through, and reaches a user scope with it for a tool with plugins", () => {
+    const server = {
+      binary: "kimi",
+      args: ["web"],
+      bannerPattern: "(a)(b)",
+      pluginsPath: "/plugins",
+      notInstalledCode: 1,
+    };
+
+    expect(nativeTool({}).pluginServer()).toBeUndefined();
+    expect(nativeTool({ pluginServer: server }).pluginServer()).toBe(server);
+    expect(nativeTool({ pluginServer: server }).supportsUserScopeActivation()).toBe(true);
+    expect(
+      withNativeRegistration(contentProfile(null), {
+        pluginServer: server,
+      }).supportsUserScopeActivation()
+    ).toBe(false);
+  });
+
   it("keeps the user scope the content profile reaches on its own", () => {
     const user = contentProfile({}, true);
 

@@ -15,6 +15,7 @@ import type {
 } from "../../contract/tool-profile.js";
 import type { SignalDirectory } from "../../contract/tool-vocabulary.js";
 import type { ProfileSection, ProfileSectionKey, ProfileSections } from "../profile.js";
+import { AS_SHIPPED } from "../sections/hooks-section.js";
 import { pluginAnswers, projectPlacement } from "./plugin-answers.js";
 
 /** Answers from the sections captured at construction, so the method survives being detached
@@ -127,11 +128,18 @@ export function configAnswers(
 export function deliveryAnswers(displayName: string, capabilities: ProfileSections) {
   return {
     machineLocalFiles: (): readonly string[] => [],
+    rulesIndex: () => capabilities.rules?.agentsIndex() ?? null,
     installedRulesLocation: () => capabilities.rules?.installedLocation() ?? null,
     projectHooksDelivery: () => {
       const placement =
         capabilities.hooks === undefined ? null : projectPlacement(capabilities.hooks.delivery);
       return placement === null ? null : { ...placement, toolName: displayName };
+    },
+    releasedProjectHooks: () => {
+      const released = capabilities.hooks?.released;
+      return released === undefined
+        ? null
+        : { ...released, hookScript: AS_SHIPPED, toolName: displayName };
     },
   };
 }

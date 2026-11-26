@@ -21,8 +21,9 @@ export interface FlatBuildSelection {
 }
 
 // Flat build emits the whole marketplace into one workspace. Agents are namespaced by
-// `<plugin>-<name>`; skills keep their subtree intact, since a skill's script can `require()` a
-// sibling by relative path, under `skills/<plugin>/` or, `single-level`, `skills/<plugin>-<skill>/`.
+// `<plugin>-<name>`, commands sit under `commands/<plugin>/`; skills keep their subtree intact,
+// since a skill's script can `require()` a sibling by relative path, under `skills/<plugin>/` or,
+// `single-level`, `skills/<plugin>-<skill>/`.
 // Hooks land under `flatHooksDir/<plugin>/`, except the loader's own runtime module, renamed to
 // the plugin's name in the loader's directory: so hook paths are matched by path, not by name.
 export async function readBuiltFlatFiles(
@@ -42,11 +43,20 @@ export async function readBuiltFlatFiles(
   return files;
 }
 
+/** The directory a tool keeps one plugin in, relative to the base its install resolves. A built
+ * plugin tree is read for a native tool alone, the only kind that names such a directory. */
+export function pluginRootIn(tool: AiToolProfile, name: string): string {
+  const plugins = tool.plugins();
+  if (plugins?.kind !== "native") throw new Error(`${tool.toolId} keeps no plugin directory`);
+  return plugins.pluginOutputDir(name);
+}
+
+/** A plugin's built subtree, each path prefixed by `root`: the directory the tool keeps it in. */
 export async function readBuiltUserPluginFiles(
   fs: FileReader,
-  built: { builtDir: string; name: string; platform: string }
+  built: { builtDir: string; name: string; root: string; platform: string }
 ): Promise<InstallationFile[]> {
-  const { builtDir, name, platform } = built;
+  const { builtDir, name, root, platform } = built;
   const pluginSrc = join(builtDir, "plugins", name);
   const absPaths = await fs.listFilesRecursive(pluginSrc);
   return Promise.all(
@@ -54,7 +64,7 @@ export async function readBuiltUserPluginFiles(
       const rel = posixRelative(pluginSrc, abs, platform);
       const content = await fs.readFile(abs);
       return new InstallationFile({
-        relativePath: posix.join(name, rel),
+        relativePath: posix.join(root, rel),
         content,
         hash: FileHash.of(content),
       });
@@ -62,11 +72,11 @@ export async function readBuiltUserPluginFiles(
   );
 }
 
-/** The files an install keeps, from a built tree read with every path prefixed by `<name>/`. */
+/** The files an install keeps, from a built tree read with every path prefixed by `root`. */
 export function withoutDroppedFiles(
   files: InstallationFile[],
-  pluginName: string,
+  root: string,
   drops: (relativePath: string) => boolean
 ): InstallationFile[] {
-  return files.filter((file) => !drops(file.relativePath.slice(pluginName.length + 1)));
+  return files.filter((file) => !drops(file.relativePath.slice(root.length)));
 }

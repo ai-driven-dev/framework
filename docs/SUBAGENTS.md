@@ -66,6 +66,7 @@ The main session and the agents run on the IDE's model unless you pick a provide
 aidd setup --ide opencode --provider mistral   # main session and agents on Mistral models
 aidd setup --ide opencode --provider none      # back to the IDE's model
 aidd setup --global --ide codex,opencode --plugins all --provider openai   # every project
+aidd setup --global --ide codex,opencode --plugins all --agents-only   # every project, agents refreshed on each tool's saved provider, main session untouched
 ```
 
 | Tier | Runs | openai | anthropic | mistral |
@@ -76,6 +77,7 @@ aidd setup --global --ide codex,opencode --plugins all --provider openai   # eve
 
 Claude Code takes anthropic, Codex openai, Copilot openai or anthropic, Cursor anthropic, OpenCode and Kilo all three. A run takes one provider, so every `--ide` it names must take it: `--ide claude,codex` is refused. The model ids live in [`agent-models.ts`](../cli/src/contexts/tools/domain/models/agent-models.ts), and the providers each IDE takes in its profile under [`tool-profiles/`](../cli/src/composition/tool-profiles).
 
+- `--agents-only` leaves main-session settings and their saved restore state untouched, including with `--provider none`. With no `--provider`, each `--ide` tool keeps the provider saved for it, else the first its profile lists. A tool set to `none` stays on the IDE's model. A tool whose `none` was saved before none was remembered is saved on its first provider by its first agents-only run, and stays there until `--provider none` is run again.
 - The provider holds for the whole machine: other projects get it at their next install; to update the agents they already have, run `aidd setup --ide … --provider …` there, `none` included.
 - Nothing changes until the install has succeeded.
 - The main session's model is written in the IDE's own user settings, so it changes every project on the machine: Claude Code's `settings.json` (under `CLAUDE_CONFIG_DIR` when set) and OpenCode's `~/.config/opencode/opencode.jsonc`, or `opencode.json` when only that one is there. `--provider none` restores what it replaced and the file's comments stay. A `model` in a project's own settings still wins. Codex, Copilot, Cursor and Kilo keep the model picked in the IDE.

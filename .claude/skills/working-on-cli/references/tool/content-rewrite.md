@@ -18,7 +18,7 @@
 
 | Profile | Rewrite |
 | --- | --- |
-| `antigravity` | none, the identity |
+| `antigravity`, `kiro`, `kimi` | none, the identity |
 | `claude` | its numbered command directories |
 | `opencode`, `kilo`, `cursor` | command directories, and for `cursor` `.md` rule references to `.mdc` |
 | `codex` | `.codex/skills/` to `.agents/skills/aidd-`, and its numbered command directories |

@@ -1,17 +1,24 @@
 import { describe, expect, it } from "vitest";
 import {
-  isWrappedCommandHooksFileEmpty,
   mergeWrappedCommandHooks,
-  unmergeWrappedCommandHooks,
   type WrappedCommandHooksTarget,
-  wrappedCommandHookEntries,
-  wrappedCommandHooksScriptDir,
   wrappedCommandHooksScriptPath,
 } from "../../../../../src/contexts/tools/domain/hooks/wrapped-command-hooks-merge.js";
 
 const target: WrappedCommandHooksTarget = {
   label: "Host",
-  descriptor: { flat: { scriptsDir: ".h/hooks/" }, eventMap: { SessionStart: "SessionStart" } },
+  descriptor: {
+    flat: { scriptsDir: ".h/hooks/" },
+    eventMap: {
+      SessionStart: "SessionStart",
+      PostToolUse: "PostToolUse",
+    },
+    toolNames: new Map([
+      ["Write", "put"],
+      ["Edit", "patch"],
+      ["Bash", "sh"],
+    ]),
+  },
 };
 
 // The token a plugin writes for its own directory.
@@ -22,6 +29,28 @@ const pluginHooks = (command: string, event = "SessionStart") =>
 
 const merged = (existing: string | null, json: string, plugin = "p") =>
   mergeWrappedCommandHooks(target, existing, { json, plugin });
+
+const insidePlugin: WrappedCommandHooksTarget = {
+  ...target,
+  runsFrom: { projectRoot: "../..", pluginDir: (plugin) => `.h/plugins/${plugin}/` },
+};
+
+describe("wrapped command hooks of a plugin the host runs from its own directory", () => {
+  const command = (json: string): string =>
+    JSON.parse(mergeWrappedCommandHooks(insidePlugin, null, { json, plugin: "p" }).content).p
+      .SessionStart[0].command;
+  const decoded = (wrapped: string) =>
+    Buffer.from(wrapped.slice(wrapped.lastIndexOf(" ") + 1), "base64").toString();
+
+  it("runs the script from the plugin's own directory, and the handler from the project root", () => {
+    const wrapped = command(pluginHooks(`node ${ROOT}/hooks/run.cjs load`));
+
+    expect([decoded(wrapped), wrapped]).toEqual([
+      "node ./.h/plugins/p/hooks/run.cjs load",
+      expect.stringContaining("cwd:'../..'"),
+    ]);
+  });
+});
 
 describe("wrapped command hooks", () => {
   it("wraps each command of a mapped event under the plugin's name, keeping its timeout", () => {
@@ -69,37 +98,11 @@ describe("wrapped command hooks", () => {
     expect(wrapped).toBe("./.h/hooks/p/a.sh && ./L/b.sh");
   });
 
-  it("unmerges one plugin and reports the file empty once none is left", () => {
-    const file = unmergeWrappedCommandHooks(JSON.stringify({ p: {}, q: {} }), "p");
-
-    expect([JSON.parse(file), isWrappedCommandHooksFileEmpty(file)]).toEqual([{ q: {} }, false]);
-    expect(isWrappedCommandHooksFileEmpty("{}")).toBe(true);
-  });
-
-  it("lists the entries a plugin holds, by event, leaving out its enabled flag", () => {
-    const entry = { type: "command", command: "c" };
-    const content = JSON.stringify({ p: { enabled: true, SessionStart: [entry] } });
-
-    expect(wrappedCommandHookEntries(target, content, "p")).toEqual([
-      { event: "SessionStart", entry },
-    ]);
-    expect(wrappedCommandHookEntries(target, content, "other")).toEqual([]);
-  });
-
-  it("names its host when an event holds no array", () => {
-    const content = JSON.stringify({ p: { SessionStart: {} } });
-
-    expect(() => wrappedCommandHookEntries(target, content, "p")).toThrow(
-      "Host hook 'p.SessionStart' must be an array."
-    );
-  });
-
-  it("names the directory and the path a plugin's scripts land at", () => {
+  it("names the path a plugin's scripts land at", () => {
     expect([
-      wrappedCommandHooksScriptDir(target, "p"),
       wrappedCommandHooksScriptPath(target, "p", "hooks/a.sh"),
       wrappedCommandHooksScriptPath(target, "p", "other/a.sh"),
-    ]).toEqual([".h/hooks/p/", ".h/hooks/p/a.sh", ".h/hooks/p/other/a.sh"]);
+    ]).toEqual([".h/hooks/p/a.sh", ".h/hooks/p/other/a.sh"]);
   });
 
   it("keeps a path outside hooks/ as it is when no locator is given", () => {
@@ -120,5 +123,71 @@ describe("wrapped command hooks", () => {
 
     expect(handlers).toHaveLength(1);
     expect(handlers[0]).not.toHaveProperty("timeout");
+  });
+
+  it("writes no handler for a hook that runs no command", () => {
+    const json = JSON.stringify({
+      hooks: { SessionStart: [{ hooks: [{ type: "prompt" }, { type: "command", command: "x" }] }] },
+    });
+
+    expect(JSON.parse(merged(null, json).content).p.SessionStart).toHaveLength(1);
+  });
+
+  describe("a tool event's matcher", () => {
+    const grouped = (event: string, ...matchers: (string | undefined)[]) =>
+      JSON.stringify({
+        hooks: {
+          [event]: matchers.map((matcher) => ({
+            ...(matcher === undefined ? {} : { matcher }),
+            hooks: [{ type: "command", command: `run ${matcher}` }],
+          })),
+        },
+      });
+    const matchersOf = (json: string, event: string) =>
+      JSON.parse(merged(null, json).content).p[event].map(
+        (group: { matcher: string }) => group.matcher
+      );
+
+    it("renames the host's tools in a group and keeps one group per source group", () => {
+      expect(matchersOf(grouped("PostToolUse", "Write|Edit", "Bash"), "PostToolUse")).toEqual([
+        "put|patch",
+        "sh",
+      ]);
+    });
+
+    it("matches every tool for a group with no matcher", () => {
+      expect(matchersOf(grouped("PostToolUse", undefined), "PostToolUse")).toEqual(["*"]);
+    });
+
+    it("drops a tool the host has no name for from a group that keeps others", () => {
+      expect(matchersOf(grouped("PostToolUse", "Write|Shell|Edit"), "PostToolUse")).toEqual([
+        "put|patch",
+      ]);
+    });
+
+    it("names a host tool once when the matcher repeats it", () => {
+      expect(matchersOf(grouped("PostToolUse", "Write|Write"), "PostToolUse")).toEqual(["put"]);
+    });
+
+    it("reads a tool name whatever its case", () => {
+      expect(matchersOf(grouped("PostToolUse", "write|EDIT"), "PostToolUse")).toEqual([
+        "put|patch",
+      ]);
+    });
+
+    it("skips a group naming no tool the host has, with a warning naming it", () => {
+      const { content, warnings } = merged(null, grouped("PostToolUse", "Delete", "Bash"));
+
+      expect([JSON.parse(content).p.PostToolUse.length, warnings]).toEqual([
+        1,
+        ["PostToolUse matcher 'Delete' names no Host tool, group skipped"],
+      ]);
+    });
+
+    it("adds no event when every group of it is skipped", () => {
+      const { content } = merged(null, grouped("PostToolUse", "Delete"));
+
+      expect(JSON.parse(content)).toEqual({});
+    });
   });
 });

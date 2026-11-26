@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import { RegistrationRefusedError } from "../../../src/contexts/host-registration/contract/host-registration.error.js";
+import { aManifest } from "../../contexts/installation/testing/manifest.builder.js";
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
 import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
@@ -48,5 +50,46 @@ describe("removing the machine-scope registration", () => {
     await deps.remove.execute({ inspection: inspected.inspection, projectRoot: "/wherever" });
 
     await expect(registry.list("/wherever")).resolves.toStrictEqual([]);
+  });
+
+  it("removes the plugins aidd installed in a host's own server", async () => {
+    let removals = 0;
+    const deps = userScopeCleanerDeps({
+      tools: hostCatalog(),
+      fs: new InMemoryFileAdapter(),
+      repo: new InMemoryManifestRepository(null),
+      removeServerPlugins: {
+        execute: async () => {
+          removals += 1;
+          return new Map();
+        },
+      },
+    });
+    const inspected = await deps.inspect.execute();
+
+    await deps.remove.execute({ inspection: inspected.inspection, projectRoot: "/wherever" });
+
+    expect(removals).toBe(1);
+  });
+
+  it("keeps the machine manifest when the host's server could not be emptied", async () => {
+    const repo = new InMemoryManifestRepository(aManifest().build());
+    const deps = userScopeCleanerDeps({
+      tools: hostCatalog(),
+      fs: new InMemoryFileAdapter(),
+      repo,
+      removeServerPlugins: {
+        execute: async () => {
+          throw new RegistrationRefusedError("kimi: 1 plugin(s) left in place");
+        },
+      },
+    });
+    const inspected = await deps.inspect.execute();
+
+    await expect(
+      deps.remove.execute({ inspection: inspected.inspection, projectRoot: "/wherever" })
+    ).rejects.toThrow(RegistrationRefusedError);
+
+    expect(await repo.load()).not.toBeNull();
   });
 });

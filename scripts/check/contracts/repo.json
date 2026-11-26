@@ -58,6 +58,12 @@
       "in": "marketplace.json",
       "check": "settings-schema",
       "why": "the host ignores a settings file that breaks its published schema, in silence"
+    },
+    "REPO-11": {
+      "op": "custom",
+      "in": "marketplace.json",
+      "check": "skill-paths-inside",
+      "why": "a skill installs under tool folders that differ, so a path climbing out of it holds in no copy"
     }
   }
 }

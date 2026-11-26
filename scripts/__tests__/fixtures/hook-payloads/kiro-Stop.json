@@ -1,0 +1,27 @@
+{
+  "host": "kiro",
+  "event": "Stop",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "session_id": "sess_00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "Stop",
+        "cwd": "/Users/user/project"
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "continue",
+      "payload": {
+        "session_id": "sess_00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "Stop",
+        "cwd": "/Users/user/project"
+      },
+      "hookAnswer": {
+        "decision": "block",
+        "reason": "PROBE-CONTINUE-7731: reply with exactly the word CONTINUED."
+      }
+    }
+  ]
+}

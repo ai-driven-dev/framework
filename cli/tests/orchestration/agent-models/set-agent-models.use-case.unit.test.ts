@@ -46,6 +46,7 @@ describe("setting agent models", () => {
     });
     expect(set).toStrictEqual({
       reinstalled: [],
+      chosen: new Map([[HOST.claude, "anthropic"]]),
       changed: [{ host: HOST.claude, path: CLAUDE_SETTINGS }],
       skipped: [],
     });
@@ -61,6 +62,72 @@ describe("setting agent models", () => {
     expect(unset.changed).toStrictEqual([{ host: HOST.claude, path: CLAUDE_SETTINGS }]);
     expect(fs.getFile(CLAUDE_SETTINGS)).toBe('{\n  "model": "mine"\n}\n');
     expect(fs.has(`${CONFIG}/main-model.json`)).toBe(false);
+  });
+
+  it("with agentsOnly, refreshes the agents and leaves the main session and its saved ownership untouched", async () => {
+    const { fs, useCase } = setup();
+    fs.setFile(CLAUDE_SETTINGS, '{\n  "model": "mine"\n}\n');
+    const base = { projectRoot: PROJECT, scope: "project" as const, hosts: [HOST.claude] };
+    await useCase.execute({ ...base, provider: "anthropic" });
+    const mainSettings = fs.getFile(CLAUDE_SETTINGS);
+    const ownership = fs.getFile(`${CONFIG}/main-model.json`);
+
+    const result = await useCase.execute({ ...base, provider: "anthropic", agentsOnly: true });
+
+    expect(result).toStrictEqual({
+      reinstalled: [],
+      chosen: new Map([[HOST.claude, "anthropic"]]),
+      changed: [],
+      skipped: [],
+    });
+    expect(fs.getFile(CLAUDE_SETTINGS)).toBe(mainSettings);
+    expect(fs.getFile(`${CONFIG}/main-model.json`)).toBe(ownership);
+    expect(fs.getFile(`${CONFIG}/agent-models.json`)).toBe(
+      `{\n  "${HOST.claude}": "anthropic"\n}\n`
+    );
+  });
+
+  it("with agentsOnly on a machine that had no provider, records it and writes no main session", async () => {
+    const { fs, useCase } = setup();
+    fs.setFile(CLAUDE_SETTINGS, '{\n  "model": "mine"\n}\n');
+
+    await useCase.execute({
+      projectRoot: PROJECT,
+      scope: "project",
+      hosts: [HOST.claude],
+      provider: "anthropic",
+      agentsOnly: true,
+    });
+
+    expect(fs.getFile(CLAUDE_SETTINGS)).toBe('{\n  "model": "mine"\n}\n');
+    expect(fs.has(`${CONFIG}/main-model.json`)).toBe(false);
+    expect(fs.getFile(`${CONFIG}/agent-models.json`)).toBe(
+      `{\n  "${HOST.claude}": "anthropic"\n}\n`
+    );
+  });
+
+  it("with agentsOnly and no provider named, keeps the provider saved for a host and writes no main session", async () => {
+    const { fs, useCase } = setup();
+    const base = { projectRoot: PROJECT, scope: "project" as const, agentsOnly: true };
+    await useCase.execute({ ...base, hosts: [HOST.mcp], provider: "mistral" });
+    fs.setFile(OPENCODE_SETTINGS, '{\n  "model": "mine"\n}\n');
+
+    const result = await useCase.execute({
+      ...base,
+      hosts: [HOST.mcp, HOST.claude],
+      keepSaved: true,
+    });
+
+    expect(result.chosen).toStrictEqual(
+      new Map([
+        [HOST.mcp, "mistral"],
+        [HOST.claude, "anthropic"],
+      ])
+    );
+    expect(fs.getFile(`${CONFIG}/agent-models.json`)).toBe(
+      `{\n  "${HOST.mcp}": "mistral",\n  "${HOST.claude}": "anthropic"\n}\n`
+    );
+    expect(fs.getFile(OPENCODE_SETTINGS)).toBe('{\n  "model": "mine"\n}\n');
   });
 
   it("writes the main model in the host's user settings, never a project file", async () => {

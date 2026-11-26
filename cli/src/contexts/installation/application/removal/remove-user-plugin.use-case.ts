@@ -73,6 +73,7 @@ export class RemoveUserPlugin<Proof> {
       await this.deps.userScopePluginFiles.remove(files, this.tools.aiProfile(toolId), {
         projectRoot: options.projectRoot,
         home: options.home,
+        plugin: plugin.name,
       });
       manifest.removePlugin(toolId, plugin.name);
     }

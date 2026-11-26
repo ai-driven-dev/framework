@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { antigravity } from "../../../../../src/composition/tool-profiles/antigravity.js";
+import { kiro } from "../../../../../src/composition/tool-profiles/kiro.js";
 import { opencode } from "../../../../../src/composition/tool-profiles/opencode.js";
 
 describe("where a flat plugin's files are installed", () => {
@@ -10,20 +10,20 @@ describe("where a flat plugin's files are installed", () => {
   });
 
   it("prefixes a skill with its plugin when the tool scans a single level", () => {
-    expect(antigravity.flatInstallPath("skills", "aidd", "plan/SKILL.md")).toBe(
-      ".agents/skills/aidd-plan/SKILL.md"
+    expect(kiro.flatInstallPath("skills", "aidd", "plan/SKILL.md")).toBe(
+      ".kiro/skills/aidd-plan/SKILL.md"
     );
   });
 
   it("places an agent as a build does, and nests rules and commands under their plugin", () => {
     expect([
-      antigravity.flatInstallPath("agents", "aidd", "a.md"),
-      antigravity.flatInstallPath("rules", "aidd", "r.md"),
-      antigravity.flatInstallPath("commands", "aidd", "c.md"),
+      kiro.flatInstallPath("agents", "aidd", "a.md"),
+      kiro.flatInstallPath("rules", "aidd", "r.md"),
+      kiro.flatInstallPath("commands", "aidd", "c.md"),
     ]).toStrictEqual([
-      ".agents/agents/aidd-a/agent.md",
-      ".agents/rules/aidd/r.md",
-      ".agents/commands/aidd/c.md",
+      ".kiro/agents/aidd-a.md",
+      ".kiro/steering/aidd-r.md",
+      ".kiro/commands/aidd/c.md",
     ]);
   });
 
@@ -49,22 +49,22 @@ describe("whether a built path belongs to a flat plugin", () => {
 
   it("owns a single-level skill by its plugin prefix and not a nested folder", () => {
     expect([
-      antigravity.ownsFlatPath(".agents/skills/aidd-plan/SKILL.md", "aidd"),
-      antigravity.ownsFlatPath(".agents/skills/aidd/plan/SKILL.md", "aidd"),
+      kiro.ownsFlatPath(".kiro/skills/aidd-plan/SKILL.md", "aidd"),
+      kiro.ownsFlatPath(".kiro/skills/aidd/plan/SKILL.md", "aidd"),
     ]).toStrictEqual([true, false]);
   });
 
   it("owns an agent by its plugin prefix", () => {
     expect([
-      antigravity.ownsFlatPath(".agents/agents/aidd-a/agent.md", "aidd"),
-      antigravity.ownsFlatPath(".agents/agents/other-a/agent.md", "aidd"),
+      kiro.ownsFlatPath(".kiro/agents/aidd-a.md", "aidd"),
+      kiro.ownsFlatPath(".kiro/agents/other-a.md", "aidd"),
     ]).toStrictEqual([true, false]);
   });
 
   it("owns nothing outside the tool's directory or above a section's file", () => {
     expect([
-      antigravity.ownsFlatPath(".kilo/skills/aidd-plan/SKILL.md", "aidd"),
-      antigravity.ownsFlatPath(".agents/skills", "aidd"),
+      kiro.ownsFlatPath(".agents/skills/aidd-plan/SKILL.md", "aidd"),
+      kiro.ownsFlatPath(".kiro/skills", "aidd"),
     ]).toStrictEqual([false, false]);
   });
 });

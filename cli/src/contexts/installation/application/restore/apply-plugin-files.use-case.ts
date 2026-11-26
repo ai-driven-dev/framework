@@ -13,8 +13,6 @@ import type { BuiltPlacement } from "../materialize/add-plugin-request.js";
 import { builtTreeModeOf } from "../materialize/plugin-placement.js";
 import { rematerializePlugin } from "../materialize/rematerialize-plugin.js";
 import { isPluginFileAtDesiredState } from "../plugin/files/check-plugin-file-state.js";
-import { deleteOldFiles } from "../plugin/files/delete-plugin-files.js";
-import { scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import { hashOutputFiles } from "../shared/hash-output-files.js";
 
 interface ApplyPluginFilesRequest {
@@ -48,34 +46,17 @@ export class ApplyPluginFiles {
     return this.restoreViaTranslate(dist, options);
   }
 
-  // Materializing tools (cursor/opencode) must re-materialize from the BUILT tree so
-  // restored content + hashes match what install wrote, and Mode A marketplace tools
-  // (claude/codex/copilot) must re-register without writing files: not the raw source
-  // transform in either case.
+  // Re-materialize from the BUILT tree, not the raw source transform, so restored content and
+  // hashes match what install wrote; a marketplace tool re-registers.
   private async restoreViaPlacement(
     mode: PluginTranslationMode,
     dist: PluginDistribution,
     options: ApplyPluginFilesRequest
   ): Promise<number> {
     const { tool, plugin, projectRoot, manifest, force = false } = options;
-    // Mode A never materializes files, so any manifest-tracked path here is a leftover from a run
-    // before that was true. Scoped to the manifest's own keys under the plugin's base dir: never a
-    // directory scan: so it cannot touch files the plugin never wrote.
-    if (mode === "marketplace") {
-      const baseDir = scopeBaseOf(tool, {
-        scope: plugin.plugin.scope,
-        projectRoot: projectRoot,
-        homedir: () => this.deps.homedir(),
-      });
-      await deleteOldFiles(
-        plugin.plugin.files,
-        { dir: baseDir, scope: plugin.plugin.scope },
-        this.deps.fs
-      );
-    }
     return rematerializePlugin(
       { dist, tool, mode, plugin, projectRoot, manifest, hooksGuard: { overwriteEdited: force } },
-      this.deps.placeBuiltTree
+      this.deps
     );
   }
 

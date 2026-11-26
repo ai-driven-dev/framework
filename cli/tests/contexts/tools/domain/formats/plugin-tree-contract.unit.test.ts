@@ -17,6 +17,7 @@ const PRESENCE = {
   agentsList: [],
   hasHooksJson: false,
   hasMcpJson: false,
+  mcpServers: {},
 };
 
 const contract = pluginTreeContract(present(cursor.hooks), LAYOUT);

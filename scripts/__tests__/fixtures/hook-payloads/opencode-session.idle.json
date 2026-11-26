@@ -31,6 +31,17 @@
           "sessionID": "00000000-0000-4000-8000-000000000000"
         }
       }
+    },
+    {
+      "run": "child",
+      "payload": {
+        "id": "evt_2148df700002T2IxwtMogUoXDw",
+        "type": "session.idle",
+        "properties": {
+          "sessionID": "00000000-0000-4000-8000-000000000001"
+        }
+      },
+      "hookAnswer": null
     }
   ]
 }

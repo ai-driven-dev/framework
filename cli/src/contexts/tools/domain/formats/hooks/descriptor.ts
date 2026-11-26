@@ -67,6 +67,9 @@ type DerivedKeys = "events" | "eventMap" | "undeclaredEvents";
 export interface HooksDescriptor {
   /** The variable the tool expands to an installed plugin's directory. */
   readonly rootToken?: string;
+  /** The hooks file inside a plugin's own directory, relative to its root, where the tool reads it
+   * elsewhere than `hooks/hooks.json`; the plugin's scripts stay below `hooks/`. */
+  readonly pluginFile?: string;
   /** Whether the synthesized plugin manifest names the hooks file. */
   readonly manifestNamesHooks?: boolean;
   /** What a person must still do before a delivered hook runs. */

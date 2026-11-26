@@ -16,7 +16,7 @@ const file = new InstallationFile({
 const issue = (message: string): DoctorIssue => ({
   severity: "warning",
   message,
-  fix: { code: "sync-reregister" },
+  fix: { code: "restore-or-sync" },
 });
 const answering = (message: string) => ({ execute: async () => [issue(message)] });
 

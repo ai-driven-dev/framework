@@ -2,15 +2,20 @@ pre-commit:
   output: true
   commands:
     framework-content:
-      # The one content check: contracts and generated docs. --fix regenerates. stage_fixed
+      # The one content check: contracts and generated files. --fix regenerates. stage_fixed
       # re-stages only the staged files, so the generated outputs --fix rewrote are added by name,
-      # never one that already held an unstaged edit.
+      # never one that already held an unstaged edit. The aidd-ui engine copies count new and
+      # deleted files too, since --fix creates and removes them.
       # Given no staged file lefthook skips it; CI runs the full check itself.
       run: |
+        generated() {
+          git diff --name-only -- README.md docs/CATALOG.md 'plugins/*/CATALOG.md' 'plugins/aidd-ui/skills/*/scripts/aidd-ui/*' 'cli/assets/hooks-runtime/host-*.cjs'
+          git ls-files --others --exclude-standard -- 'plugins/aidd-ui/skills/*/scripts/aidd-ui/*'
+        }
         before=$(mktemp)
-        git diff --name-only -- README.md docs/CATALOG.md 'plugins/*/CATALOG.md' > $before
+        generated > $before
         node scripts/check/run.cjs --fix {staged_files} || exit 1
-        git diff --name-only -- README.md docs/CATALOG.md 'plugins/*/CATALOG.md' | grep -vxFf $before | xargs git add --
+        generated | grep -vxFf $before | xargs git add --
         rm $before
       stage_fixed: true
     yaml-validity:

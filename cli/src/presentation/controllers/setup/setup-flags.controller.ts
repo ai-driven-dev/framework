@@ -27,6 +27,7 @@ export interface SetupCmdOptions {
   scope?: string;
   global?: boolean;
   provider?: string;
+  agentsOnly?: boolean;
 }
 
 export function parseSourceFlag(
@@ -69,18 +70,6 @@ export function parsePluginsFlag(
   return { mode: "named", names };
 }
 
-/** `--provider` names a tool that runs the agents, through `--ide`. */
-export function requireAgentHosts(
-  provider: string | undefined,
-  request: { hosts: readonly string[]; runnable: readonly string[] }
-): void {
-  if (provider !== undefined && request.hosts.length === 0) {
-    throw new Error(
-      `--provider needs --ide with a tool that runs the framework's agents: ${request.runnable.join(", ")}.`
-    );
-  }
-}
-
 /** `--ide` takes every tool, AI assistants and editors alike; `--ai`, its former spelling,
  * still takes AI tools alone. Each id lands in the list its category decides. */
 export function parseToolIds(
@@ -92,8 +81,10 @@ export function parseToolIds(
   return selectTools(aiIds, ids, tools);
 }
 
-/** A catalog whose AI profiles say whether their own CLI activates plugins. */
-export type SetupCatalog = ToolCatalog<AiToolProfile & { nativeActivation(): object | undefined }>;
+/** A catalog whose AI profiles say whether their own CLI, or their own server, takes plugins. */
+export type SetupCatalog = ToolCatalog<
+  AiToolProfile & { nativeActivation(): object | undefined; pluginServer(): object | undefined }
+>;
 
 export function activatesAtUserScope<A extends AiToolProfile>(
   profile: A | IdeToolProfile
@@ -109,6 +100,7 @@ export function globalSetupHelp(catalog: SetupCatalog): string {
     .filter(activatesAtUserScope);
   const tools = global.map((profile) => profile.toolId);
   const native = global.filter((profile) => profile.nativeActivation() !== undefined);
+  const served = global.filter((profile) => profile.pluginServer() !== undefined);
   const copying = global.filter((profile) => profile.plugins()?.copiesFilesGlobally());
   const where = (profile: AiToolProfile) =>
     profile.plugins()?.userPluginsBaseDir("~")?.replaceAll("\\", "/");
@@ -117,6 +109,11 @@ export function globalSetupHelp(catalog: SetupCatalog): string {
     "Global:",
     `  Pass --ide ${tools.join(",")} (one or more, no editor) and --plugins all, recommended, none or names.`,
     `  ${native.map((p) => p.toolId).join(", ")} enable the plugins through their own CLI, which must be on PATH.`,
+    ...(served.length === 0
+      ? []
+      : [
+          `  ${served.map((p) => p.toolId).join(", ")} install the plugins through their own server, which their CLI starts and which must be on PATH.`,
+        ]),
     `  ${copying.map((p) => `${p.toolId} gets their files in ${where(p)}`).join(", ")}.`,
     "  `aidd sync --global` refreshes them from the framework source.",
   ].join("\n");
@@ -147,9 +144,5 @@ export function declareSetupOptions(command: Command, catalog: ToolCatalog): Com
       "install for every project on this machine instead of into this project; see the " +
         "requirements below"
     )
-    .addOption(new Option("--scope <scope>", "Former spelling: user means --global").hideHelp())
-    .option(
-      "--provider <provider>",
-      `Run each tool's main session and agents on this provider's model for their role (${catalog.agentProviders().join(", ")}), or none for the IDE's model`
-    );
+    .addOption(new Option("--scope <scope>", "Former spelling: user means --global").hideHelp());
 }

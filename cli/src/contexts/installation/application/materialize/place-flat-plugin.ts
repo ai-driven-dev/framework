@@ -17,7 +17,8 @@ import { writeChangedPluginFiles } from "../plugin/files/write-changed-plugin-fi
 import { resolveScopeForInstall, scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 import { hashOutputFiles } from "../shared/hash-output-files.js";
 import type { AddPluginRequest, AddPluginResult } from "./add-plugin-request.js";
-import { materializeRequestedMcp } from "./flat-mcp-materializer.js";
+import { materializeRequestedMcp, placedRulesGlob } from "./flat-mcp-materializer.js";
+import { syncPlacedRules } from "./listed-rules/list-placed-rules.js";
 import type { ProjectHooksMaterializer } from "./project-hooks-materializer.use-case.js";
 
 export interface FlatPlacementDeps {
@@ -53,9 +54,11 @@ export async function placeFlatPlugin(
   const { dist, tool, source, projectRoot, manifest, marketplace } = request;
   const ctx = flatContextOf(tool, dist, { projectRoot, deps });
   if (ctx === null) return { skipped: [] };
+  const rulesGlob = placedRulesGlob(request, ctx.files);
+  await syncPlacedRules(deps.fs, request, ctx.files);
   const mcp = await materializeRequestedMcp(deps.fs, request, {
     declaration: ctx.installedMcp,
-    rulesGlob: placedRulesGlob(tool, { pluginName: dist.manifest.name, files: ctx.files }),
+    rulesGlob,
   });
   const hooks = await placeProjectHooks(request, { ctx, deps });
   const skipped: ReadonlySkipList = [...ctx.skipped, ...mcp.mcpSkips, ...hooks.skipped];
@@ -81,18 +84,6 @@ export async function placeFlatPlugin(
   });
   manifest.addPlugin(tool.toolId, plugin.withProjectHooks(hooks.projectHooks));
   return { skipped, written };
-}
-
-/** The glob listing the plugin's rules in the tool's config, when the install placed any under it. */
-function placedRulesGlob(
-  tool: AiToolProfile,
-  placed: { pluginName: string; files: readonly InstallationFile[] }
-): string | null {
-  const rules = tool.flatRulesPlacement(placed.pluginName);
-  if (rules === null) return null;
-  return placed.files.some((file) => file.relativePath.startsWith(rules.prefix))
-    ? rules.glob
-    : null;
 }
 
 function placeProjectHooks(

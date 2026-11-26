@@ -4,37 +4,97 @@ exports[`the data each registered profile declares > antigravity 1`] = `
 {
   "builds": [
     "flat",
+    "marketplace",
   ],
   "configFiles": {},
   "directory": ".agents/",
   "displayName": "Antigravity CLI",
   "distribution": {
-    "manifest": [],
-    "marketplace": [],
+    "manifest": [
+      "plugin.json",
+    ],
+    "marketplace": [
+      ".antigravity-plugin/marketplace.json",
+    ],
   },
   "frontmatter": {
-    "agents": null,
+    "agents": {
+      "description": "Review code",
+      "model": "inherit",
+      "name": "reviewer",
+      "tools": "["view_file"]",
+    },
     "commands": null,
-    "rules": null,
+    "rules": {
+      "a description alone": {
+        "description": "d",
+        "trigger": "always_on",
+      },
+      "a description that opts out of always-apply": {
+        "description": "d",
+        "trigger": "always_on",
+      },
+      "a paths list": {
+        "globs": "a, b",
+        "trigger": "glob",
+      },
+      "an always-apply rule": {
+        "description": "d",
+        "trigger": "always_on",
+      },
+      "an empty paths list": {
+        "trigger": "always_on",
+      },
+      "an opt-out with no description": {
+        "trigger": "always_on",
+      },
+      "globs that apply on request": {
+        "description": "d",
+        "globs": "a",
+        "trigger": "glob",
+      },
+      "paths beside a description": {
+        "description": "d",
+        "globs": "a",
+        "trigger": "glob",
+      },
+    },
   },
   "hooksRootToken": null,
-  "installs": {},
+  "installs": {
+    "agents": {
+      ".gitkeep": ".agents/agents/.gitkeep",
+      "helper.txt": ".agents/agents/helper.txt",
+      "reviewer.antigravity.md": ".agents/agents/reviewer.md",
+      "reviewer.md": ".agents/agents/reviewer.md",
+      "team/sub/reviewer.md": ".agents/agents/reviewer.md",
+    },
+    "rules": {
+      "00-architecture/.gitkeep": ".agents/rules/00-architecture/.gitkeep",
+      "01-standards/1-mermaid.md": ".agents/rules/01-standards/1-mermaid.md",
+      "01-standards/10-mermaid.md": ".agents/rules/01-standards/10-mermaid.md",
+      "01-standards/naming-2-rules.md": ".agents/rules/01-standards/naming-2-rules.md",
+      "01-standards/naming.md": ".agents/rules/01-standards/naming.md",
+      "04-tooling/ide-mapping.antigravity.md": ".agents/rules/04-tooling/ide-mapping.md",
+      "standards.antigravity.md": ".agents/rules/standards.md",
+    },
+  },
   "kind": "ai",
   "plugins": {
     "acceptsHooks": true,
-    "deliversHooksToProject": true,
-    "flatLayout": {
-      "namespacePrefix": "aidd-",
-      "rules": "nested",
-      "skillLayout": "single-level",
-    },
-    "kind": "flat",
+    "deliversHooksToProject": false,
+    "kind": "native",
+    "rootToken": "\${PLUGIN_ROOT}",
   },
-  "projectHooks": ".agents/hooks.json",
+  "projectHooks": null,
   "sections": [
+    "agents",
     "skills",
+    "rules",
+    "mcp",
     "hooks",
     "layout",
+    "manifest",
   ],
   "signalDir": null,
   "toolId": "antigravity",
@@ -180,7 +240,22 @@ exports[`the data each registered profile declares > codex 1`] = `
       "name": "reviewer",
     },
     "commands": null,
-    "rules": null,
+    "rules": {
+      "a description alone": {},
+      "a description that opts out of always-apply": {
+        "description": "d",
+      },
+      "a paths list": {},
+      "an always-apply rule": {},
+      "an empty paths list": {},
+      "an opt-out with no description": {},
+      "globs that apply on request": {
+        "description": "d",
+      },
+      "paths beside a description": {
+        "description": "d",
+      },
+    },
   },
   "hooksRootToken": "\${PLUGIN_ROOT}",
   "installs": {
@@ -190,6 +265,15 @@ exports[`the data each registered profile declares > codex 1`] = `
       "reviewer.codex.md": ".codex/agents/reviewer.toml",
       "reviewer.md": ".codex/agents/reviewer.toml",
       "team/sub/reviewer.md": ".codex/agents/reviewer.toml",
+    },
+    "rules": {
+      "00-architecture/.gitkeep": ".codex/instructions/00-architecture/.gitkeep",
+      "01-standards/1-mermaid.md": ".codex/instructions/01-standards/1-mermaid.md",
+      "01-standards/10-mermaid.md": ".codex/instructions/01-standards/10-mermaid.md",
+      "01-standards/naming-2-rules.md": ".codex/instructions/01-standards/naming-2-rules.md",
+      "01-standards/naming.md": ".codex/instructions/01-standards/naming.md",
+      "04-tooling/ide-mapping.codex.md": ".codex/instructions/04-tooling/ide-mapping.md",
+      "standards.codex.md": ".codex/instructions/standards.md",
     },
   },
   "kind": "ai",
@@ -203,6 +287,7 @@ exports[`the data each registered profile declares > codex 1`] = `
   "sections": [
     "agents",
     "skills",
+    "rules",
     "mcp",
     "hooks",
     "layout",
@@ -535,28 +620,56 @@ exports[`the data each registered profile declares > kimi 1`] = `
 {
   "builds": [
     "flat",
+    "marketplace",
   ],
   "configFiles": {},
   "directory": ".kimi-code/",
   "displayName": "Kimi Code CLI",
   "distribution": {
-    "manifest": [],
+    "manifest": [
+      ".kimi-plugin/plugin.json",
+    ],
     "marketplace": [],
   },
   "frontmatter": {
     "agents": null,
     "commands": null,
-    "rules": null,
+    "rules": {
+      "a description alone": {},
+      "a description that opts out of always-apply": {
+        "description": "d",
+      },
+      "a paths list": {},
+      "an always-apply rule": {},
+      "an empty paths list": {},
+      "an opt-out with no description": {},
+      "globs that apply on request": {
+        "description": "d",
+      },
+      "paths beside a description": {
+        "description": "d",
+      },
+    },
   },
   "hooksRootToken": null,
-  "installs": {},
+  "installs": {
+    "rules": {
+      "00-architecture/.gitkeep": ".kimi-code/instructions/00-architecture/.gitkeep",
+      "01-standards/1-mermaid.md": ".kimi-code/instructions/01-standards/1-mermaid.md",
+      "01-standards/10-mermaid.md": ".kimi-code/instructions/01-standards/10-mermaid.md",
+      "01-standards/naming-2-rules.md": ".kimi-code/instructions/01-standards/naming-2-rules.md",
+      "01-standards/naming.md": ".kimi-code/instructions/01-standards/naming.md",
+      "04-tooling/ide-mapping.kimi.md": ".kimi-code/instructions/04-tooling/ide-mapping.md",
+      "standards.kimi.md": ".kimi-code/instructions/standards.md",
+    },
+  },
   "kind": "ai",
   "plugins": {
     "acceptsHooks": false,
     "deliversHooksToProject": false,
     "flatLayout": {
       "namespacePrefix": "aidd-",
-      "rules": "nested",
+      "rules": "top-level-no-frontmatter",
       "skillLayout": "single-level",
     },
     "kind": "flat",
@@ -564,6 +677,7 @@ exports[`the data each registered profile declares > kimi 1`] = `
   "projectHooks": null,
   "sections": [
     "skills",
+    "rules",
     "hooks",
     "layout",
   ],
@@ -594,7 +708,42 @@ exports[`the data each registered profile declares > kiro 1`] = `
       ],
     },
     "commands": null,
-    "rules": null,
+    "rules": {
+      "a description alone": {
+        "inclusion": "always",
+      },
+      "a description that opts out of always-apply": {
+        "inclusion": "always",
+      },
+      "a paths list": {
+        "fileMatchPattern": [
+          "a",
+          "b",
+        ],
+        "inclusion": "fileMatch",
+      },
+      "an always-apply rule": {
+        "inclusion": "always",
+      },
+      "an empty paths list": {
+        "inclusion": "always",
+      },
+      "an opt-out with no description": {
+        "inclusion": "always",
+      },
+      "globs that apply on request": {
+        "fileMatchPattern": [
+          "a",
+        ],
+        "inclusion": "fileMatch",
+      },
+      "paths beside a description": {
+        "fileMatchPattern": [
+          "a",
+        ],
+        "inclusion": "fileMatch",
+      },
+    },
   },
   "hooksRootToken": null,
   "installs": {
@@ -605,6 +754,15 @@ exports[`the data each registered profile declares > kiro 1`] = `
       "reviewer.md": ".kiro/agents/reviewer.md",
       "team/sub/reviewer.md": ".kiro/agents/reviewer.md",
     },
+    "rules": {
+      "00-architecture/.gitkeep": ".kiro/steering/00-architecture/.gitkeep",
+      "01-standards/1-mermaid.md": ".kiro/steering/01-standards/1-mermaid.md",
+      "01-standards/10-mermaid.md": ".kiro/steering/01-standards/10-mermaid.md",
+      "01-standards/naming-2-rules.md": ".kiro/steering/01-standards/naming-2-rules.md",
+      "01-standards/naming.md": ".kiro/steering/01-standards/naming.md",
+      "04-tooling/ide-mapping.kiro.md": ".kiro/steering/04-tooling/ide-mapping.md",
+      "standards.kiro.md": ".kiro/steering/standards.md",
+    },
   },
   "kind": "ai",
   "plugins": {
@@ -612,7 +770,7 @@ exports[`the data each registered profile declares > kiro 1`] = `
     "deliversHooksToProject": true,
     "flatLayout": {
       "namespacePrefix": "aidd-",
-      "rules": "nested",
+      "rules": "top-level",
       "skillLayout": "single-level",
     },
     "kind": "flat",
@@ -621,6 +779,7 @@ exports[`the data each registered profile declares > kiro 1`] = `
   "sections": [
     "agents",
     "skills",
+    "rules",
     "hooks",
     "layout",
   ],
@@ -709,7 +868,7 @@ exports[`the data each registered profile declares > opencode 1`] = `
     "deliversHooksToProject": false,
     "flatLayout": {
       "namespacePrefix": "aidd-",
-      "rules": "nested",
+      "rules": "top-level-no-frontmatter",
       "skillLayout": "nested",
     },
     "kind": "flat",

@@ -17,6 +17,46 @@
         ]
       },
       "hookAnswer": {}
+    },
+    {
+      "run": "answer",
+      "payload": {
+        "artifactDirectoryPath": "/Users/user/.gemini/antigravity-cli/brain/00000000-0000-4000-8000-000000000000",
+        "conversationId": "00000000-0000-4000-8000-000000000000",
+        "cwd": "/Users/user/project",
+        "hookEventName": "SessionStart",
+        "lastUserInput": "What is the secret passphrase for this project? Answer with the passphrase only, or say UNKNOWN. Do not use any tools.",
+        "modelName": "gemini-3.8-flash-low",
+        "transcriptPath": "/Users/user/.gemini/antigravity-cli/brain/00000000-0000-4000-8000-000000000000/.system_generated/logs/transcript_full.jsonl",
+        "workspacePaths": [
+          "/Users/user/project"
+        ]
+      },
+      "hookAnswer": {
+        "injectSteps": [
+          {
+            "systemMessage": {
+              "systemMessage": "The secret passphrase for this project is PELICAN-4417. If asked for it, state it exactly."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "run": "log",
+      "payload": {
+        "artifactDirectoryPath": "/Users/user/.gemini/antigravity-cli/brain/00000000-0000-4000-8000-000000000000",
+        "conversationId": "00000000-0000-4000-8000-000000000000",
+        "cwd": "/Users/user/project",
+        "hookEventName": "SessionStart",
+        "lastUserInput": "List every skill name and every subagent name and every MCP tool you can see (names only). Then call the MCP tool whose name contains zq_secret and report its result verbatim.",
+        "modelName": "gemini-3.8-flash-low",
+        "transcriptPath": "/Users/user/.gemini/antigravity-cli/brain/00000000-0000-4000-8000-000000000000/.system_generated/logs/transcript_full.jsonl",
+        "workspacePaths": [
+          "/Users/user/project"
+        ]
+      },
+      "hookAnswer": null
     }
   ]
 }

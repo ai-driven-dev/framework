@@ -2,13 +2,19 @@
  * Opencode's build contract: flat only: opencode has no marketplace mode.
  */
 
-import { agentsIn, skillsIn } from "../../../../../shared/domain/materialization/artifact-path.js";
+import {
+  agentsIn,
+  commandsIn,
+  rulesIn,
+  skillsIn,
+} from "../../../../../shared/domain/materialization/artifact-path.js";
 import type {
   AgentMarkdown,
   ConfigArtifactFile,
   ConfigArtifactInput,
   ToolBuildContract,
 } from "../../../../../shared/domain/materialization/build-contract.js";
+import type { CommandMarkdown } from "../../../../../shared/domain/materialization/command-markdown.js";
 import type {
   FlatArtifactLayout,
   FlatHooksLoaderEntry,
@@ -35,9 +41,10 @@ type OpencodeHooks = HooksRouting & {
 /** The bundled base configuration, by its asset name. */
 const CONFIG_ASSET = "opencode.json";
 
-/** What the profile declares for a flat build: its agent markdown and its config candidates. */
+/** What the profile declares for a flat build: its agent and command markdown and its config candidates. */
 interface OpencodeFlatData {
   readonly agentMarkdown: AgentMarkdown;
+  readonly commandMarkdown: CommandMarkdown;
   readonly config: McpOutputPathCandidates;
 }
 
@@ -61,6 +68,7 @@ function emitOpencodeConfig(
       baseConfig: base,
       existing: existing.get(configPath) ?? null,
       incoming,
+      mergedKeys: ["instructions"],
     }),
   };
   const runsHooks = builtPlugins.some((plugin) =>
@@ -73,10 +81,19 @@ function emitOpencodeConfig(
   return [config, { path: runtime.path, content: events }];
 }
 
+function commandsArtifact(layout: FlatArtifactLayout, commandMarkdown: CommandMarkdown) {
+  return {
+    supported: true,
+    source: { kind: "fullTree", srcDir: "commands" },
+    placement: commandsIn(layout),
+    commandMarkdown,
+  } as const;
+}
+
 export function buildOpencodeFlatContract(
   hooks: OpencodeHooks,
   layout: FlatArtifactLayout,
-  { agentMarkdown, config }: OpencodeFlatData
+  { agentMarkdown, commandMarkdown, config }: OpencodeFlatData
 ): ToolBuildContract {
   return {
     manifestFileRelative: null,
@@ -95,8 +112,14 @@ export function buildOpencodeFlatContract(
         placement: agentsIn(layout),
         agentMarkdown,
       },
+      rules: {
+        supported: true,
+        source: { kind: "fullTree", srcDir: "rules" },
+        placement: rulesIn(layout),
+      },
+      commands: commandsArtifact(layout, commandMarkdown),
       mcp: { supported: false, reason: "carried by the config artifact (opencode.json mcp)" },
-      hooks: flatHooksArtifact(hooks, { bridge: generateOpencodeHooksBridge }),
+      hooks: flatHooksArtifact(hooks, { tool: "opencode", bridge: generateOpencodeHooksBridge }),
     },
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,

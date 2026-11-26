@@ -25,8 +25,9 @@ describe("aidd setup - the help surface", () => {
     expect(globalSetupHelp(wireTools()).split("\n")).toEqual([
       "",
       "Global:",
-      "  Pass --ide claude,codex,copilot,cursor,kilo,opencode (one or more, no editor) and --plugins all, recommended, none or names.",
+      "  Pass --ide claude,codex,copilot,cursor,kilo,kimi,opencode (one or more, no editor) and --plugins all, recommended, none or names.",
       "  claude, codex, copilot enable the plugins through their own CLI, which must be on PATH.",
+      "  kimi install the plugins through their own server, which their CLI starts and which must be on PATH.",
       "  codex gets their files in ~/.codex, cursor gets their files in ~/.cursor/plugins/local, kilo gets their files in ~/.config/kilo, opencode gets their files in ~/.config/opencode.",
       "  `aidd sync --global` refreshes them from the framework source.",
     ]);
@@ -38,7 +39,7 @@ describe("aidd setup - the help surface", () => {
     );
   });
 
-  it("offers a source, one tool list, a plugin mode, a scope, a provider, and its switches", () => {
+  it("offers a source, one tool list, a plugin mode, a scope, a provider, an agents-only switch, and its switches", () => {
     const visible = setupCommand().options.filter((option) => !option.hidden);
     expect(visible.map((option) => [option.flags, option.description])).toEqual([
       ["--source <mode>", "Framework source: remote or local"],
@@ -59,6 +60,10 @@ describe("aidd setup - the help surface", () => {
       [
         "--provider <provider>",
         "Run each tool's main session and agents on this provider's model for their role (openai, anthropic, mistral), or none for the IDE's model",
+      ],
+      [
+        "--agents-only",
+        "Update the agents' models without changing the main session's settings; without --provider, each tool keeps its saved provider",
       ],
     ]);
     expect(

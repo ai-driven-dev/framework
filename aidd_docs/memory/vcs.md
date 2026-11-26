@@ -5,7 +5,7 @@
 - GitHub, `ai-driven-dev/framework`, driven through `gh`; tickets are GitHub Issues.
 - `main` is production and GitHub's default; `next` is integration. `gh pr create` needs `--base next`.
 - Pull request template: `.github/PULL_REQUEST_TEMPLATE.md`.
-- Release model: [`RELEASE.md`](../../RELEASE.md); its tooling: `internal/deployment.md`.
+- Release model: [`RELEASE.md`](../../RELEASE.md); its tooling: `deployment.md`.
 
 ## Branches
 
@@ -24,7 +24,7 @@
 - Only `hotfix/*` targets `main`; everything else ships in the weekly release.
 - The issue type categorizes; it never routes.
 - Automation owns `promote/*` and `back-merge/*`, outside this table.
-- Board conventions: `internal/backlog.md`.
+- Board conventions: `backlog.md`.
 
 ## Pull requests
 

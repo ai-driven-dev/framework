@@ -2,7 +2,7 @@
 // The design system engine every skill and the hook call, one command per job; `node aidd-ui.cjs help` says what each does.
 const fs = require("node:fs");
 const path = require("node:path");
-const { Refusal, load, required, unreadable, UI_DIR, WARNING, ERROR, ENGINE_REF } = require("./lib/project.cjs");
+const { Refusal, load, required, unreadable, walk, relative, UI_DIR, SHOWCASE_DIR, DRAFTS_DIR, WARNING, ERROR, ENGINE_REF } = require("./lib/project.cjs");
 const { formatFindings } = require("./lib/common-rules.cjs");
 const records = require("./lib/records.cjs");
 const history = require("./lib/history.cjs");
@@ -13,9 +13,10 @@ const code = require("./lib/code.cjs");
 const { usages } = require("./lib/graph.cjs");
 const extraction = require("./lib/extract.cjs");
 const drafts = require("./lib/drafts.cjs");
+const { showcaseOf, languageOf } = require("./lib/showcase.cjs");
 const { bump, publish, validate: validateElements } = require("./lib/bump.cjs");
 const { HELP, commandList, helpText } = require("./lib/help.cjs");
-const { ROOT_FLAG, FORCE_FLAG, TASK_FLAG, CHANGE_FLAG, BREAKING_FLAG, CREATED_FLAG, REMOVED_FLAG, IMPACT_USAGE, EXTRACT_USAGE, BUMP_USAGE, PUBLISH_USAGE, COMPARE_USAGE, KEEP_USAGE, HELP_USAGE } = require("./lib/cli.cjs");
+const { ROOT_FLAG, FORCE_FLAG, TASK_FLAG, CHANGE_FLAG, BREAKING_FLAG, CREATED_FLAG, REMOVED_FLAG, LANG_FLAG, IMPACT_USAGE, EXTRACT_USAGE, BUMP_USAGE, PUBLISH_USAGE, KEEP_USAGE, SHOWCASE_USAGE, HELP_USAGE } = require("./lib/cli.cjs");
 
 const CHECKS = { records, history, tokens, renders, code, extraction };
 const VERDICT_VALID = "VALID";
@@ -186,24 +187,6 @@ function publishSystem(args) {
   });
 }
 
-/** Checks a set of variants: its problems as `validate` prints them, else what the comparison shows. */
-function compareSet(args) {
-  const { values, rest, error } = parse(args, { options: [ROOT_FLAG] });
-  if (error || rest.length !== 1) {
-    console.error(`usage: ${COMPARE_USAGE}`);
-    return EXIT_USAGE;
-  }
-  return refusing(() => {
-    const { problems, ...done } = drafts.compare(values[ROOT_FLAG] ?? process.cwd(), rest[0]);
-    if (problems) {
-      console.log(formatAll(problems));
-      return EXIT_INVALID;
-    }
-    console.log(JSON.stringify(done, null, 2));
-    return EXIT_VALID;
-  });
-}
-
 /** Makes one variant of a set the design system's own, and deletes the set. */
 function keepVariant(args) {
   const { values, rest, error } = parse(args, { options: [ROOT_FLAG] });
@@ -214,6 +197,44 @@ function keepVariant(args) {
   return refusing(() => {
     console.log(JSON.stringify(drafts.keep(values[ROOT_FLAG] ?? process.cwd(), ...rest), null, 2));
     return EXIT_VALID;
+  });
+}
+
+/** The png files under the design system folder, relative to it: the captures beside the records. */
+function capturesOf(root) {
+  const base = path.join(root, UI_DIR);
+  const skipped = [SHOWCASE_DIR, DRAFTS_DIR].map((name) => path.join(base, name));
+  return new Set(walk(base, (dir) => skipped.includes(dir)).filter((file) => file.endsWith(".png")).map((file) => relative(base, file)));
+}
+
+/** Writes a page for each record and each set of variants under `showcase/`, replacing the folder whole. A set with problems
+ * shows them on its page, and the command prints them and exits 1. */
+function writeShowcase(args) {
+  const { values, rest, error } = parse(args, { options: [ROOT_FLAG, LANG_FLAG] });
+  if (error || rest.length) {
+    console.error(`usage: ${SHOWCASE_USAGE}`);
+    return EXIT_USAGE;
+  }
+  return refusing(() => {
+    const root = values[ROOT_FLAG] ?? process.cwd();
+    const project = required(root);
+    const lang = languageOf(values[LANG_FLAG]);
+    const stylesheet = path.join(root, tokens.cssFileOf(project));
+    const sets = drafts.setsOf(root);
+    const pages = showcaseOf({ project, tokens: fs.existsSync(stylesheet) ? fs.readFileSync(stylesheet, "utf8") : null, captures: capturesOf(root), lang, sets });
+    const dir = path.join(root, UI_DIR, SHOWCASE_DIR);
+    const leaving = Object.keys(pages).filter((name) => path.basename(name) !== name);
+    if (leaving.length) throw new Refusal(`${leaving.join(", ")} would be written outside ${SHOWCASE_DIR}/: make each record's id its file name (validate names it), then run showcase`);
+    fs.rmSync(dir, { recursive: true, force: true });
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, ".gitignore"), "*\n");
+    for (const [name, html] of Object.entries(pages)) fs.writeFileSync(path.join(dir, name), html);
+    if (fs.existsSync(path.join(root, UI_DIR, DRAFTS_DIR))) fs.writeFileSync(path.join(root, UI_DIR, DRAFTS_DIR, drafts.IGNORE_FILE), drafts.IGNORE_ALL);
+    console.log(JSON.stringify({ page: `${UI_DIR}/${SHOWCASE_DIR}/index.html`, pages: Object.keys(pages).length, lang }, null, 2));
+    const refused = sets.flatMap((set) => set.problems);
+    if (!refused.length) return EXIT_VALID;
+    console.log(formatAll(refused));
+    return EXIT_INVALID;
   });
 }
 
@@ -237,7 +258,7 @@ function help([name]) {
   return EXIT_VALID;
 }
 
-const COMMANDS = { validate, tokens: generateTokens, hook: runHook, impact, extract: extractTokens, bump: bumpVersions, publish: publishSystem, compare: compareSet, keep: keepVariant, help };
+const COMMANDS = { validate, tokens: generateTokens, hook: runHook, impact, extract: extractTokens, bump: bumpVersions, publish: publishSystem, keep: keepVariant, showcase: writeShowcase, help };
 
 function main([command, ...args]) {
   return Object.hasOwn(COMMANDS, command) ? COMMANDS[command](args) : unknownCommand();

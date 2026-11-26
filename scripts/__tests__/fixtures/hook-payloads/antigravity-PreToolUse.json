@@ -1,0 +1,164 @@
+{
+  "host": "antigravity",
+  "event": "PreToolUse",
+  "samples": [
+    {
+      "run": "deny",
+      "payload": {
+        "artifactDirectoryPath": "/Users/user/.gemini/antigravity-cli/brain/00000000-0000-4000-8000-000000000000",
+        "conversationId": "00000000-0000-4000-8000-000000000000",
+        "cwd": "/Users/user/project",
+        "hookEventName": "PreToolUse",
+        "lastUserInput": "Do these in order. 1) Create notes.md containing hello with write_file. 2) With your edit tool, change hello into hi in notes.md. 3) Run the shell command 'echo done'. 4) Without reading it first, call write_file on aidd_docs/tasks/2026_01/2026_01_02_export/spec.md with the content 'new'. 5) If step 4 failed or was refused, quote the exact message you received, then create unlocked.md containing new with write_file.",
+        "modelName": "gemini-3.8-flash-low",
+        "stepIdx": 12,
+        "toolCall": {
+          "args": {
+            "Content": "new",
+            "Path": "/Users/user/project/aidd_docs/tasks/2026_01/2026_01_02_export/spec.md"
+          },
+          "id": "call_144700094158681548",
+          "name": "write_file"
+        },
+        "transcriptPath": "/Users/user/.gemini/antigravity-cli/brain/00000000-0000-4000-8000-000000000000/.system_generated/logs/transcript_full.jsonl",
+        "workspacePaths": [
+          "/Users/user/project"
+        ]
+      },
+      "hookAnswer": {
+        "decision": "deny",
+        "reason": "aidd_docs/tasks/2026_01/2026_01_02_export/spec.md is locked: only the person who approves it sets its status back to draft. Write nothing to it."
+      }
+    },
+    {
+      "run": "allow",
+      "payload": {
+        "artifactDirectoryPath": "/Users/user/.gemini/antigravity-cli/brain/00000000-0000-4000-8000-000000000000",
+        "conversationId": "00000000-0000-4000-8000-000000000000",
+        "cwd": "/Users/user/project",
+        "hookEventName": "PreToolUse",
+        "lastUserInput": "Do these in order. 1) Create notes.md containing hello with write_file. 2) With your edit tool, change hello into hi in notes.md. 3) Run the shell command 'echo done'. 4) Without reading it first, call write_file on aidd_docs/tasks/2026_01/2026_01_02_export/spec.md with the content 'new'. 5) If step 4 failed or was refused, quote the exact message you received, then create unlocked.md containing new with write_file.",
+        "modelName": "gemini-3.8-flash-low",
+        "stepIdx": 3,
+        "toolCall": {
+          "args": {
+            "Content": "hello",
+            "Path": "/Users/user/project/notes.md"
+          },
+          "id": "call_15913911400029530782",
+          "name": "write_file"
+        },
+        "transcriptPath": "/Users/user/.gemini/antigravity-cli/brain/00000000-0000-4000-8000-000000000000/.system_generated/logs/transcript_full.jsonl",
+        "workspacePaths": [
+          "/Users/user/project"
+        ]
+      },
+      "hookAnswer": {
+        "decision": "allow"
+      }
+    },
+    {
+      "run": "allow",
+      "payload": {
+        "artifactDirectoryPath": "/Users/user/.gemini/antigravity-cli/brain/00000000-0000-4000-8000-000000000000",
+        "conversationId": "00000000-0000-4000-8000-000000000000",
+        "cwd": "/Users/user/project",
+        "hookEventName": "PreToolUse",
+        "lastUserInput": "Do these in order. 1) Create notes.md containing hello with write_file. 2) With your edit tool, change hello into hi in notes.md. 3) Run the shell command 'echo done'. 4) Without reading it first, call write_file on aidd_docs/tasks/2026_01/2026_01_02_export/spec.md with the content 'new'. 5) If step 4 failed or was refused, quote the exact message you received, then create unlocked.md containing new with write_file.",
+        "modelName": "gemini-3.8-flash-low",
+        "stepIdx": 6,
+        "toolCall": {
+          "args": {
+            "Path": "/Users/user/project/notes.md",
+            "Replacement": "hi",
+            "Target": "hello"
+          },
+          "id": "call_5120018704644361073",
+          "name": "edit_file"
+        },
+        "transcriptPath": "/Users/user/.gemini/antigravity-cli/brain/00000000-0000-4000-8000-000000000000/.system_generated/logs/transcript_full.jsonl",
+        "workspacePaths": [
+          "/Users/user/project"
+        ]
+      },
+      "hookAnswer": {
+        "decision": "allow"
+      }
+    },
+    {
+      "run": "allow",
+      "payload": {
+        "artifactDirectoryPath": "/Users/user/.gemini/antigravity-cli/brain/00000000-0000-4000-8000-000000000000",
+        "conversationId": "00000000-0000-4000-8000-000000000000",
+        "cwd": "/Users/user/project",
+        "hookEventName": "PreToolUse",
+        "lastUserInput": "Do these in order. 1) Create notes.md containing hello with write_file. 2) With your edit tool, change hello into hi in notes.md. 3) Run the shell command 'echo done'. 4) Without reading it first, call write_file on aidd_docs/tasks/2026_01/2026_01_02_export/spec.md with the content 'new'. 5) If step 4 failed or was refused, quote the exact message you received, then create unlocked.md containing new with write_file.",
+        "modelName": "gemini-3.8-flash-low",
+        "stepIdx": 9,
+        "toolCall": {
+          "args": {
+            "CommandLine": "echo done",
+            "WaitMsBeforeAsync": 5000,
+            "toolSummary": "Echo done"
+          },
+          "id": "call_14559067640583118009",
+          "name": "run_command"
+        },
+        "transcriptPath": "/Users/user/.gemini/antigravity-cli/brain/00000000-0000-4000-8000-000000000000/.system_generated/logs/transcript_full.jsonl",
+        "workspacePaths": [
+          "/Users/user/project"
+        ]
+      },
+      "hookAnswer": {
+        "decision": "allow"
+      }
+    },
+    {
+      "run": "allow",
+      "payload": {
+        "artifactDirectoryPath": "/Users/user/.gemini/antigravity-cli/brain/00000000-0000-4000-8000-000000000000",
+        "conversationId": "00000000-0000-4000-8000-000000000000",
+        "cwd": "/Users/user/project",
+        "hookEventName": "PreToolUse",
+        "lastUserInput": "Do these in order. 1) Create notes.md containing hello with write_file. 2) With your edit tool, change hello into hi in notes.md. 3) Run the shell command 'echo done'. 4) Without reading it first, call write_file on aidd_docs/tasks/2026_01/2026_01_02_export/spec.md with the content 'new'. 5) If step 4 failed or was refused, quote the exact message you received, then create unlocked.md containing new with write_file.",
+        "modelName": "gemini-3.8-flash-low",
+        "stepIdx": 2,
+        "toolCall": {
+          "args": {
+            "steps": [
+              {
+                "status": "in_progress",
+                "title": "Create notes.md"
+              },
+              {
+                "status": "pending",
+                "title": "Edit notes.md"
+              },
+              {
+                "status": "pending",
+                "title": "Run echo done"
+              },
+              {
+                "status": "pending",
+                "title": "Write to spec.md"
+              },
+              {
+                "status": "pending",
+                "title": "Handle step 4 outcome"
+              }
+            ]
+          },
+          "id": "call_15913911400029528255",
+          "name": "update_steps"
+        },
+        "transcriptPath": "/Users/user/.gemini/antigravity-cli/brain/00000000-0000-4000-8000-000000000000/.system_generated/logs/transcript_full.jsonl",
+        "workspacePaths": [
+          "/Users/user/project"
+        ]
+      },
+      "hookAnswer": {
+        "decision": "allow"
+      }
+    }
+  ]
+}

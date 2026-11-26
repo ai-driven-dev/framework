@@ -46,6 +46,7 @@ const TOOL_SUFFIX = ".opencode.md";
 /** Where a flat build, and a flat install, put opencode's skills and agents. */
 const OPENCODE_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(".opencode/", {
   skills: "nested",
+  rules: "top-level-no-frontmatter",
   agent: { ext: ".md" },
 });
 
@@ -84,7 +85,8 @@ const FLAT_PLACEMENT = flatPlacement({
 // `hooks/`, namespaced per plugin, and nothing there is ever imported.
 const hooks = declareBridgeHooks(
   { toolId: "opencode", directory: DIRECTORY, adapter },
-  ["server-init", "tool.execute.after", "session.idle"],
+  // SessionStart runs on the first event naming a session; `session.created` is the label of a new one (see the bridge module doc).
+  ["session.created", "tool.execute.after", "session.idle", "tool.execute.before", "chat.message"],
   {
     // The loader scans `{plugin,plugins}/*.{ts,js}`, one level: only a plugin's own module, or
     // the bridge generated for it, belongs there, renamed so two plugins cannot collide.
@@ -141,6 +143,8 @@ export const opencode = defineAiTool(
     buildContracts: {
       flat: contract(buildOpencodeFlatContract, hooks, OPENCODE_FLAT_LAYOUT, {
         agentMarkdown: { frontmatter: AGENT_FRONTMATTER },
+        // Limit: no plugin ships a command, so no command link to a `.opencode/commands/` path is observed.
+        commandMarkdown: { namePrefix: FLAT_PLACEMENT.namespacePrefix, linkSyntax: [] },
         config: FLAT_CONFIG_CANDIDATES,
       }),
     },

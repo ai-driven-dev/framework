@@ -1,0 +1,4 @@
+/** Whether there is a message to show the person. */
+function hasPerson(person) {
+  return typeof person === "string" && person !== "";
+}

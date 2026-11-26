@@ -1,12 +1,15 @@
-import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join, resolve } from "node:path";
 import { expect, vi } from "vitest";
-import { REPOSITORY_ROOT } from "../../../shared/testing/repository-root.builder.js";
+import {
+  type CapturedSample,
+  capturedSample,
+  capturedSamples,
+  SCRUBBED_PROJECT,
+} from "./hook-payload-captures.builder.js";
 
 // Beside this package, never the repository's: a mutation run mutates its own copy.
 export const RUNTIME = join(import.meta.dirname, "..", "..", "..", "..", "assets", "hooks-runtime");
-const PAYLOADS = join(REPOSITORY_ROOT, "scripts", "__tests__", "fixtures", "hook-payloads");
 export const HOSTS = [
   "claude",
   "codex",
@@ -35,22 +38,17 @@ interface Adapter {
   readEvent(): NeutralEvent | undefined;
   answer(answer: { level: 1 | 2; text?: string; person?: string }): void;
   continueTurn(text: string): void;
+  refuse(reason: string): void;
+  ownFolder(folder: string, create: boolean): boolean;
+  hooksFolder(name: string, create: boolean): string | null;
 }
 
-interface Sample {
-  readonly run: string;
-  readonly payload: Record<string, unknown>;
-  readonly hookAnswer: Record<string, unknown> | null;
+export function samples(file: string): readonly CapturedSample[] {
+  return capturedSamples(file);
 }
 
-function samples(file: string): readonly Sample[] {
-  return (JSON.parse(readFileSync(join(PAYLOADS, file), "utf8")) as { samples: Sample[] }).samples;
-}
-
-export function sample(file: string, index: number): Sample {
-  const found = samples(file)[index];
-  if (found === undefined) throw new Error(`${file} has no sample ${index}`);
-  return found;
+export function sample(file: string, index: number): CapturedSample {
+  return capturedSample(file, (_, at) => at === index, `sample ${index}`);
 }
 
 /** A fresh copy of the adapter, as each hook process loads it once. */
@@ -62,11 +60,16 @@ export function load(host: string): Adapter {
 
 /** What the adapter printed since the last `restoreHostIo`. */
 export const printed: string[] = [];
+/** What it wrote to standard error over the same span. */
+export const printedErr: string[] = [];
+const exitCodeBefore = process.exitCode;
 
-/** Puts back the spied reads and writes, and forgets what was printed. */
+/** Puts back the spied reads and writes, the exit code, and forgets what was printed. */
 export function restoreHostIo(): void {
   vi.restoreAllMocks();
   printed.length = 0;
+  printedErr.length = 0;
+  process.exitCode = exitCodeBefore;
 }
 
 /** Hands the adapter `stdin` as the host would, and collects what it prints. */
@@ -78,6 +81,10 @@ export function given(stdin: string): void {
       : (original as (...args: unknown[]) => unknown)(file, ...rest)) as typeof fs.readFileSync);
   vi.spyOn(process.stdout, "write").mockImplementation((chunk: unknown) => {
     printed.push(String(chunk));
+    return true;
+  });
+  vi.spyOn(process.stderr, "write").mockImplementation((chunk: unknown) => {
+    printedErr.push(String(chunk));
     return true;
   });
 }
@@ -93,8 +100,7 @@ export function output(): unknown {
   return JSON.parse(printed[0] as string);
 }
 
-export const CWD = "/Users/user/project";
+export const CWD = SCRUBBED_PROJECT;
 // The adapters resolve a path against the session folder, which gives a drive-rooted path on Windows.
 export const at = (relative: string): string => resolve(CWD, relative);
-export const SESSION = "00000000-0000-4000-8000-000000000000";
 export const NOTES = at("notes.md");

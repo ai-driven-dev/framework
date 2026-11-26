@@ -13,10 +13,11 @@ import type { OutputFile } from "./output-file.js";
 
 /**
  * The generated hooks bridge of a flat install, whether it is built to disk or translated for an
- * install. `sourceShipsItsOwn` is whether the plugin's own hooks already carry the file the
- * bridge would replace. Nothing when it does, or when no event in the hooks maps to the bridge.
+ * install, and what it leaves out of the plugin's hooks, told by the one reading of them.
+ * `sourceShipsItsOwn` is whether the plugin's own hooks already carry the file the bridge would
+ * replace. Nothing of either when it does; no file when no event in the hooks maps to the bridge.
  */
-export function flatHooksBridgeFile({
+export function flatHooksBridge({
   bridge,
   rawHooksJson,
   pluginName,
@@ -26,11 +27,11 @@ export function flatHooksBridgeFile({
   rawHooksJson: string;
   pluginName: string;
   sourceShipsItsOwn: boolean;
-}): OutputFile | null {
-  if (sourceShipsItsOwn) return null;
-  const content = bridge.generate(rawHooksJson, pluginName);
-  if (content === null) return null;
-  return { relativePath: hooksBridgeFilePath(bridge, pluginName), content };
+}): { file: OutputFile | null; warnings: readonly string[] } {
+  if (sourceShipsItsOwn) return { file: null, warnings: [] };
+  const { content, warnings } = bridge.generate(rawHooksJson, pluginName);
+  if (content === null) return { file: null, warnings };
+  return { file: { relativePath: hooksBridgeFilePath(bridge, pluginName), content }, warnings };
 }
 
 /** Whether a plugin's own hooks already carry the file a bridge would replace, in any folder. */
@@ -52,7 +53,7 @@ export function flatAgentPath(
   return artifactPath(artifact, pluginName, `agents/${basename(agentFile)}`);
 }
 
-/** Where the tool places a path inside a plugin: agents, skills and hooks move. Nothing for any
+/** Where the tool places a path inside a plugin: agents, skills, commands and hooks move. Nothing for any
  * other folder, which the tool has no place for. */
 function placedPluginSuffix(
   contract: ToolBuildContract,
@@ -66,13 +67,16 @@ function placedPluginSuffix(
   if (suffix.startsWith("skills/") && art.skills.supported) {
     return artifactPath(art.skills, pluginName, suffix);
   }
+  if (suffix.startsWith("commands/") && art.commands?.supported) {
+    return artifactPath(art.commands, pluginName, suffix);
+  }
   if (suffix.startsWith("hooks/") && art.hooks.supported) {
     return artifactPath(art.hooks, pluginName, suffix);
   }
   return null;
 }
 
-/** Where a path inside a plugin lands in the flat layout: agents, skills and hooks move, anything
+/** Where a path inside a plugin lands in the flat layout: agents, skills, commands and hooks move, anything
  * else stays where it is. */
 export function flatPathOfPluginSuffix(
   contract: ToolBuildContract,
@@ -121,7 +125,7 @@ export function mergeFlatHooks(
   });
 }
 
-/** Where a markdown link's target lands in the flat layout: only agents and skills move. */
+/** Where a markdown link's target lands in the flat layout: only agents, skills and commands move. */
 export function flatLinkTarget(
   contract: ToolBuildContract,
   pluginName: string,

@@ -2,6 +2,7 @@ import type {
   PluginInstallNotice,
   ReadonlyNoticeList,
 } from "../../../../shared/domain/materialization/plugin-install-notice.js";
+import { basename } from "../../../../shared/domain/paths.model.js";
 import type {
   PluginComponentFile,
   PluginDistribution,
@@ -23,14 +24,20 @@ interface HooksTarget {
  * other file a script the host runs, beside it. */
 export function nativeHooksPlan(
   file: PluginComponentFile,
-  at: HooksTarget & { readonly pluginRoot: string }
+  at: HooksTarget & { readonly pluginRoot: string; readonly pluginName: string }
 ): ComponentPlan | null {
   const { tool, plugins, pluginRoot } = at;
   if (!plugins.hooksAcceptance().accepts) return null;
   const { relativePath: source, content } = file;
   if (source === PLUGIN_HOOKS_RELATIVE) {
     const path = `${pluginRoot}${plugins.hooksFilePath()}`;
-    return { source, path, content, rootToken: plugins.rootToken() };
+    return {
+      source,
+      path,
+      content,
+      shape: hooksManifestShape(tool, at.pluginName),
+      rootToken: plugins.rootToken(),
+    };
   }
   // The script goes beside the manifest, and where the manifest sits at the plugin root it keeps
   // its own directory: a script at the root would leave the command naming `hooks/` pointing at
@@ -43,6 +50,19 @@ export function nativeHooksPlan(
     links: isProse(source) ? toolLinks(tool) : undefined,
     script: (text) => plugins.hookScript(source, text),
   };
+}
+
+// The manifest as the tool's marketplace build writes it, so both route the same bytes to a tool
+// that reads it in a form of its own.
+function hooksManifestShape(
+  tool: TranslatedAiTool,
+  pluginName: string
+): ComponentPlan["shape"] | undefined {
+  const hooks = tool.buildContract("marketplace")?.artifacts.hooks;
+  const transform = hooks?.supported ? hooks.transform : undefined;
+  return transform === undefined
+    ? undefined
+    : (text) => transform(text, pluginName, basename(PLUGIN_HOOKS_RELATIVE));
 }
 
 /** The plugin's own manifest, at the place the tool reads one, synthesized as the tool's

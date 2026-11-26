@@ -328,7 +328,7 @@ const LAYOUT = {
 
 const countingSink: PluginTreeSink = {
   prepare: () => Promise.resolve(),
-  writePlugin: () => Promise.resolve({ files: 31, declaredMcp: null }),
+  writePlugin: () => Promise.resolve({ files: 31, declaredMcp: null, rulesGlob: null }),
   finish: () => Promise.resolve(32),
 };
 

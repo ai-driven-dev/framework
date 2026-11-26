@@ -6,6 +6,7 @@ import { RemoveMarketplace } from "../../../src/contexts/distribution/applicatio
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import type { MarketplaceRegistry } from "../../../src/contexts/distribution/ports/marketplace-registry.js";
 import { hostPortsOver } from "../../../src/contexts/host-registration/application/host-ports-over.js";
+import type { RemoveServerPlugins } from "../../../src/contexts/host-registration/application/server/remove-server-plugins.use-case.js";
 import { WithdrawFromHost } from "../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import type {
   HostPortMaps,
@@ -49,6 +50,8 @@ export interface UserScopeCleanerParts extends Partial<HostPortMaps> {
   homeDir?: () => string;
   userSourceReferences?: UserSourceReferences;
   prompter?: ConstructorParameters<typeof ConfirmRemoval>[0];
+  /** What removes the plugins aidd installed in a host's own server; none installed by default. */
+  removeServerPlugins?: Pick<RemoveServerPlugins, "execute">;
 }
 
 function hostPortsOf(parts: Partial<HostPortMaps>): HostPorts {
@@ -103,6 +106,7 @@ export function userScopeCleanerDeps(parts: UserScopeCleanerParts): CleanUserSco
       removeMarketplace: new RemoveMarketplace(
         parts.marketplaceRegistry ?? new InMemoryMarketplaceRegistry()
       ),
+      removeServerPlugins: parts.removeServerPlugins ?? { execute: async () => new Map() },
       claims,
     }),
   };
