@@ -19,7 +19,7 @@ const SHELLS = new Set(["run_command"]);
 
 // @part read-payload
 
-/** The session's folder is the first workspace path: `agy` runs a hook from its `.agents`. */
+/** The session's folder is the first workspace path: `agy` runs a hook from its plugin's root. */
 function folderOf(raw) {
   const [root] = Array.isArray(raw.workspacePaths) ? raw.workspacePaths : [];
   return typeof root === "string" && root !== "" ? root : process.cwd();
