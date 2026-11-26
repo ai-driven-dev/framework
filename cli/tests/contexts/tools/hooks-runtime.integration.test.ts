@@ -5,12 +5,15 @@
  * the test name says it is derived from a captured payload.
  * OpenCode and Kilo receive what their bridge sends, so they are read through the bridge in
  * `hooks-runtime-bridges.integration.test.ts`; garbage reaches all six adapters here, beside the
- * Antigravity adapter, which answers SessionStart and Stop only. The other hosts have their own file:
+ * Antigravity adapter, which answers SessionStart and Stop, and holds a PostToolUse requirement
+ * for the next model call. The other hosts have their own file:
  * `hooks-runtime-<host>.integration.test.ts`.
  */
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SESSION } from "./testing/hook-payload-captures.builder.js";
 import {
   at,
@@ -29,6 +32,19 @@ import {
 } from "./testing/hooks-runtime-host.builder.js";
 
 afterEach(restoreHostIo);
+
+/** Points the OS temp directory at `folder`; the returned function puts it back. */
+function redirectTemp(folder: string): () => void {
+  const keys = ["TMPDIR", "TEMP", "TMP"] as const;
+  const before = keys.map((key) => [key, process.env[key]] as const);
+  for (const key of keys) process.env[key] = folder;
+  return () => {
+    for (const [key, value] of before) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  };
+}
 
 describe("Antigravity CLI", () => {
   it("reads SessionStart from its captured payload", () => {
@@ -102,11 +118,167 @@ describe("Antigravity CLI", () => {
       expect(read("antigravity", { ...ran, hookEventName: "PreInvocation" }).event).toBe(undefined);
     });
 
-    it("prints nothing for a PostToolUse answer: agy takes no context from it", () => {
-      const { adapter } = read("antigravity", ran);
-      adapter.answer({ level: 2, text: "fix it" });
+    describe("holds a level 2 PostToolUse answer for the next model call", () => {
+      const { payload: nextCall, hookAnswer } = sample("antigravity-PreInvocation.json", 1);
+      const text = "Fix notes.txt before you reply.";
+      const injection = { injectSteps: [{ systemMessage: { systemMessage: text } }] };
+      let temp: string;
+      let restoreTemp: () => void;
 
-      expect(printed).toStrictEqual([]);
+      beforeEach(() => {
+        temp = fs.mkdtempSync(join(tmpdir(), "aidd-held-answer-test-"));
+        restoreTemp = redirectTemp(temp);
+      });
+
+      afterEach(() => {
+        restoreTemp();
+        fs.rmSync(temp, { recursive: true, force: true });
+      });
+
+      const hooksFolder = () =>
+        join(
+          temp,
+          typeof process.getuid === "function" ? `aidd-hooks-${process.getuid()}` : "aidd-hooks"
+        );
+      const heldFolder = () => join(hooksFolder(), "held-answers");
+      const heldName = (id: string) => createHash("sha256").update(id).digest("hex");
+      const hold = (level: 1 | 2, held: string, payload: unknown = ran) => {
+        vi.restoreAllMocks();
+        read("antigravity", payload).adapter.answer({ level, text: held });
+        printed.length = 0;
+      };
+      const release = (payload: unknown = nextCall) => {
+        vi.restoreAllMocks();
+        const adapter = load("antigravity");
+        given(JSON.stringify(payload));
+        adapter.release();
+      };
+
+      it("prints nothing when the answer is given: agy takes no context from a PostToolUse", () => {
+        read("antigravity", ran).adapter.answer({ level: 2, text });
+
+        expect(printed).toStrictEqual([]);
+      });
+
+      it("injects it as a system message at the next PreInvocation, the shape the captured run took", () => {
+        hold(2, text);
+        release();
+
+        expect(output()).toStrictEqual(injection);
+        expect(hookAnswer).toStrictEqual({
+          injectSteps: [{ systemMessage: { systemMessage: expect.any(String) } }],
+        });
+      });
+
+      it("injects it once", () => {
+        hold(2, text);
+        release();
+        release();
+
+        expect(printed).toHaveLength(1);
+      });
+
+      it("removes a held file it cannot read, so nothing is left behind", () => {
+        fs.mkdirSync(heldFolder(), { recursive: true, mode: 0o700 });
+        fs.writeFileSync(
+          join(heldFolder(), heldName(String(nextCall.conversationId))),
+          "not json\n"
+        );
+        release();
+
+        expect([fs.readdirSync(heldFolder()), printed]).toStrictEqual([[], []]);
+      });
+
+      it("injects each held text as a step of its own, in the order held", () => {
+        hold(2, "first");
+        hold(2, "second");
+        release();
+
+        expect(output()).toStrictEqual({
+          injectSteps: [
+            { systemMessage: { systemMessage: "first" } },
+            { systemMessage: { systemMessage: "second" } },
+          ],
+        });
+      });
+
+      it("holds a level 1 answer nowhere: only a requirement is relayed", () => {
+        hold(1, text);
+        release();
+
+        expect(printed).toStrictEqual([]);
+      });
+
+      it.each([undefined, ""])("holds the text %j nowhere", (empty) => {
+        read("antigravity", ran).adapter.answer({ level: 2, text: empty });
+        release();
+
+        expect(printed).toStrictEqual([]);
+      });
+
+      it("keeps it for the conversation it was held for", () => {
+        hold(2, text);
+        release({ ...nextCall, conversationId: "another-conversation" });
+
+        expect(printed).toStrictEqual([]);
+        release();
+        expect(printed).toHaveLength(1);
+      });
+
+      it.skipIf(process.getuid === undefined)(
+        "holds nothing in a folder other users can reach",
+        () => {
+          fs.mkdirSync(hooksFolder(), { mode: 0o777 });
+          fs.chmodSync(hooksFolder(), 0o777);
+          hold(2, text);
+          release();
+
+          expect([fs.readdirSync(hooksFolder()), printed]).toStrictEqual([[], []]);
+        }
+      );
+
+      it("keeps a conversation id that is not a plain name inside the held folder", () => {
+        const id = "../escaped";
+        hold(2, text, { ...ran, conversationId: id });
+
+        expect([fs.existsSync(join(temp, "escaped")), fs.readdirSync(heldFolder())]).toStrictEqual([
+          false,
+          [heldName(id)],
+        ]);
+      });
+
+      it("prints nothing for a model call with nothing held", () => {
+        release();
+
+        expect(printed).toStrictEqual([]);
+      });
+
+      it("releases when its file runs as the PreInvocation hook's command", () => {
+        hold(2, text);
+        const spawned = spawnSync(process.execPath, [join(RUNTIME, "host-antigravity.cjs")], {
+          input: JSON.stringify(nextCall),
+          encoding: "utf8",
+          env: { ...process.env, TMPDIR: temp, TEMP: temp, TMP: temp },
+        });
+
+        expect(JSON.parse(spawned.stdout)).toStrictEqual(injection);
+      });
+
+      it.each([
+        ["garbage", "{oops"],
+        ["a payload with no conversation id", JSON.stringify({ hookEventName: "PreInvocation" })],
+      ])(
+        "prints nothing and exits 0 when its file runs as the hook command on %s",
+        (_name, input) => {
+          const spawned = spawnSync(process.execPath, [join(RUNTIME, "host-antigravity.cjs")], {
+            input,
+            encoding: "utf8",
+            env: { ...process.env, TMPDIR: temp, TEMP: temp, TMP: temp },
+          });
+
+          expect([spawned.status, spawned.stdout, spawned.stderr]).toStrictEqual([0, "", ""]);
+        }
+      );
     });
 
     it("continues the turn at the first Stop with the text as the reason", () => {

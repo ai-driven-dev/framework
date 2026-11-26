@@ -110,12 +110,16 @@ export function buildKimiFlatContract(spec: KimiFlatSpec): ToolBuildContract {
 /** Where Kimi reads a plugin's manifest: https://www.kimi.com/code/docs/en/kimi-code-cli/customization/plugins.html */
 const PLUGIN_MANIFEST_RELATIVE = ".kimi-plugin/plugin.json";
 
+const CATALOG_VERSION = "2";
+
 /** Kimi's hooks, with the native event each canonical event fires on. */
 export type KimiHooks = HooksRouting & { readonly eventMap: Readonly<Record<string, string>> };
 
 export interface KimiPluginSpec {
   readonly agentTools: KimiAgentTools;
   readonly hooks: KimiHooks;
+  /** A catalog is any JSON path or URL a user names: https://www.kimi.com/code/docs/en/kimi-code-cli/customization/plugins.html */
+  readonly marketplaceRelative: string;
 }
 
 /** A hook as Kimi's manifest lists it: `event`, `matcher`, `command` and `timeout`
@@ -166,7 +170,11 @@ function kimiPluginManifest(hooks: KimiHooks) {
 /** The tree `aidd translate --to kimi --as marketplace` builds and the user-scope install hands
  * to Kimi's own plugin server: skills and agents under the plugin, the servers and hooks in the
  * manifest. */
-export function buildKimiPluginContract({ agentTools, hooks }: KimiPluginSpec): ToolBuildContract {
+export function buildKimiPluginContract({
+  agentTools,
+  hooks,
+  marketplaceRelative,
+}: KimiPluginSpec): ToolBuildContract {
   return {
     manifestFileRelative: PLUGIN_MANIFEST_RELATIVE,
     synthesizeManifest: kimiPluginManifest(hooks),
@@ -186,7 +194,15 @@ export function buildKimiPluginContract({ agentTools, hooks }: KimiPluginSpec): 
       mcp: { supported: false, reason: "Kimi reads a plugin's servers from its manifest" },
       hooks: pluginTreeHooksArtifact(hooks),
     },
-    buildMarketplaceCatalog: null,
-    buildMarketplaceEntry: null,
+    buildMarketplaceCatalog: async (_source, plugins) => ({
+      catalog: { version: CATALOG_VERSION, plugins },
+      schemaName: null,
+      destRelPath: marketplaceRelative,
+    }),
+    buildMarketplaceEntry: async ({ name }) => ({
+      id: name,
+      displayName: name,
+      source: `../plugins/${name}`,
+    }),
   };
 }

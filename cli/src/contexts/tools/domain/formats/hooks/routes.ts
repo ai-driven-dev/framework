@@ -4,6 +4,7 @@ import type {
   ConvertHooks,
   SupportedArtifact,
 } from "../../../../../shared/domain/materialization/build-contract.js";
+import { HOST_ADAPTER_PATH } from "../../../../../shared/domain/plugin/canon-paths.js";
 import { CapabilityConfigError } from "../../../contract/errors/tools.error.js";
 import type { HookScript } from "../../../contract/tool-vocabulary.js";
 import type { HooksFileFormat } from "../../hooks/hooks-entry-shape.js";
@@ -23,10 +24,6 @@ import {
   type ProjectMergeDelivery,
 } from "../../sections/hooks-section.js";
 import { type HooksRouting, PLUGIN_HOOKS_SOURCE, type ProjectHooksRoute } from "./descriptor.js";
-
-/** Where a plugin keeps the adapter between its hooks and the host: Claude Code's, as shipped,
- * which a build for another tool replaces with that tool's. */
-const HOST_ADAPTER_PATH = "hooks/lib/host.cjs";
 
 export function hookScript(descriptor: HooksRouting): HookScript | undefined {
   const adapter = descriptor.runtime?.adapter;
@@ -56,7 +53,7 @@ export function pluginTreeHooksArtifact(
     ...(descriptor.manifestListsHooks === true ? { skipHooksJson: true } : {}),
     ...(convertHooks === undefined
       ? {}
-      : { convertHooks, transform: (json, plugin) => convertHooks(json, plugin).content }),
+      : { convertHooks, transform: (json, plugin) => convertHooks(json, plugin, false).content }),
   };
 }
 

@@ -73,15 +73,24 @@ const hooks = declareHooks(
   }
 );
 
+const MARKETPLACE_FILE = ".kimi-plugin/marketplace.json";
+
 export const kimi = defineAiTool({
   toolId: "kimi",
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
   displayName: "Kimi Code CLI",
-  distributionProbes: { manifest: [".kimi-plugin/plugin.json"] },
+  distributionProbes: {
+    manifest: [".kimi-plugin/plugin.json"],
+    marketplace: [MARKETPLACE_FILE],
+  },
   signalDir: null,
   buildContracts: {
-    marketplace: contract(buildKimiPluginContract, { agentTools: AGENT_TOOLS, hooks }),
+    marketplace: contract(buildKimiPluginContract, {
+      agentTools: AGENT_TOOLS,
+      hooks,
+      marketplaceRelative: MARKETPLACE_FILE,
+    }),
     flat: contract(buildKimiFlatContract, {
       layout: KIMI_FLAT_LAYOUT,
       mcpPath: MCP_PATH,

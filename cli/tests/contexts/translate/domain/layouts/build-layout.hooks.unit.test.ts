@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { translate } from "../../../../../src/contexts/translate/domain/engine.js";
+import {
+  HOST_ADAPTER_PATH,
+  RELEASE_OWNER_PLUGIN,
+} from "../../../../../src/shared/domain/plugin/canon-paths.js";
 import { translateBuildLayout } from "../../../../shared/testing/build-files.builder.js";
 import { aCanon } from "../../testing/canon-distribution.builder.js";
 import { CLAUDE_ROOT_TOKEN } from "../../testing/engine-kit.builder.js";
@@ -123,5 +127,34 @@ describe("the marketplace layout of a plugin's hooks", () => {
       files: [["plugins/plug/hooks/hooks.json", "plug:{}"]],
       warnings: ["unmapped event 'SessionEnd' skipped"],
     });
+  });
+
+  it.each([
+    [RELEASE_OWNER_PLUGIN, true],
+    ["another-plugin", false],
+  ])("tells the conversion whether %s carries the release: %s", (plugin, carries) => {
+    const seen: boolean[] = [];
+    const convertHooks = (_json: string, _plugin: string, carriesRelease: boolean) => {
+      seen.push(carriesRelease);
+      return { content: "{}", warnings: [] };
+    };
+    const contract = aStubBuildContract();
+
+    translate(aCanon(plugin, { "hooks/hooks.json": "{}", [HOST_ADAPTER_PATH]: "adapter" }), {
+      kind: "build",
+      contract: {
+        ...contract,
+        artifacts: {
+          ...contract.artifacts,
+          hooks: aSupportedArtifact({ convertHooks }),
+          agents: { supported: false, reason: "off in this test" },
+          skills: { supported: false, reason: "off in this test" },
+        },
+      },
+      mode: "marketplace",
+      outDir: "/out",
+    });
+
+    expect(seen).toEqual([carries]);
   });
 });
