@@ -15,10 +15,8 @@
       ],
       "fileContains": {
         "prd-shadow-report.md": [
-          "# Shadow Areas Report",
-          "## Gaps by Category",
-          "Total gaps:",
-          "[blocker]"
+          "# Shadow areas: prd.md",
+          "status: open"
         ]
       }
     }
@@ -42,7 +40,7 @@
   {
     "skill": "03-shadow-areas",
     "evalName": "xeval-shadow",
-    "name": "empty source yields a single blocker",
+    "name": "empty source is rejected without a report",
     "setup": {
       "files": {
         "empty.md": ""
@@ -50,13 +48,10 @@
     },
     "prompt": "Use the {{SKILL}} skill on ./empty.md to find blind spots and write the shadow report next to it.",
     "expect": {
-      "filesExist": [
+      "filesAbsent": [
         "empty-shadow-report.md"
       ],
-      "judge": "The report flags exactly one blocker gap, asking what content the (empty) artifact should contain.",
-      "judgeFiles": [
-        "empty-shadow-report.md"
-      ]
+      "judge": "The answer says the source is empty, so there is nothing to scan, and writes no report."
     }
   },
   {

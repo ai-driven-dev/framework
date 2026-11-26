@@ -1,51 +1,18 @@
 ---
-source: {{source_path}}
-generated_at: {{generated_at}}
-# status: clean
+source: {{source file name}}
+status: {{clean or open}}
+open: {{open gap count}}
 ---
 
-# Shadow Areas Report
+# Shadow areas: {{source file name}}
 
-Source: `{{source_path}}`
-Generated: `{{generated_at}}`
+## {{category}}
 
-Total gaps: {{total_count}} | Blocker: {{blocker_count}} | Major: {{major_count}} | Minor: {{minor_count}}
+- {{question}}
+  > {{quote}}
 
----
+## Closed
 
-## Warnings
+- {{question}}
 
-- {{warning text}}
-
----
-
-## Gaps by Category
-
-<!-- Plain mode: one heading per category that has a gap, in locked order. A category with no gap is omitted. -->
-
-### unstated assumption
-
-**[blocker]** What happens when the upstream service returns 429 with no Retry-After header?
-> retry_limit = env.get("RETRY_LIMIT", 3)
-
-<!-- DIFF-MODE EXAMPLE (rendered only when 03-diff output is passed to 02-render-report)
-
-When `diff` is supplied the flat list per category is replaced by three named subsections.
-Empty subsections are omitted. Category headings with zero entries across all three subsets are also omitted.
-
-### unstated assumption
-
-#### Closed
-
-**[major]** Is the retry limit configurable by the caller?
-> retry_limit = env.get("RETRY_LIMIT", 3)
-
-#### Still Open
-
-**[blocker]** What happens when the upstream service returns 429 with no Retry-After header?
-
-#### Newly Introduced
-
-**[minor]** Does the default timeout apply to streaming responses or only to connection establishment?
-
-END DIFF-MODE EXAMPLE -->
+> Fill every `{{...}}` and delete this line. Repeat a category with its gaps, and a quote per passage. Omit a category without gaps, and Closed when no gap closed. With no gap at all, the report ends at its title.
