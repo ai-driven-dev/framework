@@ -1,10 +1,5 @@
 "use strict";
 /**
- * Kimi's side of the one interface every framework hook speaks: `readEvent()` turns the host's
- * stdin into a neutral event, `answer()` and `continueTurn()` give the host's answer. The build puts one such adapter
- * per tool at `hooks/lib/host.cjs`; the plugin tree ships Claude Code's. Node built-ins only;
- * anything unreadable is no event, and prints nothing.
- *
  * Only SessionStart is read: it is the one captured event a framework script reads. Kimi's tool
  * and Stop events were never captured, so a payload naming one reads as no event.
  */

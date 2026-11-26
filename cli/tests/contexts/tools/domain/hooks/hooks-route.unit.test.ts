@@ -28,4 +28,11 @@ describe("routing a plugin's events to a tool's", () => {
       skipped: [],
     });
   });
+
+  it("names an event that is only a key every object inherits", () => {
+    expect(routeEvents([["constructor", GROUPS]], { Start: "begin" }, FLAT)).toStrictEqual({
+      routed: [],
+      skipped: ["constructor"],
+    });
+  });
 });

@@ -1,10 +1,3 @@
-/**
- * The Kimi host adapter behind the one interface every framework hook speaks: `readEvent()` and
- * `answer({ level, text })`. Its payload is one Kimi Code CLI was seen sending a plugin's hook
- * (the repository's hook-payload fixtures). Only SessionStart is read: it is the one captured
- * event a framework script reads, and Kimi documents it as observation-only, so nothing is
- * printed.
- */
 import { afterEach, describe, expect, it } from "vitest";
 import {
   CWD,

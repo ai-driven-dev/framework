@@ -59,6 +59,7 @@ Sources: [Claude Code](https://code.claude.com/docs/en/hooks), [Codex](https://l
 | --- | --- |
 | Only `SessionStart` and `UserPromptSubmit` are delivered | `PreToolUse`, `PostToolUse` and `Stop` hooks do not run |
 | `SessionStart` is observation-only ([hooks](https://www.kimi.com/code/docs/en/kimi-code-cli/customization/hooks.html)) | A `SessionStart` script's output does not reach the model |
+| `UserPromptSubmit` carries `prompt` as a list of text parts | A script reading it as a string breaks |
 | A subagent's `tools` list keeps only tools with a name on the host | A Claude tool with no host name is dropped from its agent |
 
 ### Cursor
