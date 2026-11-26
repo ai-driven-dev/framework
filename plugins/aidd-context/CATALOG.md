@@ -180,12 +180,11 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-plan.md](skills/08-hook-generate/actions/02-plan.md) | - |
 | `actions` | [03-write.md](skills/08-hook-generate/actions/03-write.md) | - |
 | `actions` | [04-verify.md](skills/08-hook-generate/actions/04-verify.md) | - |
-| `assets` | [hook-template.md](skills/08-hook-generate/assets/hook-template.md) | - |
 | `references` | [hook-authoring.md](skills/08-hook-generate/references/hook-authoring.md) | - |
 | `references` | [hosts.md](skills/08-hook-generate/references/hosts.md) | - |
 | `references` | [writer.md](skills/08-hook-generate/references/writer.md) | - |
 | `scripts` | [write-hook.cjs](skills/08-hook-generate/scripts/write-hook.cjs) | - |
-| `-` | [SKILL.md](skills/08-hook-generate/SKILL.md) | `Creates, updates or removes a hook that runs a script at a lifecycle event, in each chosen host's native format, not for skills or rules.` |
+| `-` | [SKILL.md](skills/08-hook-generate/SKILL.md) | `Creates, updates or removes a project hook in each host AI tool's native format, when the user wants an action to run at a lifecycle moment.` |
 
 #### `skills/09-mermaid`
 
