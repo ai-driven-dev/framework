@@ -15,4 +15,4 @@ How to tell each host AI tool is installed in a project.
 
 Every host reads `AGENTS.md`, so it signals none. When no signal matches, confirm the host.
 
-Kimi Code CLI keeps no project hook, only user-level ones, so it is never offered.
+Kimi Code CLI keeps no project hook (user config or plugin manifest only), so it is never offered.
