@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
+import { InvalidMarketplaceScopeError } from "../../../../src/contexts/distribution/contract/distribution.error.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../src/contexts/distribution/contract/marketplace.js";
 import {
-  FRAMEWORK_MARKETPLACE_NAME,
   MARKETPLACE_NAME_REGEX,
   Marketplace,
   type MarketplaceData,
 } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import {
   InvalidMarketplaceNameError,
-  InvalidMarketplaceScopeError,
   InvalidPluginSourceError,
-} from "../../../../src/kernel/errors.js";
+} from "../../../../src/shared/domain/shared.error.js";
 
 const makeData = (overrides: Partial<MarketplaceData> = {}): MarketplaceData => ({
   name: "awesome-plugins",
@@ -19,8 +19,8 @@ const makeData = (overrides: Partial<MarketplaceData> = {}): MarketplaceData => 
   ...overrides,
 });
 
-describe("Marketplace", () => {
-  describe("MARKETPLACE_NAME_REGEX", () => {
+describe("a marketplace", () => {
+  describe("when a marketplace name is checked against the name pattern", () => {
     it("matches slug names", () => {
       expect(MARKETPLACE_NAME_REGEX.test("framework")).toBe(true);
       expect(MARKETPLACE_NAME_REGEX.test("my-marketplace")).toBe(true);
@@ -36,7 +36,7 @@ describe("Marketplace", () => {
     });
   });
 
-  describe("fromJSON()", () => {
+  describe("when a marketplace is read from JSON", () => {
     it("creates a marketplace from valid data", () => {
       const m = Marketplace.fromJSON(makeData());
       expect(m.name).toBe("awesome-plugins");
@@ -86,7 +86,7 @@ describe("Marketplace", () => {
     });
   });
 
-  describe("toJSON()", () => {
+  describe("when a marketplace is written to JSON", () => {
     it("round-trips via fromJSON/toJSON", () => {
       const data = makeData({ lastFetched: "2026-04-28T11:00:00.000Z" });
       const m = Marketplace.fromJSON(data);
@@ -100,7 +100,7 @@ describe("Marketplace", () => {
     });
   });
 
-  describe("withLastFetched()", () => {
+  describe("when a fetch time is stamped", () => {
     it("returns a new marketplace with updated timestamp", () => {
       const m = Marketplace.fromJSON(makeData());
       const updated = m.withLastFetched("2026-04-28T12:00:00.000Z");
@@ -117,7 +117,7 @@ describe("Marketplace", () => {
     });
   });
 
-  describe("isFramework()", () => {
+  describe("when asked whether it is the framework marketplace", () => {
     it("returns true when name matches the framework marketplace name", () => {
       const m = Marketplace.fromJSON(makeData({ name: FRAMEWORK_MARKETPLACE_NAME }));
       expect(m.isFramework()).toBe(true);

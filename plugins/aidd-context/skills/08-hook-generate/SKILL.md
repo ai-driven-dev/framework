@@ -1,16 +1,16 @@
 ---
 name: 08-hook-generate
-description: Creates, updates or removes a hook that runs a script at a lifecycle event, in each chosen host's native format, not for skills or rules.
-argument-hint: add | update | remove
+description: Creates, updates or removes a project hook in each host AI tool's native format, when the user wants an action to run at a lifecycle moment.
+argument-hint: need | update name | remove name
 ---
 
 # Hook Generate
 
 ```mermaid
 flowchart LR
-  entry([request]) --> frame["actions/01-frame.md"]
-  frame <-->|"operation, name, hosts and intent to confirm"| user((user answers))
-  frame -->|"no host can carry the intent"| unsupported((unsupported))
+  entry([need]) --> frame["actions/01-frame.md"]
+  frame <-->|"operation, name, hosts and need to confirm"| user((user answers))
+  frame -->|"no host can do it"| unsupported((unsupported))
   frame --> plan["actions/02-plan.md"]
   plan <-->|"plan to approve"| user
   plan -->|"revision or writer refusal"| frame
@@ -18,11 +18,10 @@ flowchart LR
   plan --> write["actions/03-write.md"]
   write -->|"writer error"| stopped((stopped))
   write -->|"remove done"| done((written))
-  plan -->|"verifier error"| stopped
   write --> verify["actions/04-verify.md"]
   verify -->|"trial failed"| plan
   verify <-->|"trial to approve"| user
-  verify -->|"trial declined"| unverified((format verified))
+  verify -->|"trial declined"| unverified((run not verified))
   verify --> verified((verified))
 ```
 

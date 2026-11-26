@@ -188,7 +188,7 @@ function identityOf(realpath) {
  * environment is asked first, then the log, so a refusal and a machine where nobody ever opted
  * in spawn nothing. Along the way, an open interval of this clone that its key no longer names
  * is closed, now, whoever is present: that is what ends a manual `git config aidd.telemetry
- * off` before the next prompt's calls. Nothing in the work tree is consent: a committed file
+ * off` at the next session start or ingest. Nothing in the work tree is consent: a committed file
  * cannot opt a teammate in. */
 function consentGranted(cwd, env = process.env, now = new Date()) {
   if (refusedByEnvironment(env)) return false;
@@ -212,7 +212,5 @@ module.exports = {
   decideConsent,
   identityFromStat,
   parseConsentLog,
-  readConsent,
-  refusedByEnvironment,
   tokenOfKey,
 };

@@ -8,7 +8,7 @@ The exhaustive list of AIDD plugins, skills, and actions. Skills are invoked thr
 - [aidd-refine](#-aidd-refine) - meta-cognition
 - [aidd-vcs](#-aidd-vcs) - version control workflows
 - [aidd-orchestrator](#-aidd-orchestrator) - feature flow, async automation and backlog
-- [aidd-ui](#-aidd-ui) - UI / UX (🚧 alpha, not ready)
+- [aidd-ui](#-aidd-ui) - UI / UX (🧪 beta, off the curated path)
 - [aidd-telemetry](#-aidd-telemetry) - token measurement for Claude Code and Codex (🧪 beta, off the curated path)
 - [aidd-qa](#-aidd-qa) - acceptance QA (🔭 preview, off the curated path)
 
@@ -41,7 +41,8 @@ Bootstrap, project init, context-artifact generation, diagrams, learning, and ex
 
 | Event | Runs |
 | --- | --- |
-| `SessionStart` | `hooks/memory.cjs` |
+| `SessionStart` | `hooks/memory.cjs` · `hooks/artifacts.cjs` |
+| `PostToolUse` | `hooks/artifacts.cjs` |
 | `Stop` | `hooks/memory.cjs` |
 
 <!--extras-aidd-context:end-->
@@ -63,6 +64,18 @@ Code transformation: plan, implement, assert, audit, review, test, refactor, deb
 | `09-for-sure`   | Iterative loop that retries until a success condition is met               | `01-init-tracking`, `02-auto-accept`, `03-autonomous-loop`                       |
 | `10-batch`       | Execute independent tasks in parallel and summarize each agent's status and result | `01-batch`                                                            |
 
+<!--extras-aidd-dev:start-->
+
+**Hooks**
+
+| Event | Runs |
+| --- | --- |
+| `SessionStart` | `hooks/artifacts.cjs` |
+| `PostToolUse` | `hooks/artifacts.cjs` |
+| `Stop` | `hooks/artifacts.cjs` |
+
+<!--extras-aidd-dev:end-->
+
 ## 📋 aidd-pm
 
 Product backlog artifacts, refinement, Product Briefs, Epics, User Stories, Tasks, Spikes, Defects, requirements, and specs.
@@ -80,6 +93,19 @@ Product backlog artifacts, refinement, Product Briefs, Epics, User Stories, Task
 | `09-defect`               | Record and manage an observed product mismatch             | `01-capture`, `02-assess`, `03-finalize` |
 | `10-task`                 | Record and manage bounded delivery work                    | `01-frame`, `02-review`, `03-finalize` |
 
+<!--extras-aidd-pm:start-->
+
+**Hooks**
+
+| Event | Runs |
+| --- | --- |
+| `SessionStart` | `hooks/artifacts.cjs` |
+| `PreToolUse` | `hooks/spec-lock.cjs` |
+| `PostToolUse` | `hooks/artifacts.cjs` |
+| `Stop` | `hooks/artifacts.cjs` |
+
+<!--extras-aidd-pm:end-->
+
 ## 🪞 aidd-refine
 
 Meta-cognition: brainstorm, challenge, blind-spot scan, fact-check, conversation review.
@@ -91,6 +117,18 @@ Meta-cognition: brainstorm, challenge, blind-spot scan, fact-check, conversation
 | `03-shadow-areas`  | Scan a markdown artifact for blind spots                   | `01-detect`, `02-render-report`, `03-diff`                                                    |
 | `04-fact-check`    | Verify factual claims against sources and cite them        | `01-identify-claims`, `02-verify`, `03-report`                                                |
 | `05-review-conversation` | Review a finished conversation and attribute each cost to its owner | `01-read-conversation`, `02-recommend`, `03-target-edits` |
+
+<!--extras-aidd-refine:start-->
+
+**Hooks**
+
+| Event | Runs |
+| --- | --- |
+| `SessionStart` | `hooks/artifacts.cjs` |
+| `PostToolUse` | `hooks/artifacts.cjs` |
+| `Stop` | `hooks/artifacts.cjs` |
+
+<!--extras-aidd-refine:end-->
 
 ## 🌿 aidd-vcs
 
@@ -104,6 +142,7 @@ Version-control workflows: repo init, commit, pull/merge request, release tag, i
 | `03-release-tag`  | Cut a semver release with annotated tag and notes                              | `01-release-tag`                        |
 | `04-issue-create` | Create an issue in the configured ticketing tool                               | `01-issue-create`                       |
 | `05-resolve-conflict` | Resolve deterministic conflicts or approved choices | `01-resolve` |
+| `06-answer-comments` | Answer review comments, resolve settled threads, summarize pending decisions, and propose learnings | `01-answer-comments` |
 
 ## 🎼 aidd-orchestrator
 
@@ -130,7 +169,7 @@ Runs synchronous feature delivery, optional async issue automation, and the prod
 
 ## 🎨 aidd-ui
 
-🚧 **Alpha, not ready for use.** UI / UX: design, review, and improve frontend interfaces. Currently maps journeys and wireframes, and lays and changes the brand, tokens and components.
+🧪 **Beta.** UI / UX: maps journeys and wireframes, lays the brand, tokens and components, dresses screens, then reviews them in a showcase and publishes what you approve.
 
 | Skill      | Role                                      | Actions    |
 | ---------- | ----------------------------------------- | ---------- |
@@ -138,6 +177,8 @@ Runs synchronous feature delivery, optional async issue automation, and the prod
 | `02-brand` | Write a project's brand, from its code or from scratch, or evolve it, by comparing directions | `01-prepare`, `02-propose`, `03-choose`, `04-conclude` |
 | `03-foundations` | Lay the system and tokens, from nothing or from the code, and carry a token change through its impact and versions | `01-prepare`, `02-write`, `03-conclude` |
 | `04-components` | Write components and assets, from nothing or from the code, and carry a component change through its impact and versions | `01-prepare`, `02-write`, `03-conclude` |
+| `05-screens` | Write a screen per wireframe by comparing variants | `01-prepare`, `02-propose`, `03-choose`, `04-conclude` |
+| `06-review` | Review wireframes, screens and components in the showcase, then publish the OK ones | `01-prepare`, `02-propose`, `03-choose`, `04-write`, `05-conclude` |
 
 <!--extras-aidd-ui:start-->
 
@@ -166,8 +207,7 @@ Runs synchronous feature delivery, optional async issue automation, and the prod
 
 | Event | Runs |
 | --- | --- |
-| `SessionStart` | `hooks/session-start.cjs` · `hooks/catch-up.cjs` |
-| `UserPromptSubmit` | `hooks/prompt-gate.cjs` |
+| `SessionStart` | `hooks/task.cjs` · `hooks/ledger.cjs` |
 
 <!--extras-aidd-telemetry:end-->
 

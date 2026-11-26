@@ -3,11 +3,15 @@ import { copyFile, mkdir, symlink, writeFile } from "node:fs/promises";
 import { delimiter, join } from "node:path";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
-import { createTestEnv, pathWithoutAidd, sandboxedEnv } from "./helpers.js";
+import {
+  createTestEnv,
+  pathWithoutAidd,
+  sandboxedEnv,
+} from "../shared/testing/cli-sandbox.builder.js";
 
 const execFileAsync = promisify(execFile);
 
-/** A test's result must not depend on which AI tools the runner happens to have installed —
+/** A test's result must not depend on which AI tools the runner happens to have installed -
  * the OpenCode reader shells out to a binary and waits ten seconds for it. */
 // AI tools only: `gh` is the CLI's own auth dependency, the same standing as `git` and `node`
 // below, and a runner shipping it is the normal case, not a deviation.
@@ -23,7 +27,7 @@ async function whichUnderSandbox(binary: string, cwd: string, env: NodeJS.Proces
   }
 }
 
-describe("E2E: the sandbox a test spawns into", () => {
+describe("the sandbox a test spawns into", () => {
   it("keeps node executable when an AI tool is installed beside it", async () => {
     const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("sandbox-shared-node-");
     try {
@@ -110,5 +114,12 @@ describe("E2E: the sandbox a test spawns into", () => {
       if (set === undefined) delete process.env.CODEX_HOME;
       else process.env.CODEX_HOME = set;
     }
+  });
+
+  it("gives a caller's PATH to the Windows spelling too, so one variable never shadows the other", () => {
+    const env = sandboxedEnv(join("/sandbox", "home"), { PATH: "/the/caller/bin" });
+
+    expect(env.PATH).toBe("/the/caller/bin");
+    expect(env.Path).toBe("/the/caller/bin");
   });
 });

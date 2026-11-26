@@ -164,6 +164,63 @@
           "output": "Success. Updated the following files:\nM notes.md\nA added.md\nD old.md"
         }
       }
+    },
+    {
+      "run": "log",
+      "payload": {
+        "call": {
+          "tool": "write",
+          "sessionID": "ses_deb42ce4affeKOAuKiZFGXxQG5",
+          "callID": "call-00000000-0000-4000-8000-000000000000",
+          "args": {
+            "filePath": "/Users/user/project/notes.md",
+            "content": "hello"
+          }
+        },
+        "output": {
+          "title": "notes.md",
+          "metadata": {
+            "diagnostics": {},
+            "filepath": "/Users/user/project/notes.md",
+            "exists": false,
+            "diff": "Index: /Users/user/project/notes.md\n===================================================================\n--- /Users/user/project/notes.md\n+++ /Users/user/project/notes.md\n@@ -0,0 +1,1 @@\n+hello\n\\ No newline at end of file\n",
+            "filediff": {
+              "file": "/Users/user/project/notes.md",
+              "patch": "Index: /Users/user/project/notes.md\n===================================================================\n--- /Users/user/project/notes.md\n+++ /Users/user/project/notes.md\n@@ -0,0 +1,1 @@\n+hello\n\\ No newline at end of file\n",
+              "additions": 1,
+              "deletions": 0
+            },
+            "truncated": false
+          },
+          "output": "Wrote file successfully."
+        }
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "log",
+      "payload": {
+        "call": {
+          "tool": "bash",
+          "sessionID": "ses_deb42ce4affeKOAuKiZFGXxQG5",
+          "callID": "call-00000000-0000-4000-8000-000000000000",
+          "args": {
+            "command": "echo done",
+            "description": "Run echo done command"
+          }
+        },
+        "output": {
+          "title": "Run echo done command",
+          "metadata": {
+            "output": "done\n",
+            "exit": 0,
+            "description": "Run echo done command",
+            "truncated": false
+          },
+          "output": "done\n"
+        }
+      },
+      "hookAnswer": null
     }
   ]
 }

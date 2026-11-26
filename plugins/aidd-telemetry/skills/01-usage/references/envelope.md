@@ -56,6 +56,7 @@ A field may be added to version `2`: a figure outside `run`, a fact of the read 
 | `unrecognised_shapes` | Lines of a shape the reader did not recognise in this run, reported and never guessed |
 | `not_stored` | Calls this run read and left out, by reason: `outside-repo`, `never-seen-alive`, `no-consent`, `consent-closed`, `unreadable-consent`, `no-cwd`, `undated` |
 | `consent_log_damaged` | `true` while `ledger/consents.jsonl` cannot be trusted and nothing is stored |
+| `unreadable_sources` | Transcripts or directories this run could not read, each named with its error code. Empty when every source read. Not zero consumption: their calls are absent from this run and read again by the next |
 | `oldest_transcript_at` | When the oldest session file still on disk was last written, `null` when there is none |
 | `skipped_ledger_lines` | Lines that were not records, kept as found (another version may have written them), in the stored days this run read before tidying them: with a period, those days and the day on each side |
 

@@ -1,6 +1,6 @@
 /**
  * What every plugin's hooks share, copied byte for byte into each plugin's `hooks/lib/` and held
- * identical by `scripts/check-hook-rule-copies.js`. Edit one copy, then copy it over the others.
+ * identical by the `hook-rule-copies` check (`scripts/check/contracts/custom/hook-rule-copies.cjs`). Edit one copy, then copy it over the others.
  *
  * - `isShellWrite`: whether a shell command's text matches a write form.
  * - `formatFindings`: the one output shape every hook prints.

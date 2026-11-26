@@ -1,0 +1,57 @@
+{
+  "kind": "agent",
+  "unit": "file",
+  "targets": "plugins/*/agents/*.md",
+  "scope": [
+    ".claude/agents/*.md",
+    ".cursor/agents/*.md",
+    ".github/agents/*.agent.md",
+    ".agents/agents/*/agent.md",
+    ".opencode/agents/*.md",
+    ".kilo/agents/*.md",
+    ".kiro/agents/*.md",
+    ".kimi-code/agents/*.md"
+  ],
+  "shell": false,
+  "rules": {
+    "AGENT-02": {
+      "op": "custom",
+      "in": "*.md",
+      "check": "name",
+      "why": "hosts resolve the agent by file name"
+    },
+    "AGENT-03": {
+      "op": "pattern",
+      "in": "*.md",
+      "field": "description",
+      "regex": "\\. Use to ",
+      "why": "A4: what it does, then when to call it",
+      "fix": "end the description with `Use to <when>`"
+    },
+    "AGENT-04": {
+      "op": "sections",
+      "in": "*.md",
+      "level": 1,
+      "allowed": [
+        "Role",
+        "Behavior",
+        "Output"
+      ],
+      "order": true,
+      "required": [
+        "Role",
+        "Behavior",
+        "Output"
+      ],
+      "why": "A5-A7: the caller reads role, boundary, then return format",
+      "fix": "use exactly # Role, # Behavior, # Output in that order"
+    },
+    "AGENT-05": {
+      "op": "forbidden",
+      "in": "*.md",
+      "regex": "\\{\\{[^{}\\n]*\\}\\}",
+      "why": "an unfilled slot is read as an instruction",
+      "fix": "fill the template slot"
+    }
+  }
+}

@@ -1,0 +1,62 @@
+import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
+import type { ToolId, ToolIdResolver } from "../../../shared/domain/tool.js";
+import {
+  InvalidManifestDataError,
+  InvalidManifestToolIdError,
+} from "../contract/installation.error.js";
+import {
+  parseToolEntry,
+  serializeToolEntry,
+  type ToolEntry,
+  type ToolEntryData,
+} from "./manifest/tool-entry.js";
+
+export const MANIFEST_VERSION = 9;
+
+export interface ManifestData {
+  version: 9;
+  tools: Record<string, ToolEntryData>;
+}
+
+export function serializeManifestTools(
+  tools: ReadonlyMap<string, ToolEntry>
+): Record<string, ToolEntryData> {
+  const out: Record<string, ToolEntryData> = {};
+  for (const [toolId, entry] of tools) {
+    out[toolId] = serializeToolEntry(entry);
+  }
+  return out;
+}
+
+export function parseManifestTools(
+  raw: Record<string, unknown>,
+  resolveToolId: ToolIdResolver
+): Map<ToolId, ToolEntry> {
+  const section = asPlainObject(raw.tools);
+  if (section === null) throw new InvalidManifestDataError("tools: expected an object.");
+
+  const tools = new Map<ToolId, ToolEntry>();
+  for (const [key, value] of Object.entries(section)) {
+    const toolId = resolveToolId(key);
+    if (toolId === null) {
+      throw new InvalidManifestToolIdError(key);
+    }
+    tools.set(toolId, parseToolEntry(toolId, parseToolEntryData(key, value)));
+  }
+  return tools;
+}
+
+/** Narrows one `tools.<id>` entry before it reaches `parseToolEntry`, which otherwise throws a raw
+ * `TypeError` from deep inside `parseTrackedFiles`. Every failure names the JSON path, so the
+ * message is actionable. */
+function parseToolEntryData(toolId: string, value: unknown): ToolEntryData {
+  const entry = asPlainObject(value);
+  if (entry === null) {
+    throw new InvalidManifestDataError(`tools.${toolId}: expected an object.`);
+  }
+  if (!Array.isArray(entry.files)) {
+    const got = entry.files === undefined ? "missing" : typeof entry.files;
+    throw new InvalidManifestDataError(`tools.${toolId}.files: expected an array, got ${got}.`);
+  }
+  return value as ToolEntryData;
+}

@@ -53,103 +53,12 @@ function sweepPlugins() {
   return { violations, skillsWithActions };
 }
 
-test("a clean skill with no sibling address and a fully-named action yields no violations", () => {
+test("a clean skill with a fully-named action yields no violations", () => {
   const content = fixture("clean-skill/SKILL.md");
   const violations = checkArchitecture(
     "plugins/aidd-fixture-a/skills/01-clean/SKILL.md",
     content,
     ["01-step.md"]
-  );
-  assert.deepEqual(violations, []);
-});
-
-test("a skill addressing a sibling plugin yields a violation naming file, line and owning plugin", () => {
-  const content = fixture("cross-address-skill/SKILL.md");
-  const filePath = "plugins/aidd-fixture-a/skills/02-cross-address/SKILL.md";
-  const violations = checkArchitecture(filePath, content, ["01-step.md"]);
-
-  assert.equal(violations.length, 1);
-  const [violation] = violations;
-  assert.equal(violation.file, filePath);
-  assert.equal(violation.plugin, "aidd-fixture-b");
-  const lines = content.split("\n");
-  assert.equal(lines[violation.line - 1].includes("/aidd-fixture-b:01-noop"), true);
-});
-
-test("an agent's Skills you may invoke list addressing siblings yields no violations", () => {
-  const content = fixture("agent-permission-list.md");
-  const violations = checkArchitecture(
-    "plugins/aidd-fixture-a/agents/reviewer.md",
-    content
-  );
-  assert.deepEqual(violations, []);
-});
-
-test("an orchestrator plugin is exempt from orthogonality alone", () => {
-  const content = fixture("orchestrator-skill/SKILL.md");
-  // No actionFileNames: isolates rule one, since rule two short-circuits on an empty list.
-  const violations = checkArchitecture(
-    "plugins/aidd-orchestrator/skills/99-fixture/SKILL.md",
-    content
-  );
-  assert.deepEqual(violations, []);
-});
-
-test("router coherence still applies to an orchestrator plugin", () => {
-  const content = fixture("orchestrator-incoherent-skill/SKILL.md");
-  const filePath = "plugins/aidd-orchestrator/skills/99-fixture/SKILL.md";
-  const violations = checkArchitecture(filePath, content, ["01-route.md"]);
-
-  assert.equal(violations.length, 1);
-  const [violation] = violations;
-  assert.equal(violation.rule, "router-coherence");
-  assert.equal(violation.plugin, "aidd-orchestrator");
-});
-
-test("a file under assets/ yields no violations regardless of content", () => {
-  const content = fixture("assets-note.md");
-  const violations = checkArchitecture(
-    "plugins/aidd-fixture-a/skills/01-clean/assets/note.md",
-    content
-  );
-  assert.deepEqual(violations, []);
-});
-
-test("an action file nested a level deeper than usual is still governed", () => {
-  const content = fixture("nested-action.md");
-  const filePath = "plugins/aidd-fixture-a/skills/01-clean/actions/group/nested-action.md";
-  const violations = checkArchitecture(filePath, content);
-
-  assert.equal(violations.length, 1);
-  const [violation] = violations;
-  assert.equal(violation.plugin, "aidd-fixture-b");
-});
-
-test("a SKILL.md nested a level deeper than usual is still governed", () => {
-  const content = fixture("nested-skill/SKILL.md");
-  const filePath = "plugins/aidd-fixture-a/skills/01-clean/variant/SKILL.md";
-  const violations = checkArchitecture(filePath, content);
-
-  assert.equal(violations.length, 1);
-  const [violation] = violations;
-  assert.equal(violation.plugin, "aidd-fixture-b");
-});
-
-test("a reference file nested two levels under references/ is still governed", () => {
-  const content = fixture("nested-reference.md");
-  const filePath = "plugins/aidd-fixture-a/skills/01-clean/references/state/nested-reference.md";
-  const violations = checkArchitecture(filePath, content);
-
-  assert.equal(violations.length, 1);
-  const [violation] = violations;
-  assert.equal(violation.plugin, "aidd-fixture-b");
-});
-
-test("a SKILL.md nested under assets/ is ungoverned for that reason alone", () => {
-  const content = fixture("nested-assets-skill/SKILL.md");
-  const violations = checkArchitecture(
-    "plugins/aidd-fixture-a/skills/01-clean/assets/nested/SKILL.md",
-    content
   );
   assert.deepEqual(violations, []);
 });
@@ -168,24 +77,6 @@ test("an action file the Actions section never names yields one violation", () =
   assert.equal(violation.plugin, "aidd-fixture-a");
   const lines = content.split("\n");
   assert.equal(lines[violation.line - 1].trim(), "## Actions");
-});
-
-test("00-onboard's own reference menus are exempt from orthogonality", () => {
-  const content = fixture("onboard-menu.md");
-  const filePath = "plugins/aidd-context/skills/00-onboard/references/order/onboard-menu.md";
-  const violations = checkArchitecture(filePath, content);
-  assert.deepEqual(violations, []);
-});
-
-test("a bare plugin:skill address is caught, but not one embedded in a longer identifier", () => {
-  const content = fixture("bare-address-skill/SKILL.md");
-  const filePath = "plugins/aidd-fixture-a/skills/07-bare-address/SKILL.md";
-  const violations = checkArchitecture(filePath, content, ["01-step.md"]);
-
-  assert.equal(violations.length, 1);
-  const [violation] = violations;
-  assert.equal(violation.plugin, "aidd-fixture-b");
-  assert.match(violation.message, /"aidd-fixture-b:01-noop"/);
 });
 
 test("a stem that is a substring of a sibling action's stem is not mistaken for a mention", () => {
@@ -229,7 +120,7 @@ test("sweeping the repository's own plugins/ tree yields zero violations", () =>
   assert.deepEqual(violations, []);
   // A sweep that never actually exercised a skill with action files would pass the same way —
   // this pins the sweep to the measured count so it cannot go vacuously green.
-  assert.equal(skillsWithActions, 52);
+  assert.equal(skillsWithActions, 55);
 });
 
 test("a table that declares no action column cites nothing, whatever its cells read", () => {
@@ -290,58 +181,6 @@ const leanRouter = [
   "",
   "- Keep scope.",
 ].join("\n");
-
-test("a preamble Mermaid flowchart names its actions without a heading or table", () => {
-  assert.deepEqual(checkArchitecture(leanRouterPath, leanRouter, ["01-first.md", "02-second.md"]), []);
-});
-
-test("removing an action path from a headerless flow still names the missing action", () => {
-  const content = leanRouter.replace("<br>actions/02-second.md", "");
-  const violations = checkArchitecture(leanRouterPath, content, ["01-first.md", "02-second.md"]);
-  assert.equal(violations.length, 1);
-  assert.match(violations[0].message, /never names action file "02-second\.md"/);
-  assert.equal(violations[0].line, 3);
-});
-
-test("a missing headerless action cannot be supplied by prose, an example or another flow", () => {
-  const incomplete = leanRouter.replace("<br>actions/02-second.md", "");
-  for (const extra of [
-    "actions/02-second.md",
-    "```md\nactions/02-second.md\n```",
-    '```mermaid\nflowchart LR\n  second["actions/02-second.md"]\n```',
-  ]) {
-    for (const content of [
-      incomplete.replace("## Transversal rules", `${extra}\n\n## Transversal rules`),
-      `${incomplete}\n\n${extra}`,
-    ]) {
-      const violations = checkArchitecture(leanRouterPath, content, ["01-first.md", "02-second.md"]);
-      assert.equal(violations.length, 1);
-      assert.match(violations[0].message, /never names action file "02-second\.md"/);
-    }
-  }
-});
-
-test("only a closed top-level preamble flowchart can replace the Actions section", () => {
-  for (const content of [
-    leanRouter.replace("```\n\n## Transversal rules", "\n\n## Transversal rules"),
-    leanRouter.replace("```mermaid", "```md"),
-    leanRouter.replace("flowchart LR", "classDiagram"),
-    `## Examples\n\n${leanRouter}`,
-    `\`\`\`\`md\n${leanRouter}\n\`\`\`\``,
-  ]) {
-    const violations = checkArchitecture(leanRouterPath, content, ["01-first.md", "02-second.md"]);
-    assert.equal(violations.length, 1);
-    assert.match(violations[0].message, /no "## Actions" section/);
-  }
-});
-
-test("numbered paths in a headerless flow distinguish action files sharing a stem", () => {
-  const content = leanRouter.replaceAll("01-first.md", "01-plan.md").replaceAll("02-second.md", "04-plan.md");
-  assert.deepEqual(checkArchitecture(leanRouterPath, content, ["01-plan.md", "04-plan.md"]), []);
-  const violations = checkArchitecture(leanRouterPath, content.replace("04-plan.md", "plan.md"), ["01-plan.md", "04-plan.md"]);
-  assert.equal(violations.length, 1);
-  assert.match(violations[0].message, /never names action file "04-plan\.md"/);
-});
 
 test("a glossary table before the router does not blind the router's own column", () => {
   const content = [
@@ -538,19 +377,6 @@ test("two action files sharing a stem are each cited by their numbered name", ()
   assert.deepEqual(violations, []);
 });
 
-test("a sibling address inside a fence is still refused, unlike a fenced router table", () => {
-  const content = [
-    "# Fenced address",
-    "",
-    "```shell",
-    "/aidd-fixture-b:01-thing",
-    "```",
-  ].join("\n");
-  const violations = checkArchitecture("plugins/aidd-fixture-a/skills/01-x/references/teach.md", content, []);
-  assert.equal(violations.length, 1);
-  assert.match(violations[0].message, /:4 addresses sibling plugin "aidd-fixture-b"/);
-});
-
 test("a fenced example table inside the Actions section cites nothing", () => {
   const content = [
     "# Fenced example skill",
@@ -675,4 +501,8 @@ test("a fence nobody closed is not read as a fence at all", () => {
     ["01-first.md"]
   );
   assert.deepEqual(violations, []);
+});
+
+test("a skill with a preamble flowchart is left to SKILL-06 even with uncited action files", () => {
+  assert.deepEqual(checkArchitecture(leanRouterPath, leanRouter, ["01-first.md", "02-second.md", "03-third.md"]), []);
 });

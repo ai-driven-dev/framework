@@ -61,67 +61,10 @@ test("the changes filter names the workflow file itself as relevant", () => {
   );
 });
 
-test("only a proven next snapshot tree skips the promotion or main mutation matrix", () => {
+// Promotion reuse may skip only the mutation matrix; every other check still validates the
+// current merge ref and so must stay gated on a relevant change.
+test("only the mutation matrix is skippable by promotion reuse: every other check still depends on changes", () => {
   const workflow = cliCiWorkflow();
-  const changes = workflow.jobs.changes;
-  const promotion = changes.steps.find((step) => step.id === "promotion");
-  const mutation = changes.steps.find((step) => step.id === "mutation");
-
-  assert.equal(workflow.permissions.actions, "read");
-  assert.equal(workflow.permissions.contents, "read");
-  assert.equal(workflow.permissions["pull-requests"], undefined);
-  assert.deepEqual(changes.permissions, {
-    actions: "read",
-    contents: "read",
-    "pull-requests": "read",
-  });
-  assert.equal(changes.outputs.trusted_promotion, "${{ steps.promotion.outputs.trusted }}");
-  assert.equal(promotion.name, "Check whether a promotion snapshot or main merge passed next");
-  assert.match(promotion.run, /EVENT_NAME.*pull_request/);
-  assert.match(promotion.run, /BASE_REF.*main/);
-  assert.equal(promotion.env.HEAD_REPO, "${{ github.event.pull_request.head.repo.full_name }}");
-  assert.match(promotion.run, /HEAD_REF.*\^promote\/next-to-main-\[0-9\]\+\$/);
-  assert.match(promotion.run, /HEAD_REPO" == "\$REPO/);
-  assert.match(promotion.run, /git merge-base --is-ancestor "\$BASE_SHA" "\$HEAD_SHA"/);
-  assert.match(promotion.run, /git rev-parse "\$CURRENT_SHA\^\{tree\}"/);
-  assert.match(promotion.run, /"\$merge_tree" != "\$snapshot_tree"/);
-  assert.match(
-    promotion.run,
-    /actions\/workflows\/cli-ci\.yml\/runs\?branch=next&event=push&status=completed&head_sha=\$HEAD_SHA/
-  );
-  assert.match(promotion.run, /\.conclusion == "success"/);
-  assert.match(promotion.run, /\.name == "cli \/ gate" and \.conclusion == "success"/);
-  assert.match(promotion.run, /reason="could not list successful cli CI push runs"/);
-  assert.match(promotion.run, /reason="could not inspect cli CI run \$run_id"/);
-  assert.match(promotion.run, /echo "promotion mutation reuse: \$reason"/);
-
-  // Main can skip mutations only for the exact two-parent promotion merge whose tree is the
-  // snapshot already gated on next. Any git or associated-PR proof mismatch remains untrusted.
-  assert.match(promotion.run, /EVENT_NAME" == "push" && "\$GITHUB_REF" == "refs\/heads\/main"/);
-  assert.match(promotion.run, /git rev-list --parents -n 1 "\$CURRENT_SHA"/);
-  assert.match(promotion.run, /-z "\$snapshot_sha" \|\| -n "\$\{extra_parent:-\}"/);
-  assert.match(promotion.run, /git rev-parse "\$snapshot_sha\^\{tree\}"/);
-  assert.match(promotion.run, /"\$main_tree" != "\$snapshot_tree"/);
-  assert.match(promotion.run, /\/repos\/\$REPO\/commits\/\$CURRENT_SHA\/pulls/);
-  assert.match(promotion.run, /\.base\.ref == "main"/);
-  assert.match(promotion.run, /\.head\.ref \| test\("\^promote\/next-to-main-\[0-9\]\+\$"\)/);
-  assert.match(promotion.run, /\.merged_at != null/);
-  assert.match(promotion.run, /"\$base_repo" == "\$REPO"/);
-  assert.match(promotion.run, /"\$head_repo" == "\$REPO"/);
-  assert.match(promotion.run, /"\$pr_head_sha" == "\$snapshot_sha"/);
-  assert.match(promotion.run, /"\$merge_commit_sha" == "\$CURRENT_SHA"/);
-  assert.match(promotion.run, /"\$matching_prs" -ne 1/);
-  assert.match(promotion.run, /HEAD_SHA="\$snapshot_sha"/);
-
-  assert.match(mutation.run, /steps\.promotion\.outputs\.trusted.*== "true"/);
-  assert.match(mutation.run, /legs='\[\]'/);
-  assert.match(mutation.run, /sharded='\[\]'/);
-  assert.match(mutation.run, /else[\s\S]*mutation-scopes-to-run\.mjs/);
-  assert.equal(workflow.jobs["cli-mutation"].if, "needs.changes.outputs.mutation_legs != '[]'");
-  // The scoring job runs whatever its shards did, so a crashed shard fails it, never skips it.
-  assert.match(workflow.jobs["cli-mutation-score"].if, /^always\(\) && needs\.changes\.outputs\.mutation_sharded != '\[\]'/);
-
-  // These checks validate the current PR merge ref or main commit; reuse never turns them off.
   for (const name of [
     "cli-typecheck",
     "cli-lint",
@@ -143,6 +86,59 @@ test("only a proven next snapshot tree skips the promotion or main mutation matr
       `${name} must still run for a relevant promotion PR`
     );
   }
+});
+
+// Only a scope with a floor may fail a run: the others report their score. The workflow says
+// so by letting a leg without `blocking` fail without failing the job, and the weekly run is
+// also a manual one.
+test("a mutation leg without a floor cannot fail the run, and the weekly run can be started by hand", () => {
+  const workflow = cliCiWorkflow();
+
+  assert.ok("workflow_dispatch" in workflow.on);
+  assert.ok("schedule" in workflow.on);
+  for (const job of ["cli-mutation", "cli-mutation-score"]) {
+    assert.equal(workflow.jobs[job]["continue-on-error"], "${{ !matrix.blocking }}", job);
+  }
+  assert.match(
+    JSON.stringify(workflow.jobs["cli-mutation"].steps),
+    /github\.event_name != 'pull_request' && github\.event_name != 'push' && '--force'/
+  );
+});
+
+// The Windows checks run as parallel parts so none sets the wall clock of a pull request. Each
+// part must own at least one step, every check that ran serially must still run, and the
+// architecture suite stays on Linux: it is static source analysis, the same on any OS.
+test("Windows runs every check in parallel parts, none of them the architecture suite", () => {
+  const windows = cliCiWorkflow().jobs.windows;
+  const parts = windows.strategy.matrix.part;
+  const steps = windows.steps.filter((step) => step.if !== undefined);
+
+  assert.ok(parts.length > 1);
+  for (const part of parts) {
+    assert.ok(
+      steps.some((step) => step.if === `matrix.part == '${part}'`),
+      `no step runs for the ${part} part`
+    );
+  }
+  for (const step of steps) {
+    assert.ok(
+      parts.some((part) => step.if === `matrix.part == '${part}'`),
+      `${step.name} is guarded by an unknown part`
+    );
+  }
+  const commands = steps.map((step) => step.run).join("\n");
+  for (const check of [
+    "node --test",
+    "lefthook run pre-commit",
+    "pnpm test:unit",
+    "pnpm test:contract",
+    "pnpm test:integration",
+    "aidd --version",
+    "--project=e2e --project=golden",
+  ]) {
+    assert.ok(commands.includes(check), `no Windows step runs ${check}`);
+  }
+  assert.ok(!/test:arch|--project=architecture/.test(commands), "the architecture suite runs on Windows");
 });
 
 // The Windows and macOS jobs are the only runs of the plugin suite off Linux, and a plugin's

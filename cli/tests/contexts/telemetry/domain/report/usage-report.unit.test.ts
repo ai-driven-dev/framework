@@ -1,37 +1,31 @@
 import { describe, expect, it } from "vitest";
+import {
+  type AxisValue,
+  REPORT_AXES,
+  type ReportAxis,
+} from "../../../../../src/contexts/telemetry/contract/usage-report.js";
 import { snapshotKey } from "../../../../../src/contexts/telemetry/domain/branch-binding.js";
 import type { SessionDeclaration } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
 import type { AttributionFacts } from "../../../../../src/contexts/telemetry/domain/report/attribution.js";
-import {
-  type AxisValue,
-  buildReport,
-  REPORT_AXES,
-  type ReportAxis,
-} from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
+import { buildReport } from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
 import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/stored-usage.js";
+import { aUsageRecord } from "../../testing/usage-record.builder.js";
 
 let counter = 0;
 const call = (over: Partial<StoredUsage> = {}): StoredUsage => {
   counter += 1;
-  return {
-    tool: "claude-code",
-    tool_version: null,
-    key: `k${counter}`,
-    session_id: "s-1",
-    agent: "main",
-    at: "2026-10-02T10:00:00.000Z",
-    model: "m-1",
-    input: 1,
-    output: 10,
-    cache_read: 100,
-    cache_write: 1000,
-    cache_write_1h: null,
-    reasoning: null,
-    cwd: null,
-    git_branch: null,
-    repository_id: "repo-a",
-    ...over,
-  };
+  return aUsageRecord()
+    .with({
+      tool_version: null,
+      key: `k${counter}`,
+      at: "2026-10-02T10:00:00.000Z",
+      model: "m-1",
+      cache_read: 100,
+      cache_write: 1000,
+      repository_id: "repo-a",
+      ...over,
+    })
+    .build();
 };
 const declaration = (session: string, task: string | null, ticket: string | null = null) =>
   ({
@@ -52,12 +46,17 @@ const values = (
   records: StoredUsage[],
   facts = noFacts,
   person: string | null = null
-) => buildReport(records, facts, person, axis).rows.map((row) => row.value);
+) => buildReport({ records, facts, person, axis }).rows.map((row) => row.value);
 const v = (value: string): AxisValue => ({ kind: "value", value });
 
 describe("a usage report", () => {
   it("keeps the four counters apart and adds them into a row total", () => {
-    const report = buildReport([call(), call()], noFacts, null, "total");
+    const report = buildReport({
+      records: [call(), call()],
+      facts: noFacts,
+      person: null,
+      axis: "total",
+    });
     expect(report.rows).toHaveLength(1);
     expect(report.rows[0]).toMatchObject({
       value: v("total"),
@@ -78,12 +77,16 @@ describe("a usage report", () => {
   });
 
   it("leaves an unknown counter out of the sum and counts it, never adding it as zero", () => {
-    const report = buildReport(
-      [call({ cache_read: null }), call({ cache_read: 5 }), call({ output: null, input: null })],
-      noFacts,
-      null,
-      "total"
-    );
+    const report = buildReport({
+      records: [
+        call({ cache_read: null }),
+        call({ cache_read: 5 }),
+        call({ output: null, input: null }),
+      ],
+      facts: noFacts,
+      person: null,
+      axis: "total",
+    });
     expect(report.totals.counters.cache_read).toEqual({ known: 105, unknownRecords: 1 });
     expect(report.totals.counters.input).toEqual({ known: 2, unknownRecords: 1 });
     expect(report.totals.counters.output).toEqual({ known: 20, unknownRecords: 1 });
@@ -92,7 +95,12 @@ describe("a usage report", () => {
   });
 
   it("counts a record with several unknown counters once in the total", () => {
-    const report = buildReport([call({ input: null, output: null })], noFacts, null, "total");
+    const report = buildReport({
+      records: [call({ input: null, output: null })],
+      facts: noFacts,
+      person: null,
+      axis: "total",
+    });
     expect(report.totals.total.unknownRecords).toBe(1);
   });
 
@@ -230,7 +238,9 @@ describe("a usage report", () => {
 
   it("has an answer for every axis it names", () => {
     for (const axis of REPORT_AXES) {
-      expect(buildReport([call()], noFacts, null, axis).totals.records).toBe(1);
+      expect(
+        buildReport({ records: [call()], facts: noFacts, person: null, axis }).totals.records
+      ).toBe(1);
     }
   });
 });

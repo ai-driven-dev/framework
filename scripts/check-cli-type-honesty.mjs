@@ -1,15 +1,19 @@
 #!/usr/bin/env node
-// Enforces the one invariant of cli/.claude/rules/00-architecture/0-hexagonal.md that a
+// Enforces the one invariant of the working-on-cli skill's architecture reference that a
 // linter cannot express: no value is widened away from the type it claims to hold.
 // Dependency direction belongs to biome, whose per-layer `noRestrictedImports` overrides
 // match the resolved path — a hand-picked prefix here goes stale the moment a layer moves.
 
+import { execFileSync } from "node:child_process";
 import { readdir, readFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 const CLI = path.join(process.cwd(), "cli");
 const SRC = path.join(CLI, "src");
 const TESTS = path.join(CLI, "tests");
+const ASSERTIONS_BASELINE = path.join(CLI, "type-assertions-baseline.json");
 
 /**
  * `\bas` keeps prose out - "was never" has no word boundary before its "as". `any` needs the
@@ -29,16 +33,215 @@ const WIDENING_ANYWHERE = [
  */
 const WIDENING_SRC_ONLY = [/@ts-expect-error\b/, /@ts-ignore\b/];
 
+/**
+ * Every spelling that turns text into a tool id: an `as` followed by any type that names a tool
+ * id (`as AiToolId`, `as readonly ToolId[]`, `as Set<ToolId>`, `as Record<ToolId, x>`), `as typeof
+ * TOOL.x`, and an angle-bracket cast. `\s` lets a line break follow `as`. Checked in `src/` and
+ * `tests/` alike, outside `TOOL_ID_MINTER`.
+ */
+const TOOL_ID_CAST = new RegExp(
+  [
+    String.raw`\bas\s+[^;=\n]{0,80}?\b(?:Ai|Ide)?ToolId\b`,
+    String.raw`\bas\s+typeof\s+TOOL\b`,
+    String.raw`(?<![\w$>])<\s*(?:Ai|Ide)?ToolId\s*>\s*[\w$"'\`(\[{]`,
+  ].join("|")
+);
+
+/**
+ * A type predicate or assertion to a tool id (`x is ToolId`, `asserts x is IdeToolId`), whatever
+ * the parameter type or position: a hand-written one turns any text into an id the catalog never
+ * saw. Only the catalog's own declarations and `TOOL_ID_MINTER` may write one.
+ */
+const TOOL_ID_PREDICATE = /\bis\s+(?:Ai|Ide)?ToolId\b/;
+
+/** An import or export specifier list renames with `as` (`import { a as b, type ToolId }`): it
+ * casts nothing, so the tool-id rules read the source without it. */
+const SPECIFIER_LIST =
+  /^(?:import|export)\b[^;]*?\bfrom\s*["'][^"']*["']|^export\s*(?:type\s*)?\{[^}]*\}/gm;
+
+/** The one file where a written name becomes a tool id: a profile's own definition. */
+const TOOL_ID_MINTER = "src/contexts/tools/domain/profile/define-tool.ts";
+
+/** The files that declare the catalog's narrowing predicates `isAiTool` and `isIdeTool`. */
+const TOOL_ID_PREDICATE_HOLDERS = new Set([
+  TOOL_ID_MINTER,
+  "src/contexts/tools/contract/tool-catalog.ts",
+  "src/contexts/tools/application/registered-tool-catalog.ts",
+]);
+
 /** Cli-relative paths, each with the reason the cast survives. Listed so adding one is a
  * decision rather than a default. */
 const CASTS_ALLOWED = new Map([
   [
-    "src/contexts/translate/application/translate-source.ts",
+    "src/contexts/translate/application/build-native-tree.use-case.ts",
     "SourceMarketplace carries an index signature beside typed optional members, so no " +
       "parsed `Record<string, unknown>` can ever satisfy it; narrowing it honestly would " +
       "mean rejecting catalogs the builder accepts today",
   ],
 ]);
+
+/**
+ * Type assertions (`x as T`, `<T>x`) are counted per file against a baseline that only shrinks:
+ * `satisfies` checks instead of asserting, and `as const` asserts nothing wider than the value.
+ * A disguised assertion counts too: a variable declared with a type annotation (neither `any` nor
+ * `unknown`) whose initializer the checker types as `any`, such as `const x: T = JSON.parse(s)`,
+ * a `require(...)` or an `any` value. Limit: only variable declarations are read; an `any` passed
+ * as an argument, returned, or assigned to a property or parameter default is not counted.
+ * The parser is the TypeScript compiler's own, reached through the cli's installed package.
+ */
+const ANY_FLAG = 1; // TypeFlags.Any, which the package exposes only as a type-level enum
+const ANY_OR_UNKNOWN_FLAGS = 3; // TypeFlags.AnyOrUnknown
+const cliRequire = createRequire(new URL("../cli/package.json", import.meta.url));
+const importFromCli = (specifier) => import(pathToFileURL(cliRequire.resolve(specifier)).href);
+
+async function countTypeAssertions() {
+  const { API } = await importFromCli("typescript/unstable/sync");
+  const {
+    isAsExpression,
+    isTypeAssertion,
+    isTypeReferenceNode,
+    isIdentifier,
+    isVariableDeclaration,
+  } =
+    await importFromCli("typescript/unstable/ast/is");
+  const isConst = (type) =>
+    isTypeReferenceNode(type) && isIdentifier(type.typeName) && type.typeName.text === "const";
+  const api = new API({ cwd: CLI });
+  const flagsOf = (project, node) => project.checker.getTypeAtLocation(node)?.flags ?? 0;
+  const isUntypedInit = (project, node) =>
+    isVariableDeclaration(node) &&
+    node.type !== undefined &&
+    node.initializer !== undefined &&
+    !isAsExpression(node.initializer) &&
+    !isTypeAssertion(node.initializer) &&
+    (flagsOf(project, node.type) & ANY_OR_UNKNOWN_FLAGS) === 0 &&
+    (flagsOf(project, node.initializer) & ANY_FLAG) !== 0;
+  try {
+    const project = api
+      .updateSnapshot({ openProject: path.join(CLI, "tsconfig.json") })
+      .getProjects()[0];
+    const found = new Map();
+    for (const name of project.program.getSourceFileNames()) {
+      const cliPath = relative(CLI, name);
+      if (!/^(?:src|tests)\/.+\.ts$/.test(cliPath)) continue;
+      const sourceFile = project.program.getSourceFile(name);
+      const lines = [];
+      const visit = (node) => {
+        if (
+          ((isAsExpression(node) || isTypeAssertion(node)) && !isConst(node.type)) ||
+          isUntypedInit(project, node)
+        ) {
+          lines.push(sourceFile.text.slice(0, node.type.pos).split("\n").length);
+        }
+        node.forEachChild(visit);
+      };
+      sourceFile.forEachChild(visit);
+      if (lines.length > 0) found.set(cliPath, lines);
+    }
+    return found;
+  } finally {
+    api.close();
+  }
+}
+
+async function readAssertionsBaseline() {
+  try {
+    return JSON.parse(await readFile(ASSERTIONS_BASELINE, "utf-8"));
+  } catch (err) {
+    if (err.code === "ENOENT") return {};
+    throw err;
+  }
+}
+
+const BASELINE_PATH = "type-assertions-baseline.json";
+
+/**
+ * The baseline at the merge-base with `ARCH_BASE_REF`, else with `origin/` and the branch a pull
+ * request targets, else with `origin/next`, and the files
+ * the change renamed, old cli path to new. Only the change that adds the baseline file may meet a
+ * base without it; any other base without it, or one git cannot give, fails: a
+ * ratchet that skips is not one.
+ */
+function readBaseBaseline(breaches) {
+  const ref = process.env.ARCH_BASE_REF || `origin/${process.env.GITHUB_BASE_REF || "next"}`;
+  const git = (...args) => execFileSync("git", args, { encoding: "utf-8", stdio: "pipe" }).trim();
+  let base;
+  try {
+    base = git("merge-base", "HEAD", ref);
+  } catch {
+    breaches.push(
+      `  no merge-base with ${ref}: run \`git fetch origin\` or name another ref in ARCH_BASE_REF`
+    );
+    return null;
+  }
+  const changes = git("diff", "-M", "--name-status", base, "--", "cli")
+    .split("\n")
+    .map((line) => line.split("\t"));
+  const renames = new Map(
+    changes
+      .filter(([status]) => status.startsWith("R"))
+      .map(([, from, to]) => [from.replace(/^cli\//, ""), to.replace(/^cli\//, "")])
+  );
+  try {
+    return { base: JSON.parse(git("show", `${base}:cli/${BASELINE_PATH}`)), renames };
+  } catch {
+    if (changes.some(([status, file]) => status === "A" && file === `cli/${BASELINE_PATH}`)) {
+      return null;
+    }
+    breaches.push(
+      `  the base has no cli/${BASELINE_PATH} and this change does not add it: the ratchet has nothing to compare with`
+    );
+    return null;
+  }
+}
+
+const sum = (counts) => Object.values(counts).reduce((total, count) => total + count, 0);
+
+/**
+ * The total may not rise, so a file split moves counts without growing them. A file the base
+ * already counts, under its new path when renamed, may not rise either. A path the base never
+ * counted is bound by the total alone.
+ */
+function baselineRises(baseline, { base, renames }) {
+  const followed = {};
+  for (const [cliPath, count] of Object.entries(base)) {
+    const path = renames.get(cliPath) ?? cliPath;
+    followed[path] = (followed[path] ?? 0) + count;
+  }
+  const breaches = Object.keys(baseline)
+    .sort()
+    .filter((cliPath) => cliPath in followed && baseline[cliPath] > followed[cliPath])
+    .map(
+      (cliPath) =>
+        `  cli/${cliPath} holds ${baseline[cliPath]} at the head and ${followed[cliPath]} at the base: a baseline only goes down`
+    );
+  if (sum(baseline) > sum(base)) {
+    breaches.push(
+      `  cli/${BASELINE_PATH} totals ${sum(baseline)} at the head and ${sum(base)} at the base: the total only goes down`
+    );
+  }
+  return breaches;
+}
+
+function assertionBreaches(found, baseline) {
+  const breaches = [];
+  for (const cliPath of [...new Set([...found.keys(), ...Object.keys(baseline)])].sort()) {
+    const lines = found.get(cliPath) ?? [];
+    const allowed = baseline[cliPath] ?? 0;
+    if (lines.length > allowed) {
+      breaches.push(
+        `  cli/${cliPath} has ${lines.length} type assertions, baseline ${allowed}: ` +
+          `${lines.map((line) => `cli/${cliPath}:${line}`).join(", ")} - parse, narrow or build the value instead`
+      );
+    } else if (lines.length < allowed) {
+      breaches.push(
+        `  cli/${cliPath} has ${lines.length} type assertions, baseline ${allowed}: ` +
+          "lower it in cli/type-assertions-baseline.json"
+      );
+    }
+  }
+  return breaches;
+}
 
 async function typescriptFilesUnder(dir) {
   const found = [];
@@ -78,6 +281,15 @@ for (const root of [SRC, TESTS]) {
     if (widensAType(source, patterns)) spentAllowances.add(cliPath);
     const breach = castBreach(cliPath, source, patterns);
     if (breach) breaches.push(`  ${breach}`);
+    const written = source.replace(SPECIFIER_LIST, "");
+    if (cliPath !== TOOL_ID_MINTER && TOOL_ID_CAST.test(written)) {
+      breaches.push(`  cli/${cliPath} casts text to a tool id - ask the catalog, or take a string`);
+    }
+    if (!TOOL_ID_PREDICATE_HOLDERS.has(cliPath) && TOOL_ID_PREDICATE.test(written)) {
+      breaches.push(
+        `  cli/${cliPath} declares a predicate to a tool id - ask the catalog, or take a string`
+      );
+    }
   }
 }
 
@@ -88,10 +300,17 @@ for (const cliPath of CASTS_ALLOWED.keys()) {
   }
 }
 
+const assertionsBaseline = await readAssertionsBaseline();
+const fromBase = readBaseBaseline(breaches);
+if (fromBase !== null) breaches.push(...baselineRises(assertionsBaseline, fromBase));
+breaches.push(...assertionBreaches(await countTypeAssertions(), assertionsBaseline));
+
 if (breaches.length > 0) {
   console.error(`cli type-honesty breaches:\n${breaches.join("\n")}`);
-  console.error("Contract: cli/.claude/rules/00-architecture/0-hexagonal.md");
+  console.error("Contract: .claude/skills/working-on-cli/references/architecture.md");
   process.exit(1);
 }
 
-console.log("No type is widened through unknown, any or never, and no directive silences the compiler outside a test proving something does not compile.");
+console.log(
+  "No type is widened through unknown, any or never, no directive silences the compiler outside a test proving something does not compile, and no file holds more type assertions than its baseline."
+);

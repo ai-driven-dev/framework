@@ -1,0 +1,41 @@
+import type { ScopeRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
+import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
+import type { Prompter } from "../../../src/orchestration/ports/prompter.js";
+import type { Lock } from "../../../src/shared/ports/lock.js";
+
+function refuse(what: string): () => never {
+  return () => {
+    throw new Error(`${what} was not expected by this test`);
+  };
+}
+
+/** A full `Prompter` that answers the questions a test scripts and fails on any other, so a
+ * command that starts asking something new turns the test red instead of hanging on a stub.
+ * An answer left `undefined` is no answer: it stays refused rather than erasing the refusal. */
+export function prompterAnswering(answers: Partial<Prompter>): Prompter {
+  return {
+    resolveConflict: refuse("prompter.resolveConflict"),
+    resolveConflictBulk: refuse("prompter.resolveConflictBulk"),
+    confirm: refuse("prompter.confirm"),
+    input: refuse("prompter.input"),
+    select: refuse("prompter.select"),
+    checkbox: refuse("prompter.checkbox"),
+    ...Object.fromEntries(Object.entries(answers).filter(([, answer]) => answer !== undefined)),
+  };
+}
+
+/** A full `ManifestRepository` and `Lock` that serves `load` and fails on a write the test did not expect. */
+export function manifestRepositoryLoading(
+  load: () => Promise<Manifest | null>
+): ManifestRepository & ScopeRecords & Lock {
+  return {
+    path: "manifest.json",
+    load,
+    save: refuse("manifestRepo.save"),
+    loadRecords: async () => new Map(),
+    saveRecords: refuse("manifestRepo.saveRecords"),
+    delete: refuse("manifestRepo.delete"),
+    withExclusiveAccess: refuse("manifestRepo.withExclusiveAccess"),
+  };
+}

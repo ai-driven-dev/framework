@@ -12,7 +12,7 @@ Re-run the committed adapter, payload, generated-layout and delivery regressions
 
 ```sh
 node scripts/check-tests-leave-git-alone.js -- node --test scripts/__tests__/opencode-plugin.test.js scripts/__tests__/aidd-telemetry-opencode-payloads.test.js
-pnpm --dir cli exec vitest run --project=unit tests/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.unit.test.ts
+pnpm --dir cli exec vitest run --project=integration tests/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.integration.test.ts
 pnpm --dir cli exec vitest run --project=integration tests/contexts/framework/application/plugin/plugin-runtime-files.integration.test.ts
 pnpm --dir cli exec vitest run --project=e2e tests/e2e/opencode-hooks-bridge-generated.e2e.test.ts
 ```

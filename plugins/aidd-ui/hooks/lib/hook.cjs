@@ -164,6 +164,29 @@ function changedLines({ written, replaced }) {
   return changed.size === 0 && linesOf(replaced).length > 0 ? null : changed;
 }
 
+/** A write widened to the whole lines the file now holds its text in, and what those lines held
+ * before: an edit's strings can be fragments of a line, which match no line of the file. Every
+ * place the file holds that text counts, as every copy of a line raises the same errors. */
+function wholeLines(root, entry) {
+  const { written, replaced } = entry;
+  if (typeof written !== "string" || typeof replaced !== "string" || written === "") return entry;
+  let text;
+  try {
+    text = fs.readFileSync(path.join(root, entry.file), "utf8");
+  } catch {
+    return entry;
+  }
+  const spans = new Map();
+  for (let at = text.indexOf(written); at >= 0; at = text.indexOf(written, at + written.length)) {
+    const start = at === 0 ? 0 : text.lastIndexOf("\n", at - 1) + 1;
+    const end = text.indexOf("\n", at + written.length);
+    spans.set(start, text.slice(start, end < 0 ? text.length : end));
+  }
+  if (!spans.size) return entry;
+  const lines = [...spans.values()];
+  return { ...entry, written: lines.join("\n"), replaced: lines.map((line) => line.split(written).join(replaced)).join("\n") };
+}
+
 /** Adds a write to the turn's net changed lines: its written lines in, its replaced lines out, so a
  * line changed and changed back nets to nothing. A write that says nothing of what it replaced proves
  * a line new only against a baseline that read the file; without one it adds nothing, and nothing of
@@ -226,7 +249,8 @@ function tellOnce(problems, files, baseline, told) {
 function afterWrite(project, event) {
   const written = event.files
     .map((file) => ({ ...file, file: relative(project.root, path.resolve(project.root, file.path)) }))
-    .filter(({ file }) => isWatched(project, file));
+    .filter(({ file }) => isWatched(project, file))
+    .map((entry) => wholeLines(project.root, entry));
   const shell = !event.files.length;
   if (!shell && !written.length) return EXIT_SILENT;
   const mark = markFile(event);
@@ -264,11 +288,20 @@ function consumeMark(mark) {
   return turn;
 }
 
+// What a reply never shows the person, as each skill rules: a colour code, a size in pixels, the word token.
+const JARGON = /#[0-9a-f]{6}\b|\b\d+(?:[.,]\d+)?\s?px\b|\btokens?\b/gi;
+
+/** The jargon a reply shows, each once, as a line that asks for plain words; empty when there is none. */
+function jargonIn(reply) {
+  const found = typeof reply === "string" ? [...new Set(reply.match(JARGON))] : [];
+  return found.length ? `${PLUGIN}: the reply shows ${found.join(", ")}. Say it in plain words: a colour by its name, a size by what it looks like, never a code, a unit or the word token.` : "";
+}
+
 /** Holds the turn's end once on the errors it produced: those on the lines its writes changed, net,
- * and, when a baseline exists, past what it counts. Nothing else is ever required, no line being
- * proof of nothing. The baseline then takes the project's errors as they stand, so what was asked
- * once is never asked again. */
-function atStop(project, mark, turn) {
+ * and, when a baseline exists, past what it counts. No error left, it holds it on the jargon its reply
+ * shows. Nothing else is ever required, no line being proof of nothing. The baseline then takes the
+ * project's errors as they stand, so what was asked once is never asked again. */
+function atStop(project, mark, turn, reply) {
   const baseline = readBaseline(mark);
   project.scope = new Set([...readCode(baseline), ...turn.code]);
   const problems = problemsOf(project);
@@ -285,7 +318,7 @@ function atStop(project, mark, turn) {
     candidates.push(...problems.filter((problem) => problem.file === file && isError(problem) && touched.has(findingOf(problem).line)));
   }
   const required = baseline ? newErrors(candidates, baseline) : candidates;
-  const reason = formatFindings(PLUGIN, { errors: required.map(findingOf) });
+  const reason = formatFindings(PLUGIN, { errors: required.map(findingOf) }) || jargonIn(reply);
   if (reason) continueTurn(reason);
   leaveBaseline(mark, problems, project.scope);
   return EXIT_SILENT;
@@ -310,7 +343,7 @@ function run() {
   const project = load(event.cwd);
   if (project === null) return EXIT_SILENT;
   if (event.event === POST_TOOL_USE) return afterWrite(project, event);
-  return atStop(project, mark, turn);
+  return atStop(project, mark, turn, event.raw?.last_assistant_message);
 }
 
 function hook() {

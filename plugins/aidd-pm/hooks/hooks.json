@@ -1,0 +1,53 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/artifacts.cjs start",
+            "timeout": 5,
+            "statusMessage": "AIDD PM: note turn start"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/spec-lock.cjs",
+            "timeout": 5,
+            "statusMessage": "AIDD PM: refuse a write to a locked spec"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|Bash|Shell|bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/artifacts.cjs mark",
+            "timeout": 5,
+            "statusMessage": "AIDD PM: check written artifacts"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/artifacts.cjs check",
+            "timeout": 5,
+            "statusMessage": "AIDD PM: check written artifacts"
+          }
+        ]
+      }
+    ]
+  }
+}

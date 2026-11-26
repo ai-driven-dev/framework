@@ -5,13 +5,16 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
+import { PluginFetchError } from "../../../../src/contexts/distribution/contract/distribution.error.js";
+import { GitCloner } from "../../../../src/contexts/distribution/infrastructure/git-cloner-adapter.js";
+import { GitSourceFetcher } from "../../../../src/contexts/distribution/infrastructure/git-source-fetcher.js";
+import { NpmSourceFetcher } from "../../../../src/contexts/distribution/infrastructure/npm-source-fetcher.js";
 import { PluginFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
-import { PluginFetchError } from "../../../../src/kernel/errors.js";
-import { FileAdapter } from "../../../../src/runtime/filesystem/file-adapter.js";
-import { HasherAdapter } from "../../../../src/runtime/filesystem/hasher-adapter.js";
+import { PnpmInstallerAdapter } from "../../../../src/contexts/distribution/infrastructure/pnpm-installer-adapter.js";
+import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
+import { FakeNpmInstaller } from "../testing/npm-installer.fake.js";
 
 const execFileAsync = promisify(execFile);
-const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/plugins");
 
 const GIT_ENV_VARS = [
   "GIT_DIR",
@@ -52,47 +55,16 @@ async function setupBareRepoWithPlugin(repoPath: string, workPath: string): Prom
 }
 
 function makeAdapter(): PluginFetcherAdapter {
-  return new PluginFetcherAdapter(new FileAdapter(new HasherAdapter()));
+  const fs = new FileAdapter();
+  return new PluginFetcherAdapter(
+    fs,
+    new GitSourceFetcher(fs, new GitCloner()),
+    new NpmSourceFetcher(fs, new PnpmInstallerAdapter())
+  );
 }
 
-describe("PluginFetcherAdapter", () => {
-  describe("local source", () => {
-    it("returns absolute path for existing local plugin", async () => {
-      const adapter = makeAdapter();
-      const pluginPath = join(FIXTURE_DIR, "claude-format/sample-plugin");
-      const result = await adapter.fetch({ kind: "local", path: pluginPath }, "/tmp/cache");
-      expect(result).toBe(pluginPath);
-    });
-
-    it("throws PluginFetchError for non-existent local path", async () => {
-      const adapter = makeAdapter();
-      await expect(
-        adapter.fetch({ kind: "local", path: "/nonexistent/path/to/plugin" }, "/tmp/cache")
-      ).rejects.toThrow(PluginFetchError);
-    });
-  });
-
+describe("fetching a plugin source", () => {
   describe("url source (file:// remote)", () => {
-    it("clones a bare git repo and returns the cache path", async () => {
-      const sandbox = await mkdtemp(join(tmpdir(), "aidd-fetcher-url-"));
-      const repoPath = join(sandbox, "remote.git");
-      const workPath = join(sandbox, "work");
-      const cacheDir = join(sandbox, "cache");
-      try {
-        await mkdir(workPath, { recursive: true });
-        await setupBareRepoWithPlugin(repoPath, workPath);
-        const adapter = makeAdapter();
-        const localPath = await adapter.fetch(
-          { kind: "url", url: `file://${repoPath}`, ref: "main" },
-          cacheDir
-        );
-        expect(existsSync(join(localPath, ".claude-plugin/plugin.json"))).toBe(true);
-        expect(existsSync(join(localPath, "commands/hello.md"))).toBe(true);
-      } finally {
-        await rm(sandbox, { recursive: true, force: true });
-      }
-    });
-
     it("returns cached path on second fetch (skips re-clone)", async () => {
       const sandbox = await mkdtemp(join(tmpdir(), "aidd-fetcher-cache-"));
       const repoPath = join(sandbox, "remote.git");
@@ -117,66 +89,43 @@ describe("PluginFetcherAdapter", () => {
         await rm(sandbox, { recursive: true, force: true });
       }
     });
+  });
 
-    it("forceRefresh busts cache and re-clones", async () => {
-      const sandbox = await mkdtemp(join(tmpdir(), "aidd-fetcher-refresh-"));
-      const repoPath = join(sandbox, "remote.git");
-      const workPath = join(sandbox, "work");
-      const cacheDir = join(sandbox, "cache");
+  describe("refresh option", () => {
+    it("reaches the npm fetcher, which wipes a package left in the cache", async () => {
+      const sandbox = await mkdtemp(join(tmpdir(), "aidd-fetcher-npm-"));
       try {
-        await mkdir(workPath, { recursive: true });
-        await setupBareRepoWithPlugin(repoPath, workPath);
-        const adapter = makeAdapter();
-        await adapter.fetch({ kind: "url", url: `file://${repoPath}`, ref: "main" }, cacheDir);
-        const local = await adapter.fetch(
-          { kind: "url", url: `file://${repoPath}`, ref: "main" },
-          cacheDir,
-          { forceRefresh: true }
+        const fs = new FileAdapter();
+        const stale = join(sandbox, "node_modules", "@acme", "plugin", "removed-upstream.js");
+        await mkdir(join(stale, ".."), { recursive: true });
+        await writeFile(stale, "");
+        const adapter = new PluginFetcherAdapter(
+          fs,
+          new GitSourceFetcher(fs, new GitCloner()),
+          new NpmSourceFetcher(fs, new FakeNpmInstaller(fs, ["@acme/plugin"]))
         );
-        expect(existsSync(join(local, ".claude-plugin/plugin.json"))).toBe(true);
+
+        await adapter.fetch({ kind: "npm", package: "@acme/plugin" }, sandbox, {
+          forceRefresh: true,
+        });
+
+        expect(existsSync(stale)).toBe(false);
       } finally {
         await rm(sandbox, { recursive: true, force: true });
       }
     });
   });
 
-  describe("git-subdir source", () => {
-    it("sparse-checkouts a subdirectory from a bare repo", async () => {
-      const sandbox = await mkdtemp(join(tmpdir(), "aidd-fetcher-subdir-"));
-      const repoPath = join(sandbox, "remote.git");
-      const workPath = join(sandbox, "work");
-      const cacheDir = join(sandbox, "cache");
-      try {
-        const env = gitEnv();
-        await mkdir(repoPath, { recursive: true });
-        await execFileAsync("git", ["init", "--bare", "-b", "main", repoPath], { env });
-        await mkdir(join(workPath, "plugins/my-plugin/.claude-plugin"), { recursive: true });
-        await writeFile(
-          join(workPath, "plugins/my-plugin/.claude-plugin/plugin.json"),
-          '{ "name": "my-plugin", "version": "1.0.0" }'
-        );
-        await mkdir(join(workPath, "plugins/my-plugin/commands"), { recursive: true });
-        await writeFile(join(workPath, "plugins/my-plugin/commands/cmd.md"), "Hi.\n");
-        await execFileAsync("git", ["init", "-b", "main"], { cwd: workPath, env });
-        await execFileAsync("git", ["add", "."], { cwd: workPath, env });
-        await execFileAsync("git", ["commit", "-m", "init"], { cwd: workPath, env });
-        await execFileAsync("git", ["push", repoPath, "main"], { cwd: workPath, env });
+  describe("local source", () => {
+    it("names the path it resolved, not the one that was typed", async () => {
+      const adapter = makeAdapter();
 
-        const adapter = makeAdapter();
-        const localPath = await adapter.fetch(
-          {
-            kind: "git-subdir",
-            url: `file://${repoPath}`,
-            path: "plugins/my-plugin",
-            ref: "main",
-          },
-          cacheDir
-        );
-        expect(existsSync(join(localPath, ".claude-plugin/plugin.json"))).toBe(true);
-        expect(existsSync(join(localPath, "commands/cmd.md"))).toBe(true);
-      } finally {
-        await rm(sandbox, { recursive: true, force: true });
-      }
+      await expect(adapter.fetch({ kind: "local", path: "./missing" }, "/unused")).rejects.toThrow(
+        PluginFetchError
+      );
+      await expect(adapter.fetch({ kind: "local", path: "./missing" }, "/unused")).rejects.toThrow(
+        expect.objectContaining({ detail: expect.stringContaining(process.cwd()) })
+      );
     });
   });
 });

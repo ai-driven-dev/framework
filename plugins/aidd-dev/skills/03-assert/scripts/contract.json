@@ -1,0 +1,14 @@
+{
+  "kind": "assert",
+  "unit": "file",
+  "scope": ["aidd_docs/**/assert.md"],
+  "rules": {
+    "ASSERT-01": {
+      "op": "template",
+      "in": "assert.md",
+      "template": "../assets/assert-template.md",
+      "why": "a round that follows the template is read the same way by every reader",
+      "fix": "follow assert-template.md, one round per pass"
+    }
+  }
+}

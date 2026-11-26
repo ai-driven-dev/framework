@@ -1,0 +1,82 @@
+import { describe, expect, it } from "vitest";
+import { resolveUninstallScopeOrder } from "../../../../../src/contexts/host-registration/application/withdraw/uninstall-scope-order.js";
+import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
+import type { Scope } from "../../../../../src/shared/domain/scope.js";
+import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.fake.js";
+
+const REF = "aidd-telemetry@aidd-framework";
+const PROJECT_ROOT = "/test-project";
+
+function readerAnswering(
+  entries: ReadonlyMap<string, { enabled: boolean; scope?: Scope }>
+): HostPluginRegistry {
+  return { read: async () => ({ location: "/registry", refs: entries }) };
+}
+
+describe("ordering the scopes to uninstall from", () => {
+  it("trusts the host's own registry when it answers for this ref", async () => {
+    const reader = readerAnswering(new Map([[REF, { enabled: true, scope: "user" }]]));
+
+    const order = await resolveUninstallScopeOrder({
+      reader: reader,
+      ref: REF,
+      projectRoot: PROJECT_ROOT,
+      manifestScope: "project",
+    });
+
+    expect(order).toEqual(["user"]);
+  });
+
+  it("falls back to the manifest's own scope, then the other one, when the registry carries no scope for this ref", async () => {
+    const reader = readerAnswering(new Map());
+
+    const order = await resolveUninstallScopeOrder({
+      reader: reader,
+      ref: REF,
+      projectRoot: PROJECT_ROOT,
+      manifestScope: "project",
+    });
+
+    expect(order).toEqual(["project", "user"]);
+  });
+
+  it("falls back the same way when no reader exists for this tool at all", async () => {
+    const order = await resolveUninstallScopeOrder({
+      reader: undefined,
+      ref: REF,
+      projectRoot: PROJECT_ROOT,
+      manifestScope: "user",
+    });
+
+    expect(order).toEqual(["user", "project"]);
+  });
+
+  it("falls back when the registry answers for a ref but carries no scope for it (codex, copilot)", async () => {
+    const reader = readerAnswering(new Map([[REF, { enabled: true }]]));
+
+    const order = await resolveUninstallScopeOrder({
+      reader: reader,
+      ref: REF,
+      projectRoot: PROJECT_ROOT,
+      manifestScope: "project",
+    });
+
+    expect(order).toEqual(["project", "user"]);
+  });
+
+  it("falls back when the host's registry could not be read at all", async () => {
+    const reader = new FakeHostPluginRegistry({
+      location: "/registry",
+      unreadable: "not valid JSON",
+    });
+
+    const order = await resolveUninstallScopeOrder({
+      reader: reader,
+      ref: REF,
+      projectRoot: PROJECT_ROOT,
+      manifestScope: "user",
+    });
+
+    expect(order).toStrictEqual(["user", "project"]);
+  });
+});

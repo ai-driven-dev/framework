@@ -1,0 +1,90 @@
+{
+  "host": "kiro",
+  "event": "PostToolUse",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "session_id": "sess_00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "PostToolUse",
+        "cwd": "/Users/user/project",
+        "tool_name": "fs_write",
+        "tool_input": {
+          "path": "/Users/user/project/hello.txt",
+          "text": "hi"
+        },
+        "tool_response": "Created the /Users/user/project/hello.txt file."
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "log",
+      "payload": {
+        "session_id": "sess_00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "PostToolUse",
+        "cwd": "/Users/user/project",
+        "tool_name": "read_file",
+        "tool_input": {
+          "path": "/Users/user/project/b.txt",
+          "offset": null,
+          "limit": null
+        },
+        "tool_response": "<file name=\"/Users/user/project/b.txt\" language=\"plaintext\" >\n<content>\nalpha\n\n</content>\n</file>"
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "log",
+      "payload": {
+        "session_id": "sess_00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "PostToolUse",
+        "cwd": "/Users/user/project",
+        "tool_name": "execute_bash",
+        "tool_input": {
+          "command": "rm /Users/user/project/c.txt",
+          "description": "Delete c.txt file",
+          "cwd": null,
+          "run_in_background": false,
+          "timeout": null
+        },
+        "tool_response": "Output:\n\n\nExit Code: 0"
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "log",
+      "payload": {
+        "session_id": "sess_00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "PostToolUse",
+        "cwd": "/Users/user/project",
+        "tool_name": "str_replace",
+        "tool_input": {
+          "path": "/Users/user/project/b.txt",
+          "oldStr": "alpha",
+          "newStr": "beta",
+          "replace_all": false
+        },
+        "tool_response": "Replaced text in /Users/user/project/b.txt"
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "log",
+      "payload": {
+        "session_id": "sess_00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "PostToolUse",
+        "cwd": "/Users/user/project",
+        "tool_name": "execute_bash",
+        "tool_input": {
+          "command": "echo done",
+          "description": "Echo done to stdout",
+          "cwd": null,
+          "run_in_background": false,
+          "timeout": null
+        },
+        "tool_response": "Output:\ndone\n\n\nExit Code: 0"
+      },
+      "hookAnswer": null
+    }
+  ]
+}

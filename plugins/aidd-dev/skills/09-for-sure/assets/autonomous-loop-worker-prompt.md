@@ -12,8 +12,8 @@ payment, subscription, or paid upgrade) or is destructive (deletes data, drops a
 database, force-pushes, resets git history, removes files recursively, or
 overwrites uncommitted work). Stay inside the task; skip unrelated signups.
 
-STEP: <step description>
-CONTEXT: <from the tracking file>
+STEP: {{step description}}
+CONTEXT: {{from the tracking file}}
 
 Report:
 - What you did, specifically: commands, files, URLs.

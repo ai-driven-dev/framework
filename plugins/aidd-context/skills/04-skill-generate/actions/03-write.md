@@ -8,7 +8,7 @@ The confirmed plan and target.
 
 ## Process
 
-1. Run [scaffold-skill.cjs](../scripts/scaffold-skill.cjs) on the plan, saved as JSON in the schema its header states.
+1. Run [scaffold-skill.cjs](../scripts/scaffold-skill.cjs) with plan JSON on stdin (`-`), without a plan file.
    - No SKILL.md or action file missing: skip this step.
 2. Write each file the plan lists at its place in [skill-tree.md](../references/skill-tree.md), per [skill-authoring.md](../references/skill-authoring.md).
    - Existing file: edit it in place.

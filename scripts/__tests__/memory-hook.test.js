@@ -84,9 +84,12 @@ const STOP = { claude: "claude-Stop.json", codex: "codex-Stop.json", copilot: "c
 const PAYLOAD_HOSTS = Object.keys(SESSION_START);
 
 // OpenCode and Kilo send no stdin: their bridge runs the hook with a payload built from the
-// plugin's arguments (`opencode-hooks-bridge.ts`, read by the CLI's `hooks-runtime-bridges.integration.test.ts`).
+// plugin's arguments, naming the session the event came from (the shared `cli/src/contexts/tools/domain/bridges/`, read by the CLI's `hooks-runtime-bridges.integration.test.ts`).
 function sessionStartPayload(host, root) {
-  if (BRIDGED.has(host)) return { hook_event_name: "SessionStart", session_id: null, cwd: root };
+  if (BRIDGED.has(host)) {
+    const session = samples(`${host}-session.created.json`)[0].payload.properties.sessionID;
+    return { hook_event_name: "SessionStart", session_id: session, cwd: root };
+  }
   return captured(SESSION_START[host], 0, root);
 }
 
@@ -224,6 +227,123 @@ for (const host of PAYLOAD_HOSTS) {
   });
 }
 
+// ---- a failed write leaves the destination as it was ------------------------------------------
+
+/** A preload failing every write to a file named `name` with EIO: after `keep` bytes landed, or before any. */
+function eioPreload(name, keep) {
+  const file = path.join(tempDir("memory-fault-"), "eio.cjs");
+  fs.writeFileSync(file, `
+const fs = require("node:fs");
+const NAME = ${JSON.stringify(name)};
+const KEEP = ${keep};
+const paths = new Map();
+const eio = () => Object.assign(new Error("EIO: i/o error, write"), { code: "EIO", errno: -5, syscall: "write" });
+const open = fs.openSync;
+fs.openSync = (target, ...rest) => {
+  const fd = open(target, ...rest);
+  paths.set(fd, String(target));
+  return fd;
+};
+const writeFileSync = fs.writeFileSync;
+fs.writeFileSync = (target, data, ...rest) => {
+  const named = typeof target === "string" ? target : paths.get(target) ?? "";
+  if (!named.includes(NAME)) return writeFileSync(target, data, ...rest);
+  if (KEEP > 0) writeFileSync(target, Buffer.from(data).subarray(0, KEEP));
+  throw eio();
+};
+`);
+  return file;
+}
+
+/** A preload making the first `times` renames fail with EPERM, as an antivirus or an editor holding the file does. */
+function renamePreload(times) {
+  const file = path.join(tempDir("memory-fault-"), "rename.cjs");
+  fs.writeFileSync(file, `
+const fs = require("node:fs");
+let left = ${times};
+const rename = fs.renameSync;
+fs.renameSync = (from, to) => {
+  if (left-- > 0) throw Object.assign(new Error("EPERM: operation not permitted, rename"), { code: "EPERM", errno: -1, syscall: "rename" });
+  return rename(from, to);
+};
+`);
+  return file;
+}
+
+const BEFORE_FIX = "# P\n\nUSER PREFIX\n\n<!-- aidd_project_memory:start -->\n<!-- aidd_project_memory:end -->\n";
+const listing = (root) => fs.readdirSync(root).sort();
+
+test("Stop: a partial write then EIO keeps CLAUDE.md byte for byte, leaves no temp file, and names the file", () => {
+  const root = project({ "CLAUDE.md": BEFORE_FIX, [VCS]: BANK });
+  const before = listing(root);
+  const result = run("claude", stopPayload("claude", root), { preload: eioPreload("CLAUDE.md", 28) });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(fs.readFileSync(path.join(root, "CLAUDE.md"), "utf8"), BEFORE_FIX);
+  assert.deepEqual(listing(root), before);
+  assert.match(JSON.parse(result.stdout).reason, /CLAUDE\.md not written \(EIO\)/u);
+});
+
+test("Stop: with two destinations, the one already renamed stays updated, the failing one is unchanged, and the failure is named", () => {
+  const root = project({ "CLAUDE.md": BEFORE_FIX, "AGENTS.md": BEFORE_FIX, [VCS]: BANK });
+  const before = listing(root);
+  const result = run("claude", stopPayload("claude", root), { preload: eioPreload("AGENTS.md", 28) });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(fs.readFileSync(path.join(root, "CLAUDE.md"), "utf8"), /^@aidd_docs\/memory\/vcs\.md$/mu);
+  assert.equal(fs.readFileSync(path.join(root, "AGENTS.md"), "utf8"), BEFORE_FIX);
+  assert.deepEqual(listing(root), before);
+  assert.match(JSON.parse(result.stdout).reason, /AGENTS\.md not written \(EIO\)/u);
+});
+
+const staleTemp = (root, name, age) => {
+  const file = path.join(root, name);
+  fs.writeFileSync(file, "left by a killed hook");
+  const when = new Date(Date.now() - age * 1000);
+  fs.utimesSync(file, when, when);
+  return file;
+};
+
+test("Stop sweeps a context file's temp leftover older than 60 s, and keeps a fresh one", () => {
+  const root = project({ "CLAUDE.md": BEFORE_FIX, [VCS]: BANK });
+  const old = staleTemp(root, ".CLAUDE.md.12345.tmp", 120);
+  const fresh = staleTemp(root, ".CLAUDE.md.67890.tmp", 5);
+  const other = staleTemp(root, ".AGENTS.md.12345.tmp", 120);
+  assert.equal(stopped(root), null);
+  assert.equal(fs.existsSync(old), false, "stale temp kept");
+  assert.equal(fs.existsSync(fresh), true, "fresh temp swept");
+  assert.equal(fs.existsSync(other), true, "another file's temp swept");
+});
+
+test("Stop: a rename held twice by EPERM is retried and CLAUDE.md is updated, with no temp file left", () => {
+  const root = project({ "CLAUDE.md": BEFORE_FIX, [VCS]: BANK });
+  const before = listing(root);
+  const result = run("claude", stopPayload("claude", root), { preload: renamePreload(2) });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, "");
+  assert.match(fs.readFileSync(path.join(root, "CLAUDE.md"), "utf8"), /^@aidd_docs\/memory\/vcs\.md$/mu);
+  assert.deepEqual(listing(root), before);
+});
+
+test("Stop: a rename always held by EPERM keeps CLAUDE.md byte for byte, leaves no temp file, and names the failure", () => {
+  const root = project({ "CLAUDE.md": BEFORE_FIX, [VCS]: BANK });
+  const before = listing(root);
+  const result = run("claude", stopPayload("claude", root), { preload: renamePreload(1e9) });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(fs.readFileSync(path.join(root, "CLAUDE.md"), "utf8"), BEFORE_FIX);
+  assert.deepEqual(listing(root), before);
+  assert.match(JSON.parse(result.stdout).reason, /CLAUDE\.md not written \(EPERM\)/u);
+});
+
+test("a write keeps the file's mode and leaves a symlinked context file a link to the written target", (t) => {
+  if (process.platform === "win32") return t.skip("POSIX modes and links");
+  const root = project({ "AGENTS.md": BEFORE_FIX, [VCS]: BANK });
+  fs.chmodSync(path.join(root, "AGENTS.md"), 0o640);
+  fs.symlinkSync("AGENTS.md", path.join(root, "CLAUDE.md"));
+  assert.equal(stopped(root), null);
+  assert.equal(fs.statSync(path.join(root, "AGENTS.md")).mode & 0o777, 0o640);
+  assert.ok(fs.lstatSync(path.join(root, "CLAUDE.md")).isSymbolicLink());
+  assert.match(fs.readFileSync(path.join(root, "AGENTS.md"), "utf8"), /^@aidd_docs\/memory\/vcs\.md$/mu);
+});
+
 // ---- robustness and contract ----------------------------------------------------------------
 
 for (const host of HOSTS) {
@@ -278,7 +398,9 @@ test("the hook's markdown reader is the skill's, byte for byte: each ships on it
 test("hooks.json names each event's goal, loads at session start and syncs at the turn end, within 5 s", () => {
   const { hooks } = JSON.parse(fs.readFileSync(path.join(HOOKS, "hooks.json"), "utf8"));
   const goals = { SessionStart: "load", Stop: "sync" };
-  assert.deepEqual(Object.keys(hooks).sort(), ["SessionStart", "Stop"]);
+  assert.deepEqual(Object.keys(hooks).sort(), ["PostToolUse", "SessionStart", "Stop"]);
+  assert.equal(hooks.Stop.length, 1, "one Stop entry: a second one is silenced by the OpenCode and Kilo bridges");
+  assert.equal(hooks.Stop[0].hooks.length, 1);
   for (const event of ["SessionStart", "Stop"]) {
     assert.equal(hooks[event][0].hooks[0].command, `node \${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs ${goals[event]}`, event);
     assert.equal(hooks[event][0].hooks[0].timeout, 5, `${event} declares the contract's 5 s timeout`);

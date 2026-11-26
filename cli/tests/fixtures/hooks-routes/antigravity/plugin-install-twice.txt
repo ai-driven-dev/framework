@@ -1,122 +1,377 @@
 second install threw DuplicatePluginError: Plugin 'aidd-context' is already installed.
 
-## project/.agents/hooks.json
+## project/.agents/plugins/aidd-context/hooks.json
 {
   "aidd-context": {
     "SessionStart": [
       {
         "type": "command",
-        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC1jb250ZXh0L21lbW9yeS5janMgbG9hZA==",
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'../../..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvcGx1Z2lucy9haWRkLWNvbnRleHQvaG9va3MvbWVtb3J5LmNqcyBsb2Fk",
         "timeout": 5
-      }
-    ]
-  },
-  "aidd-telemetry": {
-    "SessionStart": [
-      {
-        "type": "command",
-        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvc2Vzc2lvbi1zdGFydC5janM=",
-        "timeout": 10
       },
       {
         "type": "command",
-        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvY2F0Y2gtdXAuY2pz",
-        "timeout": 120
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'../../..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvcGx1Z2lucy9haWRkLWNvbnRleHQvaG9va3MvYXJ0aWZhY3RzLmNqcyBzdGFydA==",
+        "timeout": 5
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "write_file|edit_file|run_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'../../..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvcGx1Z2lucy9haWRkLWNvbnRleHQvaG9va3MvYXJ0aWZhY3RzLmNqcyBtYXJr",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'../../..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvcGx1Z2lucy9haWRkLWNvbnRleHQvaG9va3MvbWVtb3J5LmNqcyBzeW5j",
+        "timeout": 5
       }
     ]
   }
 }
 
 
-## project/.agents/hooks/aidd-context/lib/host.cjs
+## project/.agents/plugins/aidd-context/hooks/artifacts.cjs
+script, identical to the plugin source
+
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/contract.json
+{
+  "kind": "skill",
+  "unit": "folder",
+  "targets": "plugins/*/skills/*",
+  "scope": [".claude/skills/*", ".cursor/skills/*", ".opencode/skills/*", ".kilo/skills/*", ".github/skills/*", ".agents/skills/*", ".kiro/skills/*"],
+  "shell": false,
+  "marker": "SKILL.md",
+  "rules": {
+    "SKILL-01": { "op": "max", "measure": "chars", "in": "SKILL.md", "field": "description", "max": 150,
+      "why": "every description loads in every session", "fix": "cut the description to 150 characters, it has {actual}" },
+    "SKILL-02": { "op": "forbidden", "in": "SKILL.md", "field": "description", "regex": ":",
+      "why": "a colon breaks unquoted YAML on some hosts", "fix": "remove the colon from the description" },
+    "SKILL-03": { "op": "forbidden", "in": "SKILL.md", "field": "description", "regex": "\\s[-–—]\\s",
+      "why": "a dash splits the trigger into two claims", "fix": "remove the dash separator from the description" },
+    "SKILL-04": { "op": "forbidden", "in": "SKILL.md", "field": "description", "regex": "[.!?]\\s+\\S",
+      "why": "the model matches one trigger sentence", "fix": "make the description one sentence" },
+    "SKILL-05": { "op": "sections", "in": "SKILL.md", "allowed": ["Transversal rules"],
+      "why": "the router loads on every call; detail belongs in actions", "fix": "keep only the diagram and the transversal rules after the title" },
+    "SKILL-06": { "op": "custom", "in": "SKILL.md", "check": "router-diagram",
+      "why": "the diagram is the only route to an action" },
+    "SKILL-07": { "op": "custom", "in": "SKILL.md", "check": "router-edges",
+      "why": "an edge the model cannot follow is a dead route", "fix": "link the target action from the source step" },
+    "SKILL-08": { "op": "pattern", "in": "actions/*.md", "line": 1, "regex": "^# \\d\\d - \\S",
+      "why": "the number orders actions across hosts", "fix": "start with `# <NN> - <Title>`" },
+    "SKILL-09": { "op": "sections", "in": "actions/*.md", "allowed": ["Input", "Process", "Output", "Rules"], "order": true,
+      "why": "one shape lets the model find the steps", "fix": "use only and in order Input, Process, Output, Rules" },
+    "SKILL-10": { "op": "custom", "in": "actions/*.md", "check": "read-next",
+      "why": "a chained action that does not link the next stops the flow", "fix": "end with a step that reads the next action, as a link" },
+    "SKILL-11": { "op": "oneSentence", "in": ["SKILL.md", "actions/*.md"], "sections": ["Process", "Rules", "Transversal rules"], "skipIndentedIn": ["Rules", "Transversal rules"],
+      "why": "one instruction per item is followed, two are merged", "fix": "keep one sentence per item, or put exact text in backticks; in a step, cases go as dash sub-items" },
+    "SKILL-12": { "op": "flatList", "in": ["SKILL.md", "actions/*.md"], "sections": ["Rules", "Transversal rules"],
+      "why": "a nested rule hides its condition", "fix": "write the rule on one line, its case inside the sentence" },
+    "SKILL-13": { "op": "max", "measure": "lines", "in": "{actions,references}/**/*.md", "max": 100,
+      "why": "a long action dilutes the step being run", "fix": "split the file, it has {actual} lines" },
+    "SKILL-14": { "op": "forbidden", "in": "**/*.md", "notIn": "assets/**", "scope": "nofence", "regex": "<!--[\\s\\S]*?--!?>",
+      "why": "hosts strip or show comments inconsistently", "fix": "state it in the prose, or move it to an asset" },
+    "SKILL-15": { "op": "forbidden", "in": "**/*.md", "notIn": "assets/**", "regex": "\\{\\{[^{}\\n]*\\}\\}",
+      "why": "an unfilled slot is read as an instruction", "fix": "fill the template slot, or move it to an asset" },
+    "SKILL-16": { "op": "forbidden", "in": "**/*.md", "regex": "\\*\\*",
+      "why": "bold competes with the instruction order", "fix": "write the sentence without bold" },
+    "SKILL-17": { "op": "links", "in": "**/*.md", "notIn": "assets/**",
+      "why": "a dead link is a step the model cannot take", "fix": "fix the link, {target} does not exist" },
+    "SKILL-18": { "op": "equals", "in": "SKILL.md", "field": "name", "to": "folder",
+      "why": "hosts that validate skills require the name to be the folder's", "fix": "name the skill {expected}, as its folder" },
+    "SKILL-20": { "op": "pattern", "in": "SKILL.md", "field": "description", "regex": "\\S",
+      "why": "the description is the only way the model finds the skill", "fix": "give the skill a description in its front matter" },
+    "SKILL-21": { "op": "links", "in": "**/*.md", "inside": true,
+      "why": "a link leaving the skill is dead in every installed copy", "fix": "name the file in prose, {target} is outside the skill" },
+    "SKILL-22": { "op": "custom", "in": ["SKILL.md", "actions/**/*.md", "references/**/*.md"], "check": "sibling-plugin",
+      "why": "a plugin works without its siblings installed" }
+  }
+}
+
+
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/mermaid.cjs
+script, identical to the plugin source
+
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/read-next.cjs
+script, identical to the plugin source
+
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/router-diagram.cjs
+script, identical to the plugin source
+
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/router-edges.cjs
+script, identical to the plugin source
+
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/sibling-plugin.cjs
+script, identical to the plugin source
+
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/05-rule-generate/assets/rule-template.md
+---
+description: "{{when the rule applies, one line}}"
+paths:
+targets: [{{host tools}}]
+---
+
+# {{title}}
+
+- {{requirement}}
+
+## {{group}}
+
+- {{requirement}}
+
+> Fill every `{{...}}`, add one `  - "glob"` line under `paths:` per file pattern or delete `paths:` for a rule on every file, delete the group section when unused, and delete this line.
+
+
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/05-rule-generate/scripts/contract.json
+{
+  "kind": "rule",
+  "unit": "file",
+  "scope": ["aidd_docs/rules/*/*.md"],
+  "rules": {
+    "RULE-01": {
+      "op": "template",
+      "in": "*.md",
+      "template": "../assets/rule-template.md",
+      "optional": ["paths", "{{group}}"],
+      "why": "every host copy is rendered from the source, so its shape must hold",
+      "fix": "follow rule-template.md"
+    }
+  }
+}
+
+
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/06-agent-generate/scripts/contract.json
+{
+  "kind": "agent",
+  "unit": "file",
+  "targets": "plugins/*/agents/*.md",
+  "scope": [
+    ".claude/agents/*.md",
+    ".cursor/agents/*.md",
+    ".github/agents/*.agent.md",
+    ".agents/agents/*/agent.md",
+    ".opencode/agents/*.md",
+    ".kilo/agents/*.md",
+    ".kiro/agents/*.md",
+    ".kimi-code/agents/*.md"
+  ],
+  "shell": false,
+  "rules": {
+    "AGENT-02": {
+      "op": "custom",
+      "in": "*.md",
+      "check": "name",
+      "why": "hosts resolve the agent by file name"
+    },
+    "AGENT-03": {
+      "op": "pattern",
+      "in": "*.md",
+      "field": "description",
+      "regex": "\\. Use to ",
+      "why": "A4: what it does, then when to call it",
+      "fix": "end the description with `Use to <when>`"
+    },
+    "AGENT-04": {
+      "op": "sections",
+      "in": "*.md",
+      "level": 1,
+      "allowed": [
+        "Role",
+        "Behavior",
+        "Output"
+      ],
+      "order": true,
+      "required": [
+        "Role",
+        "Behavior",
+        "Output"
+      ],
+      "why": "A5-A7: the caller reads role, boundary, then return format",
+      "fix": "use exactly # Role, # Behavior, # Output in that order"
+    },
+    "AGENT-05": {
+      "op": "forbidden",
+      "in": "*.md",
+      "regex": "\\{\\{[^{}\\n]*\\}\\}",
+      "why": "an unfilled slot is read as an instruction",
+      "fix": "fill the template slot"
+    }
+  }
+}
+
+
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/06-agent-generate/scripts/custom/name.cjs
+script, identical to the plugin source
+
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/07-command-generate/assets/command-template.md
+---
+description: "{{what the command does, one line}}"
+argument-hint:
+model:
+agent:
+allowed-tools:
+disable-model-invocation:
+---
+
+# {{Command title}}
+
+{{The single objective, in one line.}}
+
+1. {{Imperative step.}}
+2. {{Next step.}}
+
+> Fill every `{{...}}`, delete each front matter key the command does not keep, and delete this line.
+
+
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/07-command-generate/scripts/contract.json
+{
+  "kind": "command",
+  "unit": "file",
+  "scope": [
+    ".claude/commands/*.md",
+    ".github/prompts/*.prompt.md",
+    ".opencode/commands/*.md",
+    ".kilo/commands/*.md"
+  ],
+  "shell": false,
+  "rules": {
+    "COMMAND-01": {
+      "op": "template",
+      "in": "*.md",
+      "template": "../assets/command-template.md",
+      "why": "one shape per command",
+      "fix": "follow command-template.md",
+      "optional": [
+        "argument-hint",
+        "model",
+        "agent",
+        "allowed-tools",
+        "disable-model-invocation"
+      ]
+    }
+  }
+}
+
+
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/lib/engine.cjs
+script, identical to the plugin source
+
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/lib/markdown.cjs
+script, identical to the plugin source
+
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/lib/ops.cjs
+script, identical to the plugin source
+
+## project/.agents/plugins/aidd-context/hooks/lib/host.cjs
 script, identical to the host adapter host-antigravity.cjs
 
-## project/.agents/hooks/aidd-context/lib/markdown.cjs
+## project/.agents/plugins/aidd-context/hooks/lib/markdown.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-context/memory.cjs
+## project/.agents/plugins/aidd-context/hooks/memory.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/catch-up.cjs
+## project/.agents/plugins/aidd-telemetry/hooks.json
+{
+  "aidd-telemetry": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'../../..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvcGx1Z2lucy9haWRkLXRlbGVtZXRyeS9ob29rcy90YXNrLmNqcyByZW1pbmQ=",
+        "timeout": 5
+      },
+      {
+        "type": "command",
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'../../..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvcGx1Z2lucy9haWRkLXRlbGVtZXRyeS9ob29rcy9sZWRnZXIuY2pzIGluZ2VzdA==",
+        "timeout": 5
+      }
+    ]
+  }
+}
+
+
+## project/.agents/plugins/aidd-telemetry/hooks/ledger.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/aidd.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/lib/aidd.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/binding.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/lib/claude-only.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/claude-only.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/lib/codex-session-file.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/codex-session-file.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/lib/consent.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/consent.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/lib/context.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/context.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/lib/git.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/declaration.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/lib/host.cjs
+script, identical to the host adapter host-antigravity.cjs
+
+## project/.agents/plugins/aidd-telemetry/hooks/lib/jsonl.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/git.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/lib/telemetry-dir.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/hook-io.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/lib/tool.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/jsonl.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-telemetry/lib/lookup.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-telemetry/lib/presence.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-telemetry/lib/telemetry-dir.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-telemetry/lib/tool.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-telemetry/prompt-gate.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-telemetry/session-start.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/task.cjs
 script, identical to the plugin source
 
 # recorded
-project antigravity aidd-context scope=project: 0 hook files
-  projectHooks {
-  "entries": [
-    {
-      "event": "SessionStart",
-      "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC1jb250ZXh0L21lbW9yeS5janMgbG9hZA==",
-      "digest": "1daba6a99a2ff06947caaa0ee5d6c2e8"
-    }
-  ],
-  "scripts": {}
-}
+project antigravity aidd-context scope=project: 20 hook files
+  .agents/plugins/aidd-context/hooks.json
+  .agents/plugins/aidd-context/hooks/artifacts.cjs
+  .agents/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/contract.json
+  .agents/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/mermaid.cjs
+  .agents/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/read-next.cjs
+  .agents/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/router-diagram.cjs
+  .agents/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/router-edges.cjs
+  .agents/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/sibling-plugin.cjs
+  .agents/plugins/aidd-context/hooks/lib/contracts/05-rule-generate/assets/rule-template.md
+  .agents/plugins/aidd-context/hooks/lib/contracts/05-rule-generate/scripts/contract.json
+  .agents/plugins/aidd-context/hooks/lib/contracts/06-agent-generate/scripts/contract.json
+  .agents/plugins/aidd-context/hooks/lib/contracts/06-agent-generate/scripts/custom/name.cjs
+  .agents/plugins/aidd-context/hooks/lib/contracts/07-command-generate/assets/command-template.md
+  .agents/plugins/aidd-context/hooks/lib/contracts/07-command-generate/scripts/contract.json
+  .agents/plugins/aidd-context/hooks/lib/contracts/lib/engine.cjs
+  .agents/plugins/aidd-context/hooks/lib/contracts/lib/markdown.cjs
+  .agents/plugins/aidd-context/hooks/lib/contracts/lib/ops.cjs
+  .agents/plugins/aidd-context/hooks/lib/host.cjs
+  .agents/plugins/aidd-context/hooks/lib/markdown.cjs
+  .agents/plugins/aidd-context/hooks/memory.cjs
+  projectHooks null
   dependents []
-project antigravity aidd-telemetry scope=project: 0 hook files
-  projectHooks {
-  "entries": [
-    {
-      "event": "SessionStart",
-      "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvc2Vzc2lvbi1zdGFydC5janM=",
-      "digest": "4100c41de2bcea80a0e3fed5d428c845"
-    },
-    {
-      "event": "SessionStart",
-      "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvY2F0Y2gtdXAuY2pz",
-      "digest": "4216d59d18b66a867925fe452de01eb5"
-    }
-  ],
-  "scripts": {}
-}
+project antigravity aidd-telemetry scope=project: 13 hook files
+  .agents/plugins/aidd-telemetry/hooks.json
+  .agents/plugins/aidd-telemetry/hooks/ledger.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/aidd.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/claude-only.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/codex-session-file.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/consent.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/context.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/git.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/host.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/jsonl.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/telemetry-dir.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/tool.cjs
+  .agents/plugins/aidd-telemetry/hooks/task.cjs
+  projectHooks null
   dependents []
 project antigravity nativeRegistrations pluginRefs null
 machine: no manifest

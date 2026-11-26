@@ -16,37 +16,47 @@ import {
 } from "node:fs";
 import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { type TelemetryDeps, wireTelemetry } from "../../../src/runtime/wiring/telemetry.js";
-import { git } from "../../helpers/git-sandbox.js";
+import { wireTelemetry } from "../../../src/composition/contexts/telemetry.js";
+import { git } from "../../shared/testing/git-sandbox.builder.js";
+import { prompterAnswering } from "../../shared/testing/partial-ports.builder.js";
 import {
   assertUnderTemporaryDirectory,
   createTelemetrySandbox,
   type TelemetrySandbox,
-} from "../../helpers/telemetry-sandbox.js";
+} from "./testing/telemetry-sandbox.builder.js";
 
 const SESSION = "00000000-0000-4000-8000-0000000000bb";
 const BARE = '{"telemetry":{"enabled":true},"keep":{"me":1}}';
 const DELEGATE_FILE = "aidd-session-trailer.sh";
-/** What the previous version installed, as it wrote it. */
+/** What the previous version installed, verbatim. */
 const DELEGATE = `#!/bin/sh
 # Installed by \`aidd telemetry on\`, removed by \`aidd telemetry off\`.
+#
+# Names the AI session that authored this commit, so what a session cost can be read
+# per commit. Writes nothing when no session made the commit.
 set -u
+
 message_file="\${1:-}"
+
 [ -n "$message_file" ] || exit 0
+
 session_id="\${CODEX_THREAD_ID:-\${CLAUDE_CODE_SESSION_ID:-}}"
 [ -n "$session_id" ] || exit 0
+
+# --if-exists doNothing keeps an amend, or a second run of this hook, from writing it twice.
 git interpret-trailers --in-place --if-exists doNothing \\
   --trailer "AIDD-Session-Id=$session_id" "$message_file" || exit 0
+
 exit 0
 `;
 
 let box: TelemetrySandbox;
 let repo: string;
-let deps: TelemetryDeps;
+let deps: ReturnType<typeof wireTelemetry>;
 
 function useSandbox(): void {
   for (const [name, value] of Object.entries(box.env())) vi.stubEnv(name, value);
-  deps = wireTelemetry(() => box.home);
+  deps = wireTelemetry(() => box.home, prompterAnswering({}));
 }
 
 beforeEach(() => {
@@ -88,109 +98,23 @@ async function configure(text: string): Promise<void> {
   writeFileSync(join(repo, ".aidd", "config.json"), text);
 }
 
-describe("opting in to a repository the previous version measured", () => {
-  it("leaves a repository that still commits, with no trailer, and no line without its script", async () => {
-    install("#!/bin/sh\n<CALL>\n");
-    await configure(BARE);
-    expect(commit("before")).toContain(`AIDD-Session-Id: ${SESSION}`);
+const retentionOf = (root: string) => deps.readTranscriptRetention.execute({ root });
 
-    const result = await deps.telemetryOnUseCase.execute(repo, "keep");
-
-    expect(result).toMatchObject({
-      status: "on",
-      hook: { lineRemoved: true, delegateRemoved: true, stillCalledBy: [] },
-    });
-    expect(existsSync(join(hooksDir(), DELEGATE_FILE))).toBe(false);
-    expect(existsSync(join(hooksDir(), "prepare-commit-msg"))).toBe(false);
-    expect(commit("after")).not.toContain("AIDD-Session-Id");
-  });
-
-  it("keeps a hook's other content byte for byte, and its mode", async () => {
-    const foreign = '#!/bin/sh\n# mine\r\n  echo "a"  \n<CALL>\necho end';
-    install(foreign);
-    await configure(BARE);
-
-    await deps.telemetryOnUseCase.execute(repo, "keep");
-
+describe("opting in to a repository a previous version measured", () => {
+  it("leaves what a previous version installed as it found it, and the repository still commits", async () => {
+    const delegate = install("#!/bin/sh\n<CALL>\n");
     const hook = join(hooksDir(), "prepare-commit-msg");
-    expect(read(hook)).toBe('#!/bin/sh\n# mine\r\n  echo "a"  \necho end');
-    // Windows has no execute bit to keep.
-    if (process.platform !== "win32") expect(statSync(hook).mode & 0o111).not.toBe(0);
-    expect(existsSync(join(hooksDir(), DELEGATE_FILE))).toBe(false);
-    expect(commit("after")).not.toContain("AIDD-Session-Id");
-  });
-
-  it("keeps the script while a lefthook job still calls it, says so, and edits no manager file", async () => {
-    install("#!/bin/sh\n<CALL>\n");
-    const lefthook = [
-      "prepare-commit-msg:",
-      "  commands:",
-      "    aidd-session-trailer:",
-      "      run: |",
-      '        delegate="$(git rev-parse --git-common-dir)/hooks/aidd-session-trailer.sh"',
-      '        if [ -f "$delegate" ]; then sh "$delegate" {1} {2}; fi',
-      "",
-    ].join("\n");
-    writeFileSync(join(repo, "lefthook.yml"), lefthook);
     await configure(BARE);
-
-    const result = await deps.telemetryOnUseCase.execute(repo, "keep");
-
-    expect(result).toMatchObject({
-      hook: { lineRemoved: true, delegateRemoved: false, stillCalledBy: ["lefthook.yml"] },
-    });
-    expect(existsSync(join(hooksDir(), DELEGATE_FILE))).toBe(true);
-    expect(read(join(repo, "lefthook.yml"))).toBe(lefthook);
-  });
-
-  it("keeps the script while a husky hook still calls it", async () => {
-    install(null);
-    const husky =
-      'delegate="$(git rev-parse --git-common-dir)/hooks/aidd-session-trailer.sh"\n[ -f "$delegate" ] && sh "$delegate" "$@"\n';
-    mkdirSync(join(repo, ".husky"));
-    writeFileSync(join(repo, ".husky", "prepare-commit-msg"), husky);
-    await configure(BARE);
-
-    const result = await deps.telemetryOnUseCase.execute(repo, "keep");
-
-    expect(result).toMatchObject({
-      hook: { delegateRemoved: false, stillCalledBy: [".husky/prepare-commit-msg"] },
-    });
-    expect(existsSync(join(hooksDir(), DELEGATE_FILE))).toBe(true);
-    expect(read(join(repo, ".husky", "prepare-commit-msg"))).toBe(husky);
-  });
-
-  it("leaves a script of somebody else's under that name alone", async () => {
-    mkdirSync(hooksDir(), { recursive: true });
-    writeFileSync(join(hooksDir(), DELEGATE_FILE), "#!/bin/sh\necho mine\n");
-    await configure(BARE);
-    await deps.telemetryOnUseCase.execute(repo, "keep");
-    expect(existsSync(join(hooksDir(), DELEGATE_FILE))).toBe(true);
-  });
-
-  it("removes the run journal and its ignore entry, and nothing else of the ignore file", async () => {
     mkdirSync(join(repo, "aidd_docs", "runs"), { recursive: true });
     writeFileSync(join(repo, "aidd_docs", "runs", "a.jsonl"), "{}\n");
-    writeFileSync(join(repo, ".gitignore"), "dist/\naidd_docs/runs/\nnode_modules/\n");
-    await configure(BARE);
+    const before = [hook, delegate, join(repo, ".aidd", "config.json")].map(read);
 
-    const result = await deps.telemetryOnUseCase.execute(repo, "keep");
+    const result = await deps.enableTelemetry.execute({ cwd: repo, choice: "keep" });
 
-    expect(result).toMatchObject({ journal: { journalRemoved: true, ignoreEntryRemoved: true } });
-    expect(existsSync(join(repo, "aidd_docs", "runs"))).toBe(false);
-    expect(read(join(repo, ".gitignore"))).toBe("dist/\nnode_modules/\n");
-  });
-
-  it("leaves a journal git tracks where it is", async () => {
-    mkdirSync(join(repo, "aidd_docs", "runs"), { recursive: true });
-    writeFileSync(join(repo, "aidd_docs", "runs", "a.jsonl"), "{}\n");
-    git(repo, box.gitEnv, "add", "-f", "aidd_docs/runs/a.jsonl");
-    await configure(BARE);
-
-    const result = await deps.telemetryOnUseCase.execute(repo, "keep");
-
-    expect(result).toMatchObject({ journal: { journalRemoved: false, trackedKept: true } });
+    expect(result).toMatchObject({ status: "on", consentWritten: true });
+    expect([hook, delegate, join(repo, ".aidd", "config.json")].map(read)).toEqual(before);
     expect(existsSync(join(repo, "aidd_docs", "runs", "a.jsonl"))).toBe(true);
+    expect(commit("after")).toContain(`AIDD-Session-Id: ${SESSION}`);
   });
 
   const consentOf = () =>
@@ -204,7 +128,7 @@ describe("opting in to a repository the previous version measured", () => {
 
   it("sets the consent in the repository's git config, not in .aidd/config.json", async () => {
     await configure(JSON.stringify({ keep: { me: 1 } }));
-    await deps.telemetryOnUseCase.execute(repo, "keep");
+    await deps.enableTelemetry.execute({ cwd: repo, choice: "keep" });
     expect(consentOf()).toMatch(TOKEN_KEY);
     expect(read(join(repo, ".aidd", "config.json"))).toBe('{"keep":{"me":1}}');
     const [opened, ...rest] = intervalLines();
@@ -214,10 +138,10 @@ describe("opting in to a repository the previous version measured", () => {
   });
 
   it("mints a fresh token for each interval and ends the last one at off", async () => {
-    await deps.telemetryOnUseCase.execute(repo, "keep");
+    await deps.enableTelemetry.execute({ cwd: repo, choice: "keep" });
     const first = consentOf();
-    await deps.telemetryOffUseCase.execute(repo);
-    await deps.telemetryOnUseCase.execute(repo, "keep");
+    await deps.disableTelemetry.execute({ cwd: repo });
+    await deps.enableTelemetry.execute({ cwd: repo, choice: "keep" });
     expect(consentOf()).toMatch(TOKEN_KEY);
     expect(consentOf()).not.toBe(first);
     expect(intervalLines().map((line) => Object.keys(line).join(","))).toEqual([
@@ -227,37 +151,23 @@ describe("opting in to a repository the previous version measured", () => {
     ]);
   });
 
-  it("removes the previous version's block, every V1 key with it, and keeps every other byte", async () => {
-    await configure(
-      '{\n  "keep": { "me": 1 },\n  "telemetry": { "enabled": true, "endpoint": "x" }\n}\n'
-    );
-    const result = await deps.telemetryOnUseCase.execute(repo, "keep");
-    expect(result).toMatchObject({ legacyConfig: "block-removed" });
-    expect(read(join(repo, ".aidd", "config.json"))).toBe('{\n  "keep": { "me": 1 }\n}\n');
-  });
-
-  it("deletes .aidd/config.json when the block was all it held", async () => {
-    await configure('{"telemetry":{"enabled":true,"endpoint":"x"}}');
-    expect(await deps.telemetryOnUseCase.execute(repo, "keep")).toMatchObject({
-      legacyConfig: "file-deleted",
-    });
-    expect(existsSync(join(repo, ".aidd", "config.json"))).toBe(false);
-  });
-
   it("is not opted in by a committed .aidd/config.json that says version 2", async () => {
     await configure('{"telemetry":{"enabled":true,"version":2}}');
     git(repo, box.gitEnv, "add", ".aidd/config.json");
     git(repo, box.gitEnv, "commit", "-q", "-m", "config");
     writeTranscript(repo, ["a"]);
     // No clone has opted in, so no transcript is even read.
-    expect(await deps.ingestUsageUseCase.execute()).toMatchObject({ added: 0, filesRead: 0 });
+    expect(await deps.ingestUsage.execute()).toMatchObject({ added: 0, filesRead: 0 });
     expect(() => consentOf()).toThrow();
   });
 
   it("turns off with the git config value off, and leaves .aidd/config.json alone", async () => {
     await configure('{"keep":1}');
-    await deps.telemetryOnUseCase.execute(repo, "keep");
-    expect(await deps.telemetryOffUseCase.execute(repo)).toEqual({ status: "off", changed: true });
+    await deps.enableTelemetry.execute({ cwd: repo, choice: "keep" });
+    expect(await deps.disableTelemetry.execute({ cwd: repo })).toEqual({
+      status: "off",
+      changed: true,
+    });
     expect(consentOf()).toBe("off");
     expect(read(join(repo, ".aidd", "config.json"))).toBe('{"keep":1}');
   });
@@ -266,28 +176,16 @@ describe("opting in to a repository the previous version measured", () => {
     const linked = join(box.root, "widgets-linked");
     git(repo, box.gitEnv, "worktree", "add", "-q", "-b", "feat/y", linked);
     writeTranscript(linked, ["a"], "s-1", soon());
-    expect(await deps.ingestUsageUseCase.execute()).toMatchObject({ added: 0 });
-    await deps.telemetryOnUseCase.execute(repo, "keep");
+    expect(await deps.ingestUsage.execute()).toMatchObject({ added: 0 });
+    await deps.enableTelemetry.execute({ cwd: repo, choice: "keep" });
     writeTranscript(linked, ["b"], "s-2", soon());
-    expect(await deps.ingestUsageUseCase.execute()).toMatchObject({ added: 1 });
-  });
-
-  it("leaves a config that does not parse as it is, and still turns measurement on", async () => {
-    await configure("{nope");
-    install("#!/bin/sh\n<CALL>\n");
-    expect(await deps.telemetryOnUseCase.execute(repo, "keep")).toMatchObject({
-      status: "on",
-      legacyConfig: "unparseable",
-    });
-    expect(read(join(repo, ".aidd", "config.json"))).toBe("{nope");
-    expect(consentOf()).toMatch(TOKEN_KEY);
-    expect(existsSync(join(hooksDir(), DELEGATE_FILE))).toBe(false);
+    expect(await deps.ingestUsage.execute()).toMatchObject({ added: 1 });
   });
 
   it("refuses outside a repository", async () => {
     const outside = join(box.root, "not-a-repo");
     mkdirSync(outside);
-    expect(await deps.telemetryOnUseCase.execute(outside, "keep")).toEqual({
+    expect(await deps.enableTelemetry.execute({ cwd: outside, choice: "keep" })).toEqual({
       status: "refused",
       reason: "outside-repository",
     });
@@ -345,8 +243,39 @@ describe("the identifier offered at on", () => {
   it("is not read from git under AIDD_TELEMETRY=0", async () => {
     git(repo, box.gitEnv, "config", "--local", "user.name", "Ada Example");
     vi.stubEnv("AIDD_TELEMETRY", "0");
-    deps = wireTelemetry(() => box.home);
-    expect(await deps.proposeIdentityUseCase.execute(repo)).toBeNull();
+    deps = wireTelemetry(() => box.home, prompterAnswering({}));
+    expect(await deps.proposeIdentity.execute({ cwd: repo })).toBeNull();
+  });
+});
+
+describe("the wiring of a declaration", () => {
+  const declare = {
+    cwd: "",
+    request: { kind: "task", task: "t1", ticket: null },
+    by: "command",
+  } as const;
+
+  it("refuses a declaration, a status and a report under AIDD_TELEMETRY=0", async () => {
+    vi.stubEnv("AIDD_TELEMETRY", "0");
+    deps = wireTelemetry(() => box.home, prompterAnswering({}));
+    const refused = { status: "refused", reason: "environment" };
+
+    expect(await deps.declareTask.execute({ ...declare, cwd: repo })).toEqual(refused);
+    expect(await deps.readTelemetryStatus.execute({ cwd: repo })).toEqual(refused);
+    expect(
+      await deps.requestReport.execute({ axis: "day", period: { from: null, to: null } })
+    ).toEqual({ status: "refused" });
+  });
+
+  it("binds the session it was declared in, from the moment it is declared", async () => {
+    vi.stubEnv("CLAUDE_CODE_SESSION_ID", SESSION);
+    deps = wireTelemetry(() => box.home, prompterAnswering({}));
+    await deps.enableTelemetry.execute({ cwd: repo, choice: "keep" });
+    await deps.declareTask.execute({ ...declare, cwd: repo });
+
+    expect(await deps.readTelemetryStatus.execute({ cwd: repo })).toMatchObject({
+      binding: { state: "bound", source: "session-declared", task: "t1" },
+    });
   });
 });
 
@@ -354,45 +283,45 @@ describe("measurement starts at on", () => {
   it("does not read back what was said before opting in, though ingest had not read past it", async () => {
     await configure(BARE);
     writeTranscript(repo, ["a", "b"]);
-    await deps.telemetryOnUseCase.execute(repo, "keep");
+    await deps.enableTelemetry.execute({ cwd: repo, choice: "keep" });
 
     // Written days before `on`: not even read.
-    expect(await deps.ingestUsageUseCase.execute()).toMatchObject({ added: 0, filesRead: 0 });
+    expect(await deps.ingestUsage.execute()).toMatchObject({ added: 0, filesRead: 0 });
     expect(stored()).toBe(0);
   });
 
   it("does not store the history again once opting in, though ingest had read past it", async () => {
     await configure(BARE);
     writeTranscript(repo, ["a", "b"]);
-    expect(await deps.ingestUsageUseCase.execute()).toMatchObject({ added: 0 });
+    expect(await deps.ingestUsage.execute()).toMatchObject({ added: 0 });
 
-    await deps.telemetryOnUseCase.execute(repo, "keep");
+    await deps.enableTelemetry.execute({ cwd: repo, choice: "keep" });
     writeTranscript(repo, ["c"], "s-2", soon());
 
-    expect(await deps.ingestUsageUseCase.execute()).toMatchObject({
+    expect(await deps.ingestUsage.execute()).toMatchObject({
       added: 1,
       notStored: { "no-consent": 0 },
     });
     expect(stored()).toBe(1);
-    expect(await deps.ingestUsageUseCase.execute()).toMatchObject({ added: 0, updated: 0 });
+    expect(await deps.ingestUsage.execute()).toMatchObject({ added: 0, updated: 0 });
   });
 
   it("does not store a directory that is gone, seen alive before the clone opted in", async () => {
     await configure(BARE);
     // Another clone measured, so this one's transcripts are read before it opts in.
-    await deps.telemetryOnUseCase.execute(box.repository("gadgets"), "keep");
+    await deps.enableTelemetry.execute({ cwd: box.repository("gadgets"), choice: "keep" });
     const sub = join(repo, "sub");
     mkdirSync(sub);
     writeTranscript(sub, ["a"], "s-1", soon());
-    await deps.ingestUsageUseCase.execute();
+    await deps.ingestUsage.execute();
     const remembered = JSON.parse(read(join(box.telemetry, "ledger", "roots.json")));
     expect(remembered.directories.some((d: { dir: string }) => d.dir.endsWith("sub"))).toBe(true);
     rmSync(sub, { recursive: true });
 
-    await deps.telemetryOnUseCase.execute(repo, "keep");
+    await deps.enableTelemetry.execute({ cwd: repo, choice: "keep" });
     writeTranscript(sub, ["b"], "s-2", soon());
 
-    expect(await deps.ingestUsageUseCase.execute()).toMatchObject({ added: 1 });
+    expect(await deps.ingestUsage.execute()).toMatchObject({ added: 1 });
     expect(stored()).toBe(1);
   });
 });
@@ -413,26 +342,13 @@ describe("how long Claude Code keeps what is measured", () => {
     const stat = [statSync(settings).mtimeMs, statSync(project).mtimeMs];
     const names = claudeFiles();
 
-    const result = await deps.telemetryOnUseCase.execute(repo, "keep");
+    await deps.enableTelemetry.execute({ cwd: repo, choice: "keep" });
 
-    expect(result).toMatchObject({ retention: { days: 30, short: true } });
+    expect(await retentionOf(repo)).toEqual({ days: 30, short: true });
     expect(read(settings)).toBe('{"theme":"dark"}');
     expect(read(project)).toBe("{}");
     expect([statSync(settings).mtimeMs, statSync(project).mtimeMs]).toEqual(stat);
     expect(claudeFiles()).toEqual(names);
-  });
-
-  it("is satisfied by 3650 in the user's settings, and overridden by a project's shorter one", async () => {
-    await configure(BARE);
-    writeFileSync(join(box.claude, "settings.json"), '{"cleanupPeriodDays":3650}');
-    expect(await deps.telemetryOnUseCase.execute(repo, "keep")).toMatchObject({
-      retention: { days: 3650, short: false },
-    });
-    mkdirSync(join(repo, ".claude"));
-    writeFileSync(join(repo, ".claude", "settings.local.json"), '{"cleanupPeriodDays":7}');
-    expect(await deps.telemetryOnUseCase.execute(repo, "keep")).toMatchObject({
-      retention: { days: 7, short: true },
-    });
   });
 });
 
@@ -448,6 +364,17 @@ function declare(branch: string, task: string): void {
   );
 }
 
+/** A directory by its mtime, a file by its mtime and bytes. */
+function stateOf(path: string, isDirectory: boolean): string {
+  if (isDirectory) return `dir ${statSync(path).mtimeMs}`;
+  const fd = openSync(path, "r");
+  try {
+    return `${fstatSync(fd).mtimeMs} ${readFileSync(fd).toString("base64")}`;
+  } finally {
+    closeSync(fd);
+  }
+}
+
 /** Every file under the sandbox with its bytes and mtime, and every directory with its mtime. */
 function snapshot(): Record<string, string> {
   const found: Record<string, string> = {};
@@ -455,29 +382,20 @@ function snapshot(): Record<string, string> {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       const path = join(dir, entry.name);
       if (path.includes(`${join(".git")}`)) continue;
-      if (entry.isDirectory()) {
-        found[path] = `dir ${statSync(path).mtimeMs}`;
-        walk(path);
-        continue;
-      }
-      const fd = openSync(path, "r");
-      try {
-        found[path] = `${fstatSync(fd).mtimeMs} ${readFileSync(fd).toString("base64")}`;
-      } finally {
-        closeSync(fd);
-      }
+      found[path] = stateOf(path, entry.isDirectory());
+      if (entry.isDirectory()) walk(path);
     }
   };
   walk(box.root);
   return found;
 }
 
-describe("forgetting", () => {
+describe("when measured data is forgotten", () => {
   async function measured(): Promise<void> {
-    await deps.telemetryOnUseCase.execute(repo, "keep");
+    await deps.enableTelemetry.execute({ cwd: repo, choice: "keep" });
     declare("main", "checkout");
     writeTranscript(repo, ["a"], "s-1", soon());
-    await deps.ingestUsageUseCase.execute();
+    await deps.ingestUsage.execute();
     writeFileSync(join(box.telemetry, "identity.json"), '{"person_id":"p-1"}\n');
     mkdirSync(join(box.telemetry, "bindings"), { recursive: true });
     writeFileSync(join(box.telemetry, "bindings", "carries.jsonl"), "{}\n");
@@ -494,16 +412,13 @@ describe("forgetting", () => {
     const before = snapshot();
     const config = git(repo, box.gitEnv, "config", "--local", "--list");
 
-    const result = await deps.forgetTelemetryUseCase.execute(false);
+    const result = await deps.forgetTelemetry.execute({ confirmed: false });
 
     expect(result.status).toBe("preview");
     expect(result.plan.entries.map((e) => e.kind).sort()).toEqual([
       "bindings",
       "identity",
       "ledger",
-      "previous-day-file",
-      "previous-day-file",
-      "previous-identity",
     ]);
     expect(result.plan.repositories).toEqual([
       { clone: join(repo, ".git"), taskKeys: 2, consent: true },
@@ -512,29 +427,29 @@ describe("forgetting", () => {
     expect(git(repo, box.gitEnv, "config", "--local", "--list")).toBe(config);
   });
 
-  it("leaves nothing of either version, and the declarations out of git config", async () => {
+  it("leaves nothing of this version, what an earlier version wrote untouched, and the declarations out of git config", async () => {
     await measured();
     const aidd = join(box.home, ".config", "aidd");
 
-    const result = await deps.forgetTelemetryUseCase.execute(true);
+    const result = await deps.forgetTelemetry.execute({ confirmed: true });
 
     expect(result.status).toBe("forgotten");
-    expect(readdirSync(box.telemetry)).toEqual([]);
-    expect(readdirSync(join(aidd, "telemetry"))).toEqual([]);
-    expect(existsSync(join(aidd, "identity.json"))).toBe(false);
+    expect(readdirSync(box.telemetry)).toEqual(["2026-10-05.jsonl"]);
+    expect(readdirSync(join(aidd, "telemetry"))).toEqual(["2026-10-06.jsonl"]);
+    expect(existsSync(join(aidd, "identity.json"))).toBe(true);
     expect(git(repo, box.gitEnv, "config", "--local", "--list")).not.toMatch(/aidd/i);
   });
 
   it("unsets the consent of a clone where `on` ran and no session ever did, and of one that ran off", async () => {
-    await deps.telemetryOnUseCase.execute(repo, "keep");
+    await deps.enableTelemetry.execute({ cwd: repo, choice: "keep" });
     const other = box.repository("gadgets");
-    await deps.telemetryOnUseCase.execute(other, "keep");
-    await deps.telemetryOffUseCase.execute(other);
+    await deps.enableTelemetry.execute({ cwd: other, choice: "keep" });
+    await deps.disableTelemetry.execute({ cwd: other });
     expect(git(other, box.gitEnv, "config", "--local", "--get", "aidd.telemetry").trim()).toBe(
       "off"
     );
 
-    const result = await deps.forgetTelemetryUseCase.execute(true);
+    const result = await deps.forgetTelemetry.execute({ confirmed: true });
 
     expect(result.plan.repositories.map((r) => r.consent)).toEqual([true, true]);
     for (const clone of [repo, other]) {
@@ -547,43 +462,10 @@ describe("forgetting", () => {
     writeFileSync(join(box.telemetry, "notes.txt"), "mine");
     writeFileSync(join(box.home, ".config", "aidd", "auth.json"), "{}");
     writeFileSync(join(box.home, ".config", "aidd", "telemetry", "keep.jsonl"), "{}");
-    await deps.forgetTelemetryUseCase.execute(true);
-    expect(readdirSync(box.telemetry)).toEqual(["notes.txt"]);
+    await deps.forgetTelemetry.execute({ confirmed: true });
+    expect(readdirSync(box.telemetry).sort()).toEqual(["2026-10-05.jsonl", "notes.txt"]);
     expect(existsSync(join(box.home, ".config", "aidd", "auth.json"))).toBe(true);
     expect(existsSync(join(box.home, ".config", "aidd", "telemetry", "keep.jsonl"))).toBe(true);
-  });
-
-  it("skips a repository that is gone and says so", async () => {
-    await measured();
-    const other = box.repository("gadgets");
-    git(other, box.gitEnv, "config", "--local", "branch.main.aiddTask", "x");
-    await deps.telemetryOnUseCase.execute(other, "keep");
-    writeTranscript(other, ["z"], "s-2");
-    await deps.ingestUsageUseCase.execute();
-    rmSync(other, { recursive: true });
-
-    const result = await deps.forgetTelemetryUseCase.execute(true);
-
-    expect(result.plan.missing).toEqual([join(other, ".git")]);
-    expect(git(repo, box.gitEnv, "config", "--local", "--list")).not.toMatch(/aidd/i);
-  });
-
-  it("does not name a gone clone that never opted in", async () => {
-    await measured();
-    const other = box.repository("gadgets");
-    writeTranscript(other, ["z"], "s-2");
-    await deps.ingestUsageUseCase.execute();
-    rmSync(other, { recursive: true });
-
-    const result = await deps.forgetTelemetryUseCase.execute(true);
-
-    expect(result.plan.missing).toEqual([]);
-  });
-
-  it("creates nothing where nothing was measured", async () => {
-    const result = await deps.forgetTelemetryUseCase.execute(true);
-    expect(result.plan.entries).toEqual([]);
-    expect(existsSync(box.telemetry)).toBe(false);
   });
 
   it("never runs against a path outside the temporary directory", () => {

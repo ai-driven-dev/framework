@@ -1,0 +1,56 @@
+{
+  "required": [
+    "name",
+    "version",
+    "description",
+    "author",
+    "repository",
+    "homepage",
+    "license"
+  ],
+  "properties": {
+    "name": {
+      "pattern": "^aidd-[a-z]+$"
+    },
+    "version": {
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "description": {
+      "pattern": "\\S"
+    },
+    "author": {
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "pattern": "\\S"
+        }
+      }
+    },
+    "repository": {
+      "pattern": "\\S"
+    },
+    "homepage": {
+      "pattern": "\\S"
+    },
+    "license": {
+      "pattern": "\\S"
+    },
+    "keywords": {
+      "items": {
+        "pattern": "\\S"
+      }
+    },
+    "skills": {
+      "items": {
+        "pattern": "^\\./skills/\\d\\d-[a-z-]+$"
+      }
+    },
+    "agents": {
+      "items": {
+        "pattern": "^\\./agents/[a-z-]+\\.md$"
+      }
+    }
+  }
+}

@@ -254,7 +254,6 @@ test("reload delivers global instructions to all three hosts while preserving pe
     executable(join(fakeBin, "npx"), "exit 0");
     const first = runSync(fakeBin, home, []);
     assert.equal(first.status, 0, first.stderr);
-    assert.match(first.stdout, /global instructions\s+ok/);
     const contents = destinations.map((path) => {
       const content = readFileSync(join(home, path), "utf8");
       assert.ok(content.startsWith("Personal rules.\n"));
@@ -271,13 +270,14 @@ test("reload delivers global instructions to all three hosts while preserving pe
   }
 });
 
-/** A checkout CLI that records each call and answers `setup` with the given shell-free body. */
-function recordingCli(source, setupBody = "") {
+/** A checkout CLI that records each call, answers `setup` and `doctor` with the given shell-free bodies. */
+function recordingCli(source, setupBody = "", doctorBody = "") {
   const binary = join(source, "cli/dist/cli.js");
   mkdirSync(dirname(binary), { recursive: true });
   writeFileSync(binary, `const fs = require("node:fs"), path = require("node:path");
 const args = process.argv.slice(2);
 fs.appendFileSync(path.join(process.env.HOME, "aidd-calls"), args.join(" ") + "\\n");
+if (args[0] === "doctor") { ${doctorBody} process.exit(0); }
 if (args[0] !== "setup") process.exit(2);
 ${setupBody}`);
 }
@@ -293,8 +293,6 @@ for (const localBinary of [false, true]) {
       const result = runSync(fakeBin, home, []);
       assert.equal(result.status, 0, result.stderr);
       assert.equal(readFileSync(join(home, "managed-call"), "utf8"), "\n");
-      assert.match(result.stdout, /reload opencode\s+managed:ok/);
-      assert.doesNotMatch(result.stdout, /global install|nothing to install/);
       assert.match(readFileSync(join(home, ".config/opencode/AGENTS.md"), "utf8"), /Use available agents when useful/);
     } finally { rmSync(root, { recursive: true, force: true }); }
   });
@@ -312,9 +310,9 @@ test("managed OpenCode reload leaves other hosts on the global install path", ()
     executable(join(fakeBin, "aidd-opencode-reload"), 'echo managed:ok');
     const result = runSync(fakeBin, home, []);
     assert.equal(result.status, 0, result.stderr);
-    assert.match(result.stdout, /global install\s+ok \(codex\)/);
+    assert.match(result.stdout, /codex  OK/);
     assert.match(result.stdout, /reload opencode\s+managed:ok/);
-    assert.match(readFileSync(join(home, "aidd-calls"), "utf8"), / --ide codex --plugins all --yes\n$/);
+    assert.match(readFileSync(join(home, "aidd-calls"), "utf8"), / --ide codex --plugins all --yes --agents-only\n/);
     assert.match(readFileSync(join(home, ".codex/AGENTS.md"), "utf8"), /Use available agents when useful/);
     assert.match(readFileSync(join(home, ".config/opencode/AGENTS.md"), "utf8"), /Use available agents when useful/);
   } finally { rmSync(root, { recursive: true, force: true }); }
@@ -331,6 +329,7 @@ test("a failed managed OpenCode reload stops before changing other hosts or inst
     const result = runSync(fakeBin, home, []);
     assert.equal(result.status, 7, result.stderr);
     assert.match(result.stderr, /managed source refused/);
+    assert.match(result.stdout, /opencode  FAIL \(managed helper\)/);
     assert.doesNotMatch(result.stdout, /Done\.|global instructions|nothing to install/);
     assert.equal(existsSync(join(home, "host-calls")), false);
     assert.equal(existsSync(join(home, "aidd-calls")), false);
@@ -350,10 +349,14 @@ test("every host takes this checkout through aidd setup --global, afresh", () =>
     }
     const result = runSync(fakeBin, home, []);
     assert.equal(result.status, 0, result.stderr);
-    assert.match(result.stdout, /global install\s+ok \(claude,codex,copilot,cursor,kilo,opencode\)/);
+    for (const host of ["claude", "codex", "copilot", "cursor", "kilo", "opencode"]) assert.match(result.stdout, new RegExp(`${host}  OK`));
     assert.equal(
       readFileSync(join(home, "aidd-calls"), "utf8"),
-      `setup --global --source local --path ${source} --ide claude,codex,copilot,cursor,kilo,opencode --plugins all --yes\n`
+      ["claude", "codex", "copilot", "cursor", "kilo", "opencode"].flatMap((host) => {
+        const setup = `setup --global --source local --path ${source} --ide ${host} --plugins all --yes`;
+        return [`${setup} --agents-only`,
+          ...(["claude", "codex"].includes(host) ? [setup] : []), `doctor --global --tool ${host}`];
+      }).join("\n") + "\n"
     );
     const hostCalls = readFileSync(join(home, "host-calls"), "utf8");
     for (const plugin of ["aidd-dev", "aidd-pm"]) {
@@ -365,6 +368,26 @@ test("every host takes this checkout through aidd setup --global, afresh", () =>
     assert.doesNotMatch(hostCalls, /^(copilot|cursor-agent|kilo|opencode) /m);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+for (const outcome of ['console.error("Error: refused"); process.exit(1);', 'console.error("Warning: activation skipped");']) {
+  test(`a failed or partial setup keeps native copies and reports the other host: ${outcome}`, () => {
+    const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-partial-"));
+    try {
+      const fakeBin = join(root, "bin"), home = join(root, "home");
+      mkdirSync(fakeBin);
+      recordingCli(fixture(home), `if (args.includes("claude")) { ${outcome} }`);
+      executable(join(fakeBin, "claude"), 'echo removed > "$HOME/native-changed"');
+      executable(join(fakeBin, "opencode"), "exit 0");
+      const result = runSync(fakeBin, home, []);
+      assert.equal(result.status, 1);
+      assert.match(result.stdout, /claude  (WARN|FAIL)/);
+      assert.match(result.stdout, /opencode  OK/);
+      assert.equal(existsSync(join(home, "native-changed")), false);
+      assert.equal(existsSync(join(home, ".claude/CLAUDE.md")), false);
+      assert.doesNotMatch(result.stdout, /Done\./);
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  });
+}
 
 for (const [name, listing] of [
   ["a project installed from it", `echo '[{"id":"aidd-dev@aidd-framework","scope":"local","projectPath":"/p"}]'`],
@@ -396,10 +419,48 @@ test("a failing global install stops the reload with its own cause", () => {
     const result = runSync(fakeBin, home, []);
     assert.notEqual(result.status, 0);
     assert.match(result.stderr, /fixture refusal/);
-    assert.match(result.stderr, /aidd setup --global failed for opencode/);
+    assert.match(result.stderr, /Reload incomplete/);
+    assert.match(result.stdout, /opencode  FAIL/);
     assert.doesNotMatch(result.stdout, /Done\./);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+test("a failing doctor is reported FAIL, exits nonzero and syncs nothing", () => {
+  const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-doctor-failed-"));
+  try {
+    const fakeBin = join(root, "bin"), home = join(root, "home");
+    mkdirSync(fakeBin);
+    recordingCli(fixture(home), "", 'console.error("doctor refusal"); process.exit(4);');
+    executable(join(fakeBin, "opencode"), "exit 0");
+    const result = runSync(fakeBin, home, []);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /doctor refusal/);
+    assert.match(result.stdout, /opencode  FAIL/);
+    assert.doesNotMatch(result.stdout, /opencode  OK|Done\./);
+    assert.equal(existsSync(join(home, ".config/opencode/AGENTS.md")), false);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+for (const [host, failing] of [["claude", "plugin uninstall"], ["codex", "plugin remove"]]) {
+  test(`a failed ${host} native refresh is reported FAIL, skips the second setup and syncs nothing`, () => {
+    const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-release-failed-"));
+    try {
+      const fakeBin = join(root, "bin"), home = join(root, "home");
+      mkdirSync(fakeBin);
+      recordingCli(fixture(home));
+      executable(join(fakeBin, host), `case "$*" in "${failing}"*) echo "release refusal" >&2; exit 1;; "plugin list --json") echo '[]';; esac\nexit 0`);
+      const result = runSync(fakeBin, home, []);
+      assert.notEqual(result.status, 0);
+      assert.match(result.stdout, new RegExp(`${host}  FAIL`));
+      assert.doesNotMatch(result.stdout, new RegExp(`${host}  OK|Done\\.`));
+      const calls = readFileSync(join(home, "aidd-calls"), "utf8").trim().split("\n");
+      assert.equal(calls.length, 1, calls.join("\n"));
+      assert.match(calls[0], /--agents-only$/);
+      assert.equal(existsSync(join(home, ".claude/CLAUDE.md")), false);
+      assert.equal(existsSync(join(home, ".codex/AGENTS.md")), false);
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  });
+}
 
 test("a global install from the published CLI is used when the checkout has none built", () => {
   const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-global-npx-"));
@@ -407,10 +468,10 @@ test("a global install from the published CLI is used when the checkout has none
     const fakeBin = join(root, "bin"), home = join(root, "home");
     mkdirSync(fakeBin);
     executable(join(fakeBin, "codex"), "exit 0");
-    executable(join(fakeBin, "npx"), 'printf \'%s\\n\' "$*" > "$HOME/npx-call"');
+    executable(join(fakeBin, "npx"), 'printf \'%s\\n\' "$*" >> "$HOME/npx-call"');
     const result = runSync(fakeBin, home, []);
     assert.equal(result.status, 0, result.stderr);
-    assert.match(readFileSync(join(home, "npx-call"), "utf8"), /^--yes @ai-driven-dev\/cli@latest setup --global .* --ide codex --plugins all --yes$/m);
+    assert.match(readFileSync(join(home, "npx-call"), "utf8"), /^--yes @ai-driven-dev\/cli@latest setup --global .* --ide codex --plugins all --yes --agents-only$/m);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
@@ -439,7 +500,6 @@ test("another tool named agent is not taken for Cursor", () => {
     executable(join(fakeBin, "agent"), "echo 'Grok Build TUI'");
     const result = runSync(fakeBin, home, []);
     assert.equal(result.status, 0, result.stderr);
-    assert.match(result.stdout, /No supported host installation found/);
     assert.equal(existsSync(join(home, "aidd-calls")), false);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });

@@ -9,4 +9,8 @@ export function scopesToRun(
 export function legsOf(
   names: readonly string[],
   scopes: Readonly<Record<string, MutationScope>>
-): { scope: string; shard: number; of: number }[];
+): { scope: string; shard: number; of: number; blocking: boolean }[];
+export function shardedOf(
+  names: readonly string[],
+  scopes: Readonly<Record<string, MutationScope>>
+): { scope: string; blocking: boolean }[];

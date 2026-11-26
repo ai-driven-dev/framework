@@ -3,13 +3,13 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { list, cells, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
-const { placed, byId, isSystem, isElement, fm, SYSTEM_ID, INTEGER_VERSION, STATUS_DEPRECATED, BREAKING, NOT_BREAKING } = require("./model.cjs");
+const { placed, byId, isSystem, fm, verdictRows, stateVerdict, REVIEW_KIND, VERDICTS_SECTION, SYSTEM_ID, INTEGER_VERSION, STATUS_DEPRECATED, BREAKING, NOT_BREAKING, SEMVER, reviewStatesOf } = require("./model.cjs");
 const { Refusal, required, withoutTrailingSeparators, HISTORY_FILE, CODE_DEBT_FILE } = require("./project.cjs");
 const { usages } = require("./graph.cjs");
 const { citations, tokenNameOf } = require("./tokens.cjs");
-const { colourDebt } = require("./code.cjs");
+const { colourDebt, parseLink } = require("./code.cjs");
 const { jsonText } = require("./resolver.cjs");
-const { fingerprint, currentRow, TASKS_DIR, REMOVED, VALIDATED, byVersion, rowsOf, taskList, brokenTasks } = require("./history.cjs");
+const { isReviewed, fingerprint, currentRow, TASKS_DIR, REMOVED, VALIDATED, byVersion, rowsOf, taskList, brokenTasks } = require("./history.cjs");
 
 const ROW_START = "|";
 const COLUMNS = ["Id", "Version", "Change", "Breaking", "Task", "Fingerprint"];
@@ -19,7 +19,9 @@ const FIRST_VERSION = "1";
 const FIRST_SYSTEM_VERSION = "1.0.0";
 const CREATED = "created";
 const PUBLISHED = "published";
-const VERDICTS_HEADING = "## Verdicts";
+const VERDICTS_HEADING = `## ${VERDICTS_SECTION}`;
+const OK = "ok";
+const SCREEN = "screen";
 const ALREADY_RAISED = "already raised for this task";
 const CARRIAGE_RETURN = "\r";
 const CELL_BREAKERS = /[|\r\n]/;
@@ -49,14 +51,6 @@ function rowOf(...cells) {
   return `${ROW_START}${cells.map((cell) => (cell === "" ? " " : ` ${cell} `)).join(ROW_START)}${ROW_START}`;
 }
 
-/** history.md's lines, with the Fingerprint column added to a table written before it: a row
- * written to it with six cells would lose the sixth. */
-function withFingerprintColumn(edit) {
-  const at = edit.lines.findIndex((line) => line.trim().startsWith(ROW_START));
-  if (at >= 0 && cells(edit.lines[at]).length === COLUMNS.length - 1) [edit.lines[at], edit.lines[at + 1]] = headerOf(COLUMNS).map((line) => `${line}${edit.end}`);
-  return edit;
-}
-
 /** The lines of the files being changed, each with the line end it was written with, and what
  * writing them takes. */
 function editing(root) {
@@ -83,21 +77,28 @@ const rowAt = (lines, id, version) => lines.findIndex((line) => {
   return rowId === id && rowVersion === String(version);
 });
 
-/** Writes the first row of each record named, its version 1 and its task `folder`: the system's
- * first publication is 1.0.0. */
+/** Writes the first row of each record named, its version 1 and its task `folder`. The system has
+ * two kinds of row: the integer ones, its content, written here as 1; and the semver ones, its
+ * publications, of which this writes the first, 1.0.0, only when it has none. */
 function create(root, folder, ids) {
   const project = required(root);
   const index = byId(project);
   const files = editing(root);
   const { lines, end } = historyIn(files);
+  let fresh = false; // a system never published: its code debt is written from now on
   for (const id of new Set(ids)) {
     const record = index.get(id);
-    if (!record || fm(record).kind === "brand") throw new Refusal(`no versioned record named "${id}"`);
-    if (project.history.some((row) => row.Id === id)) throw new Refusal(`"${id}" already has history`);
-    addRow(lines, null, rowOf(id, isSystem(record) ? FIRST_SYSTEM_VERSION : FIRST_VERSION, CREATED, NOT_BREAKING, folder, ""), end, HISTORY_FILE);
+    if (!record) throw new Refusal(`no versioned record named "${id}"`);
+    const rows = project.history.filter((row) => row.Id === id);
+    if ((isSystem(record) ? rows.filter((row) => !SEMVER.test(row.Version)) : rows).length) throw new Refusal(`"${id}" already has history`);
+    addRow(lines, null, rowOf(id, FIRST_VERSION, CREATED, NOT_BREAKING, folder, ""), end, HISTORY_FILE);
+    if (isSystem(record) && !rows.length) {
+      addRow(lines, null, rowOf(id, FIRST_SYSTEM_VERSION, CREATED, NOT_BREAKING, folder, ""), end, HISTORY_FILE);
+      fresh = true;
+    }
   }
   const changed = files.save();
-  if (!ids.includes(SYSTEM_ID)) return { changed };
+  if (!fresh) return { changed };
   fs.writeFileSync(path.join(root, CODE_DEBT_FILE), jsonText(colourDebt(project))); // the debt C4 holds the code to from now on
   return { changed: [...changed, CODE_DEBT_FILE].sort() };
 }
@@ -118,7 +119,7 @@ function remove(root, folder, ids) {
 }
 
 /** history.md as `files` edits it, written from its header when absent. */
-const historyIn = (files) => withFingerprintColumn(files.editOf(HISTORY_FILE, HISTORY_HEADER));
+const historyIn = (files) => files.editOf(HISTORY_FILE, HISTORY_HEADER);
 
 /** Raises the versions `refs` reach, as `change` of `task`, with `created` writes the first row
  * of the records `refs` name, with `removed` their removal. Returns the files changed and, for a change, `left`, the elements
@@ -137,7 +138,7 @@ function bump(root, { task, change, breaking, created, removed, refs }) {
   const records = placed(project);
   // A wireframe or a journey names what it holds: it changes only when it is the one changed.
   const named = (ids) => ids.filter((id) => refs.includes(id));
-  const reached = new Set([...report.elements, ...report.screens, ...named(report.wireframes), ...named(report.journeys)]);
+  const reached = new Set([...report.elements, ...report.screens, ...named(report.wireframes), ...named(report.journeys), ...named(["brand", SYSTEM_ID])]);
   // A deprecated element follows a rename or a deletion: it cites the token, or uses what does.
   const cites = citations(project);
   const viaTokens = breaking ? usages(project, refs.filter((ref) => cites.has(tokenNameOf(project, ref)))) : { elements: [], screens: [] };
@@ -146,12 +147,15 @@ function bump(root, { task, change, breaking, created, removed, refs }) {
   const left = [];
   const files = editing(root);
   const historyOf = () => historyIn(files);
+  const verdicts = verdictRows(records);
+  // A version a review has judged is never edited in place: its verdicts would be read on the rework.
+  const judged = (record) => ["ok", "revise"].includes(stateVerdict(verdicts, record)?.Verdict);
   for (const record of records.filter((each) => reached.has(fm(each).id))) {
     const { id } = fm(record);
     const held = fm(record).status === STATUS_DEPRECATED;
     const current = project.history.find((row) => row.Id === id && row.Version === fm(record).version);
     if (held && !followed.has(id)) left.push({ id, why: STATUS_DEPRECATED });
-    else if (current?.Task === folder && !current.Fingerprint) { // a sealed version is never edited, even in its own task
+    else if (current?.Task === folder && !current.Fingerprint && !judged(record)) { // a sealed version is never edited, even in its own task
       if (!breaking || current.Breaking === BREAKING) left.push({ id, why: ALREADY_RAISED });
       else {
         const { lines, end } = historyOf();
@@ -170,15 +174,25 @@ function bump(root, { task, change, breaking, created, removed, refs }) {
     }
   }
 
-  for (const review of records.filter((each) => fm(each).kind === "review")) {
-    for (const id of list(fm(review).screens).filter((screen) => raised.has(screen))) {
-      const screen = records.find((each) => fm(each).id === id);
-      const { lines, end } = files.editOf(review.file);
-      for (const state of list(fm(screen).states)) addRow(lines, VERDICTS_HEADING, rowOf(id, state, raised.get(id), "pending", ""), end, review.file);
-    }
+  // Only the newest review naming a screen holds its pending rows: older ones are rounds already closed.
+  const reviews = records.filter((each) => fm(each).kind === REVIEW_KIND);
+  const newest = (id) => newestOf(project, reviews.filter((review) => list(fm(review).screens).includes(id)));
+  for (const [id, version] of raised) {
+    const review = newest(id);
+    if (!review) continue;
+    const screen = records.find((each) => fm(each).id === id);
+    const { lines, end } = files.editOf(review.file);
+    for (const state of reviewStatesOf(screen)) addRow(lines, VERDICTS_HEADING, rowOf(id, state, version, "pending", ""), end, review.file);
   }
 
   return { changed: files.save(), left: left.sort((a, b) => (a.id < b.id ? -1 : 1)) };
+}
+
+/** The newest of `reviews`: the one whose own row comes last in history.md, a review with no row older than any with one,
+ * and of two equal the one loaded later. */
+function newestOf(project, reviews) {
+  const rank = (review) => project.history.findLastIndex((row) => row.Id === fm(review).id);
+  return reviews.reduce((best, review) => (best === undefined || rank(review) >= rank(best) ? review : best), undefined);
 }
 
 /** Appends the system's next publication to history.md: its Task lists every task folder with an
@@ -189,8 +203,9 @@ function publish(root, { breaking }) {
   const project = required(root);
   const last = byVersion(rowsOf(project, SYSTEM_ID), true).at(-1);
   if (!last) throw new Refusal(`${HISTORY_FILE} has no system row, write the first with bump --created system`);
-  const published = new Set(rowsOf(project, SYSTEM_ID).flatMap((row) => taskList(row.Task)));
-  const tasks = [...new Set(project.history.filter((row) => row.Id !== SYSTEM_ID).map((row) => row.Task))].filter((task) => !published.has(task)).sort();
+  const publications = rowsOf(project, SYSTEM_ID).filter((row) => SEMVER.test(row.Version)); // the integer rows are the system's content, not publications
+  const published = new Set(publications.flatMap((row) => taskList(row.Task)));
+  const tasks = [...new Set(project.history.filter((row) => row.Id !== SYSTEM_ID || !SEMVER.test(row.Version)).map((row) => row.Task))].filter((task) => !published.has(task)).sort();
   if (!tasks.length) throw new Refusal("no unpublished task, nothing to publish");
   const broken = brokenTasks(project);
   const breaks = breaking || tasks.some((task) => broken.has(task));
@@ -203,20 +218,47 @@ function publish(root, { breaking }) {
   return { version, tasks };
 }
 
-/** Validates each element `ids` names: sets its status to validated and writes its fingerprint in
- * the row of its current version. Returns `{validated}`, each `{id, version, fingerprint}`; a
+/** The first state of `record` no review holds an ok verdict for at its current version, as `{state, verdict}` (`state` undefined for a record without states, `verdict` undefined when no row decides it), or null. A revise at that version blocks it. */
+function unreviewedState(project, record) {
+  const rows = verdictRows(placed(project));
+  const states = reviewStatesOf(record);
+  const decided = (state) => stateVerdict(rows, record, state)?.Verdict;
+  const blocked = (states.length ? states : [undefined]).filter((each) => decided(each) !== OK);
+  return blocked.length ? { state: blocked[0], verdict: decided(blocked[0]) } : null;
+}
+
+/** The first state of a screen whose code is at its version and that has no capture beside it, as `{state, file}` with `file` relative to the design system folder; null for any other record. */
+function uncapturedState(project, record) {
+  const { kind, id, version, states, code } = fm(record);
+  if (kind !== SCREEN || !list(code).some((link) => parseLink(link)?.version === version)) return null;
+  const missing = list(states).find((state) => !fs.existsSync(path.join(project.root, path.dirname(record.file), `${id}.${state}@${version}.png`)));
+  return missing === undefined ? null : { state: missing, file: `${record.folder}/${id}.${missing}@${version}.png` };
+}
+
+/** A journey is agreed in the conversation: no review judges it, so no verdict and no state stand in its way. */
+const isAgreed = (record) => fm(record).kind === "journey";
+
+/** Validates each element, wireframe or journey `ids` names, each but a journey with an ok verdict at its current version
+ * for every state: sets its status to validated and writes its fingerprint in the row of its current version. Returns `{validated}`, each `{id, version, fingerprint}`; a
  * refusal is thrown before any file is written. */
 function validate(root, ids) {
   const project = required(root);
   const index = byId(project);
   const chosen = [...new Set(ids)].map((id) => {
     const record = index.get(id);
-    if (!record || !isElement(record)) throw new Refusal(`no element named "${id}"`);
+    if (!record || !(isReviewed(record) || isAgreed(record))) throw new Refusal(`no element named "${id}"`);
     if (fm(record).status === STATUS_DEPRECATED) throw new Refusal(`"${id}" is deprecated, nothing to validate`);
     const row = currentRow(project, record);
     if (!row) throw new Refusal(`"${id}" has no history row at its version ${fm(record).version}`);
     // A sealed version is never sealed again: an edit since would pass H8 without a raise.
     if (row.Fingerprint) throw new Refusal(`"${id}" version ${fm(record).version} is already validated, raise its version with bump to change it`);
+    const unreviewed = isAgreed(record) ? null : unreviewedState(project, record);
+    if (unreviewed !== null) {
+      const where = `${unreviewed.state ? ` for state ${unreviewed.state}` : ""} at version ${fm(record).version}`;
+      throw new Refusal(unreviewed.verdict === "revise" ? `"${id}" has a revise verdict${where}, change it first` : `"${id}" has no ok verdict${where}, review it first`);
+    }
+    const capture = uncapturedState(project, record);
+    if (capture !== null) throw new Refusal(`${id}: ${capture.state} has no capture at ${capture.file}`);
     return record;
   });
   const files = editing(root);
