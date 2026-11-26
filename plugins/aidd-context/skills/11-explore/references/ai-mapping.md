@@ -34,7 +34,7 @@ Resolve shared `.agents/` paths from declared tools or the AIDD manifest; otherw
 | Antigravity CLI | `.agents/hooks.json` (project, flat), `<plugin>/hooks.json` (plugin), keyed by hook name      | `.agents/plugins/<plugin>/plugin.json` |
 | Kilo Code      | JS module under `.kilo/plugin/` (parse as JS, not JSON)                                        | Not mapped                   |
 | Kiro           | `.kiro/hooks/*.json` (project)                                                                 | Not mapped                   |
-| Kimi Code CLI  | `[[hooks]]` in `~/.kimi-code/config.toml` (user only)                                          | Not mapped                   |
+| Kimi Code CLI  | `[[hooks]]` in `~/.kimi-code/config.toml` (user only), or a plugin manifest's `hooks`                                          | Not mapped                   |
 
 ## MCP config per tool
 
