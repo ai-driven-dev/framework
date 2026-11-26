@@ -9,7 +9,7 @@
 | kilo | `.kilo/`, `kilo.json` or `kilo.jsonc` | `AGENTS.md` |
 | kiro | `.kiro/` | `AGENTS.md` |
 | kimi | `.kimi-code/` | `AGENTS.md` |
-| antigravity | `.agents/agents/`, `.agents/rules/` or `.agents/hooks.json` | `AGENTS.md` |
+| antigravity | `.agents/agents/`, `.agents/rules/`, `.agents/hooks.json` or `.agents/plugins/` | `AGENTS.md` |
 | copilot | `.github/copilot-instructions.md` or `.github/{instructions,agents,skills,prompts}/` | `AGENTS.md` |
 
 - A shared `AGENTS.md` is a wiring target, never a detection signal.

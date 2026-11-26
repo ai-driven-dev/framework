@@ -19,7 +19,6 @@ const EVENTS = new Map([
 const WRITES = new Set(["write", "edit"]);
 const PATCHES = new Set(["apply_patch"]);
 const SHELLS = new Set(["bash"]);
-const PATCH_FILE = /^\*\*\* (Add File|Update File|Delete File|Move to): (.+)$/;
 
 /** The event `readEvent` last returned: an answer is printed in its terms. */
 let current;
@@ -31,6 +30,8 @@ function readPayload() {
     return undefined;
   }
 }
+
+const PATCH_FILE = /^\*\*\* (Add File|Update File|Delete File|Move to): (.+)$/;
 
 /** Every file a patch names, once each, in the order it names them, with the lines the patch
  * added to it and those it removed as what it replaced, empty when none: an added or updated file,
@@ -77,7 +78,8 @@ function writtenFiles(tool, input, cwd) {
   return [file];
 }
 
-/** Before a tool, the files it is about to write, by path alone: their text is not written yet. */
+/** Before a tool runs nothing is written yet: only where it is about to write is known, so a file
+ * carries its path and no text. */
 function filesOf(event, files) {
   return event === "PreToolUse" ? files.map(({ path }) => ({ path })) : files;
 }
@@ -88,7 +90,7 @@ function readEvent() {
   const event = raw === undefined ? undefined : EVENTS.get(raw.hook_event_name);
   if (event === undefined) return undefined;
   const cwd = typeof raw.cwd === "string" && raw.cwd !== "" ? raw.cwd : process.cwd();
-  const tool = event === "PreToolUse" || event === "PostToolUse" ? raw.tool_name : undefined;
+  const tool = event === "PostToolUse" || event === "PreToolUse" ? raw.tool_name : undefined;
   const input = raw.tool_input;
   current = {
     host: HOST,
@@ -112,14 +114,14 @@ function hasPerson(person) {
   return typeof person === "string" && person !== "";
 }
 
-/** Hands the bridge `person` alone, to show to the person and not to the model. */
+/** Shows the person `person` alone, as the host's warning, and tells the model nothing. */
 function showPerson(person) {
   if (hasPerson(person)) print({ systemMessage: person });
 }
 
-/** Asks the model to go on before the turn ends, with `text` as what it must do, and hands the
- * bridge `person` to show where its host has a person channel. Asks once: a turn end that is
- * already a continuation is never continued again. */
+/** Asks the model to go on before the turn ends, with `text` as what it must do, and shows the
+ * person `person` where the host allows it. Asks once: a turn end that is already a continuation
+ * is never continued again. */
 function continueTurn(text, person) {
   if (typeof text !== "string" || text === "" || current?.stopActive === true) return;
   print({
@@ -144,10 +146,10 @@ function answer({ level, text, person } = {}) {
   });
 }
 
+// The bridge throws the reason out of the host's hook before the tool.
 /** Refuses the tool call about to run, with `reason` as what the model is told: exit code 2 with
- * the reason on standard error, which the bridge throws out of the host's hook before the tool.
- * Does nothing at any other event: a hook that refuses is written once and is harmless where
- * nothing can be refused. */
+ * the reason on standard error. Does nothing at any other event: a hook that refuses is written
+ * once and is harmless where nothing can be refused. */
 function refuse(reason) {
   if (current?.event !== "PreToolUse" || typeof reason !== "string" || reason === "") return;
   process.stderr.write(reason);

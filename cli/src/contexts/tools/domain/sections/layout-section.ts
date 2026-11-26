@@ -33,6 +33,9 @@ export interface NativeLayout {
   readonly installScope: Scope;
   readonly userPluginsDir?: HomeTemplate;
   readonly globalFiles?: GlobalFiles;
+  /** Whether an install writes the plugin's tree into `pluginsDir` itself, at any scope, rather
+   * than leaving the tool to register a marketplace. */
+  readonly materializes: boolean;
 }
 
 /** A tool that loads a plugin's files from its own workspace directory. */
@@ -70,6 +73,7 @@ export interface NativeLayoutParams {
   installScope?: Scope;
   userPluginsDir?: HomeTemplate;
   globalFiles?: GlobalFilesParams;
+  materializes?: boolean;
 }
 
 export function nativeLayout(params: NativeLayoutParams): NativeLayout {
@@ -81,6 +85,7 @@ export function nativeLayout(params: NativeLayoutParams): NativeLayout {
     mode: "native",
     pluginsDir: params.pluginsDir,
     installScope,
+    materializes: params.materializes ?? false,
     ...(params.userPluginsDir === undefined ? {} : { userPluginsDir: params.userPluginsDir }),
     ...globalFilesOf(params.globalFiles),
   };

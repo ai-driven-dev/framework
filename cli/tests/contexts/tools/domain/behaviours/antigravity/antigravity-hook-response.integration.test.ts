@@ -4,22 +4,32 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { antigravity } from "../../../../../../src/composition/tool-profiles/antigravity.js";
-import type { ProjectHooksFormat } from "../../../../../../src/contexts/tools/contract/tool-vocabulary.js";
+import { present } from "../../../../../shared/testing/present.builder.js";
+import { supported } from "../../../testing/build-artifacts.builder.js";
 
-const format = antigravity.projectHooksDelivery()?.format as ProjectHooksFormat;
+const PLUGIN_DIR = join(".agents", "plugins", "fixture");
+
+type Handler = { command: string };
+type Group = Handler | { hooks: Handler[] };
+
+/** The first command a plugin's converted hooks.json holds for an event, grouped or not. */
+function commandOf(hooksJson: string, event: string): string {
+  const [first] = JSON.parse(hooksJson).fixture[event] as Group[];
+  return "hooks" in first ? first.hooks[0].command : first.command;
+}
 
 describe("Antigravity hook response", () => {
   let root: string;
 
   beforeEach(() => {
     root = realpathSync(mkdtempSync(join(tmpdir(), "aidd-agy-response-")));
-    mkdirSync(join(root, ".agents", "hooks", "fixture"), { recursive: true });
+    mkdirSync(join(root, PLUGIN_DIR, "hooks"), { recursive: true });
   });
 
   afterEach(() => rmSync(root, { recursive: true, force: true }));
 
   function run(script: string, args = "", input = "", event = "SessionStart") {
-    writeFileSync(join(root, ".agents", "hooks", "fixture", "hook.cjs"), script);
+    writeFileSync(join(root, PLUGIN_DIR, "hooks", "hook.cjs"), script);
     const hooks = JSON.stringify({
       hooks: {
         [event]: [
@@ -35,11 +45,11 @@ describe("Antigravity hook response", () => {
         ],
       },
     });
-    const { content } = format.merge(null, hooks, "fixture");
-    const [{ entry }] = format.contributedEntries(content, "fixture");
-    return spawnSync(entry.command, {
+    const converted = supported(present(antigravity.buildContracts.marketplace)().artifacts.hooks);
+    const command = commandOf(converted.transform?.(hooks, "fixture", "hooks.json") ?? "", event);
+    return spawnSync(command, {
       shell: true,
-      cwd: join(root, ".agents"),
+      cwd: join(root, PLUGIN_DIR),
       input,
       encoding: "utf8",
       timeout: 10000,

@@ -222,7 +222,8 @@ const DESCRIPTORS: Readonly<Record<string, HooksDescriptor>> = {
  * shipped as is, or the text a descriptor stamps from one, named for its tool. */
 async function hostAdapters(): Promise<Map<string, string>> {
   const adapters = new Map<string, string>();
-  for (const file of await readdir(ADAPTERS)) {
+  // `parts/` holds what the adapters are generated from: no route delivers it.
+  for (const file of (await readdir(ADAPTERS)).filter((name) => name.endsWith(".cjs"))) {
     adapters.set(await readFile(join(ADAPTERS, file), "utf8"), file);
   }
   for (const [tool, descriptor] of Object.entries(DESCRIPTORS)) {

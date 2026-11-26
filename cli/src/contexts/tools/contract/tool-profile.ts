@@ -289,6 +289,8 @@ export interface AiToolProfile {
   projectHooksDelivery(): ProjectHooksLocation | null;
   /** The file that lists a plugin's rules for a tool reading no rules folder, or null. */
   rulesIndex(): RulesIndexAnswers | null;
+  /** Where an earlier release merged a plugin's hooks into the project, or null when none did. */
+  releasedProjectHooks(): ProjectHooksLocation | null;
   /** Where its installed rules live and what they end in, or null when it installs none. */
   installedRulesLocation(): { readonly directory: string; readonly extension: string } | null;
   /** Where its own commands sit in the project at `projectRoot`, or null when it declares none. */

@@ -249,12 +249,15 @@ describe("the engine translate()", () => {
     });
   });
 
-  describe("antigravity target (flat mode, one-level skills)", () => {
-    it("emits a skill as .agents/skills/<plugin>-<skill>/, never nested under the plugin", () => {
+  describe("antigravity target (a plugin directory of its own)", () => {
+    it("emits each component under .agents/plugins/<plugin>/, its hooks and MCP servers at the root", () => {
       expect(pathsFor(antigravity)).toEqual([
-        ".agents/agents/sample-plugin-reviewer/agent.md",
-        ".agents/rules/sample-plugin-standards.md",
-        ".agents/skills/sample-plugin-hello/SKILL.md",
+        ".agents/plugins/sample-plugin/agents/reviewer.md",
+        ".agents/plugins/sample-plugin/hooks.json",
+        ".agents/plugins/sample-plugin/mcp_config.json",
+        ".agents/plugins/sample-plugin/plugin.json",
+        ".agents/plugins/sample-plugin/rules/standards.md",
+        ".agents/plugins/sample-plugin/skills/hello/SKILL.md",
       ]);
     });
   });

@@ -11,26 +11,32 @@ import type { PluginHookItem, PluginHooksShape } from "./plugin-hooks-shape.js";
 // The host runs a handler from its own directory under the project and requires JSON stdout even
 // for a silent hook. Before a tool, `{}` is a deny: a silent script lets the tool run by saying so.
 // `silent` is a JS expression: the program sits inside a double-quoted shell argument.
-const jsonResponse = (silent: string) =>
-  "const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});" +
+const jsonResponse = (silent: string, projectRoot: string) =>
+  `const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'${projectRoot}',stdio:['inherit','pipe','inherit']});` +
   "let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});" +
   `p.on('close',c=>{if(empty)process.stdout.write(${silent});process.exitCode=c??1});`;
 
 /** The events whose handlers are grouped under the tools they run for. */
 const TOOL_EVENTS: ReadonlySet<string> = new Set(["PreToolUse", "PostToolUse"]);
 
-type HandlerGroup = { matcher: string; hooks: ProjectHookEntry[] };
-const isGroup = (entry: ProjectHookEntry | HandlerGroup): entry is HandlerGroup => "hooks" in entry;
+export type HandlerGroup = { matcher: string; hooks: ProjectHookEntry[] };
 type NamedHook = {
   enabled?: boolean;
   [key: string]: (ProjectHookEntry | HandlerGroup)[] | boolean | undefined;
 };
-type NamedHooks = Record<string, NamedHook>;
+export type NamedHooks = Record<string, NamedHook>;
 
 /** What a host that keeps hooks as a named, wrapped command is declared by. `label` names the host
  * in an error. */
 export interface WrappedCommandHooksTarget {
   readonly label: string;
+  /** Set for a host that runs a handler from the plugin's own directory: the way up from there to
+   * the project root, and the plugin's directory below that root. Absent, the host runs it from
+   * the folder holding the route's `scriptsDir`, one level below the root. */
+  readonly runsFrom?: {
+    readonly projectRoot: string;
+    readonly pluginDir: (plugin: string) => string;
+  };
   readonly descriptor: {
     readonly flat: { readonly scriptsDir: string };
     readonly eventMap: Readonly<Record<string, string>>;
@@ -55,10 +61,10 @@ const runsCommand = (hook: PluginHookItem): hook is PluginHookItem & ProjectHook
   typeof hook.command === "string";
 
 const toHandler =
-  (event: string) =>
+  (event: string, projectRoot: string) =>
   (hook: ProjectHookEntry): ProjectHookEntry => ({
     type: "command",
-    command: `node -e "${jsonResponse(event === "PreToolUse" ? "JSON.stringify({decision:'allow'})" : "'{}'")}" ${toBase64(hook.command)}`,
+    command: `node -e "${jsonResponse(event === "PreToolUse" ? "JSON.stringify({decision:'allow'})" : "'{}'", projectRoot)}" ${toBase64(hook.command)}`,
     timeout: hook.timeout,
   });
 
@@ -70,15 +76,32 @@ function hostMatcher(target: WrappedCommandHooksTarget, matcher: string | undefi
   return names.length > 0 ? names.join("|") : undefined;
 }
 
+/** The way up from where a handler runs to the project root. */
+function projectRootOf(target: WrappedCommandHooksTarget): string {
+  return target.runsFrom?.projectRoot ?? "..";
+}
+
+/** Where a script a plugin names sits from the project root. */
+function scriptPathOf(
+  target: WrappedCommandHooksTarget,
+  at: { pluginName: string; suffix: string; locate: (pluginPath: string) => string }
+): string {
+  const { pluginName, suffix, locate } = at;
+  if (target.runsFrom !== undefined) return `${target.runsFrom.pluginDir(pluginName)}${suffix}`;
+  return suffix.startsWith(`${PLUGIN_HOOKS_SOURCE.scriptDir}/`)
+    ? wrappedCommandHooksScriptPath(target, pluginName, suffix)
+    : locate(suffix);
+}
+
 function convert(
   target: WrappedCommandHooksTarget,
   { json, plugin: pluginName, locate = (pluginPath) => pluginPath }: ShippedHooks
 ): { handlers: Record<string, (ProjectHookEntry | HandlerGroup)[]>; warnings: string[] } {
   const parsed = JSON.parse(json) as unknown;
-  const rewritten = rewritePluginRootInJson(parsed, (suffix) =>
-    suffix.startsWith(`${PLUGIN_HOOKS_SOURCE.scriptDir}/`)
-      ? `./${wrappedCommandHooksScriptPath(target, pluginName, suffix)}`
-      : `./${locate(suffix)}`
+  const projectRoot = projectRootOf(target);
+  const rewritten = rewritePluginRootInJson(
+    parsed,
+    (suffix) => `./${scriptPathOf(target, { pluginName, suffix, locate })}`
   ) as PluginHooksShape;
   const handlers: Record<string, (ProjectHookEntry | HandlerGroup)[]> = {};
   const warnings: string[] = [];
@@ -89,7 +112,7 @@ function convert(
     }
     if (!TOOL_EVENTS.has(event)) {
       handlers[event] = groups.flatMap((group) =>
-        (group.hooks ?? []).filter(runsCommand).map(toHandler(event))
+        (group.hooks ?? []).filter(runsCommand).map(toHandler(event, projectRoot))
       );
       continue;
     }
@@ -100,19 +123,28 @@ function convert(
         warnings.push(matcherNamesNoToolWarning(target.label, event, group.matcher ?? ""));
         return [];
       }
-      return [{ matcher, hooks: (group.hooks ?? []).filter(runsCommand).map(toHandler(event)) }];
+      return [
+        {
+          matcher,
+          hooks: (group.hooks ?? []).filter(runsCommand).map(toHandler(event, projectRoot)),
+        },
+      ];
     });
     if (grouped.length > 0) handlers[event] = grouped;
   }
   return { handlers, warnings };
 }
 
-function withoutPlugin(existingJson: string, pluginName: string): NamedHooks {
-  const { [pluginName]: _removed, ...kept } = JSON.parse(existingJson) as NamedHooks;
+export function readNamedHooks(json: string): NamedHooks {
+  return JSON.parse(json) as NamedHooks;
+}
+
+export function withoutPlugin(existingJson: string, pluginName: string): NamedHooks {
+  const { [pluginName]: _removed, ...kept } = readNamedHooks(existingJson);
   return kept;
 }
 
-function serialize(hooks: NamedHooks): string {
+export function serialize(hooks: NamedHooks): string {
   return `${JSON.stringify(hooks, null, 2)}\n`;
 }
 
@@ -124,7 +156,7 @@ export function mergeWrappedCommandHooks(
 ): { content: string; warnings: readonly string[] } {
   const pluginName = shipped.plugin;
   const { [pluginName]: previous, ...kept } =
-    existingJson === null ? {} : (JSON.parse(existingJson) as NamedHooks);
+    existingJson === null ? {} : readNamedHooks(existingJson);
   const { handlers, warnings } = convert(target, shipped);
   const merged =
     Object.keys(handlers).length > 0
@@ -137,35 +169,4 @@ export function mergeWrappedCommandHooks(
         }
       : kept;
   return { content: serialize(merged), warnings };
-}
-
-export function unmergeWrappedCommandHooks(existingJson: string, pluginName: string): string {
-  return serialize(withoutPlugin(existingJson, pluginName));
-}
-
-export function wrappedCommandHookEntries(
-  target: WrappedCommandHooksTarget,
-  content: string,
-  pluginName: string
-): readonly { event: string; entry: ProjectHookEntry }[] {
-  const { enabled: _enabled, ...events } = (JSON.parse(content) as NamedHooks)[pluginName] ?? {};
-  return Object.entries(events).flatMap(([event, entries]) => {
-    if (!Array.isArray(entries)) {
-      throw new Error(`${target.label} hook '${pluginName}.${event}' must be an array.`);
-    }
-    return entries.flatMap((entry) =>
-      (isGroup(entry) ? entry.hooks : [entry]).map((handler) => ({ event, entry: handler }))
-    );
-  });
-}
-
-export function isWrappedCommandHooksFileEmpty(content: string): boolean {
-  return Object.keys(JSON.parse(content) as NamedHooks).length === 0;
-}
-
-export function wrappedCommandHooksScriptDir(
-  target: WrappedCommandHooksTarget,
-  pluginName: string
-): string {
-  return `${target.descriptor.flat.scriptsDir}${pluginName}/`;
 }
