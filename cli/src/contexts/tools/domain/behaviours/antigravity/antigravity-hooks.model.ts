@@ -39,7 +39,7 @@ export function mergeAntigravityHooks(
 export function antigravityHooksFormat(hooks: AntigravityHooks): ProjectHooksFormat {
   const target = targetOf(hooks);
   return {
-    merge: (existing, json, plugin) => mergeAntigravityHooks(hooks, existing, { json, plugin }),
+    merge: (existing, shipped) => mergeAntigravityHooks(hooks, existing, shipped),
     unmerge: unmergeWrappedCommandHooks,
     contributedEntries: (content, name) => wrappedCommandHookEntries(target, content, name),
     isEmpty: isWrappedCommandHooksFileEmpty,

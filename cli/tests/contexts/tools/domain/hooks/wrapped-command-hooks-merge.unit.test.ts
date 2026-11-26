@@ -222,6 +222,7 @@ describe("wrapped command hooks", () => {
       const content = mergeWrappedCommandHooks(relaying, null, {
         json: post(),
         plugin: "p",
+        hostAdapter: true,
       }).content;
 
       expect(wrappedCommandHookEntries(relaying, content, "p").map(({ event }) => event)).toEqual([

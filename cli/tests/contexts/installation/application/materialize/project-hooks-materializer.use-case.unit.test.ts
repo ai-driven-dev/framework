@@ -252,6 +252,31 @@ describe("materializing a project's hooks", () => {
     });
   });
 
+  describe("on a tool that takes a PostToolUse answer only at a later event", () => {
+    const ANTIGRAVITY = {
+      tools: registeredTools(),
+      tool: registeredTools().aiProfile(TOOL.antigravity),
+    };
+    const ADAPTER = { relativePath: "hooks/lib/host.cjs", content: "module.exports = {};" };
+    const hooksOf = async (files: readonly PluginComponentFile[]) => {
+      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
+      await deliverProjectHooks(projectIntegrationOver(fs).materializer, {
+        dist: distWithHooks([hooksManifest("PostToolUse"), ...files]),
+        ...ANTIGRAVITY,
+        projectRoot: PROJECT_ROOT,
+      });
+      return JSON.parse(fs.getFile(join(PROJECT_ROOT, ".agents", "hooks.json")) ?? "null");
+    };
+
+    it("adds the handler that releases it for a plugin shipping the host adapter", async () => {
+      expect((await hooksOf([SCRIPT, ADAPTER]))[PLUGIN_NAME]).toHaveProperty("PreInvocation");
+    });
+
+    it("adds none for a plugin shipping no host adapter", async () => {
+      expect((await hooksOf([SCRIPT]))[PLUGIN_NAME]).not.toHaveProperty("PreInvocation");
+    });
+  });
+
   it("replaces the plugin's older matcher-less entries on reinstall, leaving another plugin's alone", async () => {
     const command = `node ./.cursor/hooks/${PLUGIN_NAME}/pre.js`;
     const foreign = { command: "node ./.cursor/hooks/other-plugin/check.js" };

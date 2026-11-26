@@ -102,7 +102,7 @@ describe("kiro's hooks file", () => {
         ],
       },
     });
-    const { content, warnings } = format.merge(null, shipped, "aidd-context");
+    const { content, warnings } = format.merge(null, { json: shipped, plugin: "aidd-context" });
     const hooks = hooksOf(content);
 
     expect(hooks.map(({ matcher }) => matcher)).toEqual(["write", "shell"]);
@@ -128,7 +128,7 @@ describe("kiro's hooks file", () => {
         ],
       },
     });
-    const { content } = format.merge(null, shipped, "aidd-context");
+    const { content } = format.merge(null, { json: shipped, plugin: "aidd-context" });
 
     expect(hooksOf(content).map(({ matcher }) => matcher)).toEqual([tag]);
   });
@@ -150,7 +150,7 @@ describe("kiro's hooks file", () => {
           ],
         },
       });
-      const { content } = format.merge(null, shipped, "aidd-context");
+      const { content } = format.merge(null, { json: shipped, plugin: "aidd-context" });
 
       expect(hooksOf(content).map((hook) => hook.matcher)).toEqual(tags);
     }
@@ -165,7 +165,7 @@ describe("kiro's hooks file", () => {
         Stop: [{ matcher: "Bash", hooks: [{ type: "command", command }] }],
       },
     });
-    const { content } = format.merge(null, shipped, "aidd-context");
+    const { content } = format.merge(null, { json: shipped, plugin: "aidd-context" });
 
     expect(hooksOf(content)).toHaveLength(3);
     for (const hook of hooksOf(content)) expect(hook).not.toHaveProperty("matcher");
@@ -182,7 +182,7 @@ describe("kiro's hooks file", () => {
         ],
       },
     });
-    const { content, warnings } = format.merge(null, shipped, "aidd-context");
+    const { content, warnings } = format.merge(null, { json: shipped, plugin: "aidd-context" });
 
     expect(hooksOf(content)).toEqual([]);
     expect(warnings).toEqual([
@@ -191,14 +191,14 @@ describe("kiro's hooks file", () => {
   });
 
   it("names a script paired across events once per trigger, so no two hooks share a name", () => {
-    const { content } = format.merge(null, PAIRED, "aidd-context");
+    const { content } = format.merge(null, { json: PAIRED, plugin: "aidd-context" });
     const names = hooksOf(content).map((hook) => hook.name);
 
     expect(new Set(names).size).toBe(names.length);
   });
 
   it("holds a named hook per plugin script, triggered on SessionStart, in a v1 file", () => {
-    const { content } = format.merge(null, SHIPPED, "aidd-context");
+    const { content } = format.merge(null, { json: SHIPPED, plugin: "aidd-context" });
 
     expect(JSON.parse(content)).toMatchObject({
       version: "v1",
@@ -220,14 +220,17 @@ describe("kiro's hooks file", () => {
   });
 
   it("drops an event with no captured payload and says so", () => {
-    const { content, warnings } = format.merge(null, UNCAPTURED, "aidd-context");
+    const { content, warnings } = format.merge(null, { json: UNCAPTURED, plugin: "aidd-context" });
 
     expect(hooksOf(content)).toEqual([]);
     expect(warnings).toEqual(["unmapped event 'SessionEnd' skipped"]);
   });
 
   it("delivers a prompt and a subagent's end, each to every one, under its own trigger", () => {
-    const { content, warnings } = format.merge(null, ON_A_PROMPT_AND_A_SUBAGENT, "aidd-context");
+    const { content, warnings } = format.merge(null, {
+      json: ON_A_PROMPT_AND_A_SUBAGENT,
+      plugin: "aidd-context",
+    });
 
     expect(hooksOf(content)).toEqual([
       expect.objectContaining({
@@ -241,7 +244,7 @@ describe("kiro's hooks file", () => {
   });
 
   it("delivers PreToolUse to every tool, the script telling a write apart by the files it reads", () => {
-    const { content, warnings } = format.merge(null, BEFORE_A_TOOL, "aidd-pm");
+    const { content, warnings } = format.merge(null, { json: BEFORE_A_TOOL, plugin: "aidd-pm" });
 
     expect(hooksOf(content)).toEqual([
       expect.objectContaining({
@@ -255,8 +258,8 @@ describe("kiro's hooks file", () => {
   });
 
   it("keeps a hook the user declared, and changes nothing when merged twice", () => {
-    const { content: first } = format.merge(USER_FILE, SHIPPED, "aidd-context");
-    const { content: second } = format.merge(first, SHIPPED, "aidd-context");
+    const { content: first } = format.merge(USER_FILE, { json: SHIPPED, plugin: "aidd-context" });
+    const { content: second } = format.merge(first, { json: SHIPPED, plugin: "aidd-context" });
 
     expect(hooksOf(first).map((hook) => hook.name)).toEqual([
       "lint",
@@ -268,8 +271,11 @@ describe("kiro's hooks file", () => {
   });
 
   it("removes only the plugin's own hooks, and is empty once none is left", () => {
-    const { content } = format.merge(null, SHIPPED, "aidd-context");
-    const left = format.unmerge(format.merge(content, SHIPPED, "other").content, "aidd-context");
+    const { content } = format.merge(null, { json: SHIPPED, plugin: "aidd-context" });
+    const left = format.unmerge(
+      format.merge(content, { json: SHIPPED, plugin: "other" }).content,
+      "aidd-context"
+    );
 
     expect(hooksOf(left).map((hook) => hook.name)).toEqual([
       "other-SessionStart-memory.cjs",
@@ -280,7 +286,7 @@ describe("kiro's hooks file", () => {
   });
 
   it("lists what a plugin contributed under its trigger", () => {
-    const { content } = format.merge(null, SHIPPED, "aidd-context");
+    const { content } = format.merge(null, { json: SHIPPED, plugin: "aidd-context" });
 
     expect(format.contributedEntries(content, "aidd-context")).toMatchObject([
       {

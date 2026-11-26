@@ -71,11 +71,10 @@ describe("the memory hook under Antigravity", () => {
     const format = antigravity.projectHooksDelivery()?.format;
     if (format === undefined) throw new Error("antigravity declares no project hooks format");
     for (const source of filesUnder(PLUGIN_HOOKS)) installScript(format, source);
-    const { content } = format.merge(
-      null,
-      readFileSync(join(PLUGIN_HOOKS, "hooks.json"), "utf8"),
-      PLUGIN
-    );
+    const { content } = format.merge(null, {
+      json: readFileSync(join(PLUGIN_HOOKS, "hooks.json"), "utf8"),
+      plugin: PLUGIN,
+    });
     writeFileSync(join(root, ".agents", "hooks.json"), content);
     const [first] = format
       .contributedEntries(content, PLUGIN)

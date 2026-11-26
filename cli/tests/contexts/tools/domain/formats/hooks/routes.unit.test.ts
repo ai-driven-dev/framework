@@ -139,7 +139,7 @@ describe("a tool's plugins capability, as far as hooks go", () => {
     );
     const { merge, unmerge, contributedEntries, isEmpty, scriptPath, scriptDir } =
       support.project.format;
-    const merged = merge(null, SHIPPED, "p").content;
+    const merged = merge(null, { json: SHIPPED, plugin: "p" }).content;
 
     expect([support.kind, support.pluginFile, support.project.relativePath]).toStrictEqual([
       "project-merge",

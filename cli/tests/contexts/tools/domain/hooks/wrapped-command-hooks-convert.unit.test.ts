@@ -23,8 +23,8 @@ const post = (matcher: string) =>
     hooks: { PostToolUse: [{ matcher, hooks: [{ type: "command", command: "x" }] }] },
   });
 
-const handlersOf = (on: WrappedCommandHooksTarget, json: string) =>
-  convert(on, { json, plugin: "p" }).handlers;
+const handlersOf = (on: WrappedCommandHooksTarget, json: string, hostAdapter = true) =>
+  convert(on, { json, plugin: "p", hostAdapter }).handlers;
 
 /** The command a handler runs, read back out of its wrapper. */
 function wrapped(handler: unknown): string {
@@ -37,8 +37,12 @@ describe("a host that takes a PostToolUse answer only at a later event", () => {
   it("adds a handler at that event, running the plugin's own copy of the host adapter", () => {
     const [handler] = handlersOf(relaying, post("Write")).Later ?? [];
 
-    expect(handler).toMatchObject({ type: "command", timeout: undefined });
+    expect(handler).toMatchObject({ type: "command", timeout: 5 });
     expect(wrapped(handler)).toBe("node ./.h/hooks/p/lib/host.cjs");
+  });
+
+  it("adds nothing for a plugin that ships no host adapter: nothing of it could hold an answer", () => {
+    expect(handlersOf(relaying, post("Write"), false)).not.toHaveProperty("Later");
   });
 
   it("adds nothing for a plugin with no PostToolUse handler", () => {

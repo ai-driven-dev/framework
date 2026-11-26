@@ -23,7 +23,10 @@ export function translatePluginIntoProject(
   const location = tool.kind === "ai" ? tool.projectHooksDelivery() : null;
   const { manifest, scripts } = result.projectHooks;
   if (location === null || manifest === null) return result;
-  const merged = location.format.merge(null, manifest, distribution.manifest.name).content;
+  const merged = location.format.merge(null, {
+    json: manifest,
+    plugin: distribution.manifest.name,
+  }).content;
   return {
     ...result,
     files: [...result.files, ...scripts, { relativePath: location.relativePath, content: merged }],

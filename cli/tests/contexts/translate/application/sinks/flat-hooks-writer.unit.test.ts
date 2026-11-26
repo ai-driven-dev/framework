@@ -43,6 +43,22 @@ describe("one plugin's flat hooks file", () => {
     expect(fs.getFile("/out/flat/all.json")).toBe("merged:{}");
   });
 
+  it("tells the merge whether the plugin ships the host adapter", async () => {
+    const told: (boolean | undefined)[] = [];
+    const shared = {
+      at: { shared: "flat/all.json" },
+      merge: (_existing: string | null, shipped: { hostAdapter?: boolean }) => {
+        told.push(shipped.hostAdapter);
+        return { content: "{}", warnings: [] };
+      },
+    };
+    const step = { ...stepFor({ hooksFile: shared }), hostAdapter: true };
+
+    await writeFlatHooks(seeded(), new CapturingLogger(), step);
+
+    expect(told).toEqual([true]);
+  });
+
   it("writes nothing for a hooks file one plugin owns: the engine lists it", async () => {
     const fs = seeded();
     const count = await writeFlatHooks(fs, new CapturingLogger(), stepFor({ hooksFile: OWN_FILE }));

@@ -200,6 +200,8 @@ export interface ShippedHooks {
   readonly json: string;
   readonly plugin: string;
   readonly locate?: (pluginPath: string) => string;
+  /** Whether the plugin ships the host adapter its hooks speak through, at `hooks/lib/host.cjs`. */
+  readonly hostAdapter?: boolean;
 }
 
 /** A config file a tool builds from every plugin at once. The build reads what it names and

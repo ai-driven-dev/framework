@@ -111,12 +111,12 @@ export const PROFILE_TRANSLATION_CHECKS: readonly ConformanceCheck<TranslationSu
       const { format } = location;
       const plugin = referenceHooks(`node ./${format.scriptPath("alpha", "hooks/check.cjs")}`);
       const person = withPersonKey(
-        format.merge(null, referenceHooks("echo mine"), "person").content
+        format.merge(null, { json: referenceHooks("echo mine"), plugin: "person" }).content
       );
-      const merged = format.merge(person, plugin, "alpha").content;
+      const merged = format.merge(person, { json: plugin, plugin: "alpha" }).content;
       const removed = format.unmerge(merged, "alpha");
       expect(JSON.parse(removed)).toEqual(JSON.parse(person));
-      expect(format.merge(removed, plugin, "alpha").content).toBe(merged);
+      expect(format.merge(removed, { json: plugin, plugin: "alpha" }).content).toBe(merged);
     }
   ),
 ];

@@ -35,7 +35,7 @@ describe("Antigravity hook response", () => {
         ],
       },
     });
-    const { content } = format.merge(null, hooks, "fixture");
+    const { content } = format.merge(null, { json: hooks, plugin: "fixture" });
     const [{ entry }] = format.contributedEntries(content, "fixture");
     return spawnSync(entry.command, {
       shell: true,

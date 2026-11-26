@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { HOST_ADAPTER_PATH } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type {
   PluginTranslationSkip,
@@ -108,16 +109,20 @@ export class ProjectHooksMaterializer {
   }
 
   private async mergeProjectHooksJson(
-    { projectRoot, location }: HooksDelivery,
+    { projectRoot, location, scripts }: HooksDelivery,
     plugin: { pluginName: string; manifest: string }
   ): Promise<{ warnings: readonly string[]; entries: ProjectHooksProvenance["entries"] }> {
     const destPath = join(projectRoot, location.relativePath);
     const existing = await this.readExistingJson(destPath);
-    const { content, warnings } = location.format.merge(
-      existing,
-      plugin.manifest,
-      plugin.pluginName
-    );
+    const { format } = location;
+    const { content, warnings } = format.merge(existing, {
+      json: plugin.manifest,
+      plugin: plugin.pluginName,
+      hostAdapter: scripts.some(
+        ({ relativePath }) =>
+          relativePath === format.scriptPath(plugin.pluginName, HOST_ADAPTER_PATH)
+      ),
+    });
     await this.fs.writeFile(destPath, content);
     return {
       warnings,

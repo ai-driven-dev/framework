@@ -1,6 +1,7 @@
 /** What the builders read of a descriptor to deliver a tool's hooks: where each route writes them. */
 
 import type { ArtifactContract } from "../../../../../shared/domain/materialization/build-contract.js";
+import { HOST_ADAPTER_PATH } from "../../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import { CapabilityConfigError } from "../../../contract/errors/tools.error.js";
 import type { HookScript } from "../../../contract/tool-vocabulary.js";
 import type { HooksFileFormat } from "../../hooks/hooks-entry-shape.js";
@@ -20,10 +21,6 @@ import {
   type ProjectMergeDelivery,
 } from "../../sections/hooks-section.js";
 import { type HooksRouting, PLUGIN_HOOKS_SOURCE, type ProjectHooksRoute } from "./descriptor.js";
-
-/** Where a plugin keeps the adapter between its hooks and the host: Claude Code's, as shipped,
- * which a build for another tool replaces with that tool's. */
-export const HOST_ADAPTER_PATH = "hooks/lib/host.cjs";
 
 export function hookScript(descriptor: HooksRouting): HookScript | undefined {
   const adapter = descriptor.runtime?.adapter;
@@ -102,7 +99,7 @@ export function projectHooksSupport(
     project: {
       relativePath: route.sharedFile,
       format: {
-        merge: (existing, json, plugin) => mergeHooks(existing, { json, plugin }, target),
+        merge: (existing, shipped) => mergeHooks(existing, shipped, target),
         unmerge: (existing, plugin) => unmergeHooks(existing, plugin, target),
         contributedEntries: (content, plugin) => pluginEntries(content, plugin, target),
         isEmpty: isHooksFileEmpty,

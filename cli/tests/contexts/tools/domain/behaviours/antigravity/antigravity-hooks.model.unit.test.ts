@@ -21,6 +21,10 @@ const USER_HOOKS = `${JSON.stringify(
   2
 )}\n`;
 
+/** The merge for a plugin that ships the host adapter. */
+const shipping = (json: string, plugin: string) =>
+  format.merge(null, { json, plugin, hostAdapter: true });
+
 function parse(content: string): Record<string, Record<string, unknown[]>> {
   return JSON.parse(content) as Record<string, Record<string, unknown[]>>;
 }
@@ -28,7 +32,10 @@ function parse(content: string): Record<string, Record<string, unknown[]>> {
 describe("antigravity's project hooks format", () => {
   describe("when plugin hooks are merged", () => {
     it("writes one key named after the plugin, its handlers directly under SessionStart", () => {
-      const { content, warnings } = format.merge(null, MEMORY_HOOKS, "aidd-context");
+      const { content, warnings } = format.merge(null, {
+        json: MEMORY_HOOKS,
+        plugin: "aidd-context",
+      });
 
       expect(parse(content)).toEqual({
         "aidd-context": {
@@ -46,29 +53,34 @@ describe("antigravity's project hooks format", () => {
     });
 
     it("keeps a hook the user declared under another name", () => {
-      const { content } = format.merge(USER_HOOKS, MEMORY_HOOKS, "aidd-context");
+      const { content } = format.merge(USER_HOOKS, { json: MEMORY_HOOKS, plugin: "aidd-context" });
 
       expect(parse(content).lint).toEqual(parse(USER_HOOKS).lint);
       expect(Object.keys(parse(content))).toEqual(["lint", "aidd-context"]);
     });
 
     it("changes nothing when the same plugin is merged twice", () => {
-      const { content: first } = format.merge(USER_HOOKS, MEMORY_HOOKS, "aidd-context");
-      const { content: second } = format.merge(first, MEMORY_HOOKS, "aidd-context");
+      const { content: first } = format.merge(USER_HOOKS, {
+        json: MEMORY_HOOKS,
+        plugin: "aidd-context",
+      });
+      const { content: second } = format.merge(first, {
+        json: MEMORY_HOOKS,
+        plugin: "aidd-context",
+      });
 
       expect(second).toBe(first);
     });
 
     it.each([false, true])("keeps enabled: %s when replacing the plugin's handlers", (enabled) => {
-      const { content } = format.merge(USER_HOOKS, MEMORY_HOOKS, "aidd-context");
+      const { content } = format.merge(USER_HOOKS, { json: MEMORY_HOOKS, plugin: "aidd-context" });
       const existing = JSON.parse(content);
       existing["aidd-context"].enabled = enabled;
 
-      const merged = format.merge(
-        JSON.stringify(existing),
-        MEMORY_HOOKS.replace("update_memory.js", "refresh.js"),
-        "aidd-context"
-      );
+      const merged = format.merge(JSON.stringify(existing), {
+        json: MEMORY_HOOKS.replace("update_memory.js", "refresh.js"),
+        plugin: "aidd-context",
+      });
 
       expect(JSON.parse(merged.content)).toEqual({
         ...JSON.parse(USER_HOOKS),
@@ -87,7 +99,9 @@ describe("antigravity's project hooks format", () => {
     });
 
     it("refuses a file it cannot parse rather than overwriting it", () => {
-      expect(() => format.merge("{ not json", MEMORY_HOOKS, "aidd-context")).toThrow();
+      expect(() =>
+        format.merge("{ not json", { json: MEMORY_HOOKS, plugin: "aidd-context" })
+      ).toThrow();
     });
 
     it("keeps a timeout the plugin declared", () => {
@@ -96,7 +110,7 @@ describe("antigravity's project hooks format", () => {
         '"type":"command","timeout":10,'
       );
 
-      const { content } = format.merge(null, withTimeout, "aidd-context");
+      const { content } = format.merge(null, { json: withTimeout, plugin: "aidd-context" });
 
       expect(parse(content)["aidd-context"].SessionStart).toEqual([
         expect.objectContaining({ timeout: 10 }),
@@ -113,7 +127,7 @@ describe("antigravity's project hooks format", () => {
         ),
       });
 
-      const { content, warnings } = format.merge(null, all, "aidd-dev");
+      const { content, warnings } = shipping(all, "aidd-dev");
 
       expect(parse(content)["aidd-dev"]).toEqual({
         SessionStart: [expect.objectContaining({ type: "command" })],
@@ -134,7 +148,7 @@ describe("antigravity's project hooks format", () => {
         hooks: { PostToolUse: [{ hooks: [{ type: "command", command: "node x.cjs" }] }] },
       });
 
-      const { content } = format.merge(null, post, "aidd-dev");
+      const { content } = shipping(post, "aidd-dev");
       const released = format
         .contributedEntries(content, "aidd-dev")
         .find(({ event }) => event === "PreInvocation");
@@ -142,6 +156,16 @@ describe("antigravity's project hooks format", () => {
       expect(
         Buffer.from(released?.entry.command.split(" ").at(-1) ?? "", "base64").toString()
       ).toBe("node ./.agents/hooks/aidd-dev/lib/host.cjs");
+    });
+
+    it("releases nothing for a plugin that ships no host adapter, which a marketplace plugin does not", () => {
+      const post = JSON.stringify({
+        hooks: { PostToolUse: [{ hooks: [{ type: "command", command: "node x.cjs" }] }] },
+      });
+
+      const { content } = format.merge(null, { json: post, plugin: "some-plugin" });
+
+      expect(parse(content)["some-plugin"]).not.toHaveProperty("PreInvocation");
     });
 
     it("renames the tools of the matcher the plugins ship, and drops the other hosts' shells", () => {
@@ -156,7 +180,7 @@ describe("antigravity's project hooks format", () => {
         },
       });
 
-      const { content, warnings } = format.merge(null, shipped, "aidd-dev");
+      const { content, warnings } = format.merge(null, { json: shipped, plugin: "aidd-dev" });
 
       expect(parse(content)["aidd-dev"].PostToolUse).toEqual([
         expect.objectContaining({ matcher: "write_file|edit_file|run_command" }),
@@ -168,7 +192,7 @@ describe("antigravity's project hooks format", () => {
       const post = JSON.stringify({
         hooks: { PostToolUse: [{ hooks: [{ type: "command", command: "node x.cjs" }] }] },
       });
-      const { content } = format.merge(null, post, "aidd-dev");
+      const { content } = shipping(post, "aidd-dev");
 
       expect(format.contributedEntries(content, "aidd-dev")).toEqual([
         { event: "PostToolUse", entry: expect.objectContaining({ type: "command" }) },
@@ -183,7 +207,7 @@ describe("antigravity's project hooks format", () => {
         },
       });
 
-      const { content, warnings } = format.merge(null, pre, "aidd-dev");
+      const { content, warnings } = format.merge(null, { json: pre, plugin: "aidd-dev" });
 
       expect(parse(content)["aidd-dev"].PreToolUse).toEqual([
         { matcher: "*", hooks: [expect.objectContaining({ type: "command", timeout: 5 })] },
@@ -201,7 +225,7 @@ describe("antigravity's project hooks format", () => {
           },
         });
 
-        const { content, warnings } = format.merge(null, hooks, "aidd-telemetry");
+        const { content, warnings } = format.merge(null, { json: hooks, plugin: "aidd-telemetry" });
 
         expect(Object.keys(parse(content)["aidd-telemetry"])).toEqual(["SessionStart"]);
         expect(warnings).toEqual([`unmapped event '${event}' skipped`]);
@@ -213,7 +237,7 @@ describe("antigravity's project hooks format", () => {
         hooks: { SessionEnd: [{ hooks: [{ type: "command", command: "node x.cjs" }] }] },
       });
 
-      const { content } = format.merge(USER_HOOKS, onlyEnd, "aidd-telemetry");
+      const { content } = format.merge(USER_HOOKS, { json: onlyEnd, plugin: "aidd-telemetry" });
 
       expect(Object.keys(parse(content))).toEqual(["lint"]);
     });
@@ -221,7 +245,7 @@ describe("antigravity's project hooks format", () => {
 
   describe("when plugin hooks are removed", () => {
     it("removes the plugin's key and leaves the user's untouched", () => {
-      const { content } = format.merge(USER_HOOKS, MEMORY_HOOKS, "aidd-context");
+      const { content } = format.merge(USER_HOOKS, { json: MEMORY_HOOKS, plugin: "aidd-context" });
 
       expect(format.unmerge(content, "aidd-context")).toBe(USER_HOOKS);
     });
@@ -229,7 +253,7 @@ describe("antigravity's project hooks format", () => {
 
   describe("when the entries a plugin contributed are listed", () => {
     it.each([false, true])("reads handlers when the named hook has enabled: %s", (enabled) => {
-      const { content } = format.merge(null, MEMORY_HOOKS, "aidd-context");
+      const { content } = format.merge(null, { json: MEMORY_HOOKS, plugin: "aidd-context" });
       const existing = JSON.parse(content);
       existing["aidd-context"].enabled = enabled;
 
@@ -239,7 +263,7 @@ describe("antigravity's project hooks format", () => {
     });
 
     it("lists the plugin's handlers with their event, and nothing of the user's", () => {
-      const { content } = format.merge(USER_HOOKS, MEMORY_HOOKS, "aidd-context");
+      const { content } = format.merge(USER_HOOKS, { json: MEMORY_HOOKS, plugin: "aidd-context" });
 
       expect(format.contributedEntries(content, "aidd-context")).toEqual([
         {

@@ -8,6 +8,8 @@ type RuntimeDeps = Pick<DiskSinkDeps, "flat" | "logger">;
 interface FoldedHooks {
   readonly name: string;
   readonly hooks: string | null;
+  /** Whether the plugin ships the host adapter its hooks speak through. */
+  readonly hostAdapter?: boolean;
 }
 
 interface FoldedMcp {
@@ -20,7 +22,7 @@ interface FoldedMcp {
 export async function writePluginHooks(
   deps: RuntimeDeps,
   t: DiskTarget,
-  { name, hooks }: FoldedHooks
+  { name, hooks, hostAdapter }: FoldedHooks
 ): Promise<number> {
   if (hooks === null) return 0;
   const artifact = t.contract.artifacts.hooks;
@@ -28,7 +30,13 @@ export async function writePluginHooks(
     deps.logger.warn(`Skipping hooks/ in plugin '${name}' (hooks not supported for this target).`);
     return 0;
   }
-  return deps.flat.writeHooks({ target: t, artifact, pluginName: name, hooksJson: hooks });
+  return deps.flat.writeHooks({
+    target: t,
+    artifact,
+    pluginName: name,
+    hooksJson: hooks,
+    hostAdapter,
+  });
 }
 
 /** One plugin's MCP servers merged into the flat file; the marketplace layout is built by the

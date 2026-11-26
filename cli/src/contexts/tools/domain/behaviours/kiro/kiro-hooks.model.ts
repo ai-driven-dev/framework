@@ -187,7 +187,7 @@ export function mergeKiroHooks(
 export function kiroHooksFormat(hooks: KiroHooks): ProjectHooksFormat {
   const scripts = hooks.flat.scriptsDir;
   return {
-    merge: (existing, json, plugin) => mergeKiroHooks(hooks, existing, { json, plugin }),
+    merge: (existing, shipped) => mergeKiroHooks(hooks, existing, shipped),
     unmerge: (existing, plugin) =>
       serialize(
         existing,

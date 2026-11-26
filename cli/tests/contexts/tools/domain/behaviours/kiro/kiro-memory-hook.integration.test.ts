@@ -70,11 +70,10 @@ describe("the memory hook under Kiro", () => {
     const format = kiro.projectHooksDelivery()?.format;
     if (format === undefined) throw new Error("kiro declares no project hooks format");
     for (const source of filesUnder(PLUGIN_HOOKS)) installScript(base, format, source);
-    const { content } = format.merge(
-      null,
-      readFileSync(join(PLUGIN_HOOKS, "hooks.json"), "utf8"),
-      PLUGIN
-    );
+    const { content } = format.merge(null, {
+      json: readFileSync(join(PLUGIN_HOOKS, "hooks.json"), "utf8"),
+      plugin: PLUGIN,
+    });
     mkdirSync(join(base, ".kiro/hooks"), { recursive: true });
     writeFileSync(join(base, ".kiro/hooks/aidd.json"), content);
     const [first] = format
@@ -156,9 +155,8 @@ describe("the memory hook under Kiro", () => {
   function runScript(event: string, body: string): SpawnSyncReturns<string> {
     const format = kiro.projectHooksDelivery()?.format;
     if (format === undefined) throw new Error("kiro declares no project hooks format");
-    const { content } = format.merge(
-      null,
-      JSON.stringify({
+    const { content } = format.merge(null, {
+      json: JSON.stringify({
         hooks: {
           [event]: [
             {
@@ -169,8 +167,8 @@ describe("the memory hook under Kiro", () => {
           ],
         },
       }),
-      PLUGIN
-    );
+      plugin: PLUGIN,
+    });
     const [entry] = format.contributedEntries(content, PLUGIN);
     if (entry === undefined) throw new Error("no entry was merged");
     const script = join(HOME(), format.scriptPath(PLUGIN, "hooks/script.cjs"));

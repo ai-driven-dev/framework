@@ -181,6 +181,31 @@ describe("Antigravity CLI", () => {
         expect(fs.readdirSync(hooksFolder())).toStrictEqual([]);
       });
 
+      it("removes a held file it cannot read, so nothing is left behind", () => {
+        fs.mkdirSync(hooksFolder(), { mode: 0o700 });
+        fs.writeFileSync(join(hooksFolder(), `agy-relay-${nextCall.conversationId}`), "not json\n");
+        release();
+
+        expect([fs.readdirSync(hooksFolder()), printed]).toStrictEqual([[], []]);
+      });
+
+      it("sweeps what a conversation that ended left held for over a day, and nothing else", () => {
+        fs.mkdirSync(hooksFolder(), { mode: 0o700 });
+        const aged = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+        for (const name of ["agy-relay-abandoned", "other-state"]) {
+          fs.writeFileSync(join(hooksFolder(), name), "x\n");
+          fs.utimesSync(join(hooksFolder(), name), aged, aged);
+        }
+        fs.writeFileSync(join(hooksFolder(), "agy-relay-recent"), "x\n");
+        hold(2, text);
+
+        expect(fs.readdirSync(hooksFolder()).sort()).toStrictEqual([
+          `agy-relay-${ran.conversationId}`,
+          "agy-relay-recent",
+          "other-state",
+        ]);
+      });
+
       it("injects each held text as a step of its own, in the order held", () => {
         hold(2, "first");
         hold(2, "second");

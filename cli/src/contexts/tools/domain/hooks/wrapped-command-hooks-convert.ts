@@ -1,10 +1,12 @@
 import type { ShippedHooks } from "../../../../shared/domain/materialization/build-contract.js";
 import { genericFlatHooksScriptPath } from "../../../../shared/domain/materialization/flat-paths.js";
-import { rewritePluginRootInJson } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
+import {
+  HOST_ADAPTER_PATH,
+  rewritePluginRootInJson,
+} from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import type { ProjectHookEntry } from "../../contract/tool-vocabulary.js";
 import { toBase64 } from "../formats/base64.js";
 import { PLUGIN_HOOKS_SOURCE } from "../formats/hooks/descriptor.js";
-import { HOST_ADAPTER_PATH } from "../formats/hooks/routes.js";
 import { hostToolNamesMatching, matcherNamesNoToolWarning } from "../formats/host-tool-names.js";
 import { unmappedEventWarning } from "./hooks-warnings.js";
 import type { PluginHookItem, PluginHooksShape, PluginMatcherGroup } from "./plugin-hooks-shape.js";
@@ -33,7 +35,8 @@ export interface WrappedCommandHooksTarget {
     /** The host's name of each tool a plugin's matcher names, by the name the plugin gives it. */
     readonly toolNames: ReadonlyMap<string, string>;
     /** The host's event at which a PostToolUse answer can reach the model, when it takes none at
-     * PostToolUse itself: a plugin with a PostToolUse handler gets one there that releases it. */
+     * PostToolUse itself: a plugin with a PostToolUse handler and the host adapter gets one there
+     * that releases it. */
     readonly releasesPostToolAnswersAt?: string;
   };
 }
@@ -107,6 +110,9 @@ function eventHandlers(
   return { ...(grouped.length > 0 ? { handlers: grouped } : {}), warnings };
 }
 
+/** Seconds a handler that releases a held answer may run: it only reads one small file. */
+const RELEASE_TIMEOUT = 5;
+
 /** The handler that releases a PostToolUse answer at the host's own event: the plugin's copy of the
  * host adapter, run as that hook's command. */
 function releaseHandler(
@@ -115,12 +121,17 @@ function releaseHandler(
   event: string
 ): ProjectHookEntry {
   const adapter = wrappedCommandHooksScriptPath(target, pluginName, HOST_ADAPTER_PATH);
-  return toHandler(event)({ command: `node ./${adapter}` });
+  return toHandler(event)({ command: `node ./${adapter}`, timeout: RELEASE_TIMEOUT });
 }
 
 export function convert(
   target: WrappedCommandHooksTarget,
-  { json, plugin: pluginName, locate = (pluginPath) => pluginPath }: ShippedHooks
+  {
+    json,
+    plugin: pluginName,
+    locate = (pluginPath) => pluginPath,
+    hostAdapter = false,
+  }: ShippedHooks
 ): { handlers: Handlers; warnings: string[] } {
   const parsed = JSON.parse(json) as unknown;
   const rewritten = rewritePluginRootInJson(parsed, (suffix) =>
@@ -136,7 +147,7 @@ export function convert(
     if (converted.handlers !== undefined) handlers[event] = converted.handlers;
   }
   const { releasesPostToolAnswersAt: releaseEvent } = target.descriptor;
-  if (releaseEvent !== undefined && handlers.PostToolUse !== undefined) {
+  if (hostAdapter && releaseEvent !== undefined && handlers.PostToolUse !== undefined) {
     handlers[releaseEvent] = [releaseHandler(target, pluginName, releaseEvent)];
   }
   return { handlers, warnings };

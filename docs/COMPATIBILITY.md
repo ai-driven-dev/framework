@@ -51,7 +51,7 @@ Sources: [Claude Code](https://code.claude.com/docs/en/hooks), [Codex](https://l
 | Limit | What it means for you |
 | --- | --- |
 | A hook matcher takes only the tools Write, Edit and Bash, renamed to `agy`'s own | Any other tool name is dropped from the matcher |
-| A level 1 `PostToolUse` answer is not relayed to the model | Use level 2 to feed the model after a tool |
+| A `PostToolUse` answer is not relayed to the model | Do not use `PostToolUse` to feed the model |
 | A silent `PreToolUse` script answers `allow` | Print a refusal to block; silence never does |
 | A subagent's `tools` list keeps only tools with a name on the host | A Claude tool with no host name is dropped from its agent |
 
