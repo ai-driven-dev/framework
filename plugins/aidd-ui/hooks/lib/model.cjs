@@ -4,6 +4,10 @@ const { list, table } = require("./markdown.cjs");
 
 const SYSTEM_ID = "system";
 const STEPS_SECTION = "Steps";
+const PERSONA_SECTION = "Persona";
+const REVIEW_KIND = "review";
+const VERDICTS_SECTION = "Verdicts";
+const VERDICT_PRIORITY = ["revise", "ok", "pending"]; // what decides a state: a revise, else an ok, else a pending
 const STATUS_DEPRECATED = "deprecated";
 const BREAKING = "yes"; // a history row's Breaking cell
 const NOT_BREAKING = "no";
@@ -36,6 +40,15 @@ const isElement = (record) => Object.hasOwn(LEVELS, fm(record).kind);
 /** Whether `kind` belongs in `folder`: own keys only, so `constructor` names no folder. */
 const belongs = (folder, kind) => Object.hasOwn(FOLDER_KINDS, folder) && FOLDER_KINDS[folder].includes(kind);
 const isComponent = (record) => COMPONENT_KINDS.includes(fm(record).kind);
+
+/** The verdict rows of every review among `records`, in record order. */
+const verdictRows = (records) => records.filter((record) => fm(record).kind === REVIEW_KIND).flatMap((record) => table(record.sections[VERDICTS_SECTION]));
+
+/** The row that decides a state of `record` at its version, or undefined: with no `state`, any state of it. */
+function stateVerdict(rows, record, state) {
+  const here = rows.filter((row) => row.Screen === fm(record).id && row.Version === String(fm(record).version) && (state === undefined || row.State === state));
+  return VERDICT_PRIORITY.map((verdict) => here.findLast((row) => row.Verdict === verdict)).find(Boolean);
+}
 
 /** The records the other rules can read: a file without front matter is R1's alone. */
 const readable = (project) => project.records.filter((record) => record.hasFrontMatter);
@@ -76,4 +89,8 @@ const breakpointsOf = (system) => breakpointRows(system).map((row) => row.Name);
 const systemOf = (project) => readable(project).find((record) => fm(record).kind === SYSTEM_ID);
 const isSystem = (record) => fm(record).kind === SYSTEM_ID;
 
-module.exports = { breakpointRows, breakpointsOf, SYSTEM_ID, STEPS_SECTION, STATUS_DEPRECATED, BREAKING, NOT_BREAKING, BREAKING_VALUES, AXIS_SEPARATOR, variantOf, COMPONENT_KINDS, IMPLEMENTED_KINDS, TOKENED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf, tokensUsedBy };
+const DEFAULT_STATE = "default";
+/** The states a review judges for a record: a brand or a system is one page, so one `default`; any other, its own. */
+const reviewStatesOf = (record) => (["brand", SYSTEM_ID].includes(fm(record).kind) ? [DEFAULT_STATE] : list(fm(record).states));
+
+module.exports = { BREAKPOINTS_SECTION, breakpointRows, breakpointsOf, SYSTEM_ID, STEPS_SECTION, PERSONA_SECTION, REVIEW_KIND, VERDICTS_SECTION, verdictRows, stateVerdict, STATUS_DEPRECATED, BREAKING, NOT_BREAKING, BREAKING_VALUES, AXIS_SEPARATOR, variantOf, COMPONENT_KINDS, IMPLEMENTED_KINDS, TOKENED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf, tokensUsedBy, reviewStatesOf };

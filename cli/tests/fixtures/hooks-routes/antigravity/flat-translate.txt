@@ -12,19 +12,45 @@
         "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC1jb250ZXh0L2FydGlmYWN0cy5janMgc3RhcnQ=",
         "timeout": 5
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "write_file|edit_file|run_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC1jb250ZXh0L2FydGlmYWN0cy5janMgbWFyaw==",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC1jb250ZXh0L21lbW9yeS5janMgc3luYw==",
+        "timeout": 5
+      }
+    ],
+    "PreInvocation": [
+      {
+        "type": "command",
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC1jb250ZXh0L2xpYi9ob3N0LmNqcw==",
+        "timeout": 5
+      }
     ]
   },
   "aidd-telemetry": {
     "SessionStart": [
       {
         "type": "command",
-        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvc2Vzc2lvbi1zdGFydC5janM=",
-        "timeout": 10
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvdGFzay5janMgcmVtaW5k",
+        "timeout": 5
       },
       {
         "type": "command",
-        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvY2F0Y2gtdXAuY2pz",
-        "timeout": 120
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvbGVkZ2VyLmNqcyBpbmdlc3Q=",
+        "timeout": 5
       }
     ]
   }
@@ -36,11 +62,10 @@ script, identical to the plugin source
 
 ## out-flat/.agents/hooks/aidd-context/lib/contracts/04-skill-generate/scripts/contract.json
 {
-  "version": 1,
   "kind": "skill",
   "unit": "folder",
   "targets": "plugins/*/skills/*",
-  "scope": [".claude/skills/*", ".cursor/skills/*", ".opencode/skills/*", ".kilo/skills/*", ".github/skills/*", ".agents/skills/*"],
+  "scope": [".claude/skills/*", ".cursor/skills/*", ".opencode/skills/*", ".kilo/skills/*", ".github/skills/*", ".agents/skills/*", ".kiro/skills/*"],
   "shell": false,
   "marker": "SKILL.md",
   "rules": {
@@ -125,7 +150,6 @@ targets: [{{host tools}}]
 
 ## out-flat/.agents/hooks/aidd-context/lib/contracts/05-rule-generate/scripts/contract.json
 {
-  "version": 1,
   "kind": "rule",
   "unit": "file",
   "scope": ["aidd_docs/rules/*/*.md"],
@@ -144,23 +168,26 @@ targets: [{{host tools}}]
 
 ## out-flat/.agents/hooks/aidd-context/lib/contracts/06-agent-generate/scripts/contract.json
 {
-  "version": 1,
   "kind": "agent",
   "unit": "file",
   "targets": "plugins/*/agents/*.md",
   "scope": [
     ".claude/agents/*.md",
-    ".cursor/agents/*.md"
+    ".cursor/agents/*.md",
+    ".github/agents/*.agent.md",
+    ".agents/agents/*/agent.md",
+    ".opencode/agents/*.md",
+    ".kilo/agents/*.md",
+    ".kiro/agents/*.md",
+    ".kimi-code/agents/*.md"
   ],
   "shell": false,
   "rules": {
     "AGENT-02": {
-      "op": "equals",
+      "op": "custom",
       "in": "*.md",
-      "field": "name",
-      "to": "basename",
-      "why": "hosts resolve the agent by file name",
-      "fix": "set name to {expected}"
+      "check": "name",
+      "why": "hosts resolve the agent by file name"
     },
     "AGENT-03": {
       "op": "pattern",
@@ -199,6 +226,9 @@ targets: [{{host tools}}]
 }
 
 
+## out-flat/.agents/hooks/aidd-context/lib/contracts/06-agent-generate/scripts/custom/name.cjs
+script, identical to the plugin source
+
 ## out-flat/.agents/hooks/aidd-context/lib/contracts/07-command-generate/assets/command-template.md
 ---
 description: "{{what the command does, one line}}"
@@ -221,7 +251,6 @@ disable-model-invocation:
 
 ## out-flat/.agents/hooks/aidd-context/lib/contracts/07-command-generate/scripts/contract.json
 {
-  "version": 1,
   "kind": "command",
   "unit": "file",
   "scope": [
@@ -268,13 +297,10 @@ script, identical to the plugin source
 ## out-flat/.agents/hooks/aidd-context/memory.cjs
 script, identical to the plugin source
 
-## out-flat/.agents/hooks/aidd-telemetry/catch-up.cjs
+## out-flat/.agents/hooks/aidd-telemetry/ledger.cjs
 script, identical to the plugin source
 
 ## out-flat/.agents/hooks/aidd-telemetry/lib/aidd.cjs
-script, identical to the plugin source
-
-## out-flat/.agents/hooks/aidd-telemetry/lib/binding.cjs
 script, identical to the plugin source
 
 ## out-flat/.agents/hooks/aidd-telemetry/lib/claude-only.cjs
@@ -289,22 +315,13 @@ script, identical to the plugin source
 ## out-flat/.agents/hooks/aidd-telemetry/lib/context.cjs
 script, identical to the plugin source
 
-## out-flat/.agents/hooks/aidd-telemetry/lib/declaration.cjs
-script, identical to the plugin source
-
 ## out-flat/.agents/hooks/aidd-telemetry/lib/git.cjs
 script, identical to the plugin source
 
-## out-flat/.agents/hooks/aidd-telemetry/lib/hook-io.cjs
-script, identical to the plugin source
+## out-flat/.agents/hooks/aidd-telemetry/lib/host.cjs
+script, identical to the host adapter host-antigravity.cjs
 
 ## out-flat/.agents/hooks/aidd-telemetry/lib/jsonl.cjs
-script, identical to the plugin source
-
-## out-flat/.agents/hooks/aidd-telemetry/lib/lookup.cjs
-script, identical to the plugin source
-
-## out-flat/.agents/hooks/aidd-telemetry/lib/presence.cjs
 script, identical to the plugin source
 
 ## out-flat/.agents/hooks/aidd-telemetry/lib/telemetry-dir.cjs
@@ -313,8 +330,5 @@ script, identical to the plugin source
 ## out-flat/.agents/hooks/aidd-telemetry/lib/tool.cjs
 script, identical to the plugin source
 
-## out-flat/.agents/hooks/aidd-telemetry/prompt-gate.cjs
-script, identical to the plugin source
-
-## out-flat/.agents/hooks/aidd-telemetry/session-start.cjs
+## out-flat/.agents/hooks/aidd-telemetry/task.cjs
 script, identical to the plugin source

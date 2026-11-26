@@ -1,0 +1,9 @@
+function denyToolCall(reason) {
+  print({
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: "deny",
+      permissionDecisionReason: reason,
+    },
+  });
+}

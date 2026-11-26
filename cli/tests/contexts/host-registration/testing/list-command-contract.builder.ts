@@ -1,0 +1,14 @@
+import { nativeRegistrationsOf } from "../../../../src/composition/contexts/host-registration.js";
+import { REGISTERED_PROFILES } from "../../../../src/composition/tool-profiles/index.js";
+import { marketplaceListContract } from "../../../../src/contexts/host-registration/infrastructure/marketplace/marketplace-list-parsers.js";
+import type { NativeMarketplaceSourceListContract } from "../../../../src/contexts/host-registration/infrastructure/marketplace/native-marketplace-source-list-contract.js";
+import type { AiToolId } from "../../../../src/shared/domain/tool.js";
+
+/** The list contract a tool's own declaration yields, as the composition builds it. */
+export function listContractOf(tool: AiToolId): NativeMarketplaceSourceListContract {
+  const activation = nativeRegistrationsOf(REGISTERED_PROFILES).get(tool);
+  const sources = activation?.marketplaceSourcesDeclaration();
+  if (activation === undefined || sources?.from !== "list-command")
+    throw new Error(`${tool} declares no list-command marketplace sources`);
+  return marketplaceListContract(activation.hostBinary(), sources);
+}

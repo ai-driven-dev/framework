@@ -1,355 +1,68 @@
-import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
-import { appendFile, chmod, mkdir, readFile, writeFile } from "node:fs/promises";
-import { delimiter, dirname, join } from "node:path";
+import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { git, initRepository, sandboxGitEnv } from "../helpers/git-sandbox.js";
-import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
-import { cliPath, createTestEnv, runCli, sandboxedEnv } from "./helpers.js";
+import { git } from "../shared/testing/git-sandbox.builder.js";
+import {
+  AXES,
+  CALLS,
+  COUNTERS,
+  Journey,
+  lines,
+  S_CLEARED,
+  S_HEADLESS,
+  S_MAIN,
+  S_OTHER,
+  type Session,
+} from "./testing/telemetry-journey.builder.js";
 
-/**
- * The whole journey on the built binary, driven by the plugin's real hooks: a person opts in,
- * is asked once, answers by typing the declaration, clears, and a headless run follows on the
- * same branch. No AI tool binary is reachable: the only `aidd` on `PATH` is a shim to the
- * binary under test, and the transcripts are synthetic.
- */
-
-const HOOKS = join(REPOSITORY_ROOT, "plugins", "aidd-telemetry", "hooks");
-const AXES = [
-  "total",
-  "person",
-  "session",
-  "model",
-  "agent",
-  "day",
-  "repository",
-  "task",
-  "ticket",
-  "tool",
-];
-const COUNTERS = ["input", "output", "cache_read", "cache_write"] as const;
-
-const S_MAIN = "a1b2c3d4-0000-4000-8000-0000000000a1";
-const S_CLEARED = "b2c3d4e5-0000-4000-8000-0000000000b2";
-const S_HEADLESS = "c3d4e5f6-0000-4000-8000-0000000000c3";
-const S_OTHER = "d4e5f6a7-0000-4000-8000-0000000000d4";
-const S_CODEX = "00000000-0000-4000-8000-0000000000e5";
-const S_CODEX_CHILD = "00000000-0000-4000-8000-0000000000f6";
-const S_CODEX_EXEC = "00000000-0000-4000-8000-0000000000a7";
-const CLAUDE_PID = "424242";
-
-interface Call {
-  id: string;
-  session: string;
-  minute: number;
-  branch: string | null;
-  model: string;
-  input: number;
-  output: number;
-  read: number | null;
-  write: number;
-}
-
-/** Offsets in minutes from a base after the declaration, so a session's calls come after what
- * its person declared. */
-const CALLS: Call[] = [
-  {
-    id: "1",
-    session: S_MAIN,
-    minute: 1,
-    branch: null,
-    model: "m-big",
-    input: 1,
-    output: 10,
-    read: 100,
-    write: 1000,
-  },
-  {
-    id: "2",
-    session: S_MAIN,
-    minute: 2,
-    branch: null,
-    model: "m-big",
-    input: 2,
-    output: 20,
-    read: 200,
-    write: 2000,
-  },
-  {
-    id: "3",
-    session: S_CLEARED,
-    minute: 3,
-    branch: null,
-    model: "m-big",
-    input: 3,
-    output: 30,
-    read: 300,
-    write: 3000,
-  },
-  {
-    id: "4",
-    session: S_CLEARED,
-    minute: 26 * 60,
-    branch: null,
-    model: "m-small",
-    input: 4,
-    output: 40,
-    read: 400,
-    write: 4000,
-  },
-  {
-    id: "5",
-    session: S_HEADLESS,
-    minute: 5,
-    branch: "feat/x",
-    model: "m-small",
-    input: 5,
-    output: 50,
-    read: null,
-    write: 5000,
-  },
-];
-
-let env: Awaited<ReturnType<typeof createTestEnv>>;
-let repo: string;
-let claude: string;
-let telemetry: string;
-let userConfig: string;
-let binDir: string;
-let gitEnv: NodeJS.ProcessEnv;
-
-/** `aidd` as a person's `PATH` holds it: a `.cmd` on Windows, a node script elsewhere. Neither
- * is a shell script, so the same journey runs on every platform. */
-async function writeAiddShim(dir: string, binary: string): Promise<void> {
-  await mkdir(dir, { recursive: true });
-  if (process.platform === "win32") {
-    await writeFile(join(dir, "aidd.cmd"), `@"${process.execPath}" "${binary}" %*\r\n`);
-    return;
-  }
-  const file = join(dir, "aidd");
-  await writeFile(
-    file,
-    [
-      "#!/usr/bin/env node",
-      `const run = require("node:child_process").spawnSync(process.execPath, [${JSON.stringify(binary)}, ...process.argv.slice(2)], { stdio: "inherit" });`,
-      "process.exit(run.status ?? 1);",
-      "",
-    ].join("\n")
-  );
-  await chmod(file, 0o755);
-}
+let j: Journey;
 
 beforeEach(async () => {
-  env = await createTestEnv("telemetry-journey");
-  gitEnv = sandboxGitEnv(env.fakeHome);
-  repo = join(env.tempDir, "repo");
-  claude = join(env.tempDir, "claude-config");
-  telemetry = join(env.tempDir, "telemetry-dir");
-  userConfig = join(env.tempDir, "user-config");
-  binDir = join(env.tempDir, "bin");
-  initRepository(repo, gitEnv, { remote: "git@github.com:acme/widgets.git" });
-  // Created in the past, as a working branch is: the reflog is what dates a branch.
-  const early = sandboxGitEnv(env.fakeHome, {
-    GIT_COMMITTER_DATE: "2026-10-01T08:00:00Z",
-    GIT_AUTHOR_DATE: "2026-10-01T08:00:00Z",
-  });
-  git(repo, early, "switch", "-q", "-c", "feat/x");
-  await writeAiddShim(binDir, cliPath());
+  j = await Journey.open();
 });
 afterEach(async () => {
-  await env.cleanup();
+  await j.close();
 });
-
-const sandboxVariables = () => ({
-  AIDD_TELEMETRY_DIR: telemetry,
-  AIDD_USER_CONFIG_DIR: userConfig,
-  CLAUDE_CONFIG_DIR: claude,
-  AIDD_TELEMETRY: "",
-});
-
-function aidd(args: string[]) {
-  return runCli(["telemetry", ...args], repo, env.fakeHome, {
-    env: { ...sandboxVariables(), CLAUDE_CODE_SESSION_ID: "" },
-  });
-}
-
-interface Session {
-  id: string;
-  attended?: boolean;
-}
-
-/** One real hook, as Claude Code runs it: payload on stdin, Claude's variables in the
- * environment, and the shim first on `PATH`. */
-function runHook(
-  hook: string,
-  session: Session,
-  payload: Record<string, unknown>
-): { stdout: string; json: Record<string, unknown> | null } {
-  const path = [binDir, sandboxedEnv(env.fakeHome).PATH].join(delimiter);
-  const attended = session.attended ?? true;
-  const run = spawnSync(process.execPath, [join(HOOKS, hook)], {
-    cwd: repo,
-    input: JSON.stringify({
-      session_id: session.id,
-      transcript_path: join(claude, "projects", "sandbox", `${session.id}.jsonl`),
-      cwd: repo,
-      ...payload,
-    }),
-    encoding: "utf8",
-    env: sandboxedEnv(env.fakeHome, {
-      ...sandboxVariables(),
-      PATH: path,
-      Path: path,
-      CLAUDE_CODE_SESSION_ID: session.id,
-      CLAUDE_CODE_SESSION_ATTENDED: attended ? "1" : "0",
-      CLAUDE_CODE_ENTRYPOINT: attended ? "cli" : "sdk-cli",
-      CLAUDE_PID,
-    }),
-  });
-  expect(run.status, run.stderr).toBe(0);
-  const text = run.stdout.trim();
-  return { stdout: text, json: text === "" ? null : (JSON.parse(text) as Record<string, unknown>) };
-}
-
-const prompt = (session: Session, text: string) =>
-  runHook("prompt-gate.cjs", session, { hook_event_name: "UserPromptSubmit", prompt: text });
-const sessionStart = (session: Session, source: string) =>
-  runHook("session-start.cjs", session, { hook_event_name: "SessionStart", source });
-
-async function optIn(): Promise<void> {
-  const run = await runCli(["telemetry", "on", "--yes", "--anonymous"], repo, env.fakeHome, {
-    env: { ...sandboxVariables(), CLAUDE_CODE_SESSION_ID: "" },
-  });
-  expect(run.exitCode, run.stderr).toBe(0);
-  expect(run.stdout).toContain("Measurement is on for this clone");
-}
-
-const lines = async (file: string) =>
-  (await readFile(file, "utf8"))
-    .split("\n")
-    .filter(Boolean)
-    .map((line) => JSON.parse(line) as Record<string, unknown>);
-
-function usageLine(call: Call, base: number): string {
-  return JSON.stringify({
-    type: "assistant",
-    sessionId: call.session,
-    requestId: `req_${call.id}`,
-    timestamp: new Date(base + call.minute * 60_000).toISOString(),
-    version: "2.1.0",
-    cwd: repo,
-    ...(call.branch === null ? {} : { gitBranch: call.branch }),
-    message: {
-      id: `msg_${call.id}`,
-      model: call.model,
-      usage: {
-        input_tokens: call.input,
-        output_tokens: call.output,
-        ...(call.read === null ? {} : { cache_read_input_tokens: call.read }),
-        cache_creation_input_tokens: call.write,
-        cache_creation: { ephemeral_5m_input_tokens: call.write, ephemeral_1h_input_tokens: 0 },
-      },
-    },
-  });
-}
-
-async function writeTranscripts(base: number): Promise<void> {
-  const project = join(claude, "projects", "sandbox");
-  await mkdir(project, { recursive: true });
-  for (const session of [S_MAIN, S_CLEARED, S_HEADLESS]) {
-    const mine = CALLS.filter((call) => call.session === session);
-    await writeFile(
-      join(project, `${session}.jsonl`),
-      `${mine.map((call) => usageLine(call, base)).join("\n")}\n`
-    );
-  }
-}
-
-interface Counter {
-  tokens: number;
-  unknown_records: number;
-}
-interface Row {
-  kind: string;
-  key: string | null;
-  records: number;
-  input: Counter;
-  output: Counter;
-  cache_read: Counter;
-  cache_write: Counter;
-  total: Counter;
-}
-interface Envelope {
-  version: number;
-  axis: string;
-  rows: Row[];
-  totals: Row;
-}
-
-async function report(axis: string, from: string, to: string): Promise<Envelope> {
-  const run = await aidd(["report", "--from", from, "--to", to, "--axis", axis, "--json"]);
-  expect(run.exitCode, run.stderr).toBe(0);
-  return JSON.parse(run.stdout) as Envelope;
-}
 
 describe("the telemetry journey, on the built binary", () => {
-  it("opts in, asks once, keeps the task across /clear, and attributes every axis to it", async () => {
-    await optIn();
-    expect(git(repo, gitEnv, "config", "--local", "--get", "aidd.telemetry").trim()).toMatch(
+  it("opts in, reminds once, attributes the cleared session through its branch, and every axis to the task", async () => {
+    await j.optIn();
+    expect(git(j.repo, j.gitEnv, "config", "--local", "--get", "aidd.telemetry").trim()).toMatch(
       /^2:[0-9a-f-]{36}$/u
     );
     // Consent is the clone's own, never a file a team could commit.
-    expect(existsSync(join(repo, ".aidd", "config.json"))).toBe(false);
+    expect(existsSync(join(j.repo, ".aidd", "config.json"))).toBe(false);
 
     const main: Session = { id: S_MAIN };
-    expect(sessionStart(main, "startup").stdout).toBe("");
+    // Reminded at session start, before any model call, to the person alone.
+    const reminded = j.sessionStart(main, "startup");
+    expect(Object.keys(reminded.json ?? {})).toEqual(["systemMessage"]);
+    expect(String(reminded.json?.systemMessage)).toContain("Telemetry: no task on feat/x.");
+    expect(existsSync(join(j.telemetry, "bindings", "sessions.jsonl"))).toBe(false);
 
-    // Asked, once, before any model call: the person is present on an unbound working branch.
-    const asked = prompt(main, "build the checkout");
-    expect(asked.json?.decision).toBe("block");
-    expect(String(asked.json?.reason)).toContain("Telemetry: no task on feat/x yet.");
-    expect(existsSync(join(telemetry, "bindings", "sessions.jsonl"))).toBe(false);
-
-    // Answered by typing the declaration, which the model never sees.
-    const declared = prompt(main, "aidd telemetry task checkout-fix --ticket PROJ-12");
-    expect(declared.json?.decision).toBe("block");
-    expect(declared.json?.reason).toBe(
-      "Task checkout-fix (ticket PROJ-12) declared. Send your prompt again."
-    );
-    expect(declared.json?.hookSpecificOutput).toMatchObject({ suppressOriginalPrompt: true });
-    const stored = await lines(join(telemetry, "bindings", "sessions.jsonl"));
+    // Answered by the command, run from the session.
+    const declared = await j.declare(main, "checkout-fix", "--ticket", "PROJ-12");
+    expect(declared.exitCode, declared.stderr).toBe(0);
+    const stored = await lines(join(j.telemetry, "bindings", "sessions.jsonl"));
     expect(stored).toHaveLength(1);
     expect(stored[0]).toMatchObject({
       session_id: S_MAIN,
       task: "checkout-fix",
       ticket: "PROJ-12",
       none: false,
-      by: "hook-intercept",
+      by: "command",
     });
-    expect(git(repo, gitEnv, "config", "--local", "--get", "branch.feat/x.aiddTask").trim()).toBe(
-      "checkout-fix"
-    );
+    expect(
+      git(j.repo, j.gitEnv, "config", "--local", "--get", "branch.feat/x.aiddTask").trim()
+    ).toBe("checkout-fix");
 
-    // The next prompt passes.
-    expect(prompt(main, "build the checkout").stdout).toBe("");
-
-    // /clear: a new session in the same process keeps the task, and says so.
-    const cleared: Session = { id: S_CLEARED };
-    const carried = sessionStart(cleared, "clear");
-    expect(String(carried.json?.systemMessage)).toContain(
-      "Task checkout-fix (ticket PROJ-12) kept after /clear."
-    );
-    expect(await lines(join(telemetry, "bindings", "carries.jsonl"))).toMatchObject([
-      { session_id: S_CLEARED, from: S_MAIN },
-    ]);
-    expect(prompt(cleared, "keep going").stdout).toBe("");
-
-    // A headless run on the same branch is never blocked.
-    expect(prompt({ id: S_HEADLESS, attended: false }, "run the migration").stdout).toBe("");
+    // The branch is declared: no further reminder, /clear's new session included.
+    expect(j.sessionStart(main, "resume").stdout).toBe("");
+    expect(j.sessionStart({ id: S_CLEARED }, "clear").stdout).toBe("");
 
     const base = Date.now() + 60_000;
-    await writeTranscripts(base);
-    expect((await aidd(["identity", "person-a"])).exitCode).toBe(0);
+    await j.writeTranscripts(base);
+    expect((await j.aidd(["identity", "person-a"])).exitCode).toBe(0);
 
     const days = CALLS.map((call) =>
       new Date(base + call.minute * 60_000).toISOString().slice(0, 10)
@@ -364,7 +77,7 @@ describe("the telemetry journey, on the built binary", () => {
 
     const totals = new Set<number>();
     for (const axis of AXES) {
-      const envelope = await report(axis, first, last);
+      const envelope = await j.report(axis, first, last);
       expect(envelope.version).toBe(2);
       expect(envelope.axis).toBe(axis);
       expect(envelope.totals.records, axis).toBe(CALLS.length);
@@ -391,185 +104,42 @@ describe("the telemetry journey, on the built binary", () => {
       oracle.input + oracle.output + oracle.cache_read + oracle.cache_write,
     ]);
 
-    // Every token lands on the declared task and ticket: the first two sessions by their own
-    // declaration and the carry (their lines name no branch), the headless one by the branch.
-    const task = await report("task", first, last);
+    // Every token lands on the declared task and ticket: the first session by its own
+    // declaration (its lines name no branch), the cleared and the headless ones by the branch.
+    const task = await j.report("task", first, last);
     expect(task.rows.map((row) => [row.kind, row.key, row.records])).toEqual([
       ["value", "checkout-fix", CALLS.length],
     ]);
-    const ticket = await report("ticket", first, last);
+    const ticket = await j.report("ticket", first, last);
     expect(ticket.rows.map((row) => [row.kind, row.key, row.records])).toEqual([
       ["value", "PROJ-12", CALLS.length],
     ]);
-    const sessions = await report("session", first, last);
+    const sessions = await j.report("session", first, last);
     expect(sessions.rows.map((row) => row.key).sort()).toEqual(
       [S_MAIN, S_CLEARED, S_HEADLESS].sort()
     );
-    expect((await report("person", first, last)).rows.map((row) => row.key)).toEqual(["person-a"]);
-    expect((await report("day", first, last)).rows.map((row) => row.key)).toEqual([
+    expect((await j.report("person", first, last)).rows.map((row) => row.key)).toEqual([
+      "person-a",
+    ]);
+    expect((await j.report("day", first, last)).rows.map((row) => row.key)).toEqual([
       ...new Set(days),
     ]);
   });
 
-  it("asks a person on an unbound branch and never an unattended session", async () => {
-    await optIn();
-    git(repo, gitEnv, "switch", "-q", "-c", "feat/y");
-    const person = prompt({ id: S_OTHER }, "start");
-    expect(person.json?.decision).toBe("block");
-    expect(String(person.json?.reason)).toContain("feat/y");
-    expect(prompt({ id: S_HEADLESS, attended: false }, "start").stdout).toBe("");
-    // Declared none, once: the branch is answered and the same person is no longer asked.
-    const none = prompt({ id: S_OTHER }, "aidd telemetry task --none");
-    expect(String(none.json?.reason)).toBe(
-      "No task declared for this work. Send your prompt again."
-    );
-    expect(prompt({ id: S_OTHER }, "start").stdout).toBe("");
+  it("reminds a person on an unbound branch until a task, or none, is declared", async () => {
+    await j.optIn();
+    git(j.repo, j.gitEnv, "switch", "-q", "-c", "feat/y");
+    const other: Session = { id: S_OTHER };
+    expect(String(j.sessionStart(other, "startup").json?.systemMessage)).toContain("feat/y");
+    // Declared none, once: the branch is answered and the same person is no longer reminded.
+    const none = await j.declare(other, "--none");
+    expect(none.exitCode, none.stderr).toBe(0);
+    expect(j.sessionStart(other, "startup").stdout).toBe("");
   });
 
-  it("says in a report what the catch-up hook measured and could not store, and keeps nothing of a clone that never opted in", async () => {
-    await optIn();
-    const elsewhere = join(env.tempDir, "elsewhere");
-    initRepository(elsewhere, gitEnv, { remote: "git@github.com:acme/other.git" });
-    // After `on`: what is made before it is never stored.
-    const base = Date.now() + 60_000;
-    const project = join(claude, "projects", "sandbox");
-    await mkdir(project, { recursive: true });
-    const [first, second, third] = CALLS as [Call, Call, Call];
-    const at = (cwd: string) => (line: string) =>
-      line.replace(JSON.stringify(repo), JSON.stringify(cwd));
-    const junk = (cwd: string) => JSON.stringify({ type: "assistant", cwd, message: { usage: 7 } });
-    const undated = (call: Call) =>
-      usageLine(call, base).replace(/"timestamp":"[^"]*"/, '"timestamp":"not a time"');
-    // Only the clone that never opted in: nothing of it is kept.
-    await writeFile(
-      join(project, `${S_OTHER}.jsonl`),
-      `${[at(elsewhere)(usageLine(second, base)), junk(elsewhere), at(elsewhere)(undated(third)), "{torn"].join("\n")}\n`
-    );
-    runHook("catch-up.cjs", { id: S_MAIN }, { hook_event_name: "SessionStart", source: "startup" });
-    expect(existsSync(join(telemetry, "ledger", "left-out.txt"))).toBe(false);
-
-    await writeFile(
-      join(project, `${S_MAIN}.jsonl`),
-      `${[usageLine(first, base), junk(repo), undated(third)].join("\n")}\n`
-    );
-    runHook("catch-up.cjs", { id: S_MAIN }, { hook_event_name: "SessionStart", source: "startup" });
-    const run = await aidd(["report", "--json"]);
-    expect(run.exitCode, run.stderr).toBe(0);
-    const envelope = JSON.parse(run.stdout) as {
-      coverage: { records: number; left_out: Record<string, number> };
-      run: { files_read: number };
-    };
-    expect(envelope).toMatchObject({
-      coverage: { records: 1, left_out: { undated: 1, unrecognised: 1 } },
-      run: { files_read: 0 },
-    });
-  });
-
-  it("asks a Codex TUI session, binds its declaration to that session, and attributes its calls and its sub-agent's", async () => {
-    await optIn();
-    const sessions = join(env.fakeHome, ".codex", "sessions", "2026", "10", "19");
-    await mkdir(sessions, { recursive: true });
-    const line = (
-      type: string,
-      payload: Record<string, unknown>,
-      at = "2026-10-19T10:00:00.000Z"
-    ) => `${JSON.stringify({ timestamp: at, type, payload })}\n`;
-    // No `git` in either first line: the branch is declared too, and must not be what attributes.
-    const meta = (id: string, source: unknown, originator: string) =>
-      line("session_meta", { id, cwd: repo, cli_version: "0.163.0", source, originator });
-    const rootFile = join(sessions, `rollout-2026-10-19T10-00-00-${S_CODEX}.jsonl`);
-    const childFile = join(sessions, `rollout-2026-10-19T10-00-01-${S_CODEX_CHILD}.jsonl`);
-    const execFile = join(sessions, `rollout-2026-10-19T10-00-02-${S_CODEX_EXEC}.jsonl`);
-    const turn = line("turn_context", { cwd: repo, model: "gpt-x" });
-    await writeFile(rootFile, meta(S_CODEX, "cli", "codex-tui") + turn);
-    await writeFile(execFile, meta(S_CODEX_EXEC, "exec", "codex_exec") + turn);
-
-    // The hook as Codex runs it: none of Claude Code's variables, the session in the payload.
-    const path = [binDir, sandboxedEnv(env.fakeHome).PATH].join(delimiter);
-    const codex = (session: string, file: string, permission: string, text: string) => {
-      const run = spawnSync(process.execPath, [join(HOOKS, "prompt-gate.cjs")], {
-        cwd: repo,
-        input: JSON.stringify({
-          session_id: session,
-          transcript_path: file,
-          cwd: repo,
-          hook_event_name: "UserPromptSubmit",
-          permission_mode: permission,
-          turn_id: "t",
-          prompt: text,
-        }),
-        encoding: "utf8",
-        env: sandboxedEnv(env.fakeHome, { ...sandboxVariables(), PATH: path, Path: path }),
-      });
-      expect(run.status, run.stderr).toBe(0);
-      return run.stdout.trim() === "" ? null : (JSON.parse(run.stdout) as Record<string, unknown>);
-    };
-
-    expect(codex(S_CODEX, rootFile, "default", "build the checkout")).toMatchObject({
-      decision: "block",
-      reason: expect.stringContaining("Telemetry: no task on feat/x yet."),
-    });
-    // `codex exec` shows nobody the reason: never held.
-    expect(codex(S_CODEX_EXEC, execFile, "bypassPermissions", "run it")).toBeNull();
-    expect(
-      codex(S_CODEX, rootFile, "default", "aidd telemetry task codex-fix --ticket PROJ-7")
-    ).toEqual({
-      decision: "block",
-      reason: "Task codex-fix (ticket PROJ-7) declared. Send your prompt again.",
-    });
-    expect(await lines(join(telemetry, "bindings", "sessions.jsonl"))).toMatchObject([
-      { session_id: S_CODEX, task: "codex-fix", ticket: "PROJ-7", by: "hook-intercept" },
-    ]);
-    expect(codex(S_CODEX, rootFile, "default", "build the checkout")).toBeNull();
-
-    // Calls after the declaration, the sub-agent's in its own file under the root's session.
-    const base = Date.now() + 60_000;
-    const call = (id: string, thread: string, minute: number) =>
-      line(
-        "token_usage_record",
-        {
-          response_id: `resp_${id}`,
-          session_id: S_CODEX,
-          thread_id: thread,
-          usage: {
-            input_tokens: 10,
-            cached_input_tokens: 4,
-            cache_write_input_tokens: 0,
-            output_tokens: 2,
-            reasoning_output_tokens: 1,
-            total_tokens: 12,
-          },
-        },
-        new Date(base + minute * 60_000).toISOString()
-      );
-    await appendFile(rootFile, call("1", S_CODEX, 1) + call("2", S_CODEX, 2));
-    const spawned = { subagent: { thread_spawn: { parent_thread_id: S_CODEX, depth: 1 } } };
-    await writeFile(
-      childFile,
-      meta(S_CODEX_CHILD, spawned, "codex-tui") + turn + call("3", S_CODEX_CHILD, 3)
-    );
-
-    const day = new Date(base).toISOString().slice(0, 10);
-    const last = new Date(base + 3 * 60_000).toISOString().slice(0, 10);
-    const task = await report("task", day, last);
-    expect(task.rows.map((row) => [row.kind, row.key, row.records])).toEqual([
-      ["value", "codex-fix", 3],
-    ]);
-    const agents = await report("agent", day, last);
-    expect(agents.rows.map((row) => [row.key, row.records]).sort()).toEqual([
-      ["main", 2],
-      ["subagent", 1],
-    ]);
-    const tools = await report("tool", day, last);
-    expect(tools.rows.map((row) => [row.key, row.records])).toEqual([["codex", 3]]);
-  });
-
-  it("shows nothing, blocks nothing and stores nothing in a project that never opted in", async () => {
-    const main: Session = { id: S_MAIN };
-    expect(sessionStart(main, "startup").stdout).toBe("");
-    expect(prompt(main, "build the checkout").stdout).toBe("");
-    expect(prompt(main, "aidd telemetry task t").stdout).toBe("");
-    expect(existsSync(telemetry)).toBe(false);
-    expect(existsSync(dirname(join(repo, ".aidd", "config.json")))).toBe(false);
+  it("shows nothing and stores nothing in a project that never opted in", async () => {
+    expect(j.sessionStart({ id: S_MAIN }, "startup").stdout).toBe("");
+    expect(existsSync(j.telemetry)).toBe(false);
+    expect(existsSync(dirname(join(j.repo, ".aidd", "config.json")))).toBe(false);
   });
 });

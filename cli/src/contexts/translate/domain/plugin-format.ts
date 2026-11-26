@@ -1,47 +1,46 @@
-import { AI_TOOL_IDS, type AiToolId, type ToolId } from "../../../kernel/tool.js";
-import type { ToolConfig } from "../../tools/domain/registry.js";
-import { getAllRegisteredTools, isAiTool } from "../../tools/domain/registry.js";
-
-/** The tool whose layout a plugin distribution follows. An alias rather than its own union: a
- * format is a tool's way of laying out a plugin, so a sixth tool is a sixth format by
- * construction. */
-export type PluginFormat = AiToolId;
+import { SOURCE_PLUGIN_MANIFEST_RELATIVE } from "../../../shared/domain/plugin/canon-paths.js";
+import type { AiToolId } from "../../../shared/domain/tool.js";
+import type { TranslateToolCatalog } from "./translate-profile.js";
 
 export interface DistributionProbe {
-  readonly format: PluginFormat;
+  /** The tool whose layout a plugin distribution follows. */
+  readonly format: AiToolId;
   readonly relativePath: string;
 }
 
 /**
- * Probes ordered most specific first — deepest path wins, ties broken by tool order. The order
- * is behaviour, not presentation: the reader takes the first probe that resolves, and copilot
- * declares a bare `plugin.json` at the root that any directory can satisfy. Takes the profiles
- * explicitly so the rule can be probed with synthetic tools.
+ * Probes ordered most specific first: deepest path wins, ties broken by the order the tools
+ * were registered. The order is behaviour, not presentation: the reader takes the first probe
+ * that resolves, and copilot declares a bare `plugin.json` at the root that any directory can
+ * satisfy. Takes the catalog explicitly so the rule can be probed with synthetic tools.
  */
 export function distributionProbesOf(
-  tools: ReadonlyMap<ToolId, ToolConfig>,
+  tools: TranslateToolCatalog,
   kind: "manifest" | "marketplace"
 ): readonly DistributionProbe[] {
   const probes: DistributionProbe[] = [];
-  for (const format of AI_TOOL_IDS) {
-    const config = tools.get(format);
-    if (config === undefined || !isAiTool(config)) continue;
-    for (const relativePath of config.distributionProbes?.[kind] ?? []) {
+  for (const format of tools.inHelpOrder("ai")) {
+    for (const relativePath of tools.aiProfile(format).distributionPaths(kind)) {
       probes.push({ format, relativePath });
     }
   }
+  // `sort` is stable: equally deep paths keep the order the tools were registered in.
   return probes
-    .map((probe, index) => ({ probe, index, depth: probe.relativePath.split("/").length }))
-    .sort((a, b) => b.depth - a.depth || a.index - b.index)
+    .map((probe) => ({ probe, depth: probe.relativePath.split("/").length }))
+    .sort((a, b) => b.depth - a.depth)
     .map((entry) => entry.probe);
 }
 
 /** Where a plugin manifest can sit, across every registered tool's layout. */
-export function pluginManifestProbes(): readonly DistributionProbe[] {
-  return distributionProbesOf(getAllRegisteredTools(), "manifest");
+export function pluginManifestProbes(tools: TranslateToolCatalog): readonly DistributionProbe[] {
+  return distributionProbesOf(tools, "manifest");
 }
 
-/** Where a marketplace catalog can sit, across every registered tool's layout. */
-export function marketplaceProbes(): readonly DistributionProbe[] {
-  return distributionProbesOf(getAllRegisteredTools(), "marketplace");
+/** The tool the framework's source plugins are written for: the one whose manifest sits where the
+ * source plugin's does. `null` when no registered tool reads that place. */
+export function canonFormatOf(tools: TranslateToolCatalog): AiToolId | null {
+  const probe = pluginManifestProbes(tools).find(
+    (candidate) => candidate.relativePath === SOURCE_PLUGIN_MANIFEST_RELATIVE
+  );
+  return probe?.format ?? null;
 }

@@ -4,7 +4,7 @@ Guidelines for adding skills, agents, rules, and templates inside your AIDD-equi
 
 ## Creating New Content
 
-Never hand-write a context artifact. Run its generator: it applies the contract, fills the template, and writes to the right place for every AI tool the project uses (Claude Code, Cursor, Copilot, Codex, OpenCode).
+Never hand-write a context artifact. Run its generator: it applies the contract, fills the template, and writes to the right place for every AI tool the project uses (the list is in [COMPATIBILITY](../docs/COMPATIBILITY.md)).
 
 | Artifact                     | Run                                |
 | ---------------------------- | ---------------------------------- |

@@ -1,0 +1,140 @@
+import { describe, expect, it } from "vitest";
+import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import type { HostRefusal } from "../../../src/contexts/host-registration/domain/native-refusal.js";
+import type { HostPluginRegistryEntry } from "../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
+import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { Scope } from "../../../src/shared/domain/scope.js";
+import type { AiToolId } from "../../../src/shared/domain/tool.js";
+import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.fake.js";
+import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.fake.js";
+import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.fake.js";
+import { CapturingLogger } from "../../shared/testing/capturing-logger.fake.js";
+import { fakeEnsureBuiltMarketplace } from "../../shared/testing/fake-ensure-built-marketplace.fake.js";
+import { FakeHostActions } from "../../shared/testing/fake-host-actions.fake.js";
+import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../shared/testing/in-memory-manifest-repository.fake.js";
+import { InMemoryMarketplaceRegistry } from "../../shared/testing/in-memory-marketplace-registry.fake.js";
+import { marketplaceSync } from "../../shared/testing/marketplace-sync.builder.js";
+import {
+  SYNTHETIC_TOOL,
+  type SyntheticNativeSources,
+  syntheticNativeCatalog,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
+
+const tool = SYNTHETIC_TOOL;
+
+const REF = "test-plugin@aidd-framework";
+
+async function globalActivation(kind: SyntheticNativeSources) {
+  const toolId = tool;
+  const refs = new Map<string, HostPluginRegistryEntry>();
+  class StatefulActivator extends FakeHostActions {
+    override enablePlugin(ref: string, scope: Scope = "project"): HostRefusal {
+      super.enablePlugin(ref, scope);
+      refs.set(ref, { enabled: true, scope });
+      return undefined;
+    }
+  }
+  const activator = new StatefulActivator({ available: true });
+  const machine = Manifest.create();
+  machine.addTool(toolId, "1.0.0", []);
+  const userRepo = new InMemoryManifestRepository(machine);
+  const registry = new InMemoryMarketplaceRegistry();
+  await registry.save(
+    "/project",
+    Marketplace.create({
+      name: "aidd-framework",
+      source: { kind: "local", path: "/source" },
+      scope: "user",
+      addedAt: "2026-09-15T00:00:00Z",
+    })
+  );
+  const builtDir = `/built/${toolId}`;
+  const fs = new InMemoryFileAdapter({
+    [`${builtDir}/.plugin/marketplace.json`]: JSON.stringify({
+      name: "aidd-framework",
+      plugins: [{ name: "test-plugin" }],
+    }),
+  });
+  const sync = marketplaceSync({
+    tools: syntheticNativeCatalog(tool, kind),
+    fs,
+    manifestRepo: new InMemoryManifestRepository(Manifest.create()),
+    marketplaceRegistry: registry,
+    logger: new CapturingLogger(),
+    activators: new Map([[toolId, activator]]),
+    ensureBuilt: fakeEnsureBuiltMarketplace(),
+    hostMarketplaceRegistries: new Map([
+      [tool, new FakeHostMarketplaceRegistry({ location: "catalogues", entries: new Map() })],
+    ]),
+    hostPluginRegistries: new Map([
+      [toolId, new FakeHostPluginRegistry({ location: "plugins", refs })],
+    ]),
+    userManifestRepo: userRepo,
+    nativeSources: new Map([
+      [
+        toolId,
+        new FakeHostMarketplaceSources(
+          activator,
+          kind === "registry" ? "registry" : "effective-list",
+          (path) => (path === builtDir ? "aidd-framework" : undefined),
+          new Map()
+        ),
+      ],
+    ]),
+  });
+  const options = { projectRoot: "/project", scope: "user" as const, manifestRepo: userRepo };
+  const setup = await sync.execute({
+    ...options,
+    enablePlugins: ["test-plugin"],
+  });
+  expect(setup.errors).toEqual([]);
+  expect(setup.warnings).toEqual([]);
+  expect(userRepo.getCurrent()?.getPlugins(toolId)).toEqual([]);
+  expect(userRepo.records.get(tool)?.pluginRefs).toEqual([REF]);
+  return { refs, activator, userRepo, sync, options };
+}
+
+type RefState = "enabled" | "missing" | "disabled" | "claims only";
+
+async function dropRegisteredRefs(
+  toolId: AiToolId,
+  refs: Map<string, HostPluginRegistryEntry>,
+  userRepo: Awaited<ReturnType<typeof globalActivation>>["userRepo"]
+) {
+  const registrations = userRepo.records.get(tool);
+  if (registrations === undefined) throw new Error("missing setup record");
+  userRepo.records.set(toolId, { ...registrations, pluginRefs: [] });
+  refs.delete(REF);
+}
+
+async function applyRefState(
+  state: RefState,
+  refs: Map<string, HostPluginRegistryEntry>,
+  userRepo: Awaited<ReturnType<typeof globalActivation>>["userRepo"]
+) {
+  if (state === "missing") refs.delete(REF);
+  if (state === "disabled") refs.set(REF, { enabled: false, scope: "user" });
+  if (state === "claims only") await dropRegisteredRefs(tool, refs, userRepo);
+}
+
+describe.each(["registry", "list-command"] as const)("global %s native plugins", (kind) => {
+  it.each(["enabled", "missing", "disabled", "claims only"] as const)(
+    "sync retains and restores a successful selection when the ref is %s",
+    async (state) => {
+      const { refs, activator, userRepo, sync, options } = await globalActivation(kind);
+      await applyRefState(state, refs, userRepo);
+
+      const result = await sync.execute({ ...options });
+
+      expect(result.errors).toEqual([]);
+      expect(result.warnings).toEqual([]);
+      expect(refs.get(REF)?.enabled).toBe(true);
+      expect(userRepo.records.get(tool)?.pluginRefs).toEqual([REF]);
+      expect(userRepo.records.get(tool)?.pluginClaims).toEqual([{ ref: REF, dependents: [] }]);
+      expect(activator.enabledPluginScopes).toEqual(
+        state === "enabled" ? ["user"] : ["user", "user"]
+      );
+    }
+  );
+});

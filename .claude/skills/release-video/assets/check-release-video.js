@@ -25,7 +25,7 @@ const NOT_COMMANDS = new Set([
 ]);
 
 const SKILL = /^plugins\/([^/]+)\/skills\/(\d{2}-[^/]+)\//;
-const COMMAND = /^cli\/src\/presentation\/commands\/([^/]+)\.ts$/;
+const COMMAND = /^cli\/src\/presentation\/controllers\/(?:[^/]+\/)?([^/]+)\.controller\.ts$/;
 
 function surfaceOf(file) {
   const skill = SKILL.exec(file);
@@ -40,13 +40,16 @@ function surfacesOf(files) {
   return [...found].sort();
 }
 
-/** Where a surface lives, so a surface added then removed or renamed in the same cycle is dropped. */
-function pathOf(surface) {
+/** Whether a surface still lives in the tree, so a surface added then removed or renamed in the
+ * same cycle is dropped. A command controller sits at the root of `controllers/` or in one family folder. */
+function surfaceExists(cwd, surface) {
   if (surface.startsWith("aidd ")) {
-    return `cli/src/presentation/commands/${surface.slice(5)}.ts`;
+    const root = path.join(cwd, "cli/src/presentation/controllers");
+    const file = `${surface.slice(5)}.controller.ts`;
+    return fs.existsSync(root) && fs.readdirSync(root, { recursive: true }).some((entry) => path.basename(entry) === file);
   }
   const [plugin, skill] = surface.split(":");
-  return `plugins/${plugin}/skills/${skill}`;
+  return fs.existsSync(path.join(cwd, `plugins/${plugin}/skills/${skill}`));
 }
 
 function shown(plan) {
@@ -134,7 +137,7 @@ function featSurfaces(cwd = ROOT) {
     .flatMap(([sha]) =>
       git(cwd, "show", "--name-only", "--diff-filter=AM", "--format=", sha).split("\n")
     );
-  return surfacesOf(files).filter((surface) => fs.existsSync(path.join(cwd, pathOf(surface))));
+  return surfacesOf(files).filter((surface) => surfaceExists(cwd, surface));
 }
 
 /** A theme (the pill, top left) groups what touches the same domain: its scenes follow each other. */

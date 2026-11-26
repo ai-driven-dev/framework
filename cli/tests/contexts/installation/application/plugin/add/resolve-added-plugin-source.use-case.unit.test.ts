@@ -1,0 +1,82 @@
+import { describe, expect, it, vi } from "vitest";
+import { ResolveAddedPluginSource } from "../../../../../../src/contexts/installation/application/plugin/add/resolve-added-plugin-source.use-case.js";
+import { PluginDistribution } from "../../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../../src/shared/domain/plugin/plugin-name.js";
+import { buildInstallationDeps } from "../../../../../shared/testing/installation-deps.builder.js";
+import { loadDistributionOf } from "../../../../../shared/testing/load-distribution.builder.js";
+import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
+
+const PROJECT_ROOT = "/test-project";
+const SOURCE = { kind: "local" as const, path: "/plugin" };
+const INPUT = { source: SOURCE, projectRoot: PROJECT_ROOT, toolIds: [TOOL.claude] };
+
+const fetch = vi.fn(async () => "/fetched");
+
+async function resolver() {
+  const _deps = await buildInstallationDeps({ tools: registeredTools() });
+  fetch.mockClear();
+  const reader = {
+    read: async () =>
+      new PluginDistribution({
+        manifest: { name: parsePluginName("sample-plugin"), version: "1.0.0" },
+        format: TOOL.claude,
+        files: [],
+        components: { commands: [], agents: [], rules: [], skills: [], hooks: [], mcp: [] },
+      }),
+  };
+  return new ResolveAddedPluginSource(
+    {
+      loadDistribution: loadDistributionOf({ fetch }, reader),
+    },
+    registeredTools()
+  );
+}
+
+describe("resolving the source of an added plugin", () => {
+  it("reads the distribution of a plugin that is not from a github marketplace", async () => {
+    const added = await (await resolver()).execute({ ...INPUT, githubMarketplace: false });
+
+    expect(added.isGithubMarketplace).toBe(false);
+    expect(added.distribution?.manifest.name).toBe("sample-plugin");
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("reads nothing for a github marketplace plugin only native tools take, given its version", async () => {
+    const added = await (await resolver()).execute({
+      ...INPUT,
+      githubMarketplace: true,
+      catalog: { version: "9.9.9" },
+    });
+
+    expect(added).toEqual({
+      isGithubMarketplace: true,
+      flat: [],
+      native: [TOOL.claude],
+      distribution: undefined,
+      version: "9.9.9",
+    });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("reads the distribution of a github marketplace plugin that a flat tool takes", async () => {
+    const added = await (await resolver()).execute({
+      ...INPUT,
+      toolIds: [TOOL.cursor],
+      githubMarketplace: true,
+      catalog: { version: "9.9.9" },
+    });
+
+    expect(added.distribution?.manifest.name).toBe("sample-plugin");
+    expect(added).toMatchObject({ flat: [TOOL.cursor], version: "9.9.9" });
+  });
+
+  it("takes the version from plugin.json when the catalog gives none", async () => {
+    const added = await (await resolver()).execute({
+      ...INPUT,
+      githubMarketplace: true,
+      catalog: {},
+    });
+
+    expect(added).toMatchObject({ version: "1.0.0" });
+  });
+});

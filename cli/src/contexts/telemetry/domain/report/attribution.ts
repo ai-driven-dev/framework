@@ -1,12 +1,7 @@
+import type { UnattributedReason } from "../../contract/usage-report.js";
 import { type BranchSnapshot, snapshotKey } from "../branch-binding.js";
 import { resolveBinding } from "../declaration/binding-resolution.js";
 import type { SessionCarry, SessionDeclaration } from "../declaration/task-declaration.js";
-
-/** Why a billed call has no task. A call from outside any repository, or from a directory never
- * seen alive, is never stored, so it reaches a report only as a count in `run.not_stored`
- * and is not a reason here. */
-export const UNATTRIBUTED_REASONS = ["no-binding", "declared-none"] as const;
-export type UnattributedReason = (typeof UNATTRIBUTED_REASONS)[number];
 
 export type Attribution =
   | { readonly state: "attributed"; readonly task: string; readonly ticket: string | null }
@@ -81,19 +76,32 @@ function inForce(
   generation: readonly DeclaredSnapshot[],
   at: number
 ): DeclaredSnapshot | undefined {
+  const first = earliest(generation);
+  if (first === undefined) return undefined;
+  return declaredBy(generation, at) ?? latestOfFirst(generation, first);
+}
+
+function earliest(generation: readonly DeclaredSnapshot[]): DeclaredSnapshot | undefined {
   let first: DeclaredSnapshot | undefined;
-  let current: DeclaredSnapshot | undefined;
   for (const snapshot of generation) {
     if (first === undefined || declaredAt(snapshot) < declaredAt(first)) first = snapshot;
-    if (
-      declaredAt(snapshot) <= at &&
-      (current === undefined || declaredAt(snapshot) >= declaredAt(current))
-    ) {
+  }
+  return first;
+}
+
+/** The latest declaration made by the instant, the later snapshot winning an equal time. */
+function declaredBy(
+  generation: readonly DeclaredSnapshot[],
+  at: number
+): DeclaredSnapshot | undefined {
+  let current: DeclaredSnapshot | undefined;
+  for (const snapshot of generation) {
+    const made = declaredAt(snapshot) <= at;
+    if (made && (current === undefined || declaredAt(snapshot) >= declaredAt(current))) {
       current = snapshot;
     }
   }
-  if (first === undefined) return undefined;
-  return current ?? latestOfFirst(generation, first);
+  return current;
 }
 
 /** The latest snapshot of the earliest declaration. */

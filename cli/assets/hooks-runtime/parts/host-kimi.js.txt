@@ -1,0 +1,29 @@
+"use strict";
+// Kimi's tool and Stop events were never captured: a payload naming one reads as no event.
+// @part requires
+
+const HOST = "kimi";
+const EVENTS = new Map([["SessionStart", "SessionStart"]]);
+const SHELLS = new Set();
+
+// @part current
+
+// @part read-payload
+
+function writtenFiles() {
+  return [];
+}
+
+// @part files-of
+
+// @part read-event
+
+/** Unverified: whether SessionStart stdout reaches the model, as every model turn was refused. */
+function answer() {}
+
+/** No Stop payload was captured, so no answer to it is known to take effect. */
+function continueTurn() {}
+
+// @part own-folder
+
+module.exports = { readEvent, answer, continueTurn, ownFolder, hooksFolder };

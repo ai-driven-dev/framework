@@ -1,0 +1,75 @@
+"use strict";
+/**
+ * OpenCode's and Kilo's side of the one interface every framework hook speaks: `readEvent()`
+ * turns what the host's bridge sends on stdin into a neutral event, `answer()`, `continueTurn()`
+ * and `refuse()` give the host's own answer. Each host's descriptor stamps its name into `HOST` and the build
+ * puts the result at `hooks/lib/host.cjs`. Node built-ins only; anything unreadable is no event.
+ */
+// @part requires
+
+const HOST = "unstamped";
+const EVENTS = new Map([
+  ["SessionStart", "SessionStart"],
+  ["PreToolUse", "PreToolUse"],
+  ["PostToolUse", "PostToolUse"],
+  ["Stop", "Stop"],
+]);
+// The host names its tools in lowercase.
+const WRITES = new Set(["write", "edit"]);
+const PATCHES = new Set(["apply_patch"]);
+const SHELLS = new Set(["bash"]);
+
+// @part current
+
+// @part read-payload
+
+// @part patched-files
+
+function writtenFiles(tool, input, cwd) {
+  // A patch names its files relative to the session's folder, its text in `patchText`.
+  if (PATCHES.has(tool))
+    return typeof input?.patchText === "string" ? patchedFiles(input.patchText, cwd) : [];
+  if (!WRITES.has(tool) || typeof input?.filePath !== "string") return [];
+  const file = { path: path.resolve(cwd, input.filePath) };
+  // A write carries the whole file; an edit carries fragments of it, never `content`.
+  if (typeof input.content === "string") file.content = file.written = input.content;
+  // What an edit put in the file, and what it replaced.
+  if (typeof input.newString === "string") file.written = input.newString;
+  if (typeof input.oldString === "string") file.replaced = input.oldString;
+  return [file];
+}
+
+// @part files-of
+
+// @part read-event
+
+// @part print
+
+// @part has-person
+
+// @part show-person
+
+// @part continue-turn-with-person
+
+/** Both levels inform: the bridge appends the text to the tool's result. Level 2 also marks it
+ * required; a bridge reads that at PostToolUse only, and queues it as the session's next prompt
+ * where the host's client can.
+ * At Stop, any answer continues the turn. With no `text`, only `person` is handed to the bridge,
+ * at any event. */
+function answer({ level, text, person } = {}) {
+  if (current === undefined) return;
+  if (typeof text !== "string" || text === "") return showPerson(person);
+  if (current.event === "Stop") return continueTurn(text, person);
+  print({
+    additionalContext: text,
+    ...(level === 2 ? { required: true } : {}),
+  });
+}
+
+// @part refuse
+
+// @part deny-by-exit-code
+
+// @part own-folder
+
+module.exports = { readEvent, answer, continueTurn, refuse, ownFolder, hooksFolder };

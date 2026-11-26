@@ -2,6 +2,11 @@
 approval_policy = "on-request"
 
 
+## project/.codex/plugins/aidd-context/.codex-plugin/plugin.json
+{
+  "hooks": "./hooks/hooks.json"
+}
+
 ## project/.codex/plugins/aidd-context/hooks/artifacts.cjs
 script, identical to the plugin source
 
@@ -57,11 +62,10 @@ script, identical to the plugin source
 
 ## project/.codex/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/contract.json
 {
-  "version": 1,
   "kind": "skill",
   "unit": "folder",
   "targets": "plugins/*/skills/*",
-  "scope": [".claude/skills/*", ".cursor/skills/*", ".opencode/skills/*", ".kilo/skills/*", ".github/skills/*", ".agents/skills/*"],
+  "scope": [".claude/skills/*", ".cursor/skills/*", ".opencode/skills/*", ".kilo/skills/*", ".github/skills/*", ".agents/skills/*", ".kiro/skills/*"],
   "shell": false,
   "marker": "SKILL.md",
   "rules": {
@@ -146,7 +150,6 @@ targets: [{{host tools}}]
 
 ## project/.codex/plugins/aidd-context/hooks/lib/contracts/05-rule-generate/scripts/contract.json
 {
-  "version": 1,
   "kind": "rule",
   "unit": "file",
   "scope": ["aidd_docs/rules/*/*.md"],
@@ -165,23 +168,26 @@ targets: [{{host tools}}]
 
 ## project/.codex/plugins/aidd-context/hooks/lib/contracts/06-agent-generate/scripts/contract.json
 {
-  "version": 1,
   "kind": "agent",
   "unit": "file",
   "targets": "plugins/*/agents/*.md",
   "scope": [
     ".claude/agents/*.md",
-    ".cursor/agents/*.md"
+    ".cursor/agents/*.md",
+    ".github/agents/*.agent.md",
+    ".agents/agents/*/agent.md",
+    ".opencode/agents/*.md",
+    ".kilo/agents/*.md",
+    ".kiro/agents/*.md",
+    ".kimi-code/agents/*.md"
   ],
   "shell": false,
   "rules": {
     "AGENT-02": {
-      "op": "equals",
+      "op": "custom",
       "in": "*.md",
-      "field": "name",
-      "to": "basename",
-      "why": "hosts resolve the agent by file name",
-      "fix": "set name to {expected}"
+      "check": "name",
+      "why": "hosts resolve the agent by file name"
     },
     "AGENT-03": {
       "op": "pattern",
@@ -220,6 +226,9 @@ targets: [{{host tools}}]
 }
 
 
+## project/.codex/plugins/aidd-context/hooks/lib/contracts/06-agent-generate/scripts/custom/name.cjs
+script, identical to the plugin source
+
 ## project/.codex/plugins/aidd-context/hooks/lib/contracts/07-command-generate/assets/command-template.md
 ---
 description: "{{what the command does, one line}}"
@@ -242,7 +251,6 @@ disable-model-invocation:
 
 ## project/.codex/plugins/aidd-context/hooks/lib/contracts/07-command-generate/scripts/contract.json
 {
-  "version": 1,
   "kind": "command",
   "unit": "file",
   "scope": [
@@ -289,8 +297,10 @@ script, identical to the plugin source
 ## project/.codex/plugins/aidd-context/hooks/memory.cjs
 script, identical to the plugin source
 
-## project/.codex/plugins/aidd-telemetry/hooks/catch-up.cjs
-script, identical to the plugin source
+## project/.codex/plugins/aidd-telemetry/.codex-plugin/plugin.json
+{
+  "hooks": "./hooks/hooks.json"
+}
 
 ## project/.codex/plugins/aidd-telemetry/hooks/hooks.json
 {
@@ -300,9 +310,9 @@ script, identical to the plugin source
         "hooks": [
           {
             "type": "command",
-            "command": "node ${PLUGIN_ROOT}/hooks/session-start.cjs",
-            "statusMessage": "AIDD Telemetry: carry Claude session task",
-            "timeout": 10
+            "command": "node ${PLUGIN_ROOT}/hooks/task.cjs remind",
+            "statusMessage": "AIDD Telemetry: remind the task",
+            "timeout": 5
           }
         ]
       },
@@ -310,22 +320,9 @@ script, identical to the plugin source
         "hooks": [
           {
             "type": "command",
-            "command": "node ${PLUGIN_ROOT}/hooks/catch-up.cjs",
-            "statusMessage": "AIDD Telemetry: update measurement ledger",
-            "async": true,
-            "timeout": 120
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ${PLUGIN_ROOT}/hooks/prompt-gate.cjs",
-            "statusMessage": "AIDD Telemetry: check task declaration",
-            "timeout": 30
+            "command": "node ${PLUGIN_ROOT}/hooks/ledger.cjs ingest",
+            "statusMessage": "AIDD Telemetry: update the measurement ledger",
+            "timeout": 5
           }
         ]
       }
@@ -334,10 +331,10 @@ script, identical to the plugin source
 }
 
 
-## project/.codex/plugins/aidd-telemetry/hooks/lib/aidd.cjs
+## project/.codex/plugins/aidd-telemetry/hooks/ledger.cjs
 script, identical to the plugin source
 
-## project/.codex/plugins/aidd-telemetry/hooks/lib/binding.cjs
+## project/.codex/plugins/aidd-telemetry/hooks/lib/aidd.cjs
 script, identical to the plugin source
 
 ## project/.codex/plugins/aidd-telemetry/hooks/lib/claude-only.cjs
@@ -352,22 +349,13 @@ script, identical to the plugin source
 ## project/.codex/plugins/aidd-telemetry/hooks/lib/context.cjs
 script, identical to the plugin source
 
-## project/.codex/plugins/aidd-telemetry/hooks/lib/declaration.cjs
-script, identical to the plugin source
-
 ## project/.codex/plugins/aidd-telemetry/hooks/lib/git.cjs
 script, identical to the plugin source
 
-## project/.codex/plugins/aidd-telemetry/hooks/lib/hook-io.cjs
-script, identical to the plugin source
+## project/.codex/plugins/aidd-telemetry/hooks/lib/host.cjs
+script, identical to the host adapter host-codex.cjs
 
 ## project/.codex/plugins/aidd-telemetry/hooks/lib/jsonl.cjs
-script, identical to the plugin source
-
-## project/.codex/plugins/aidd-telemetry/hooks/lib/lookup.cjs
-script, identical to the plugin source
-
-## project/.codex/plugins/aidd-telemetry/hooks/lib/presence.cjs
 script, identical to the plugin source
 
 ## project/.codex/plugins/aidd-telemetry/hooks/lib/telemetry-dir.cjs
@@ -376,14 +364,11 @@ script, identical to the plugin source
 ## project/.codex/plugins/aidd-telemetry/hooks/lib/tool.cjs
 script, identical to the plugin source
 
-## project/.codex/plugins/aidd-telemetry/hooks/prompt-gate.cjs
-script, identical to the plugin source
-
-## project/.codex/plugins/aidd-telemetry/hooks/session-start.cjs
+## project/.codex/plugins/aidd-telemetry/hooks/task.cjs
 script, identical to the plugin source
 
 # recorded
-project codex aidd-context scope=project: 19 hook files
+project codex aidd-context scope=project: 20 hook files
   .codex/plugins/aidd-context/hooks/artifacts.cjs
   .codex/plugins/aidd-context/hooks/hooks.json
   .codex/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/contract.json
@@ -395,6 +380,7 @@ project codex aidd-context scope=project: 19 hook files
   .codex/plugins/aidd-context/hooks/lib/contracts/05-rule-generate/assets/rule-template.md
   .codex/plugins/aidd-context/hooks/lib/contracts/05-rule-generate/scripts/contract.json
   .codex/plugins/aidd-context/hooks/lib/contracts/06-agent-generate/scripts/contract.json
+  .codex/plugins/aidd-context/hooks/lib/contracts/06-agent-generate/scripts/custom/name.cjs
   .codex/plugins/aidd-context/hooks/lib/contracts/07-command-generate/assets/command-template.md
   .codex/plugins/aidd-context/hooks/lib/contracts/07-command-generate/scripts/contract.json
   .codex/plugins/aidd-context/hooks/lib/contracts/lib/engine.cjs
@@ -405,25 +391,20 @@ project codex aidd-context scope=project: 19 hook files
   .codex/plugins/aidd-context/hooks/memory.cjs
   projectHooks null
   dependents []
-project codex aidd-telemetry scope=project: 18 hook files
-  .codex/plugins/aidd-telemetry/hooks/catch-up.cjs
+project codex aidd-telemetry scope=project: 13 hook files
   .codex/plugins/aidd-telemetry/hooks/hooks.json
+  .codex/plugins/aidd-telemetry/hooks/ledger.cjs
   .codex/plugins/aidd-telemetry/hooks/lib/aidd.cjs
-  .codex/plugins/aidd-telemetry/hooks/lib/binding.cjs
   .codex/plugins/aidd-telemetry/hooks/lib/claude-only.cjs
   .codex/plugins/aidd-telemetry/hooks/lib/codex-session-file.cjs
   .codex/plugins/aidd-telemetry/hooks/lib/consent.cjs
   .codex/plugins/aidd-telemetry/hooks/lib/context.cjs
-  .codex/plugins/aidd-telemetry/hooks/lib/declaration.cjs
   .codex/plugins/aidd-telemetry/hooks/lib/git.cjs
-  .codex/plugins/aidd-telemetry/hooks/lib/hook-io.cjs
+  .codex/plugins/aidd-telemetry/hooks/lib/host.cjs
   .codex/plugins/aidd-telemetry/hooks/lib/jsonl.cjs
-  .codex/plugins/aidd-telemetry/hooks/lib/lookup.cjs
-  .codex/plugins/aidd-telemetry/hooks/lib/presence.cjs
   .codex/plugins/aidd-telemetry/hooks/lib/telemetry-dir.cjs
   .codex/plugins/aidd-telemetry/hooks/lib/tool.cjs
-  .codex/plugins/aidd-telemetry/hooks/prompt-gate.cjs
-  .codex/plugins/aidd-telemetry/hooks/session-start.cjs
+  .codex/plugins/aidd-telemetry/hooks/task.cjs
   projectHooks null
   dependents []
 project codex nativeRegistrations pluginRefs null

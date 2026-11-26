@@ -1,5 +1,4 @@
 {
-  "version": 1,
   "kind": "shadow",
   "unit": "file",
   "scope": ["**/*-shadow-report.md"],
