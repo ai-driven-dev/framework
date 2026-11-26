@@ -1,11 +1,6 @@
 import type { ProjectHookEntry } from "../../contract/tool-vocabulary.js";
-import {
-  type HandlerGroup,
-  readNamedHooks,
-  serialize,
-  type WrappedCommandHooksTarget,
-  withoutPlugin,
-} from "./wrapped-command-hooks-merge.js";
+import type { HandlerGroup, WrappedCommandHooksTarget } from "./wrapped-command-hooks-convert.js";
+import { readNamedHooks, serialize, withoutPlugin } from "./wrapped-command-hooks-merge.js";
 
 const isGroup = (entry: ProjectHookEntry | HandlerGroup): entry is HandlerGroup => "hooks" in entry;
 

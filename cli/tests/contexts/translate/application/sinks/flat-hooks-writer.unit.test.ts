@@ -19,6 +19,7 @@ function stepFor(over: Parameters<typeof aSupportedArtifact>[0] = {}) {
     artifact,
     pluginName: "plug",
     hooksJson: "{}",
+    carriesRelease: false,
   };
 }
 
