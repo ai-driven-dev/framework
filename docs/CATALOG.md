@@ -114,7 +114,7 @@ Meta-cognition: brainstorm, challenge, blind-spot scan, fact-check, conversation
 | ------------------ | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | `01-brainstorm`    | Clarify a vague product or technical intent through natural discovery | `01-capture`, `02-probe`, `03-integrate`, `04-finalize` |
 | `02-challenge`     | Rethink prior work to verify correctness against a plan    | `01-challenge`                                                                                |
-| `03-shadow-areas`  | Scan a markdown artifact for blind spots                   | `01-detect`, `02-render-report`, `03-diff`                                                    |
+| `03-shadow-areas`  | Scan a markdown artifact for blind spots                   | `01-detect`, `02-diff`, `03-render-report`                                                    |
 | `04-fact-check`    | Verify factual claims against sources and cite them        | `01-identify-claims`, `02-verify`, `03-report`                                                |
 | `05-review-conversation` | Review a finished conversation and attribute each cost to its owner | `01-read-conversation`, `02-recommend`, `03-target-edits` |
 

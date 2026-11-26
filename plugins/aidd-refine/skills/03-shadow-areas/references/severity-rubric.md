@@ -1,62 +1,20 @@
-<!-- source of truth: locked-sets.json -->
+# Severity rubric
 
-# Severity Rubric
+How severe a gap is. The validator reads the same three tiers from `scripts/custom/locked-sets.json`.
 
-The 3 locked severity tiers below come from `references/locked-sets.json`. Assign the highest-matching tier; do not escalate speculatively.
+## Assignment
 
----
+1. Name the downstream phase the gap hurts most: design, implementation, testing or release.
+2. Assign `blocker` when the gap stops that phase entirely.
+3. Assign `major` when it does not, but causes a rework cycle: a code change after review or test.
+4. Assign `minor` otherwise.
 
-## blocker
+Assign the highest tier that matches, never one raised on a guess, and never `blocker` for a gap found and fixed within the current phase.
 
-**Decision rule**: The gap will cause a downstream phase to hit a hard stop. Work cannot proceed or a deliverable cannot be verified until this gap is resolved.
+## Tiers
 
-**When to assign**:
-- A required actor is absent and no decision can be made about their role without naming them.
-- An acceptance criterion is missing and there is no other way to confirm "done" for the associated requirement.
-- A dependency is unnamed and the implementation cannot start without it.
-- An assumption, if wrong, invalidates a core design decision that would require starting over.
-
-**Example 1**: A spec defines an authorization model but never names which role grants elevated access. The developer cannot implement the access check until this is resolved. Severity: `blocker`.
-
-**Example 2**: A feature is described but has no acceptance criterion of any kind. QA has no basis for a pass/fail judgment. Severity: `blocker`.
-
----
-
-## major
-
-**Decision rule**: The gap does not prevent starting work, but it will cause rework: incomplete implementation, a failed review cycle, or a missed requirement that surfaces during testing.
-
-**When to assign**:
-- A failure mode is undescribed; it will be discovered during integration or QA and require a code change.
-- An edge case is missing; it will surface in testing and require a spec amendment followed by a code fix.
-- An ambiguous term is used in a critical path where two reasonable interpretations lead to different implementations.
-
-**Example 1**: A payment spec omits the card-declined failure mode. The developer ships the happy path. QA surfaces the gap. A code fix and a re-test cycle are required. Severity: `major`.
-
-**Example 2**: The word "user" refers to both guest and authenticated account holders in different sections, with no reconciliation. One interpretation leads to the wrong access scope. Severity: `major`.
-
----
-
-## minor
-
-**Decision rule**: The gap is cosmetic or affects documentation clarity only. Resolving it improves precision or readability but will not change an implementation decision or require rework.
-
-**When to assign**:
-- An ambiguous term exists in a non-critical context where both interpretations lead to the same implementation.
-- A term lacks a formal definition but its meaning is inferable from context and consistent usage.
-- A counter-example or illustrative example is absent from a requirement, leaving the intent slightly underspecified but not actionably wrong.
-
-**Example 1**: A spec says "the button should be prominent." The design system already enforces a primary-button style. The ambiguity does not affect the implementation. Severity: `minor`.
-
-**Example 2**: A user story omits "given / when / then" formatting but the intent is clear from the surrounding context. Severity: `minor`.
-
----
-
-## Severity assignment process
-
-1. Read the gap and identify the downstream phase most affected (design, implementation, testing, release).
-2. Ask: will the gap stop that phase entirely? If yes, assign `blocker`.
-3. If no: will it cause a rework cycle (code change after review or test)? If yes, assign `major`.
-4. If no: assign `minor`.
-
-Do not assign `blocker` for gaps that are discoverable and fixable within the current phase.
+| Tier | Decision rule | Typical gaps | Example |
+| --- | --- | --- | --- |
+| blocker | Work cannot proceed, or a deliverable cannot be verified, until the gap is resolved. | A required actor is absent; a requirement has no acceptance criterion at all; an unnamed dependency blocks the start; a wrong assumption would void a core design decision. | A spec defines an authorization model but never names which role grants elevated access, so the access check cannot be built. |
+| major | Work can start but will be redone: an incomplete build, a failed review, or a missed requirement found in testing. | An undescribed failure mode; a missing edge case; an ambiguous term on a critical path where two readings build different things. | A payment spec omits the declined-card case; QA finds it after the happy path ships, and a fix and re-test follow. |
+| minor | Clarity only: resolving it changes no implementation decision and causes no rework. | An ambiguous term where both readings build the same thing; an undefined term clear from consistent use; a missing illustrative example. | A spec says "the button should be prominent" while the design system already enforces a primary-button style. |

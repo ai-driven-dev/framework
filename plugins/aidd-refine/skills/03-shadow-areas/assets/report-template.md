@@ -1,51 +1,40 @@
 ---
-source: {{source_path}}
-generated_at: {{generated_at}}
-# status: clean
+source: {{source path}}
+generated_at: {{generated at}}
+status: clean
 ---
 
 # Shadow Areas Report
 
-Source: `{{source_path}}`
-Generated: `{{generated_at}}`
+Source: `{{source path}}`
+Generated: `{{generated at}}`
 
-Total gaps: {{total_count}} | Blocker: {{blocker_count}} | Major: {{major_count}} | Minor: {{minor_count}}
-
----
+Total gaps: {{total}} | Blocker: {{blocker count}} | Major: {{major count}} | Minor: {{minor count}}
 
 ## Warnings
 
-- {{warning text}}
-
----
+- {{warning}}
 
 ## Gaps by Category
 
-<!-- Plain mode: one heading per category that has a gap, in locked order. A category with no gap is omitted. -->
+### {{category}}
 
-### unstated assumption
-
-**[blocker]** What happens when the upstream service returns 429 with no Retry-After header?
-> retry_limit = env.get("RETRY_LIMIT", 3)
-
-<!-- DIFF-MODE EXAMPLE (rendered only when 03-diff output is passed to 02-render-report)
-
-When `diff` is supplied the flat list per category is replaced by three named subsections.
-Empty subsections are omitted. Category headings with zero entries across all three subsets are also omitted.
-
-### unstated assumption
+[{{severity}}] {{probe}}
+> {{snippet}}
 
 #### Closed
 
-**[major]** Is the retry limit configurable by the caller?
-> retry_limit = env.get("RETRY_LIMIT", 3)
+[{{severity}}] {{probe}}
+> {{snippet}}
 
 #### Still Open
 
-**[blocker]** What happens when the upstream service returns 429 with no Retry-After header?
+[{{severity}}] {{probe}}
+> {{snippet}}
 
 #### Newly Introduced
 
-**[minor]** Does the default timeout apply to streaming responses or only to connection establishment?
+[{{severity}}] {{probe}}
+> {{snippet}}
 
-END DIFF-MODE EXAMPLE -->
+<!-- Fill, then strip this comment. Repeat a category and its gaps as needed. Without a diff, write gaps right under the category and omit Closed, Still Open and Newly Introduced; with one, write gaps only inside them. Omit a snippet a gap does not have. -->
