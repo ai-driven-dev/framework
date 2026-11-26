@@ -77,6 +77,12 @@ Sources: [Claude Code](https://code.claude.com/docs/en/hooks), [Codex](https://d
 | One `Stop` hook per plugin can continue a turn | After one blocks, the next stay silent |
 | A `SessionStart` script that exits 2 has its stderr added to the model's system prompt | Claude Code shows it to the person only; do not exit 2 for a message |
 | On OpenCode 2, a refusal reaches only write and edit, and a message for the person is not shown | A hook that refuses a shell command is not stopped there |
+| On OpenCode 2, a required finding is appended to the tool's result but never queued | A required `PostToolUse` finding is only informing there |
+| A `UserPromptSubmit` throw stops the prompt but its reason reaches neither the person nor the model | A `UserPromptSubmit` script cannot refuse with a reason |
+| A child session's prompt, the one its parent wrote, reaches `UserPromptSubmit` too | A `UserPromptSubmit` hook also runs for a subagent's task |
+| A call made through Code Mode was not observed reaching a hook | Do not rely on a hook for those calls |
+| On Kilo, a script's message for the person is not shown | Kilo has no person channel |
+| In `kilo run`, a `Stop` follow-up's turn never runs | A `Stop` hook cannot continue a headless Kilo run |
 
 ### Codex
 

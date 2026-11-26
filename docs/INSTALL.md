@@ -141,8 +141,8 @@ cp -r aidd-framework-antigravity-marketplace-<version>/plugins/aidd-* .agents/pl
 <br />
 
 1. Download `aidd-framework-kimi-marketplace-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest). It holds plugin directories, not a catalog.
-2. Unzip it.
-3. Start `kimi web`, then install each `plugins/aidd-*` directory as a local plugin ([Kimi's web guide](https://www.kimi.com/code/docs/en/kimi-code-cli/guides/web.html)).
+2. Unzip it. The plugins are the `plugins/aidd-*` directories.
+3. Installing them by hand in Kimi's web UI is unverified. `aidd setup --global --ide kimi` installs the plugins through the server Kimi starts.
 
 </details>
 

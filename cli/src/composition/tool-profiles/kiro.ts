@@ -67,7 +67,7 @@ const MATCHER_TOOLS: ReadonlyMap<string, string> = new Map([
 const hooks = declareHooks(
   { toolId: "kiro", directory: DIRECTORY, adapter },
   {
-    // Only events with a captured payload are delivered (https://kiro.dev/docs/hooks/types/); SessionEnd fires unreliably headless, so it is skipped with a warning.
+    // Only events with a captured payload are delivered (https://kiro.dev/docs/hooks/types/); SessionEnd was seen firing in one of six headless runs, so it is skipped with a warning.
     undeclaredEvents: "skipped",
     events: {
       SessionStart: "SessionStart",

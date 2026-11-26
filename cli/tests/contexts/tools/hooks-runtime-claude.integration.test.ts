@@ -187,4 +187,11 @@ describe("Claude Code", () => {
       hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: "memory" },
     });
   });
+
+  it("continues nothing outside a Stop", () => {
+    const { adapter } = read("claude", sample("claude-PostToolUse.json", 0).payload);
+    adapter.continueTurn("go on");
+
+    expect(printed).toStrictEqual([]);
+  });
 });

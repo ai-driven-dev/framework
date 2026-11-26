@@ -83,7 +83,7 @@ function answer({ text } = {}) {
   print({ additional_context: text });
 }
 
-/** Cursor delivers no tool call a hook can refuse, so refusing is a no-op here. */
+/** Refuses nothing: no Cursor `preToolUse` payload has been captured. */
 function refuse() {}
 
 // @part own-folder

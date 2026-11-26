@@ -4,7 +4,7 @@
  * Limit: V2 setup has no toast and no promptAsync, so no message reaches the person and a required
  * finding is never queued.
  * Limit: V2 never calls V1 dispose.
- * Limit: a Code Mode call reaches no hook.
+ * Limit: a Code Mode call was not observed reaching a hook.
  * Limit: a child session's prompt reaches UserPromptSubmit.
  * Limit: a UserPromptSubmit throw carries no reason, so no script refuses.
  */

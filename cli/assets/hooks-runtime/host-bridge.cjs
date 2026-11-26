@@ -123,7 +123,8 @@ function showPerson(person) {
  * person `person` where the host allows it. Asks once: a turn end that is already a continuation
  * is never continued again. */
 function continueTurn(text, person) {
-  if (typeof text !== "string" || text === "" || current?.stopActive === true) return;
+  if (current?.event !== "Stop" || typeof text !== "string" || text === "") return;
+  if (current.stopActive === true) return;
   print({
     decision: "block",
     reason: text,

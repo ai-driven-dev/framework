@@ -98,7 +98,7 @@ function answer({ text } = {}) {
   print({ additional_context: text });
 }
 
-/** Cursor delivers no tool call a hook can refuse, so refusing is a no-op here. */
+/** Refuses nothing: no Cursor `preToolUse` payload has been captured. */
 function refuse() {}
 
 /** Whether `folder` is a folder of this user's alone, created when `create` and missing; its parent must exist. */
