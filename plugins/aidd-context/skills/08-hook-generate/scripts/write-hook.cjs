@@ -218,11 +218,12 @@ const HOSTS = {
     config: { path: `.github/hooks/${NAMES}.json`, shape: "the whole file: version 1, bash, cwd \".\", timeoutSec", source: COPILOT_DOC },
     cwd: { value: "the repository root", source: COPILOT_DOC },
     trust: { value: "folder trust", source: COPILOT_DOC },
-    shell: { value: null, command: null, source: COPILOT_DOC },
+    shell: { value: "bash", command: "command", source: capture("copilot-camel-preToolUse.json") },
+    alsoRuns: { value: "the project's .claude/settings.json and .claude/settings.local.json hooks", source: COPILOT_DOC },
     moments: {
       "session-start": moment("sessionStart", false, COPILOT_DOC),
       prompt: moment("userPromptSubmitted", false, COPILOT_DOC),
-      "before-tool": moment("preToolUse", true, COPILOT_DOC, ["toolName", "toolArgs"]),
+      "before-tool": moment("preToolUse", true, capture("copilot-camel-preToolUse.json"), ["toolName", "toolArgs"]),
       "after-tool": moment("postToolUse", true, COPILOT_DOC),
       stop: moment("agentStop", false, COPILOT_DOC, ["stop_hook_active"]),
       "session-end": moment("sessionEnd", false, COPILOT_DOC),
@@ -576,7 +577,11 @@ function main(argv) {
     plan = planWrite(project, hook);
   }
   // Removing was approved as such; only a write can overwrite without asking.
-  if (!options["--plan"]) applyPlan(project, plan, removing || options["--force"]);
+  if (!options["--plan"]) {
+    applyPlan(project, plan, removing || options["--force"]);
+    // The input is a temporary file; once written, nothing reads it again.
+    if (!removing) fs.unlinkSync(options["--input"]);
+  }
   return { changes: plan.map((change) => ({ tool: change.tool, path: change.path, operation: change.operation })) };
 }
 

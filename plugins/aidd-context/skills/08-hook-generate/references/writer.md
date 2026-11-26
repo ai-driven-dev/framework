@@ -11,7 +11,7 @@ node "$writer" --project "$project_root" --remove "$name"
 - `$writer`: the absolute path of `scripts/write-hook.cjs`, next to the loaded `SKILL.md`.
 - `$host_ids`: the confirmed IDs from `hosts.md`, comma-separated.
 - `$project_root`: the absolute path of the working directory.
-- `$hook_json`: a temporary file outside the project, deleted with its folder in the command that writes the hook. It holds `name` and `hosts`, one handler per host ID:
+- `$hook_json`: a temporary file outside the project, which the writer deletes once the hook is written. It holds `name` and `hosts`, one handler per host ID:
 
 | Handler field | Holds |
 | --- | --- |
@@ -25,7 +25,7 @@ node "$writer" --project "$project_root" --remove "$name"
 
 | Option | Effect |
 | --- | --- |
-| `--describe` | Writes nothing; prints per host its doc, moments, effects, shell tool and its command argument, cwd and trust, each fact with its source. |
+| `--describe` | Writes nothing; prints per host its doc, moments, effects, shell tool and its command argument, cwd, trust and the other hosts' hooks it also runs, each fact with its source. |
 | `--plan` | Writes nothing; lists each path with `create`, `update`, `unchanged` or `delete`. |
 | `--force` | Overwrites each path the plan lists as `update`; without it, the writer refuses. |
 

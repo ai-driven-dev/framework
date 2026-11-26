@@ -16,7 +16,7 @@ The frame, or the trial failure verify sends back.
 4. Present the plan.
    - Each handler in full.
    - Each path with its operation.
-   - Per host: where it falls short, what a teammate grants before it runs, and whether it blocks this session's own tool, with the remove command.
+   - Per host: where it falls short, what a teammate grants before it runs, another host's hook it also runs, and whether it blocks this session's own tool, with the remove command.
 5. End the turn and wait for the user's answer.
    - Revision: read [frame](01-frame.md).
    - Cancel: stop, cancelled.
