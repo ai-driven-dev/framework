@@ -89,8 +89,8 @@ function generate(root) {
 }
 
 /** The hook run on `input`; `temp` points it at another temp dir, so a test can plant files there. */
-function hook(input, temp = null) {
-  const env = temp ? { ...process.env, TMPDIR: temp, TMP: temp, TEMP: temp } : process.env;
+function hook(input, temp = null, extra = {}) {
+  const env = { ...(temp ? { ...process.env, TMPDIR: temp, TMP: temp, TEMP: temp } : process.env), ...extra };
   const run = spawnSync(process.execPath, [ENGINE, "hook"], { input, encoding: "utf8", env });
   return { code: run.status, out: run.stdout, err: run.stderr };
 }
@@ -742,6 +742,24 @@ describe("aidd-ui validator entries", () => {
       fs.chmodSync(path.dirname(stateFolder(temp)), 0o777);
       hook(postToolUse(path.join(tmp, BRAND)), temp);
       assert.equal(fs.existsSync(markPath(sid, temp)), false);
+    });
+
+    it("leaves no mark in a hooks folder that is not a folder", { skip: process.platform === "win32" }, () => {
+      const temp = path.join(tmp, "temp");
+      fs.mkdirSync(temp);
+      fs.writeFileSync(path.dirname(stateFolder(temp)), "keep", { mode: 0o700 });
+      hook(postToolUse(path.join(tmp, BRAND)), temp);
+      assert.equal(fs.readFileSync(path.dirname(stateFolder(temp)), "utf8"), "keep");
+    });
+
+    it("leaves no mark in a hooks folder this user does not own", { skip: process.platform === "win32" }, () => {
+      const temp = path.join(tmp, "temp");
+      fs.mkdirSync(temp);
+      const preload = path.join(tmp, "other-user.cjs");
+      fs.writeFileSync(preload, "const real = process.getuid;\nprocess.getuid = () => real.call(process) + 1;\n");
+      hook(postToolUse(path.join(tmp, BRAND)), temp, { NODE_OPTIONS: `--require ${preload}` });
+      const written = fs.readdirSync(temp, { recursive: true, withFileTypes: true }).filter((entry) => entry.isFile());
+      assert.deepEqual(written, []);
     });
 
     it("consumes the turn mark: a later Stop without a new write is silent", () => {
