@@ -1,5 +1,5 @@
 "use strict";
-// A bundled skill, agent or agent template sets no `model` in its front matter: the host picks the model. Anchor: marketplace.json.
+// A bundled skill, agent or agent template sets no `model` or `effort` in its front matter: the host picks both. Anchor: marketplace.json.
 const fs = require("node:fs");
 const path = require("node:path");
 const { frontmatter, readText } = require("../../engine/markdown.cjs");
@@ -14,7 +14,9 @@ module.exports = (ctx) => {
     const abs = path.join(root, file);
     if (!fs.existsSync(abs)) continue;
     const fm = frontmatter(readText(abs));
-    if ("model" in fm.fields) found.push({ file: path.relative(ctx.root, abs), line: fm.fieldLine.model, offending: `model: ${fm.fields.model}`, fix: "remove model from the front matter, the host picks it" });
+    for (const key of ["model", "effort"]) {
+      if (key in fm.fields) found.push({ file: path.relative(ctx.root, abs), line: fm.fieldLine[key], offending: `${key}: ${fm.fields[key]}`, fix: `remove ${key} from the front matter, the host picks it` });
+    }
   }
   return found;
 };
