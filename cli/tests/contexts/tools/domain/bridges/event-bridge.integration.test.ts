@@ -409,6 +409,17 @@ describe("the bridge body every host shares, in Kilo's module", () => {
     expect(warn).toHaveBeenCalledTimes(1);
   });
 
+  it("leaves no SessionStart script running past the test that started it", async () => {
+    const { directory, emit } = await open(host);
+    await emit(sessionStarted(host, "left-running", directory));
+    await cleanBridges();
+
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    await delay(500);
+
+    expect(warn).not.toHaveBeenCalled();
+  });
+
   it("runs no Stop script for an event that is not an idle session", async () => {
     const { emit, of } = await open(host);
     await emit(
