@@ -13,11 +13,10 @@ import { basename, isProse } from "../plugin-paths.js";
 import type { ComponentPlan } from "../rules/component-pipeline.js";
 import { flatHookPlans } from "../rules/hook-plans.js";
 import { chainLinks, toolLinks } from "../rules/links.js";
-import { ruleFilePlan } from "../rules/rule-scope.js";
 import type { TranslatedAiTool, TranslatedFlatPlugin } from "../translate-profile.js";
 import { flatAgentPlan, flatSkillLinks } from "./build-flat.js";
 import { namedByFolder } from "./build-shared.js";
-import { prefixCommandName } from "./install-flat-rules.js";
+import { installedRulePlan, prefixCommandName } from "./install-flat-rules.js";
 
 type FlatSection = "agents" | "rules" | "skills";
 
@@ -75,8 +74,10 @@ function sectionPlans(
   return FLAT_SECTIONS.flatMap((section) =>
     dist.components[section].flatMap((file) => {
       const plan = sectionPlan(file, section, at);
-      if (plan === null) return [];
-      return [section === "rules" ? ruleFilePlan(plan, file.content, plugins.flatLayout()) : plan];
+      if (plan === null || section !== "rules") return plan === null ? [] : [plan];
+      return [
+        installedRulePlan(plan, file.content, { tool: at.tool, layout: plugins.flatLayout() }),
+      ];
     })
   );
 }

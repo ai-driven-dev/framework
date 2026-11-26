@@ -34,8 +34,20 @@ const SHIPPED = JSON.stringify({
 
 const UNCAPTURED = JSON.stringify({
   hooks: {
+    SessionEnd: [{ hooks: [{ type: "command", command: `node ${PLUGIN_ROOT_VAR}/hooks/c.cjs` }] }],
+  },
+});
+
+const ON_A_PROMPT_AND_A_SUBAGENT = JSON.stringify({
+  hooks: {
     UserPromptSubmit: [
       { hooks: [{ type: "command", command: `node ${PLUGIN_ROOT_VAR}/hooks/c.cjs` }] },
+    ],
+    SubagentStop: [
+      {
+        matcher: "Write",
+        hooks: [{ type: "command", command: `node ${PLUGIN_ROOT_VAR}/hooks/d.cjs` }],
+      },
     ],
   },
 });
@@ -211,7 +223,21 @@ describe("kiro's hooks file", () => {
     const { content, warnings } = format.merge(null, UNCAPTURED, "aidd-context");
 
     expect(hooksOf(content)).toEqual([]);
-    expect(warnings).toEqual(["unmapped event 'UserPromptSubmit' skipped"]);
+    expect(warnings).toEqual(["unmapped event 'SessionEnd' skipped"]);
+  });
+
+  it("delivers a prompt and a subagent's end, each to every one, under its own trigger", () => {
+    const { content, warnings } = format.merge(null, ON_A_PROMPT_AND_A_SUBAGENT, "aidd-context");
+
+    expect(hooksOf(content)).toEqual([
+      expect.objectContaining({
+        name: "aidd-context-UserPromptSubmit-c.cjs",
+        trigger: "UserPromptSubmit",
+      }),
+      expect.objectContaining({ name: "aidd-context-SubagentStop-d.cjs", trigger: "SubagentStop" }),
+    ]);
+    expect(hooksOf(content).map((hook) => hook.matcher)).toEqual([undefined, undefined]);
+    expect(warnings).toEqual([]);
   });
 
   it("delivers PreToolUse to every tool, the script telling a write apart by the files it reads", () => {

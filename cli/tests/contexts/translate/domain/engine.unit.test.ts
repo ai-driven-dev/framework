@@ -253,6 +253,7 @@ describe("the engine translate()", () => {
     it("emits a skill as .agents/skills/<plugin>-<skill>/, never nested under the plugin", () => {
       expect(pathsFor(antigravity)).toEqual([
         ".agents/agents/sample-plugin-reviewer/agent.md",
+        ".agents/rules/sample-plugin-standards.md",
         ".agents/skills/sample-plugin-hello/SKILL.md",
       ]);
     });

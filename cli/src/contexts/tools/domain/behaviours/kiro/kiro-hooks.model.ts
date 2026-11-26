@@ -3,12 +3,13 @@
  * merge is Kiro's own.
  *
  * Only a command of the form `node ${CLAUDE_PLUGIN_ROOT}/hooks/...` is delivered; any other is
- * dropped, and no plugin ships one. Only `SessionStart`, `PreToolUse`, `PostToolUse` and `Stop` are
- * delivered. A PostToolUse matcher names Claude Code's tools; Kiro selects by a tool's tag
- * (https://kiro.dev/docs/hooks/types/), and a matcher with `|` is a regex there, never a selector,
- * so each tag gets its own hook. PreToolUse takes none: it runs for every tool, and its script
- * tells a write by the files it reads. Stop takes no matcher, and SessionStart none a plugin
- * ships. */
+ * dropped, and no plugin ships one. Only `SessionStart`, `UserPromptSubmit`, `PreToolUse`,
+ * `PostToolUse`, `Stop` and `SubagentStop` are delivered. A PostToolUse matcher names Claude
+ * Code's tools; Kiro selects by a tool's tag (https://kiro.dev/docs/hooks/types/), and a matcher
+ * with `|` is a regex there, never a selector, so each tag gets its own hook. PreToolUse takes
+ * none: it runs for every tool, and its script tells a write by the files it reads. Stop and
+ * UserPromptSubmit take no matcher, SubagentStop's names an agent, never a tool, and SessionStart
+ * none a plugin ships. */
 
 import type { ShippedHooks } from "../../../../../shared/domain/materialization/build-contract.js";
 import { genericFlatHooksScriptPath } from "../../../../../shared/domain/materialization/flat-paths.js";
@@ -141,7 +142,7 @@ function hooksOfCall(
 function hooksOfEvent(where: Where, groups: readonly PluginMatcherGroup[]): Built {
   const built = groups.flatMap((group) =>
     (group.hooks ?? []).flatMap((item) =>
-      // Only PostToolUse selects by tool: Stop takes no matcher, and none ships at SessionStart.
+      // Only PostToolUse selects by tool: no other trigger a plugin ships takes a tool matcher.
       bridgeHookCalls([
         { matcher: where.trigger === "PostToolUse" ? group.matcher : undefined, hooks: [item] },
       ]).map((call) => hooksOfCall(where, call, item.timeout))
