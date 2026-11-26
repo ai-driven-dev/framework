@@ -32,7 +32,7 @@ What a host (Claude Code, Codex, Copilot) says it registered, and the calls that
 
 - A host with no plugin verbs declares a `pluginServer` in its native-registration section; selection is by that declaration, never by tool id.
 - The token is read from the server's startup banner and never stored or logged. `ServerPluginLedger` records which plugins aidd installed, beside the machine manifest.
-- A user-scope run installs from the framework's built tree; `clean --scope user` removes what the ledger holds and refuses when the host's binary is gone.
+- A user-scope run installs from the framework's built tree; `clean --scope user` removes what the ledger holds and refuses when the host's binary is gone. `plugin remove` and `plugin update` at user scope reach the ledger too; `plugin install --scope user` cannot target such a tool, whose install scope is the project's.
 
 ## Tests
 

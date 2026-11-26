@@ -194,7 +194,7 @@
       "marketplace": {
         "skills": "yes",
         "agents": "yes",
-        "mcp": "no",
+        "mcp": "yes",
         "hooks": "no",
         "rules": "no",
         "commands": "no"

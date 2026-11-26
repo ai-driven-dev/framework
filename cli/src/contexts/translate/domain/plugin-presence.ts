@@ -5,13 +5,12 @@ import {
   PLUGIN_AGENT_INPUT_EXT,
   PLUGIN_HOOKS_RELATIVE,
   PLUGIN_SKILL_ENTRY_FILE,
+  parsedMcpDeclaration,
 } from "./canon-format.js";
 
 /** The servers the plugin's `.mcp.json` declares, none when it declares no `mcpServers` object. */
 function mcpServersOf(dist: PluginDistribution): Readonly<Record<string, unknown>> {
-  const file = dist.components.mcp[0];
-  if (file === undefined) return {};
-  return asPlainObject(asPlainObject(JSON.parse(file.content))?.mcpServers) ?? {};
+  return asPlainObject(asPlainObject(parsedMcpDeclaration(dist))?.mcpServers) ?? {};
 }
 
 /** What a plugin's canon holds, for the manifest a tool synthesizes from it. */

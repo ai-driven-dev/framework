@@ -63,16 +63,17 @@ describe("updating plugins from the command line", () => {
       expect.objectContaining({ pluginNames: undefined, scope: "project" })
     );
     expect(userUpdate).not.toHaveBeenCalled();
-    expect(activation).toHaveBeenCalledOnce();
+    expect(activation).toHaveBeenCalledWith({ projectRoot: expect.any(String) });
   });
 
-  it("sends a user-scope update to the machine updater, without re-driving activation", async () => {
+  it("sends a user-scope update to the machine updater, then refreshes only the plugins a host's server holds", async () => {
     const { update, userUpdate, activation, environment } = change();
 
     await updatePluginsFrom(environment, "aidd-vcs", { scope: "user" });
 
     expect(userUpdate).toHaveBeenCalledWith(expect.objectContaining({ pluginNames: ["aidd-vcs"] }));
     expect(update).not.toHaveBeenCalled();
-    expect(activation).not.toHaveBeenCalled();
+    expect(activation).toHaveBeenCalledOnce();
+    expect(activation).toHaveBeenCalledWith(expect.objectContaining({ served: "all" }));
   });
 });

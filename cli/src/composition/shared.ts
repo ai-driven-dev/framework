@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import pkg from "../../package.json" with { type: "json" };
 import { hostPortsOver } from "../contexts/host-registration/application/host-ports-over.js";
+import { HeldServerPlugins } from "../contexts/host-registration/application/server/held-server-plugins.use-case.js";
 import { RemoveServerPlugins } from "../contexts/host-registration/application/server/remove-server-plugins.use-case.js";
 import { SyncServerPlugins } from "../contexts/host-registration/application/server/sync-server-plugins.use-case.js";
 import { WithdrawFromHost } from "../contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
@@ -165,6 +166,7 @@ export function wireBase(options: BaseOptions) {
     ...host,
     syncServerPlugins: new SyncServerPlugins(serverPlugins),
     removeServerPlugins: new RemoveServerPlugins(serverPlugins),
+    heldServerPlugins: new HeldServerPlugins(storage.serverPluginLedger),
     ...remote,
     ...storage,
     homedir,

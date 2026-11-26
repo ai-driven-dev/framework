@@ -49,11 +49,7 @@ const AGENT_TOOLS: ReadonlyMap<string, string> = new Map([
   ["TaskStop", "TaskStop"],
 ]);
 
-/** Kimi reads hooks from `[[hooks]]` in the user-level `~/.kimi-code/config.toml` or from a local
- * plugin's manifest, never from a project:
- * https://www.kimi.com/code/docs/en/kimi-code-cli/customization/hooks.html and
- * https://www.kimi.com/code/docs/en/kimi-code-cli/customization/plugins.html. A plugin's hook was
- * observed installed and counted, never observed firing, so none is delivered. */
+/** Kimi reads hooks from the user config.toml or a local plugin, never a project: https://www.kimi.com/code/docs/en/kimi-code-cli/customization/hooks.html */
 const USER_CONFIG_REASON =
   "Kimi reads hooks from the user config.toml or a local plugin, never from a project, and a plugin's hooks are not delivered until a payload is captured";
 
@@ -86,11 +82,7 @@ export const kimi = defineAiTool({
   linkSyntax: [],
 });
 
-/** Kimi has no plugin verbs: its own `kimi web` server installs a plugin from a local directory,
- * lists and removes them, behind the token its startup banner prints
- * (https://www.kimi.com/code/docs/en/kimi-code-cli/guides/web.html, a bearer per
- * https://www.kimi.com/code/docs/en/kimi-code-cli/reference/server-api.html). The plugin routes
- * and the refusal code are observed on 0.42.0: `tests/fixtures/hosts/kimi-0.42.0`. */
+/** Kimi has no plugin verbs: its `kimi web` server installs a local plugin directory, behind the token its banner prints: https://www.kimi.com/code/docs/en/kimi-code-cli/guides/web.html */
 export const kimiNativeRegistration: NativeRegistrationSection = {
   pluginServer: {
     binary: "kimi",

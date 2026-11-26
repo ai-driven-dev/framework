@@ -65,4 +65,12 @@ describe("telling what a plugin ships", () => {
       mcpServers: {},
     });
   });
+
+  it("names the plugin whose mcp declaration cannot be parsed", async () => {
+    const canon = await canonOf({ [`${PLUGIN_SRC}/.mcp.json`]: "{ not json" });
+
+    expect(() => presenceOf(canon)).toThrow(
+      expect.objectContaining({ detail: expect.stringContaining("plugin 'aidd-test' MCP config") })
+    );
+  });
 });

@@ -164,6 +164,11 @@ export function wireMarketplaceSync(base: Base, inst: Installation) {
   return {
     recordSourceReference,
     syncSettings,
-    syncNativeActivation: new SyncNativeActivation(syncSettings),
+    syncNativeActivation: new SyncNativeActivation(
+      syncSettings,
+      tools
+        .inHelpOrder("ai")
+        .filter((toolId) => tools.aiProfile(toolId).pluginServer() !== undefined)
+    ),
   };
 }
