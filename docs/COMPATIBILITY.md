@@ -23,7 +23,7 @@ What each AI tool receives from the framework.
 | ✅ | Supported |
 | ❌ | Not supported |
 | Marketplace only | Supported when installed through the tool's marketplace, not as flat files |
-| Some events | Through a generated bridge: `SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse` and `Stop` |
+| Some events | Through a generated bridge; events in [Hook events](#hook-events) |
 
 ## Hook events
 
@@ -63,15 +63,16 @@ Sources: [Claude Code](https://code.claude.com/docs/en/hooks), [Codex](https://l
 
 - A subagent's child session runs neither `SessionStart` nor `Stop`.
 - One `Stop` hook per plugin: after one blocks, the next stay silent.
-- A `SessionStart` script that exits 2 shows its stderr to the person only.
+- A `SessionStart` script that exits 2 has its stderr added to the model's system prompt (Claude Code shows it to the person only).
 
 ### Codex
 
-- A project hooks file is skipped in an untrusted project.
+- A hook runs only after it is approved in `/hooks`; an unapproved one is skipped silently.
 
 ### Kiro
 
 - A matcher becomes Kiro's tool tags, one hook per tag.
+- With a home and a project install, each Kiro hook runs twice.
 - A `PostToolUse` script's output does not reach the model.
 
 ### Kimi Code CLI
