@@ -1,0 +1,40 @@
+{
+  "host": "kimi",
+  "event": "UserPromptSubmit",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "hook_event_name": "UserPromptSubmit",
+        "session_id": "session_00000000-0000-4000-8000-000000000000",
+        "cwd": "/Users/user/project",
+        "client_type": "kimi_code_cli",
+        "prompt": [
+          {
+            "type": "text",
+            "text": "Write a file named hello.txt containing the word hi, then run the shell command: echo probe-ok. Then stop."
+          }
+        ],
+        "is_steer": false
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "log",
+      "payload": {
+        "hook_event_name": "UserPromptSubmit",
+        "session_id": "session_00000000-0000-4000-8000-000000000000",
+        "cwd": "/Users/user/project",
+        "client_type": "kimi_code_cli",
+        "prompt": [
+          {
+            "type": "text",
+            "text": "Reply with ok"
+          }
+        ],
+        "is_steer": false
+      },
+      "hookAnswer": null
+    }
+  ]
+}

@@ -41,7 +41,8 @@ describe("telling what a plugin ships", () => {
     const canon = await canonOf({
       [`${PLUGIN_SRC}/agents/reviewer.md`]: "# Reviewer",
       [`${PLUGIN_SRC}/skills/hello/SKILL.md`]: "# Hello",
-      [`${PLUGIN_SRC}/hooks/hooks.json`]: "{}",
+      [`${PLUGIN_SRC}/hooks/hooks.json`]:
+        '{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"node a.cjs"}]}]}}',
       [`${PLUGIN_SRC}/.mcp.json`]: '{"mcpServers":{"docs":{"url":"https://example.com/mcp"}}}',
     });
     expect(presenceOf(canon)).toEqual({
@@ -49,6 +50,7 @@ describe("telling what a plugin ships", () => {
       agentsList: ["reviewer.md"],
       skillsList: ["hello"],
       hasHooksJson: true,
+      hooks: { SessionStart: [{ hooks: [{ type: "command", command: "node a.cjs" }] }] },
       hasMcpJson: true,
       mcpServers: { docs: { url: "https://example.com/mcp" } },
     });
@@ -61,6 +63,7 @@ describe("telling what a plugin ships", () => {
       agentsList: [],
       skillsList: [],
       hasHooksJson: false,
+      hooks: {},
       hasMcpJson: false,
       mcpServers: {},
     });

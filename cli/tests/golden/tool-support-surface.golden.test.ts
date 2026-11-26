@@ -6,9 +6,9 @@ import type { AiToolProfile } from "../../src/contexts/tools/contract/tool-profi
 import { foldsFlatMcp } from "../../src/contexts/translate/domain/rules/flat-mcp.js";
 import type {
   ArtifactContract,
-  PluginPresence,
   ToolBuildContract,
 } from "../../src/shared/domain/materialization/build-contract.js";
+import type { PluginPresence } from "../../src/shared/domain/materialization/plugin-presence.js";
 import { pluginModeOf } from "../contexts/tools/testing/plugin-mode.builder.js";
 import { catalogOf, registeredAiConfig } from "../shared/testing/catalog-of.builder.js";
 import { REPOSITORY_ROOT } from "../shared/testing/repository-root.builder.js";
@@ -43,6 +43,7 @@ const ONE_SERVER: PluginPresence = {
   agentsList: [],
   skillsList: [],
   hasHooksJson: false,
+  hooks: {},
   hasMcpJson: true,
   mcpServers: { probe: {} },
 };

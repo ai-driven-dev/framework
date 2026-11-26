@@ -3,6 +3,7 @@ import type { SourceMarketplaceRef, SourcePluginEntryRef } from "../plugin/sourc
 import type { ConfigAsset, SchemaName } from "../reading/config-asset.js";
 import type { CommandsSlot } from "./command-markdown.js";
 import type { FlatArtifactLayout, FlatHooksLoaderEntry } from "./flat-paths.js";
+import type { PluginPresence } from "./plugin-presence.js";
 
 /** All a marketplace builder reads of the output tree. */
 export interface BuildFileReader {
@@ -243,15 +244,4 @@ export interface ConfigArtifactFile {
   /** Relative to the output root. */
   readonly path: string;
   readonly content: string;
-}
-
-export interface PluginPresence {
-  readonly hasAgents: boolean;
-  /** Agent markdown files relative to the plugin's `agents/` dir (e.g. "planner.md"), sorted. */
-  readonly agentsList: readonly string[];
-  readonly skillsList: readonly string[];
-  readonly hasHooksJson: boolean;
-  readonly hasMcpJson: boolean;
-  /** The servers `.mcp.json` declares, by name, for a tool whose manifest carries them inline. */
-  readonly mcpServers: Readonly<Record<string, unknown>>;
 }

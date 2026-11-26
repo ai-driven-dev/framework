@@ -17,6 +17,7 @@ export const HOSTS = [
   "cursor",
   "antigravity",
   "kiro",
+  "kimi",
   "bridge",
 ] as const;
 

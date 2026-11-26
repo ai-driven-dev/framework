@@ -14,7 +14,7 @@ What each AI tool receives from the framework.
 | Codex | `.codex/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
 | Antigravity CLI | `.agents/` | Plugin directory `.agents/plugins/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
 | Kiro | `.kiro/` | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Kimi Code CLI | `.kimi-code/` | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
+| Kimi Code CLI | `.kimi-code/` | ✅ | ✅ | ✅ | ✅ | ✅ | Marketplace only | ✅ | ❌ |
 
 <!--support:end-->
 
@@ -36,11 +36,11 @@ What each AI tool receives from the framework.
 | Kilo Code | yes | yes | yes | yes | yes | no | no | yes |
 | Antigravity CLI | yes | no | yes | yes | yes | no | no | yes |
 | Kiro | yes | yes | yes | yes | yes | no | yes | yes |
-| Kimi Code CLI | no | no | no | no | no | no | no | no |
+| Kimi Code CLI | yes | yes | no | no | no | no | no | no |
 
 yes: the CLI writes the event to the host's hook file or bridge. no: it drops the event, and a build warns where it can.
 
-Sources: [Claude Code](https://code.claude.com/docs/en/hooks), [Codex](https://learn.chatgpt.com/docs/hooks), [Copilot](https://docs.github.com/en/copilot/reference/hooks-configuration), [Cursor](https://cursor.com/docs/agent/hooks), [Antigravity](https://antigravity.google/docs/hooks), [Kiro](https://kiro.dev/docs/hooks/types/).
+Sources: [Claude Code](https://code.claude.com/docs/en/hooks), [Codex](https://learn.chatgpt.com/docs/hooks), [Copilot](https://docs.github.com/en/copilot/reference/hooks-configuration), [Cursor](https://cursor.com/docs/agent/hooks), [Antigravity](https://antigravity.google/docs/hooks), [Kiro](https://kiro.dev/docs/hooks/types/), [Kimi](https://www.kimi.com/code/docs/en/kimi-code-cli/customization/hooks.html).
 
 ## Limits
 
@@ -57,6 +57,9 @@ Sources: [Claude Code](https://code.claude.com/docs/en/hooks), [Codex](https://l
 
 | Limit | What it means for you |
 | --- | --- |
+| Hooks are read from a plugin's manifest, never from a project | A flat build carries none |
+| Only `SessionStart` and `UserPromptSubmit` are delivered: no tool or `Stop` payload was captured | `PreToolUse`, `PostToolUse` and `Stop` hooks do not run |
+| `SessionStart` is observation-only ([hooks](https://www.kimi.com/code/docs/en/kimi-code-cli/customization/hooks.html)) | A `SessionStart` script's output does not reach the model |
 | A subagent's `tools` list keeps only tools with a name on the host | A Claude tool with no host name is dropped from its agent |
 
 ### Cursor
