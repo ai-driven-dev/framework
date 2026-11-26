@@ -1,5 +1,61 @@
 # Changelog
 
+## [3.3.0](https://github.com/ai-driven-dev/framework/compare/aidd-refine-v3.2.0...aidd-refine-v3.3.0) (2026-11-26)
+
+
+### Features
+
+* **aidd-refine:** challenge without a confidence score ([b8a4629](https://github.com/ai-driven-dev/framework/commit/b8a4629425ae1deb52d329d98449a54a8110ccb8))
+* **aidd-refine:** challenge without a confidence score, its report checked through a contract ([5d2400d](https://github.com/ai-driven-dev/framework/commit/5d2400ddf4ff8749206c704fe763b44ecce5556d))
+* **aidd-refine:** check the challenge report through a contract ([f3b56d3](https://github.com/ai-driven-dev/framework/commit/f3b56d32f9f7002d632f85603d2e7733883b2286))
+* **aidd-refine:** check the persisted brainstorm brief and link each action to the next ([503859d](https://github.com/ai-driven-dev/framework/commit/503859d65727d2937ed0546dcf90ca4b66a4cfc3))
+* **aidd-refine:** check the persisted brainstorm brief and link each action to the next ([#1084](https://github.com/ai-driven-dev/framework/issues/1084)) ([60b0f41](https://github.com/ai-driven-dev/framework/commit/60b0f4142e2c3e753ef8f1efc6f36e65bfca5566))
+* **aidd-refine:** give the challenge attacks aimed at failure paths, state and claims ([c5dcfb0](https://github.com/ai-driven-dev/framework/commit/c5dcfb09fae8af2d1e40764fe059b41361f676c3))
+* **aidd-refine:** keep each challenge round in the task folder ([13e75b0](https://github.com/ai-driven-dev/framework/commit/13e75b0bfcf9da5e87f186c675a6908ec38e441d))
+* **aidd-refine:** lay the challenge report out like review and check it with the template op ([f378a73](https://github.com/ai-driven-dev/framework/commit/f378a738103b3f3e9dc7a220ed39560aab08021f))
+* **framework:** check framework content through contracts ([8922b9b](https://github.com/ai-driven-dev/framework/commit/8922b9be53cd946e09edf45d34a46a92d128cc29))
+
+
+### Bug Fixes
+
+* **aidd-refine:** answer with the challenge report alone and keep test results out of holds ([4ae0317](https://github.com/ai-driven-dev/framework/commit/4ae0317eaaf22422d355c6336fc400528fc84200))
+* **aidd-refine:** answer with the challenge report as kept, without the read-back details ([2ed73f7](https://github.com/ai-driven-dev/framework/commit/2ed73f7c0cdf76eb361daba40c81473ebfeae5af))
+* **aidd-refine:** drop findings that need an input no real use reaches before classifying the rest ([390e5ca](https://github.com/ai-driven-dev/framework/commit/390e5ca9eb3b6f97318e1b30e20b418e45fc8dbf))
+* **aidd-refine:** drop from the challenge action what its links and its check already say ([8166ded](https://github.com/ai-driven-dev/framework/commit/8166dedc5228f1ddacfcb87dabc4b5be2c1e89dc))
+* **aidd-refine:** drop the brief's approval status and the stop rule the diagram already draws ([#1084](https://github.com/ai-driven-dev/framework/issues/1084)) ([8b16d58](https://github.com/ai-driven-dev/framework/commit/8b16d582fc29bf9222e97406efc031ce1f626f43))
+* **aidd-refine:** keep the stop rule in the router, where a model applies it on every turn ([#1084](https://github.com/ai-driven-dev/framework/issues/1084)) ([4a09c5b](https://github.com/ai-driven-dev/framework/commit/4a09c5b1a2d688f7ee2e2319a9ec0984a92bfc50))
+* **aidd-refine:** let a stop end the questions where they are asked ([#1084](https://github.com/ai-driven-dev/framework/issues/1084)) ([65b8ec9](https://github.com/ai-driven-dev/framework/commit/65b8ec9ce910540d0365e7acf0f6918180fb990a))
+* **aidd-refine:** link the brief check and keep its step to the authoring form ([#1084](https://github.com/ai-driven-dev/framework/issues/1084)) ([b6f4273](https://github.com/ai-driven-dev/framework/commit/b6f4273fe53734eae24ce09af2a69cb9aa4e35db))
+* **aidd-refine:** link the challenge check and keep its step to the authoring form ([efa8a9e](https://github.com/ai-driven-dev/framework/commit/efa8a9e289d866062effe95ba2564939e2c4c76b))
+* **aidd-refine:** run the challenge report's check before answering ([453b380](https://github.com/ai-driven-dev/framework/commit/453b3801e40e004c95b114e47eaf579368d71779))
+* **aidd-refine:** run the challenge report's check before answering ([34e7df5](https://github.com/ai-driven-dev/framework/commit/34e7df5f3949ebe4fc9e689fefc206a770dd34aa))
+* **aidd-refine:** state challenge's input in one line and select techniques where they are applied ([31a764e](https://github.com/ai-driven-dev/framework/commit/31a764efb8f7ca0d6cdc1215bb874ad4ca4fca43))
+* **aidd-refine:** stop the brief check after three passes, as the other report checks do ([#1084](https://github.com/ai-driven-dev/framework/issues/1084)) ([99f8940](https://github.com/ai-driven-dev/framework/commit/99f8940f534d6402e3d3d7deca4403417bf5af09))
+* **framework:** mark the remaining template slots as {{...}} ([#1149](https://github.com/ai-driven-dev/framework/issues/1149)) ([bb11a8d](https://github.com/ai-driven-dev/framework/commit/bb11a8dfb09fc1ffec0165a461da38bf7bbc5815))
+* **refine:** clarify conversation review recommendations ([#1161](https://github.com/ai-driven-dev/framework/issues/1161)) ([de9fd10](https://github.com/ai-driven-dev/framework/commit/de9fd101f1594e6e11114fb5638458c7bffbab6a))
+
+
+### Miscellaneous
+
+* **aidd-refine:** move the challenge hook onto the plugin's shared engine ([4547b80](https://github.com/ai-driven-dev/framework/commit/4547b80adba758059d535b97b368b18739edf1c2))
+* **aidd-refine:** sync the challenge contract's engine copies ([54b77ef](https://github.com/ai-driven-dev/framework/commit/54b77ef615276d946f673a22f1a00b168a77c358))
+* **aidd-refine:** sync the challenge contract's engine copies ([472b6d1](https://github.com/ai-driven-dev/framework/commit/472b6d1302f441337a7472ae1fb2f8a6792fcbb6))
+
+
+### Documentation
+
+* **framework:** mark every template slot as {{…}} ([#1149](https://github.com/ai-driven-dev/framework/issues/1149)) ([04119a5](https://github.com/ai-driven-dev/framework/commit/04119a5f9b8d2b91fbff6b8f1f721c1993e0b0c0))
+
+
+### Refactoring
+
+* **aidd-refine:** attack duplication and give the challenge decision its own reference ([5673d88](https://github.com/ai-driven-dev/framework/commit/5673d8845add324bbb859ef89cf35f7b5668330e))
+* **aidd-refine:** fit the challenge skill to the skill authoring rules ([e757f94](https://github.com/ai-driven-dev/framework/commit/e757f9450d4c14288cb96da35f493255238a4477))
+* **aidd-refine:** give shadow-areas a router, a report contract and one home per fact ([e4c1d4f](https://github.com/ai-driven-dev/framework/commit/e4c1d4f5cfa2817e97bc9e632f76c54fbca78ffe))
+* **aidd-refine:** give shadow-areas a router, a report contract and one home per fact ([4d34d93](https://github.com/ai-driven-dev/framework/commit/4d34d93a2ab2164c5dc79b40b5b8bdb3383c7590))
+* **aidd-refine:** lean the challenge skill to the skill authoring format ([ad12762](https://github.com/ai-driven-dev/framework/commit/ad12762be801d56cacb1d9e3e544af79b8612560))
+* **aidd-refine:** write the brainstorm skill in the skill generator's format ([#1084](https://github.com/ai-driven-dev/framework/issues/1084)) ([b2cad96](https://github.com/ai-driven-dev/framework/commit/b2cad96fdba1e8a82b53983a4b9fa639f93c42b4))
+
 ## [3.2.0](https://github.com/ai-driven-dev/framework/compare/aidd-refine-v3.1.2...aidd-refine-v3.2.0) (2026-11-13)
 
 
