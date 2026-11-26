@@ -6,11 +6,11 @@ What each AI tool receives from the framework.
 
 | Tool | Directory | Marketplace | Flat files | Skills | Agents | MCP | Hooks | Rules | Commands |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Claude Code | `.claude/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Marketplace only |
-| Cursor | `.cursor/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Marketplace only |
-| GitHub Copilot | `.github/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Marketplace only |
+| Claude Code | `.claude/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Cursor | `.cursor/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| GitHub Copilot | `.github/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | OpenCode | `.opencode/` | ❌ | ✅ | ✅ | ✅ | ✅ | Some events | ✅ | ✅ |
-| Kilo Code | `.kilo/` | ❌ | ✅ | ✅ | ✅ | ✅ | Some events | ✅ | ❌ |
+| Kilo Code | `.kilo/` | ❌ | ✅ | ✅ | ✅ | ✅ | Some events | ✅ | ✅ |
 | Codex | `.codex/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
 | Antigravity CLI | `.agents/` | Plugin directory `.agents/plugins/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
 | Kiro | `.kiro/` | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |

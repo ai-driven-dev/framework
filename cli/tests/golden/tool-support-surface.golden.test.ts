@@ -33,8 +33,8 @@ interface ToolSupport {
   /** The directory of the project where the tool loads each plugin's tree that `aidd` writes there
    * itself, a native plugin install and no marketplace the tool could register; or null. */
   pluginTree: string | null;
-  /** What a user gets per output layout the tool supports: build output, plus the rules the install profile ships and,
-   * for the marketplace layout, its commands. */
+  /** What a user gets per output layout the tool supports: build output, plus the rules and commands the install
+   * profile ships. */
   builds: Record<string, Record<Surface, Support>>;
 }
 
@@ -70,16 +70,11 @@ function supportOf(
   return "yes";
 }
 
-/** A flat layout's commands are those its build writes, so only the marketplace layout reads them from the install profile. */
-function installedSurfaces(
-  tool: AiToolProfile,
-  mode: "marketplace" | "flat"
-): ReadonlySet<Surface> {
+/** The sections the install profile ships, whichever layout the build is read for. */
+function installedSurfaces(tool: AiToolProfile): ReadonlySet<Surface> {
   return new Set<Surface>([
     ...(tool.installedRulesLocation() === null ? [] : (["rules"] as const)),
-    ...(mode === "marketplace" && tool.markdownSection("commands") !== null
-      ? (["commands"] as const)
-      : []),
+    ...(tool.markdownSection("commands") === null ? [] : (["commands"] as const)),
   ]);
 }
 
@@ -104,7 +99,7 @@ function capture(): ToolSupport[] {
         builds[mode] = Object.fromEntries(
           SURFACES.map((surface) => [
             surface,
-            supportOf(surface, contract, installedSurfaces(tool, mode)),
+            supportOf(surface, contract, installedSurfaces(tool)),
           ])
         ) as Record<Surface, Support>;
       }

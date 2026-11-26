@@ -21,7 +21,7 @@
         "mcp": "yes",
         "hooks": "yes",
         "rules": "yes",
-        "commands": "no"
+        "commands": "yes"
       }
     }
   },
@@ -47,7 +47,7 @@
         "mcp": "yes",
         "hooks": "yes",
         "rules": "yes",
-        "commands": "no"
+        "commands": "yes"
       }
     }
   },
@@ -73,7 +73,7 @@
         "mcp": "yes",
         "hooks": "yes",
         "rules": "yes",
-        "commands": "no"
+        "commands": "yes"
       }
     }
   },
@@ -109,7 +109,7 @@
         "mcp": "yes",
         "hooks": "bridge",
         "rules": "yes",
-        "commands": "no"
+        "commands": "yes"
       }
     }
   },
