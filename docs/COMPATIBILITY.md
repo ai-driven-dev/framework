@@ -26,7 +26,7 @@ What each AI tool receives from the framework.
 
 ## Hook events
 
-What an event can do per host is in [hosts.md](../plugins/aidd-context/skills/08-hook-generate/references/hosts.md). The event map is in `cli/src/composition/tool-profiles/`.
+What a project hook can do per host, cited to each host's doc: `node plugins/aidd-context/skills/08-hook-generate/scripts/write-hook.cjs --describe`. The event map is in `cli/src/composition/tool-profiles/`.
 
 | Host | SessionStart | UserPromptSubmit | PreToolUse | PostToolUse | Stop | SessionEnd | SubagentStop | Refuse a write |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
