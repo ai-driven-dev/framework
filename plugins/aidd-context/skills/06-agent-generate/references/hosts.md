@@ -6,11 +6,13 @@ Where each host AI tool keeps a project's agents, and how to tell it is installe
 | --- | --- | --- |
 | Claude Code / `claude` | `.claude/` or `CLAUDE.md` | `.claude/agents/<name>.md` |
 | Cursor / `cursor` | `.cursor/` | `.cursor/agents/<name>.md` |
-| GitHub Copilot / `copilot` | `.github/copilot-instructions.md` or `.github/instructions/` | `.github/agents/<name>.agent.md` |
+| GitHub Copilot / `copilot` | `.github/copilot-instructions.md` or `.github/{instructions,agents,skills,prompts}/` | `.github/agents/<name>.agent.md` |
 | Antigravity / `antigravity` | `.agents/agents/`, `.agents/rules/`, `.agent/rules/` or `.agents/hooks.json` | `.agents/agents/<name>/agent.md` |
 | Codex CLI / `codex` | `.codex/` | `.codex/agents/<name>.toml` |
 | OpenCode / `opencode` | `.opencode/`, `opencode.json` or `opencode.jsonc` | `.opencode/agents/<name>.md` |
-| Kilo Code / `kilo` | `.kilo/` | `.kilo/agents/<name>.md` |
+| Kilo Code / `kilo` | `.kilo/`, `kilo.json` or `kilo.jsonc` | `.kilo/agents/<name>.md` |
+| Kiro / `kiro` | `.kiro/` | `.kiro/agents/<name>.md` |
+| Kimi Code CLI / `kimi` | `.kimi-code/` | `.kimi-code/agents/<name>.md` |
 
 Every host reads `AGENTS.md`, so it signals none. Test each listed path itself, never its parent: `.agents/skills/` alone signals no host. When no signal matches, confirm the host.
 
@@ -20,4 +22,4 @@ Facts the writer cannot enforce:
 
 - The Codex `workspace-write` sandbox denies writes under `.agents/`, so an Antigravity target fails when run from Codex.
 
-Sources: [Claude](https://code.claude.com/docs/en/sub-agents), [Cursor](https://cursor.com/docs/subagents), [Copilot](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference#custom-agent-frontmatter-fields), [Antigravity](https://antigravity.google/docs/subagents), [Codex](https://developers.openai.com/codex/subagents), [OpenCode V2](https://opencode.ai/v2/docs/agents), [Kilo](https://kilo.ai/docs/customize/custom-subagents).
+Sources: [Claude](https://code.claude.com/docs/en/sub-agents), [Cursor](https://cursor.com/docs/subagents), [Copilot](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference#custom-agent-frontmatter-fields), [Antigravity](https://antigravity.google/docs/subagents), [Codex](https://developers.openai.com/codex/subagents), [OpenCode V2](https://opencode.ai/v2/docs/agents), [Kilo](https://kilo.ai/docs/customize/custom-subagents), [Kiro](https://kiro.dev/docs/custom-agents/configuration-reference/), [Kimi](https://www.kimi.com/code/docs/en/kimi-code-cli/customization/agents).

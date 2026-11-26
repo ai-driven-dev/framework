@@ -1,0 +1,29 @@
+import type { FrameworkBuildMode } from "../../../../src/contexts/tools/contract/tool-profile.js";
+import { BuildNativeTree } from "../../../../src/contexts/translate/application/build-native-tree.use-case.js";
+import type { JsonSchemaValidator } from "../../../../src/contexts/translate/ports/json-schema-validator.js";
+import type { SchemaProvider } from "../../../../src/contexts/translate/ports/schema-provider.js";
+import type { ToolBuildContract } from "../../../../src/shared/domain/materialization/build-contract.js";
+import type { AssetProvider } from "../../../../src/shared/ports/asset-provider.js";
+import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
+import type { Logger } from "../../../../src/shared/ports/logger.js";
+import { aDiskSink } from "./disk-sink.builder.js";
+
+/** A build of one contract in one mode, over in-memory files: the real sink behind the real use case. */
+export function buildTree(
+  fs: FileReader & FileWriter,
+  validator: JsonSchemaValidator,
+  assetProvider: AssetProvider,
+  logger: Logger,
+  contract: ToolBuildContract,
+  mode: FrameworkBuildMode,
+  force = false,
+  schemaProvider?: SchemaProvider
+): BuildNativeTree {
+  return new BuildNativeTree({
+    fs,
+    logger,
+    sink: aDiskSink(fs, validator, assetProvider, logger, schemaProvider),
+    layout: { contract, mode, force },
+  });
+}

@@ -11,7 +11,7 @@ Unify **engineering teams** around **standardized workflows** and **shared best 
 🧱 **IDE agnostic** · 🏗️ **Legacy systems** · 🌱 **Token-optimized** · 🇫🇷 **Made in France**
 
 <p>
-  <!--counts:start--><kbd>9 plugins</kbd> · <kbd>55 skills</kbd> · <kbd>4 agents</kbd><!--counts:end-->
+  <!--counts:start--><kbd>9 plugins</kbd> · <kbd>58 skills</kbd> · <kbd>4 agents</kbd><!--counts:end-->
 </p>
 
 [![Open Source](https://img.shields.io/badge/Open_Source-Yes-yellow?logo=open-source-initiative&logoColor=white)](https://opensource.org/)
@@ -50,7 +50,9 @@ https://github.com/user-attachments/assets/92474f4c-053a-471d-9c62-16560b7a2a09
 <tr><td><b>OpenCode</b></td><td align="center">✅</td><td align="center">—</td><td align="center">✅</td></tr>
 <tr><td><b>Kilo Code</b></td><td align="center">✅</td><td align="center">—</td><td align="center">✅</td></tr>
 <tr><td><b>Codex</b></td><td align="center">✅</td><td align="center">✅</td><td align="center">✅</td></tr>
-<tr><td><b>Antigravity CLI</b></td><td align="center">✅</td><td align="center">—</td><td align="center">✅</td></tr></tbody>
+<tr><td><b>Antigravity CLI</b></td><td align="center">✅</td><td align="center">Plugin directory</td><td align="center">✅</td></tr>
+<tr><td><b>Kiro</b></td><td align="center">✅</td><td align="center">—</td><td align="center">✅</td></tr>
+<tr><td><b>Kimi Code CLI</b></td><td align="center">✅</td><td align="center">✅</td><td align="center">✅</td></tr></tbody>
 </table>
 
 <!--tools:end-->
@@ -133,7 +135,7 @@ flowchart TD
 <a href="plugins/aidd-context/README.md">
 <img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
 <h3>🧭 aidd-context</h3>
-14 skills · 2 hooks<br />
+14 skills · 3 hooks<br />
 Project memory, context generation, learning
 </a>
 </td>
@@ -141,7 +143,7 @@ Project memory, context generation, learning
 <a href="plugins/aidd-dev/README.md">
 <img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
 <h3>⚙️ aidd-dev</h3>
-10 skills<br />
+10 skills · 3 hooks<br />
 Plan, build, review, test, debug
 </a>
 </td>
@@ -149,7 +151,7 @@ Plan, build, review, test, debug
 <a href="plugins/aidd-vcs/README.md">
 <img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
 <h3>🌿 aidd-vcs</h3>
-6 skills<br />
+7 skills<br />
 Commits, pull requests, release tags, issues
 </a>
 </td>
@@ -159,7 +161,7 @@ Commits, pull requests, release tags, issues
 <a href="plugins/aidd-pm/README.md">
 <img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
 <h3>📋 aidd-pm</h3>
-10 skills<br />
+10 skills · 4 hooks<br />
 Briefs, Epics, Stories, specs, Spikes, Defects
 </a>
 </td>
@@ -167,7 +169,7 @@ Briefs, Epics, Stories, specs, Spikes, Defects
 <a href="plugins/aidd-refine/README.md">
 <img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
 <h3>🪞 aidd-refine</h3>
-5 skills<br />
+5 skills · 3 hooks<br />
 Brainstorm, challenge, fact-check
 </a>
 </td>
@@ -183,9 +185,9 @@ Feature flow, issue-to-PR automation, backlog
 <tr>
 <td width="33%" valign="top">
 <a href="plugins/aidd-ui/README.md">
-<img align="right" alt="alpha" src="https://img.shields.io/badge/alpha-cf222e?style=flat-square" />
+<img align="right" alt="beta" src="https://img.shields.io/badge/beta-bf8700?style=flat-square" />
 <h3>🎨 aidd-ui</h3>
-4 skills · 3 hooks<br />
+6 skills · 3 hooks<br />
 UI design system, checked on every write
 </a>
 </td>
@@ -193,7 +195,7 @@ UI design system, checked on every write
 <a href="plugins/aidd-telemetry/README.md">
 <img align="right" alt="beta" src="https://img.shields.io/badge/beta-bf8700?style=flat-square" />
 <h3>📈 aidd-telemetry</h3>
-2 skills · 2 hooks<br />
+2 skills · 1 hook<br />
 Token usage per task, opt-in
 </a>
 </td>

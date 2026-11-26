@@ -1,0 +1,249 @@
+import { resolve } from "node:path";
+import { Command } from "commander";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { wireTools } from "../../../src/composition/contexts/tools.js";
+import { supportedBuildTargets } from "../../../src/contexts/translate/contract/build-targets.js";
+import { bindOutput } from "../../../src/presentation/controllers/menu/global-options.controller.js";
+import { ExitRequested } from "../../shared/testing/capturing-output.fake.js";
+import { processOutputFactory } from "../../shared/testing/output-factory.builder.js";
+import { parseToExit } from "../../shared/testing/parse-to-exit.builder.js";
+
+const build = vi.fn();
+let buildUseCase: { execute: typeof build } | undefined;
+
+const frameworkBuild = vi.fn((_ctx: object) => buildUseCase);
+const containerOf = vi.fn(async () => ({ translate: { frameworkBuild } }));
+
+const { registerTranslateCommand } = await import(
+  "../../../src/presentation/controllers/translate.controller.js"
+);
+
+const PROJECT_ROOT = process.cwd();
+const CATALOG = wireTools();
+const SOURCE_DIR = resolve(PROJECT_ROOT, "framework");
+const OUT_DIR = resolve(PROJECT_ROOT, "dist-plugins");
+
+let written: string[] = [];
+let errors: string[] = [];
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  written = [];
+  errors = [];
+  vi.spyOn(process.stdout, "write").mockImplementation((chunk) => {
+    written.push(String(chunk));
+    return true;
+  });
+  vi.spyOn(process.stderr, "write").mockImplementation((chunk) => {
+    errors.push(String(chunk));
+    return true;
+  });
+  buildUseCase = { execute: build };
+  build.mockResolvedValue({ plugins: ["a", "b"], totalFiles: 12, outDir: OUT_DIR });
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  process.exitCode = undefined;
+});
+
+async function run(...args: string[]): Promise<string[]> {
+  const program = new Command();
+  bindOutput(program, processOutputFactory());
+  program.exitOverride();
+  program.option("--verbose");
+  registerTranslateCommand(program, CATALOG, containerOf);
+  await parseToExit(program, ["node", "aidd", ...args]);
+  return written.join("").split("\n").slice(0, -1);
+}
+
+describe("aidd translate - what it hands the build", () => {
+  it("resolves both directories against the project and builds a marketplace tree", async () => {
+    expect(await run("translate", "framework", "--to", "claude", "--out", "dist-plugins")).toEqual([
+      `Built 2 plugins, 12 files written to ${OUT_DIR}`,
+    ]);
+    expect(frameworkBuild).toHaveBeenCalledWith({
+      target: "claude",
+      mode: "marketplace",
+      outDir: OUT_DIR,
+      force: false,
+    });
+    expect(build).toHaveBeenCalledWith({
+      sourceDir: SOURCE_DIR,
+      outDir: OUT_DIR,
+      target: "claude",
+      mode: "marketplace",
+    });
+  });
+
+  it("carries a flat layout into both the factory and the build, and says so", async () => {
+    expect(
+      await run("translate", "framework", "--to", "claude", "--out", "dist-plugins", "--as", "flat")
+    ).toEqual([`Flat-installed 2 plugins, 12 files written under ${OUT_DIR}`]);
+    expect(frameworkBuild).toHaveBeenCalledWith(expect.objectContaining({ mode: "flat" }));
+    expect(build).toHaveBeenCalledWith(expect.objectContaining({ mode: "flat" }));
+  });
+
+  it("carries an overwrite through to the factory alone", async () => {
+    await run("translate", "framework", "--to", "claude", "--out", "dist-plugins", "--force");
+
+    expect(frameworkBuild).toHaveBeenCalledWith(expect.objectContaining({ force: true }));
+  });
+
+  it("hands a provider to the factory only when one is named", async () => {
+    await run("translate", "framework", "--to", "claude", "--out", "dist-plugins");
+    await run(
+      "translate",
+      "framework",
+      "--to",
+      "claude",
+      "--out",
+      "dist-plugins",
+      "--provider",
+      "anthropic"
+    );
+    await run(
+      "translate",
+      "framework",
+      "--to",
+      "claude",
+      "--out",
+      "dist-plugins",
+      "--provider",
+      "none"
+    );
+
+    expect(frameworkBuild.mock.calls.map(([ctx]) => ctx)).toEqual([
+      expect.not.objectContaining({ provider: expect.anything() }),
+      expect.objectContaining({ provider: "anthropic" }),
+      expect.not.objectContaining({ provider: expect.anything() }),
+    ]);
+  });
+
+  it("builds the graph for this project at this run's verbosity", async () => {
+    await run("--verbose", "translate", "framework", "--to", "claude", "--out", "dist-plugins");
+
+    expect(vi.mocked(containerOf)).toHaveBeenCalledWith(
+      PROJECT_ROOT,
+      { verbose: true },
+      expect.anything()
+    );
+  });
+});
+
+describe("aidd translate - what it refuses", () => {
+  it("refuses a target no profile declares, and lists the ones that do", async () => {
+    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new ExitRequested(1);
+    });
+
+    await expect(
+      run("translate", "framework", "--to", "emacs", "--out", "dist-plugins")
+    ).rejects.toThrow(ExitRequested);
+
+    expect(errors.join("")).toBe(
+      `Error: Unsupported target 'emacs'. Supported targets: ${supportedBuildTargets(wireTools()).join(", ")}.\n`
+    );
+    expect(exit).toHaveBeenCalledWith(1);
+    expect(vi.mocked(containerOf)).not.toHaveBeenCalled();
+  });
+
+  it("refuses a layout that is neither marketplace nor flat", async () => {
+    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new ExitRequested(1);
+    });
+
+    await expect(
+      run("translate", "framework", "--to", "claude", "--out", "dist-plugins", "--as", "zip")
+    ).rejects.toThrow(ExitRequested);
+
+    expect(errors.join("")).toBe("Error: Invalid --as 'zip'. Expected 'marketplace' or 'flat'.\n");
+    expect(exit).toHaveBeenCalledWith(1);
+    expect(vi.mocked(containerOf)).not.toHaveBeenCalled();
+  });
+
+  it("names the target and layout together when no strategy pairs them", async () => {
+    buildUseCase = undefined;
+    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new ExitRequested(1);
+    });
+
+    await expect(
+      run("translate", "framework", "--to", "claude", "--out", "dist-plugins", "--as", "flat")
+    ).rejects.toThrow(ExitRequested);
+
+    expect(errors[0]).toBe("Error: Unsupported target/mode combination: claude (flat).\n");
+    expect(exit).toHaveBeenCalledWith(1);
+    expect(build).not.toHaveBeenCalled();
+  });
+
+  it("names a failed build on stderr and fails the process", async () => {
+    build.mockRejectedValue(new Error("source directory is empty"));
+    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new ExitRequested(1);
+    });
+
+    await expect(
+      run("translate", "framework", "--to", "claude", "--out", "dist-plugins")
+    ).rejects.toThrow(ExitRequested);
+
+    expect(errors.join("")).toBe("Error: source directory is empty\n");
+    expect(exit).toHaveBeenCalledWith(1);
+  });
+});
+
+describe("aidd translate - the help surface", () => {
+  function translateCommand(): Command {
+    const program = new Command();
+    bindOutput(program, processOutputFactory());
+    registerTranslateCommand(program, CATALOG, containerOf);
+    const translate = program.commands.find((command) => command.name() === "translate");
+    if (translate === undefined) throw new Error("translate command was not registered");
+    return translate;
+  }
+
+  it("describes itself against the command that records what it writes", () => {
+    expect(translateCommand().description()).toBe(
+      "Convert an arbitrary source into a target-native plugin tree — records nothing (see `sync` for the manifest-driven, tracked version)"
+    );
+  });
+
+  it("takes one required source, named for what it points at", () => {
+    expect(
+      translateCommand().registeredArguments.map((argument) => [
+        argument.name(),
+        argument.required,
+        argument.description,
+      ])
+    ).toEqual([["source", true, "Path to the source framework directory"]]);
+  });
+
+  it("requires a target and an output directory, and defaults the layout", () => {
+    expect(
+      translateCommand().options.map((option) => [
+        option.flags,
+        option.description,
+        option.defaultValue,
+      ])
+    ).toEqual([
+      [
+        "--to <target>",
+        "Conversion target (claude, cursor, copilot, codex, antigravity, opencode, kilo, kiro, kimi)",
+        undefined,
+      ],
+      ["--out <dir>", "Output directory (marketplace dist or project root)", undefined],
+      ["--as <marketplace|flat>", "Output layout", "marketplace"],
+      ["--force", "Overwrite existing files at canonical paths under --out", undefined],
+      [
+        "--provider <provider>",
+        "Run the agents on this provider's model for their role (openai, anthropic, mistral), or none to leave each on the IDE's model",
+        undefined,
+      ],
+    ]);
+    expect(
+      translateCommand()
+        .options.filter((option) => option.mandatory)
+        .map((option) => option.long)
+    ).toEqual(["--to", "--out"]);
+  });
+});

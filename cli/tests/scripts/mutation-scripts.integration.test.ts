@@ -1,0 +1,256 @@
+/**
+ * The mutation scripts, exercised through the same functions the pipeline calls: score, scope
+ * selection, shard arguments and incremental carry. The declaration
+ * `mutation-scopes.json` is held against the source by `tests/architecture/mutation-covers-source`.
+ */
+import { spawnSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { describe, expect, it } from "vitest";
+import { HARNESS, scopesToRun } from "../../scripts/mutation-scopes-to-run.mjs";
+import {
+  breakVerdict,
+  changedArgs,
+  changedRanges,
+  type MutationScope,
+  pruneIncremental,
+  scoreOf,
+  strykerArgs,
+  survivorsOf,
+} from "../../scripts/run-mutation.mjs";
+import mutationConfig from "../../vitest.mutation.config.js";
+import { mutationScopes } from "../shared/testing/json-value.builder.js";
+import { REPOSITORY_ROOT } from "../shared/testing/repository-root.builder.js";
+
+const CLI_ROOT = resolve(import.meta.dirname, "..", "..");
+const REPO_ROOT = REPOSITORY_ROOT;
+
+function declaration(): { scopes: Readonly<Record<string, MutationScope>> } {
+  return { scopes: mutationScopes(readFileSync(join(CLI_ROOT, "mutation-scopes.json"), "utf8")) };
+}
+
+describe("the mutation scripts", () => {
+  it("reads a changed-file list longer than one environment variable can hold from stdin", () => {
+    const filler = Array.from(
+      { length: 4000 },
+      (_, i) => `docs/unrelated-${i}/a-long-enough-file-name.md`
+    );
+    const changed = [...filler, "cli/src/shared/domain/shared.error.ts"].join("\n");
+    const run = spawnSync("node", [join(CLI_ROOT, "scripts", "mutation-scopes-to-run.mjs")], {
+      input: changed,
+      env: { ...process.env, ALL: "false" },
+      encoding: "utf8",
+    });
+    expect(changed.length).toBeGreaterThan(131072);
+    expect(run.status).toBe(0);
+    expect(JSON.parse(run.stdout).map((leg: { scope: string }) => leg.scope)).toContain("shared");
+  });
+
+  const scopes = {
+    shared: { mutate: "src/shared/**/*.ts", break: 70 },
+    tools: { mutate: "src/contexts/tools/**/*.ts", break: 60 },
+  };
+
+  it("gives each scope its own glob and incremental file, and refuses a scope nobody declared", () => {
+    expect(strykerArgs("shared", scopes)).toEqual([
+      "run",
+      "--mutate",
+      "src/shared/**/*.ts",
+      "--incremental",
+      "--incrementalFile",
+      "reports/mutation/shared/incremental.json",
+      "--ignoreStatic",
+    ]);
+    expect(strykerArgs("tools", scopes, { force: true })).toContain("--force");
+    expect(() => strykerArgs("nowhere", scopes)).toThrow('Unknown scope "nowhere"');
+  });
+
+  it("scores detected over detected plus undetected, leaves ignored and errored aside, and an empty report as zero", () => {
+    const report = {
+      files: {
+        "a.ts": {
+          mutants: [
+            { status: "Killed" },
+            { status: "Timeout" },
+            { status: "Survived" },
+            { status: "NoCoverage" },
+            { status: "Ignored" },
+            { status: "RuntimeError" },
+            { status: "CompileError" },
+          ],
+        },
+      },
+    };
+    expect(scoreOf(report)).toBe(50);
+    expect(scoreOf({ files: {} })).toBe(0);
+  });
+
+  it("runs per change only the gated scopes whose source changed, and every scope for a harness file or a full run", () => {
+    const mixed = {
+      shared: {
+        mutate: "src/shared/**/*.ts",
+        break: 70,
+        tests: ["tests/shared/domain/**"],
+      },
+      tools: { mutate: "src/contexts/tools/**/*.ts", tests: ["tests/contexts/tools/**"] },
+    };
+    expect(scopesToRun(["cli/src/shared/domain/paths.model.ts"], mixed)).toEqual(["shared"]);
+    expect(scopesToRun(["cli/src/contexts/tools/domain/marketplace-entry.ts"], mixed)).toEqual([]);
+    expect(
+      scopesToRun(["cli/tests/contexts/tools/domain/catalog-registered.unit.test.ts"], mixed)
+    ).toEqual([]);
+    expect(scopesToRun(["README.md"], mixed)).toEqual([]);
+    expect(scopesToRun(["cli/tests/golden/testing/expect-golden.builder.ts"], mixed)).toEqual([]);
+    expect(scopesToRun(["cli/tests/shared/domain/paths.model.unit.test.ts"], mixed)).toEqual([
+      "shared",
+    ]);
+    expect(
+      scopesToRun(["cli/tests/shared/infrastructure/asset-loader.integration.test.ts"], mixed)
+    ).toEqual([]);
+    expect(scopesToRun(["cli/pnpm-lock.yaml", ".github/workflows/cli-ci.yml"], mixed)).toEqual([]);
+    for (const file of HARNESS) expect(scopesToRun([file], mixed)).toEqual(["shared", "tools"]);
+    expect(scopesToRun([], mixed, { all: true })).toEqual(["shared", "tools"]);
+  });
+
+  it("runs a gated scope when its tests or its own kit change, never a scope with no floor", () => {
+    const scopes = declaration().scopes;
+    expect(
+      scopesToRun(["cli/tests/contexts/telemetry/testing/fake-locator.fake.ts"], scopes)
+    ).toEqual(["telemetry"]);
+    expect(
+      scopesToRun(
+        ["cli/tests/presentation/presenters/telemetry/telemetry-report.presenter.unit.test.ts"],
+        scopes
+      )
+    ).toEqual(["telemetry"]);
+    expect(scopesToRun(["cli/tests/shared/testing/capturing-logger.fake.ts"], scopes)).toEqual([]);
+    expect(
+      scopesToRun(["cli/tests/contexts/tools/domain/catalog-registered.unit.test.ts"], scopes)
+    ).toEqual([]);
+    expect(scopesToRun(["cli/tests/golden/testing/expect-golden.builder.ts"], scopes)).toEqual([]);
+    for (const [name, scope] of Object.entries(scopes)) {
+      for (const glob of scope.tests ?? []) {
+        expect(
+          existsSync(join(REPO_ROOT, "cli", glob.replace(/\/\*\*.*$/, ""))),
+          `${name}: tests glob ${glob} names nothing`
+        ).toBe(true);
+      }
+    }
+  });
+
+  it("keeps a test that drives the CLI in process out of the worker-thread projects", () => {
+    const unit = mutationConfig.test?.projects?.find(
+      (project) => typeof project === "object" && "test" in project && project.test?.name === "unit"
+    );
+    const excluded = typeof unit === "object" && "test" in unit ? unit.test?.exclude : undefined;
+    expect(excluded).toContain(
+      "tests/presentation/controllers/menu/unknown-commands.integration.test.ts"
+    );
+  });
+
+  it("names a harness of exactly the three files that reshape every scope", () => {
+    expect([...HARNESS].sort()).toEqual([
+      "cli/mutation-scopes.json",
+      "cli/stryker.conf.json",
+      "cli/vitest.mutation.config.ts",
+    ]);
+  });
+
+  it("runs a scope that names a single file when that file changed", () => {
+    const single = {
+      adapter: {
+        mutate: ["src/contexts/telemetry/domain/resolution/git-environment.ts"],
+        break: 1,
+      },
+      tools: { mutate: "src/contexts/tools/**/*.ts", break: 1 },
+    };
+    expect(
+      scopesToRun(["cli/src/contexts/telemetry/domain/resolution/git-environment.ts"], single)
+    ).toEqual(["adapter"]);
+    expect(
+      scopesToRun(["cli/src/contexts/telemetry/domain/resolution/git-environment.tsx"], single)
+    ).toEqual([]);
+  });
+
+  it("names every harness file the tree holds, so a renamed one cannot silently stop counting", () => {
+    for (const file of HARNESS) {
+      expect(
+        existsSync(join(REPO_ROOT, file)),
+        `${file} is named in HARNESS but is not there`
+      ).toBe(true);
+    }
+  });
+
+  it("carries only a kill forward, so a test written later reaches what survived, went uncovered or is static", () => {
+    const pruned = pruneIncremental({
+      files: {
+        "a.ts": {
+          mutants: [
+            { status: "Killed" },
+            { status: "Timeout" },
+            { status: "Killed", static: true },
+            { status: "Survived" },
+            { status: "NoCoverage" },
+          ],
+        },
+      },
+    });
+    expect(pruned.files?.["a.ts"]?.mutants).toEqual([{ status: "Killed" }]);
+  });
+
+  it("mutates only the lines a diff adds or changes under src/, never a deletion or another file", () => {
+    const diff = [
+      "diff --git a/src/a.ts b/src/a.ts",
+      "--- a/src/a.ts",
+      "+++ b/src/a.ts",
+      "@@ -10,2 +10,3 @@ function a() {",
+      "@@ -20 +21 @@ function b() {",
+      "@@ -30,4 +31,0 @@ function c() {",
+      "diff --git a/src/b.ts b/src/b.ts",
+      "--- /dev/null",
+      "+++ b/src/b.ts",
+      "@@ -0,0 +1,5 @@",
+      "diff --git a/README.md b/README.md",
+      "+++ b/README.md",
+      "@@ -1 +1 @@",
+    ].join("\n");
+    expect(changedRanges(diff)).toEqual(["src/a.ts:10-12", "src/a.ts:21-21", "src/b.ts:1-5"]);
+    expect(changedArgs(["src/a.ts:10-12", "src/b.ts:1-5"])).toEqual([
+      "run",
+      "--mutate",
+      "src/a.ts:10-12,src/b.ts:1-5",
+      "--ignoreStatic",
+    ]);
+  });
+
+  it("names each mutant a test left alive, with its file and line", () => {
+    const report = {
+      files: {
+        "src/a.ts": {
+          mutants: [
+            { status: "Killed", mutatorName: "BooleanLiteral", location: { start: { line: 3 } } },
+            { status: "Survived", mutatorName: "StringLiteral", location: { start: { line: 7 } } },
+            {
+              status: "NoCoverage",
+              mutatorName: "BlockStatement",
+              location: { start: { line: 9 } },
+            },
+          ],
+        },
+      },
+    };
+    expect(survivorsOf(report)).toEqual([
+      "src/a.ts:7 StringLiteral (Survived)",
+      "src/a.ts:9 BlockStatement (NoCoverage)",
+    ]);
+  });
+
+  it("passes any score for a scope that declares no floor", () => {
+    expect(breakVerdict(0, { mutate: "x" })).toBeNull();
+  });
+
+  it("fails a score under the floor and passes one on it", () => {
+    expect(breakVerdict(69.9, scopes.shared)).toMatch(/below the 70/);
+    expect(breakVerdict(70, scopes.shared)).toBeNull();
+  });
+});

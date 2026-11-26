@@ -4,7 +4,7 @@ Guidelines for adding skills, agents, rules, and templates inside your AIDD-equi
 
 ## Creating New Content
 
-Never hand-write a context artifact. Run its generator: it applies the contract, fills the template, and writes to the right place for every AI tool the project uses (Claude Code, Cursor, Copilot, Codex, OpenCode).
+Never hand-write a context artifact. Run its generator: it applies the contract, fills the template, and writes to the right place for every AI tool the project uses (the list is in [COMPATIBILITY](../docs/COMPATIBILITY.md)).
 
 | Artifact                     | Run                                |
 | ---------------------------- | ---------------------------------- |
@@ -22,7 +22,7 @@ Never hand-write a context artifact. Run its generator: it applies the contract,
 
 Every template lives beside the skill that owns it, under `plugins/<plugin>/skills/<NN-name>/assets/`, and is filled by one of that skill's actions. Adapt a template to your team's conventions, then let the generator derive from it.
 
-The skill contract itself lives in one file: `aidd-context:04-skill-generate/references/skill-authoring.md`. It is the only place that states what a router, an action, and a reference may hold.
+The skill contract itself lives in one file: `aidd-context:04-skill-generate/references/skill-authoring.md`. It states what a router, an action, and a reference may hold; `scripts/contract.json` checks it.
 
 ## Syncing Across Tools
 

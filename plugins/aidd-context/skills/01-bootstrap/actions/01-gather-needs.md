@@ -8,7 +8,7 @@ A free-form user request to bootstrap a new SaaS project.
 
 ## Output
 
-A filled copy of [checklist.md](../assets/checklist.md) held in conversation context, not yet written to disk, with every user-input item's `<...>` placeholder replaced by a concrete value.
+A filled copy of [checklist.md](../assets/checklist.md) held in conversation context, not yet written to disk, with every user-input item's `{{...}}` slot replaced by a concrete value.
 
 ## Process
 
@@ -21,6 +21,6 @@ A filled copy of [checklist.md](../assets/checklist.md) held in conversation con
 
 ## Test
 
-- The 18 user-input items have no remaining `<...>` placeholders.
+- The 18 user-input items have no remaining `{{...}}` slots.
 - The 6 block-4 items are still placeholders.
 - The user explicitly confirmed the filled checklist before action 02 starts.

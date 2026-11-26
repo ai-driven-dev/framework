@@ -1,0 +1,52 @@
+import { describe, expect, it } from "vitest";
+import { stripCodexSkillFrontmatter } from "../../../../../../src/contexts/tools/domain/behaviours/codex/codex-skill.model.js";
+import { serializeFrontmatter } from "../../../../../../src/shared/domain/markdown.js";
+
+/**
+ * Codex is the only target that re-serialises skill frontmatter instead of passing the file
+ * through, so these pin the transform itself rather than the golden that recorded its output.
+ */
+describe("a skill's frontmatter, rewritten for Codex", () => {
+  const rebuild = (fm: Record<string, unknown>) =>
+    serializeFrontmatter(stripCodexSkillFrontmatter(fm), "body\n");
+
+  it("keeps the three fields Codex reads", () => {
+    expect(
+      stripCodexSkillFrontmatter({
+        name: "aidd-dev:01:plan",
+        description: "Plan things",
+        allowed_tools: ["Read"],
+      })
+    ).toEqual({ name: "aidd-dev:01:plan", description: "Plan things", allowed_tools: ["Read"] });
+  });
+
+  it("drops the fields it does not, rather than passing them through", () => {
+    // `model` is the one the framework ships and Codex has no use for.
+    expect(stripCodexSkillFrontmatter({ name: "n", description: "d", model: "opus" })).toEqual({
+      name: "n",
+      description: "d",
+    });
+  });
+
+  it("omits a field the source never set", () => {
+    expect(stripCodexSkillFrontmatter({ description: "d" })).toEqual({ description: "d" });
+  });
+
+  it("writes no description key for a skill that has none", () => {
+    expect(stripCodexSkillFrontmatter({ name: "n" })).toStrictEqual({ name: "n" });
+  });
+
+  it("quotes a value whose colon would otherwise make the frontmatter unreadable", () => {
+    // Not cosmetic: a description containing ": " makes `js-yaml` refuse the source with "bad
+    // indentation of a mapping entry". Re-serialising with quotes is what makes it parse.
+    expect(rebuild({ name: "aidd-context:03:context-generate", description: "Do a: thing" })).toBe(
+      "---\nname: 'aidd-context:03:context-generate'\ndescription: 'Do a: thing'\n---\nbody\n"
+    );
+  });
+
+  it("escapes a quote in the value rather than closing the string early", () => {
+    expect(rebuild({ description: "it's here" })).toBe(
+      "---\ndescription: 'it''s here'\n---\nbody\n"
+    );
+  });
+});

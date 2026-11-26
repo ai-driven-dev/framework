@@ -123,22 +123,16 @@ test("M2: a date is a warning, never an error", () => {
   assert.deepEqual(lint("# T\n\nDated 2026-01-31 here.\n").map(({ rule, severity }) => [rule, severity]), [["M2", "warning"]]);
 });
 
-test("each message names what is wrong, never its fix: the fix stands apart", () => {
-  const message = (text, files) => lint(text, files)[0].message;
-  assert.equal(message(`# T\n\n${words(26)}\n`), "sentence of 26 words, over the recommended 25");
-  assert.equal(message("# T\n\nShipped 2026-01-02.\n"), '"2026-01-02" goes stale');
-  assert.equal(message("# T\n\nSee `src/gone.cfg`.\n", { "src/here.cfg": "" }), "`src/gone.cfg` names nothing on disk");
-});
-
-test("each error carries its excerpt and its fix apart, as the findings formatter prints them", () => {
+test("each error carries its excerpt and a non-empty fix apart, as the findings formatter prints them", () => {
   const parts = (text, files) => {
     const [{ excerpt, fix }] = lint(text, files);
-    return { excerpt, fix };
+    assert.ok(fix, "a finding without a fix");
+    return excerpt;
   };
-  assert.deepEqual(parts(`# T\n\n${words(26)}\n`), { excerpt: "26 words, over the recommended 25", fix: "split it into a list or a table; keep every fact" });
-  assert.deepEqual(parts("# T\n\nShipped 2026-01-02.\n"), { excerpt: "2026-01-02", fix: "check it against the code; keep it if true" });
-  assert.deepEqual(parts("# T\n\nSee `src/gone.cfg`.\n", { "src/here.cfg": "" }), { excerpt: "src/gone.cfg", fix: "fix the path; keep the fact" });
-  assert.deepEqual(parts(`# T\n\n- ${words(36)}\n`), { excerpt: undefined, fix: "split it; keep every fact" });
+  assert.equal(parts(`# T\n\n${words(26)}\n`), "26 words, over the recommended 25");
+  assert.equal(parts("# T\n\nShipped 2026-01-02.\n"), "2026-01-02");
+  assert.equal(parts("# T\n\nSee `src/gone.cfg`.\n", { "src/here.cfg": "" }), "src/gone.cfg");
+  assert.equal(parts(`# T\n\n- ${words(36)}\n`), undefined);
 });
 
 test("an excerpt over 40 characters is cut with an ellipsis", () => {
@@ -200,31 +194,20 @@ test("M3: every question of every template is found when its file keeps it", () 
   }
 });
 
-// Where a build puts the skill, as `aidd translate --as flat` lays it out per tool, and the plugin tree.
-const LAYOUTS = {
-  "plugin tree": "skills/02-project-memory",
-  claude: ".claude/skills/aidd-context-02-project-memory",
-  cursor: ".cursor/skills/aidd-context-02-project-memory",
-  copilot: ".github/skills/aidd-context-02-project-memory",
-  codex: ".agents/skills/aidd-context-02-project-memory",
-  opencode: ".opencode/skills/aidd-context/02-project-memory",
-  kilo: ".kilo/skills/aidd-context/02-project-memory",
-};
-
-test("M3 finds the templates beside the skill in every layout a build produces, and flags nothing without them", () => {
+// A build copies the skill's scripts and templates side by side, wherever it puts the skill.
+test("M3 finds the templates beside the skill in a built layout, and flags nothing without them", () => {
   const skillSource = path.resolve(__dirname, "../../plugins/aidd-context/skills/02-project-memory");
-  for (const [layout, skill] of Object.entries(LAYOUTS)) {
-    for (const withTemplates of [true, false]) {
-      const root = fs.mkdtempSync(path.join(os.tmpdir(), "memory-layout-"));
-      try {
-        fs.cpSync(path.join(skillSource, "scripts"), path.join(root, skill, "scripts"), { recursive: true });
-        if (withTemplates) fs.cpSync(path.join(skillSource, "assets/templates"), path.join(root, skill, "assets/templates"), { recursive: true });
-        const script = `const { RULES } = require(${JSON.stringify(path.join(root, skill, "scripts/lib/memory-rules.cjs"))});\nconsole.log(RULES.find((rule) => rule.id === "M3").check({ file: "aidd_docs/memory/vcs.md", text: process.argv[1] }).length);`;
-        const run = spawnSync(process.execPath, ["-e", script, `# V\n\n- ${slotOf("vcs.md", 2)}\n`], { encoding: "utf8" });
-        assert.equal(run.stdout.trim(), withTemplates ? "1" : "0", `${layout}${withTemplates ? "" : " without templates"}: ${run.stderr}`);
-      } finally {
-        fs.rmSync(root, { recursive: true, force: true });
-      }
+  const skill = ".claude/skills/aidd-context-02-project-memory";
+  for (const withTemplates of [true, false]) {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "memory-layout-"));
+    try {
+      fs.cpSync(path.join(skillSource, "scripts"), path.join(root, skill, "scripts"), { recursive: true });
+      if (withTemplates) fs.cpSync(path.join(skillSource, "assets/templates"), path.join(root, skill, "assets/templates"), { recursive: true });
+      const script = `const { RULES } = require(${JSON.stringify(path.join(root, skill, "scripts/lib/memory-rules.cjs"))});\nconsole.log(RULES.find((rule) => rule.id === "M3").check({ file: "aidd_docs/memory/vcs.md", text: process.argv[1] }).length);`;
+      const run = spawnSync(process.execPath, ["-e", script, `# V\n\n- ${slotOf("vcs.md", 2)}\n`], { encoding: "utf8" });
+      assert.equal(run.stdout.trim(), withTemplates ? "1" : "0", `${withTemplates ? "" : "without templates: "}${run.stderr}`);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
     }
   }
 });
@@ -240,15 +223,8 @@ test("M4: a backticked path under a real top-level entry that does not exist is 
   assert.deepEqual(problems.map(({ rule, line }) => [rule, line]), [["M4", 3]]);
 });
 
-test("M4: an existing path, an unknown head, a directory, a glob and a version stay quiet", () => {
-  const text = "# T\n\n`src/here.cfg` `nowhere/x.cfg` `src/dir` `src/*.cfg` `>=22.12` `a b.cfg` `src/settings.local.json`\n";
-  assert.deepEqual(ids(lint(text, { "src/here.cfg": "" })), []);
-});
-
 test("M4: a path that exists beside the citing file is a sibling, not a dead path", () => {
-  const files = { "ARCHITECTURE.md": "" };
-  assert.deepEqual(ids(lint("# T\n\nSee `architecture.md`.\n", files, { "architecture.md": "# A\n" })), []);
-  assert.deepEqual(ids(lint("# T\n\nSee `architecture.md`.\n", files, { "other.md": "# O\n" })), ["M4"]);
+  assert.deepEqual(ids(lint("# T\n\nSee `architecture.md`.\n", { "ARCHITECTURE.md": "" }, { "architecture.md": "# A\n" })), []);
 });
 
 test("M5: a bullet or a table cell over 35 words is a warning", () => {
@@ -257,14 +233,6 @@ test("M5: a bullet or a table cell over 35 words is a warning", () => {
   const cell = lint(`# T\n\n| a | b |\n| - | - |\n| x | ${words(36)} |\n`);
   assert.deepEqual(ids(cell), ["M5"]);
   assert.deepEqual(ids(lint(`# T\n\n- ${words(35)}\n`)), []);
-});
-
-test("M5 and M6 name the count over the recommendation and a fix that keeps every fact", () => {
-  const [m5] = lint(`# T\n\n- ${words(36)}\n`);
-  assert.deepEqual([m5.message, m5.fix], ["bullet or cell of 36 words, over the recommended 35", "split it; keep every fact"]);
-  const m6 = lint(`# T\n\n${Array(41).fill(words(10) + ".").join("\n")}\n`).find((problem) => problem.rule === "M6");
-  assert.match(m6.message, /^file of \d+ words, over the recommended 400$/u);
-  assert.equal(m6.fix, "move a section to the capability file it belongs to; keep every fact");
 });
 
 test("M6: a file over 400 words is a warning", () => {

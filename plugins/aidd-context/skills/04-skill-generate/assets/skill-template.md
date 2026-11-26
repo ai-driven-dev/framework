@@ -1,17 +1,17 @@
 ---
-name: <skill-name>
-description: <description>
+name: {{skill-name}}
+description: {{description}}
 ---
 
-# <Skill Name>
+# {{Skill Name}}
 
 ```mermaid
 flowchart LR
-  <diagram from the plan>
+  {{diagram from the plan}}
 ```
 
 ## Transversal rules
 
-- <rule>
+- {{rule}}
 
-> Fill every `<...>` and delete this line. Omit Transversal rules when empty.
+> Fill every `{{...}}` and delete this line. Omit Transversal rules when empty.

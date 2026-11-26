@@ -4,12 +4,14 @@ Run `scripts/write-rule.cjs` to write a rule source under `aidd_docs/rules/` and
 
 ```sh
 node "$writer" --project "$project_root" --tools "$host_ids" --input "$request_json"
+node "$validator" "$project_root/aidd_docs/rules/$category/$slug.md"
 ```
 
 - `$writer`: the absolute path of `scripts/write-rule.cjs`, next to the loaded `SKILL.md`.
+- `$validator`: the absolute path of `scripts/validate-rule.cjs`, next to the loaded `SKILL.md`; it prints one `path:line RULE-nn message` per finding and nothing when clean.
 - `$project_root`: the absolute path of the working directory, copied as the session reports it.
 - `$host_ids`: the confirmed IDs from `hosts.md`, comma-separated.
-- `$request_json`: a temporary file outside the project holding `category`, `slug`, a one-line `description`, a `body` starting with `# <title>`, and optional `paths`, an array of globs without commas, so write `*.{ts,tsx}` as `*.ts` and `*.tsx`.
+- `$request_json`: a temporary file outside the project holding `category`, `slug`, a one-line `description`, a `body` starting with `# <title>`, and optional `paths`, an array of globs.
 
 | Option | Effect |
 | --- | --- |

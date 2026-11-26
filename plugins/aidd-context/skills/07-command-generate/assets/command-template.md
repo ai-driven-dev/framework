@@ -1,8 +1,17 @@
-# <Command title>
+---
+description: "{{what the command does, one line}}"
+argument-hint:
+model:
+agent:
+allowed-tools:
+disable-model-invocation:
+---
 
-<The single objective, in one line.>
+# {{Command title}}
 
-1. <Imperative step.>
-2. <Next step.>
+{{The single objective, in one line.}}
 
-> Fill every `<...>` and delete this line.
+1. {{Imperative step.}}
+2. {{Next step.}}
+
+> Fill every `{{...}}`, delete each front matter key the command does not keep, and delete this line.

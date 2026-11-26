@@ -1,0 +1,69 @@
+{
+  "host": "opencode-v2",
+  "event": "session.get",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "id": "00000000-0000-4000-8000-000000000000",
+        "projectID": "global",
+        "model": {
+          "id": "big-pickle",
+          "providerID": "opencode",
+          "variant": "default"
+        },
+        "cost": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache": {
+            "read": 0,
+            "write": 0
+          }
+        },
+        "time": {
+          "created": 0,
+          "updated": 0
+        },
+        "location": {
+          "directory": "/Users/user/project"
+        }
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "child",
+      "payload": {
+        "id": "00000000-0000-4000-8000-000000000001",
+        "parentID": "00000000-0000-4000-8000-000000000000",
+        "projectID": "global",
+        "agent": "general",
+        "model": {
+          "id": "big-pickle",
+          "providerID": "opencode",
+          "variant": "default"
+        },
+        "cost": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache": {
+            "read": 0,
+            "write": 0
+          }
+        },
+        "time": {
+          "created": 0,
+          "updated": 0
+        },
+        "title": "Reply with OK",
+        "location": {
+          "directory": "/Users/user/project"
+        }
+      },
+      "hookAnswer": null
+    }
+  ]
+}

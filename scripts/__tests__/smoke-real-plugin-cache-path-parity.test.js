@@ -13,16 +13,13 @@ const ROOT = path.resolve(__dirname, "../..");
  */
 
 function pluginCacheDirSegments(profileFile) {
-  const text = fs.readFileSync(path.join(ROOT, "cli/src/contexts/tools/domain/profiles", profileFile), "utf8");
-  const match = text.match(/pluginCacheDir:\s*\(h\)\s*=>\s*join\(h,\s*([^)]+)\)/u);
+  const text = fs.readFileSync(path.join(ROOT, "cli/src/composition/tool-profiles", profileFile), "utf8");
+  const match = text.match(/pluginCacheDir:\s*"\{home\}\/([^"]+)"/u);
   assert.ok(
     match,
     `${profileFile} no longer declares pluginCacheDir the way this guard expects`
   );
-  return match[1]
-    .split(",")
-    .map((segment) => segment.trim().replace(/^"|"$/gu, ""))
-    .join("/");
+  return match[1];
 }
 
 function smokeRealScript() {
@@ -30,21 +27,21 @@ function smokeRealScript() {
 }
 
 describe("smoke-real.sh names the same cache path each profile declares", () => {
-  it("claude's literal path matches claude/profile.ts's own pluginCacheDir", () => {
-    const expected = pluginCacheDirSegments("claude/profile.ts");
+  it("claude's literal path matches claude.ts's own pluginCacheDir", () => {
+    const expected = pluginCacheDirSegments("claude.ts");
     assert.equal(expected, ".claude/plugins/cache");
     assert.ok(
       smokeRealScript().includes(expected),
-      `smoke-real.sh does not contain the literal path segment '${expected}' claude/profile.ts declares`
+      `smoke-real.sh does not contain the literal path segment '${expected}' claude.ts declares`
     );
   });
 
-  it("codex's literal path matches codex/profile.ts's own pluginCacheDir", () => {
-    const expected = pluginCacheDirSegments("codex/profile.ts");
+  it("codex's literal path matches codex.ts's own pluginCacheDir", () => {
+    const expected = pluginCacheDirSegments("codex.ts");
     assert.equal(expected, ".codex/plugins/cache");
     assert.ok(
       smokeRealScript().includes(expected),
-      `smoke-real.sh does not contain the literal path segment '${expected}' codex/profile.ts declares`
+      `smoke-real.sh does not contain the literal path segment '${expected}' codex.ts declares`
     );
   });
 });

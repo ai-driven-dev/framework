@@ -234,7 +234,8 @@ for (const [label, change] of [
   ["category and slug digit mismatch", { slug: "2-naming" }],
   ["unknown category", { category: "01-nope" }],
   ["traversal slug", { slug: "../escape" }],
-  ["comma in path", { paths: ["src/{a,b}.ts"] }],
+  ["comma in path", { paths: ["src/a,b.ts"] }],
+  ["unclosed brace in path", { paths: ["src/{a,b.ts"] }],
   ["newline in description", { description: "a\nb" }],
   ["empty body", { body: "  \n" }],
   ["body without a title heading", { body: "Keep names clear.\n" }],
@@ -401,11 +402,12 @@ test("an instructions value that is not an array refuses", (t) => {
 
 test("a publish plan restores each removed host config entry", (t) => {
   const f = fixture(t);
-  assert.equal(f.run(rule, "kilo,opencode").status, 0);
+  assert.equal(f.run(rule, "opencode").status, 0);
   assert.deepEqual(json(f.run(null, null, ["--plan", "--publish"])).files, []);
   f.put("opencode.json", "{}\n");
-  f.put("kilo.jsonc", "{}\n");
-  assert.deepEqual(paths(json(f.run(null, null, ["--plan", "--publish"])).files, "update"), ["kilo.jsonc", "opencode.json"]);
+  assert.deepEqual(paths(json(f.run(null, null, ["--plan", "--publish"])).files, "update"), ["opencode.json"]);
+  assert.equal(f.run(rule, "kilo").status, 0);
+  assert.ok(!f.has("kilo.jsonc"));
 });
 
 test("removing the last rule keeps the config entry", (t) => {
@@ -510,4 +512,45 @@ test("an untrusted AGENTS.md block blocks only the codex index, never a copy hos
   assert.equal(r.status, 0, r.stdout);
   assert.equal(f.read("AGENTS.md"), agents);
   assert.equal(f.run(rule, "codex").status, 1);
+});
+
+test("a brace glob is written as one glob per alternative, nested braces included", (t) => {
+  const f = fixture(t);
+  assert.equal(f.run({ ...rule, paths: ["src/**/*.{ts,tsx}", "t/{a,b{1,2}}.js"] }, "claude").status, 0);
+  assert.equal(f.read(CLAUDE), `---\npaths:\n  - "src/**/*.ts"\n  - "src/**/*.tsx"\n  - "t/a.js"\n  - "t/b1.js"\n  - "t/b2.js"\n---\n${rule.body}`);
+});
+
+test("kimi takes a line in the AGENTS.md index and no copy", (t) => {
+  const f = fixture(t);
+  assert.equal(f.run(rule, "kimi").status, 0);
+  assert.ok(f.read("AGENTS.md").includes(`- \`src/**/*.ts\`, \`test/**/*.ts\`: [Naming](${SRC})`));
+  assert.deepEqual(Object.keys(f.snapshot()).sort(), ["AGENTS.md", SRC]);
+});
+
+const KIRO = ".kiro/steering/01-standards-1-naming.md";
+
+test("kiro gets a steering file, always included or matched on the rule's globs", (t) => {
+  const f = fixture(t);
+  assert.equal(f.run(rule, "kiro").status, 0);
+  assert.equal(f.read(KIRO), `---\ninclusion: fileMatch\nfileMatchPattern: ["src/**/*.ts", "test/**/*.ts"]\n---\n${rule.body}`);
+  assert.equal(f.run({ ...rule, slug: "1-other", paths: [], body: "# Other\n" }, "kiro").status, 0);
+  assert.equal(f.read(".kiro/steering/01-standards-1-other.md"), "---\ninclusion: always\n---\n# Other\n");
+});
+
+test("a rule for both opencode and kilo is published once, through the opencode copy and entry", (t) => {
+  const f = fixture(t);
+  assert.equal(f.run(rule, "opencode,kilo").status, 0);
+  assert.equal(f.read(OPENCODE), scopeLine + rule.body);
+  assert.equal(f.read("opencode.json"), '{\n  "instructions": [".opencode/rules/*.md"]\n}\n');
+  assert.ok(!f.has(KILO));
+  assert.ok(!f.has("kilo.jsonc"));
+});
+
+test("adding opencode to a kilo rule removes the kilo copy the writer produced", (t) => {
+  const f = fixture(t);
+  assert.equal(f.run(rule, "kilo").status, 0);
+  assert.ok(f.has(KILO));
+  assert.equal(f.run(rule, "opencode").status, 0);
+  assert.ok(!f.has(KILO));
+  assert.equal(f.read(OPENCODE), scopeLine + rule.body);
 });

@@ -11,7 +11,7 @@ const REPO_ROOT = path.resolve(__dirname, "../..");
 const CHECK = path.join(REPO_ROOT, "scripts/check-architecture-rules.js");
 
 /**
- * The commit-time half of issue #250. The write-time hook only ever sees Claude Code; this
+ * The commit-time half of issue #250, router coherence. The write-time hook only ever sees Claude Code; this
  * check is what every other tool, and every person, runs into. Its tests are therefore the
  * ones that matter for coverage, not the hook's.
  */
@@ -26,11 +26,6 @@ const CLEAN_SKILL = [
   "| 01 | `step` | Do the one thing |",
   "",
 ].join("\n");
-
-const SIBLING_ADDRESS_SKILL = CLEAN_SKILL.replace(
-  "# Clean skill",
-  "# Clean skill\n\nSee @aidd-fixture-b:02-thing for the other half."
-);
 
 const UNCITED_ACTION_SKILL = CLEAN_SKILL.replace("| 01 | `step` | Do the one thing |", "");
 
@@ -51,14 +46,6 @@ test("a skill citing every action it provides yields nothing", () => {
   assert.deepEqual(scan(root, [skill]), []);
 });
 
-test("a skill addressing a sibling plugin is caught, and names the sibling", () => {
-  const { root, skill } = makeTree(SIBLING_ADDRESS_SKILL);
-  const found = scan(root, [skill]);
-  assert.equal(found.length, 1);
-  assert.equal(found[0].rule, "orthogonality");
-  assert.equal(found[0].plugin, "aidd-fixture-b");
-});
-
 test("an action file the router never cites is caught, and names the file", () => {
   const { root, skill } = makeTree(UNCITED_ACTION_SKILL);
   const found = scan(root, [skill]);
@@ -68,8 +55,8 @@ test("an action file the router never cites is caught, and names the file", () =
 });
 
 test("a path outside the governed surface contributes nothing", () => {
-  const { root } = makeTree(SIBLING_ADDRESS_SKILL);
-  fs.writeFileSync(path.join(root, "README.md"), "See @aidd-fixture-b:02-thing.\n");
+  const { root } = makeTree(UNCITED_ACTION_SKILL);
+  fs.writeFileSync(path.join(root, "README.md"), "# Readme\n");
   assert.deepEqual(scan(root, ["README.md"]), []);
 });
 
@@ -92,11 +79,11 @@ test("the command exits 0 on this repository and says how much it checked", () =
 });
 
 test("the command exits 1 and prints the fix when a governed file breaks a rule", () => {
-  const { root, skill } = makeTree(SIBLING_ADDRESS_SKILL);
+  const { root, skill } = makeTree(UNCITED_ACTION_SKILL);
   const result = spawnSync(process.execPath, [CHECK, "--root", root, skill], { encoding: "utf8" });
   assert.equal(result.status, 1);
-  assert.match(result.stderr, /addresses sibling plugin "aidd-fixture-b"/);
-  assert.match(result.stderr, /Fix: name the concept aidd-fixture-b owns/);
+  assert.match(result.stderr, /never names action file "01-step\.md"/);
+  assert.match(result.stderr, /Fix: cite every action file/);
 });
 
 test("the command scans a whole tree it is pointed at, not only this repository", () => {

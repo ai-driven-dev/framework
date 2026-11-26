@@ -1,17 +1,13 @@
 # framework-real fixture
 
-Pinned snapshot of aidd-framework tag **v4.1.0-beta.12**.
+A frozen copy of the framework's `plugins/` and `.claude-plugin/marketplace.json`.
+`version.txt` records the framework version it was copied from.
 
-Used by `tests/e2e/persona.e2e.test.ts` as a local marketplace source
-(avoids network calls, deterministic content).
+It is the single source for the goldens (`tests/golden/`), the persona e2e journey
+(`tests/e2e/persona.e2e.test.ts`) and the collision smoke (`scripts/smoke-collision.sh`).
+It serves as a local marketplace, so none of them reach the network.
 
 ## Refresh
 
-```bash
-pnpm fixture:refresh
-# or pin to a specific tag:
-bash scripts/refresh-framework-fixture.sh v4.1.0-beta.12
-```
-
-The script archives `plugins/`, `.claude-plugin/marketplace.json`, and
-`version.txt` from the framework repo at the given tag.
+No script refreshes it. The goldens are frozen against these bytes: replacing the copy
+means regenerating every golden in the same change, and reviewing that diff by hand.

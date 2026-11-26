@@ -1,1 +1,185 @@
-route not supported by this tool
+## out-marketplace/plugins/aidd-context/hooks.json
+{
+  "aidd-context": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'../../..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvcGx1Z2lucy9haWRkLWNvbnRleHQvaG9va3MvbWVtb3J5LmNqcyBsb2Fk",
+        "timeout": 5
+      },
+      {
+        "type": "command",
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'../../..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvcGx1Z2lucy9haWRkLWNvbnRleHQvaG9va3MvYXJ0aWZhY3RzLmNqcyBzdGFydA==",
+        "timeout": 5
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "write_file|edit_file|run_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'../../..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvcGx1Z2lucy9haWRkLWNvbnRleHQvaG9va3MvYXJ0aWZhY3RzLmNqcyBtYXJr",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'../../..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvcGx1Z2lucy9haWRkLWNvbnRleHQvaG9va3MvbWVtb3J5LmNqcyBzeW5j",
+        "timeout": 5
+      }
+    ]
+  }
+}
+
+
+## out-marketplace/plugins/aidd-context/hooks/artifacts.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/contract.json
+{}
+
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/mermaid.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/read-next.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/router-diagram.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/router-edges.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/sibling-plugin.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/05-rule-generate/assets/rule-template.md
+---
+description: "{{when the rule applies, one line}}"
+paths:
+targets: [{{host tools}}]
+---
+
+# {{title}}
+
+- {{requirement}}
+
+## {{group}}
+
+- {{requirement}}
+
+> Fill every `{{...}}`, add one `  - "glob"` line under `paths:` per file pattern or delete `paths:` for a rule on every file, delete the group section when unused, and delete this line.
+
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/05-rule-generate/scripts/contract.json
+{}
+
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/06-agent-generate/scripts/contract.json
+{}
+
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/06-agent-generate/scripts/custom/name.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/07-command-generate/assets/command-template.md
+---
+description: "{{what the command does, one line}}"
+argument-hint:
+model:
+agent:
+allowed-tools:
+disable-model-invocation:
+---
+
+# {{Command title}}
+
+{{The single objective, in one line.}}
+
+1. {{Imperative step.}}
+2. {{Next step.}}
+
+> Fill every `{{...}}`, delete each front matter key the command does not keep, and delete this line.
+
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/07-command-generate/scripts/contract.json
+{}
+
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/lib/engine.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/lib/markdown.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/lib/ops.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-context/hooks/lib/host.cjs
+script, identical to the host adapter host-antigravity.cjs
+
+## out-marketplace/plugins/aidd-context/hooks/lib/markdown.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-context/hooks/memory.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks.json
+{
+  "aidd-telemetry": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'../../..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvcGx1Z2lucy9haWRkLXRlbGVtZXRyeS9ob29rcy90YXNrLmNqcyByZW1pbmQ=",
+        "timeout": 5
+      },
+      {
+        "type": "command",
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'../../..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvcGx1Z2lucy9haWRkLXRlbGVtZXRyeS9ob29rcy9sZWRnZXIuY2pzIGluZ2VzdA==",
+        "timeout": 5
+      }
+    ]
+  }
+}
+
+
+## out-marketplace/plugins/aidd-telemetry/hooks/ledger.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/aidd.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/claude-only.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/codex-session-file.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/consent.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/context.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/git.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/host.cjs
+script, identical to the host adapter host-antigravity.cjs
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/jsonl.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/telemetry-dir.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/tool.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/task.cjs
+script, identical to the plugin source

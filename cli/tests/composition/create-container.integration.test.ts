@@ -1,0 +1,131 @@
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import pkg from "../../package.json" with { type: "json" };
+import { containerFactory, createContainer } from "../../src/composition/container.js";
+import { wireInstallation } from "../../src/composition/contexts/installation.js";
+import { createOutput } from "../../src/composition/shared.js";
+import { catalogOf } from "../shared/testing/catalog-of.builder.js";
+
+vi.mock("../../src/composition/contexts/installation.js", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../../src/composition/contexts/installation.js")>();
+  return { ...actual, wireInstallation: vi.fn(actual.wireInstallation) };
+});
+
+describe("creating a container", () => {
+  const tools = catalogOf();
+  let root: string;
+
+  beforeEach(async () => {
+    root = await mkdtemp(join(tmpdir(), "aidd-create-container-"));
+    vi.mocked(wireInstallation).mockClear();
+  });
+
+  afterEach(async () => {
+    await rm(root, { recursive: true, force: true });
+  });
+
+  it("hands the same instance each time a context is read", () => {
+    const container = createContainer({ projectRoot: root, verbose: false, tools });
+
+    expect(container.shared).toBe(container.shared);
+    expect(container.installation).toBe(container.installation);
+    expect(container.update).toBe(container.update);
+  });
+
+  it("shares nothing between two containers", () => {
+    const first = createContainer({ projectRoot: root, verbose: false, tools });
+    const second = createContainer({ projectRoot: root, verbose: false, tools });
+
+    expect(second.shared).not.toBe(first.shared);
+    expect(second.update).not.toBe(first.update);
+  });
+
+  it("wires installation only when a context that needs it is read", () => {
+    const container = createContainer({ projectRoot: root, verbose: false, tools });
+
+    expect(container.update.selfUpdate).toBeDefined();
+    expect(wireInstallation).not.toHaveBeenCalled();
+
+    expect(container.installation).toBeDefined();
+    expect(wireInstallation).toHaveBeenCalledTimes(1);
+  });
+
+  it("reads the version of the running binary from its shared context", () => {
+    const container = createContainer({ projectRoot: root, verbose: false, tools });
+
+    expect(container.shared.currentVersion).toBe(pkg.version);
+  });
+
+  it("logs through the output it was handed", () => {
+    const output = createOutput(false);
+    const container = createContainer({ projectRoot: root, verbose: false, output, tools });
+
+    expect(container.shared.logger).toBe(output);
+  });
+
+  it("hands a command only the contexts it reads, wired on first read", async () => {
+    const container = await containerFactory(tools)(root, { verbose: false }, createOutput(false));
+
+    expect(container.update.selfUpdate).toBeDefined();
+    expect(container.shared.logIn).toBeDefined();
+    expect(wireInstallation).not.toHaveBeenCalled();
+
+    expect(container.translate.frameworkBuild).toBeDefined();
+    expect(wireInstallation).toHaveBeenCalledTimes(1);
+  });
+
+  it("hands setup, plugin, marketplace and sync their use cases", async () => {
+    const container = await containerFactory(tools)(root, { verbose: false }, createOutput(false));
+
+    for (const member of [
+      container.setup.runSetup,
+      container.agentModels.setAgentModels,
+      container.plugin.installPlugin,
+      container.plugin.removePlugin,
+      container.marketplace.addMarketplace,
+      container.marketplace.checkMarketplaceUpstream,
+      container.marketplace.syncSettings,
+      container.global.runSync,
+    ])
+      expect(member.execute).toBeTypeOf("function");
+    expect(container.shared.userManifestRepo.load).toBeTypeOf("function");
+  });
+
+  it("hands doctor, clean, tool configuration, recipes and telemetry their use cases", async () => {
+    const container = await containerFactory(tools)(root, { verbose: false }, createOutput(false));
+
+    for (const member of [
+      container.doctor.doctorAll,
+      container.global.reportAllStatus,
+      container.doctor.runUserScopeDoctor,
+      container.clean.cleanProject,
+      container.clean.cleanUserScope,
+      container.global.installAiToolWithPlugins,
+      container.clean.uninstallTools,
+      container.installation.listInstalledRules,
+      container.recipes.validateRecipes,
+      container.telemetry.declareTask,
+    ])
+      expect(member.execute).toBeTypeOf("function");
+    expect(container.doctor.userSettingsFileOf).toBeTypeOf("function");
+  });
+
+  it("wires telemetry and recipes without wiring installation", async () => {
+    const container = await containerFactory(tools)(root, { verbose: false }, createOutput(false));
+
+    expect(container.telemetry).toBeDefined();
+    expect(container.recipes.validateRecipes).toBeDefined();
+    expect(wireInstallation).not.toHaveBeenCalled();
+  });
+
+  it("builds one container per call", async () => {
+    const forContainer = containerFactory(tools);
+    const first = await forContainer(root, { verbose: false }, createOutput(false));
+    const second = await forContainer(root, { verbose: false }, createOutput(false));
+
+    expect(second).not.toBe(first);
+  });
+});

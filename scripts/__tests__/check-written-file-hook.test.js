@@ -32,12 +32,12 @@ test("hands a broken Biome rule back to the agent, naming it", { skip: noBiome }
 });
 
 test("formats a file in place and stays silent on what would not block a commit", { skip: noBiome }, () => {
-  const file = probe("clean", "export function echo(value: any) {\n  return   value;\n}\n");
+  const file = probe("clean", "export function echo(value: number) {\n  const unused = 1;\n  return   value;\n}\n");
   try {
     const result = runHook(JSON.stringify({ tool_input: { file_path: file } }));
     assert.equal(result.status, 0);
     assert.equal(result.stdout + result.stderr, "");
-    assert.equal(fs.readFileSync(file, "utf8"), "export function echo(value: any) {\n  return value;\n}\n");
+    assert.equal(fs.readFileSync(file, "utf8"), "export function echo(value: number) {\n  const unused = 1;\n  return value;\n}\n");
   } finally {
     fs.rmSync(file, { force: true });
   }

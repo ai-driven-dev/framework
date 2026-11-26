@@ -1,0 +1,16 @@
+language js
+
+// A test file or the shared test kit hands a foreign context's closed folder back out, so a
+// test would reach it from a file the per-context import restriction does not cover. Only a
+// context's application/ and contract/ may travel through a re-export.
+or {
+  `export { $names } from $source`,
+  `export type { $names } from $source`,
+  `export * from $source`,
+  `export * as $ns from $source`,
+  `export type * from $source`
+} as $statement where {
+  $source <: r".*/contexts/[^/]+/[^/]+/.*",
+  $source <: not r".*/contexts/[^/]+/(?:application|contract)/.*",
+  register_diagnostic(span=$statement, message="a test file re-exports a closed folder or a context kit: re-export a context's application/ or contract/ only", severity="error")
+}

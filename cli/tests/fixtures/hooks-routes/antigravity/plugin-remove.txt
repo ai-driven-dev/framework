@@ -1,90 +1,74 @@
-## project/.agents/hooks.json
+## project/.agents/plugins/aidd-telemetry/hooks.json
 {
   "aidd-telemetry": {
     "SessionStart": [
       {
         "type": "command",
-        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvc2Vzc2lvbi1zdGFydC5janM=",
-        "timeout": 10
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'../../..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvcGx1Z2lucy9haWRkLXRlbGVtZXRyeS9ob29rcy90YXNrLmNqcyByZW1pbmQ=",
+        "timeout": 5
       },
       {
         "type": "command",
-        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvY2F0Y2gtdXAuY2pz",
-        "timeout": 120
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'../../..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvcGx1Z2lucy9haWRkLXRlbGVtZXRyeS9ob29rcy9sZWRnZXIuY2pzIGluZ2VzdA==",
+        "timeout": 5
       }
     ]
   }
 }
 
 
-## project/.agents/hooks/aidd-telemetry/catch-up.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/ledger.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/aidd.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/lib/aidd.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/binding.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/lib/claude-only.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/claude-only.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/lib/codex-session-file.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/codex-session-file.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/lib/consent.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/consent.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/lib/context.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/context.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/lib/git.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/declaration.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/lib/host.cjs
+script, identical to the host adapter host-antigravity.cjs
+
+## project/.agents/plugins/aidd-telemetry/hooks/lib/jsonl.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/git.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/lib/telemetry-dir.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/hook-io.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/lib/tool.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/jsonl.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-telemetry/lib/lookup.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-telemetry/lib/presence.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-telemetry/lib/telemetry-dir.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-telemetry/lib/tool.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-telemetry/prompt-gate.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-telemetry/session-start.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/task.cjs
 script, identical to the plugin source
 
 # recorded
-project antigravity aidd-telemetry scope=project: 0 hook files
-  projectHooks {
-  "entries": [
-    {
-      "event": "SessionStart",
-      "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvc2Vzc2lvbi1zdGFydC5janM=",
-      "digest": "4100c41de2bcea80a0e3fed5d428c845"
-    },
-    {
-      "event": "SessionStart",
-      "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvY2F0Y2gtdXAuY2pz",
-      "digest": "4216d59d18b66a867925fe452de01eb5"
-    }
-  ],
-  "scripts": {}
-}
+project antigravity aidd-telemetry scope=project: 13 hook files
+  .agents/plugins/aidd-telemetry/hooks.json
+  .agents/plugins/aidd-telemetry/hooks/ledger.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/aidd.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/claude-only.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/codex-session-file.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/consent.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/context.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/git.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/host.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/jsonl.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/telemetry-dir.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/tool.cjs
+  .agents/plugins/aidd-telemetry/hooks/task.cjs
+  projectHooks null
   dependents []
 project antigravity nativeRegistrations pluginRefs null
 machine: no manifest

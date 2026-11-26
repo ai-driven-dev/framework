@@ -26,6 +26,10 @@ describe("deriveProgressStatus", () => {
     expect(deriveProgressStatus("reviewed")).toBe("done");
   });
 
+  it("maps the raw status superseded to the done progress bucket", () => {
+    expect(deriveProgressStatus("superseded")).toBe("done");
+  });
+
   it("maps the raw status blocked to its own blocked progress bucket", () => {
     expect(deriveProgressStatus("blocked")).toBe("blocked");
   });

@@ -19,6 +19,14 @@ const ALLOWLIST = [
       "whatever claude-code currently ships, not a version this repo controls. Pinning " +
       "it would defeat the point of the probe.",
   },
+  {
+    file: ".github/workflows/cli-ci.yml",
+    pattern: /npm install -g \$\{\{ matrix\.package \}\}@latest/,
+    reason:
+      "Deliberately unpinned: the weekly host contract replays the recorded host behaviour against the newest " +
+      "claude, codex and copilot binaries, so a host that changed its word turns the run red. A pinned version " +
+      "would only ever replay the recording against itself.",
+  },
 ];
 
 /** Every `run:` step's script across every job in one workflow file, each tagged with

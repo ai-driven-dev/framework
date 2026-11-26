@@ -1,0 +1,82 @@
+## project/.kiro/hooks/aidd-telemetry/ledger.cjs
+script, identical to the plugin source
+
+## project/.kiro/hooks/aidd-telemetry/lib/aidd.cjs
+script, identical to the plugin source
+
+## project/.kiro/hooks/aidd-telemetry/lib/claude-only.cjs
+script, identical to the plugin source
+
+## project/.kiro/hooks/aidd-telemetry/lib/codex-session-file.cjs
+script, identical to the plugin source
+
+## project/.kiro/hooks/aidd-telemetry/lib/consent.cjs
+script, identical to the plugin source
+
+## project/.kiro/hooks/aidd-telemetry/lib/context.cjs
+script, identical to the plugin source
+
+## project/.kiro/hooks/aidd-telemetry/lib/git.cjs
+script, identical to the plugin source
+
+## project/.kiro/hooks/aidd-telemetry/lib/host.cjs
+script, identical to the host adapter host-kiro.cjs
+
+## project/.kiro/hooks/aidd-telemetry/lib/jsonl.cjs
+script, identical to the plugin source
+
+## project/.kiro/hooks/aidd-telemetry/lib/telemetry-dir.cjs
+script, identical to the plugin source
+
+## project/.kiro/hooks/aidd-telemetry/lib/tool.cjs
+script, identical to the plugin source
+
+## project/.kiro/hooks/aidd-telemetry/task.cjs
+script, identical to the plugin source
+
+## project/.kiro/hooks/aidd.json
+{
+  "version": "<version>",
+  "hooks": [
+    {
+      "name": "aidd-telemetry-SessionStart-task.cjs",
+      "trigger": "SessionStart",
+      "action": {
+        "type": "command",
+        "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-telemetry/task.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status===0||c.status===2)process.exit(c.status);console.error('aidd: hook script failed: '+r);process.exit(0)\" -- remind"
+      },
+      "timeout": 5
+    },
+    {
+      "name": "aidd-telemetry-SessionStart-ledger.cjs",
+      "trigger": "SessionStart",
+      "action": {
+        "type": "command",
+        "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-telemetry/ledger.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status===0||c.status===2)process.exit(c.status);console.error('aidd: hook script failed: '+r);process.exit(0)\" -- ingest"
+      },
+      "timeout": 5
+    }
+  ]
+}
+
+
+# recorded
+project kiro aidd-telemetry scope=project: 0 hook files
+  projectHooks {
+  "entries": [
+    {
+      "event": "SessionStart",
+      "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-telemetry/task.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status===0||c.status===2)process.exit(c.status);console.error('aidd: hook script failed: '+r);process.exit(0)\" -- remind",
+      "digest": "c1d3e9e9f22614eaeccecee0b0778eef"
+    },
+    {
+      "event": "SessionStart",
+      "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-telemetry/ledger.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});if(c.status===0||c.status===2)process.exit(c.status);console.error('aidd: hook script failed: '+r);process.exit(0)\" -- ingest",
+      "digest": "67b7f1dd05a545cc969252f8716ce35d"
+    }
+  ],
+  "scripts": {}
+}
+  dependents []
+project kiro nativeRegistrations pluginRefs null
+machine: no manifest

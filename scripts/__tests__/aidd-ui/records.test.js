@@ -164,14 +164,27 @@ describe("aidd-ui records and history", () => {
     });
 
     it("names an id two records hold", () => {
-      const screen = ["id: brand", "kind: screen", "status: proposed", "version: 1", "uses: []", "tokens: []", "states: [default]", "breakpoints: [mobile]", "route: /brand"];
+      const screen = ["id: brand", "kind: screen", "status: proposed", "version: 1", "uses: []", "tokens: []", "states: [default]", "breakpoints: [mobile]", "route: /brand", "wireframe: search-flow"];
       put(tmp, `${UI}/screens/brand.md`, record(screen));
-      addHistory(tmp, ["brand", "1", "created", "no", "aidd_docs/tasks/ds-init"]);
       assert.deepEqual(problems(), [`${UI}/screens/brand.md: id "brand" already belongs to ${BRAND}`]);
     });
   });
 
+  describe("R3 brand and system versions", () => {
+    for (const [file, id] of [[BRAND, "brand"], [SYSTEM, "system"]]) {
+      it(`names status and version missing from ${id}.md, with the line to add`, () => {
+        change(file, "status: proposed\nversion: 1\n", "");
+        assert.deepEqual(problems(), [`${file}: missing key "status"`, `${file}: missing key "version"`]);
+        assert.deepEqual(records.check(load(tmp)).filter((each) => each.file === file).map((each) => each.fix), ["add status: proposed", "add version: 1"]);
+      });
+    }
+  });
+
   describe("R5 version", () => {
+    it("accepts an integer system row beside the semver ones", () => {
+      assert.deepEqual(problems(), []);
+    });
+
     for (const bad of ["0", "v2"]) {
       it(`names element version ${bad}`, () => {
         change(JOURNEY, "version: 1", `version: ${bad}`);
@@ -377,9 +390,32 @@ describe("aidd-ui records and history", () => {
     });
   });
 
+  describe("R19 wireframe of a screen", () => {
+    const found = () => ledger.note(records.check(load(tmp))).filter((problem) => problem.rule === "R19").map((problem) => [problem.severity, problem.message]);
+
+    it("holds no problem for a screen whose wireframe exists", () => {
+      assert.deepEqual(found(), []);
+    });
+
+    it("warns of a screen with no wireframe, and never errs for it", () => {
+      change(HOME, "wireframe: search-flow\n", "");
+      assert.deepEqual(found(), [["warning", "has no wireframe"]]);
+    });
+
+    it("names a wireframe no record has", () => {
+      change(HOME, "wireframe: search-flow", "wireframe: ghost");
+      assert.deepEqual(found(), [["error", 'wireframe "ghost" is no record']]);
+    });
+
+    it("names a wireframe that is a record of another kind", () => {
+      change(HOME, "wireframe: search-flow", "wireframe: button");
+      assert.deepEqual(found(), [["error", 'wireframe "button" is an atom, not a wireframe']]);
+    });
+  });
+
   describe("R13 reviews", () => {
     it("names a screen state with no verdict row", () => {
-      change(REVIEW, "| home | loading | 1 | ko | spinner too small |\n", "");
+      change(REVIEW, "| home | loading | 1 | revise | spinner too small |\n", "");
       assert.deepEqual(problems(), [`${REVIEW}: no verdict row for home / loading at version 1`]);
     });
 
@@ -388,9 +424,33 @@ describe("aidd-ui records and history", () => {
       assert.deepEqual(problems(), [`${REVIEW}: no verdict row for home / loading at version 1`]);
     });
 
-    it("names a verdict that is not ok, ko or pending", () => {
+    it("names a verdict that is not ok, revise or pending", () => {
       change(REVIEW, "| home | default | 1 | ok | |", "| home | default | 1 | maybe | |");
-      assert.deepEqual(problems(), [`${REVIEW}: verdict "maybe" for home / default must be ok, ko or pending`]);
+      assert.deepEqual(problems(), [`${REVIEW}: verdict "maybe" for home / default must be ok, revise or pending`]);
+    });
+
+    it("accepts a revise verdict that says what to change", () => {
+      assert.deepEqual(problems(), []);
+    });
+
+    it("names a ko verdict, which no review holds any more", () => {
+      change(REVIEW, "| home | loading | 1 | revise | spinner too small |", "| home | loading | 1 | ko | spinner too small |");
+      assert.deepEqual(problems(), [`${REVIEW}: verdict "ko" for home / loading must be ok, revise or pending`]);
+    });
+
+    it("names a revise verdict with no comment", () => {
+      change(REVIEW, "| home | loading | 1 | revise | spinner too small |", "| home | loading | 1 | revise | |");
+      assert.deepEqual(problems(), [`${REVIEW}: verdict "revise" for home / loading has no comment`]);
+    });
+
+    it("accepts an ok verdict with no comment", () => {
+      assert.ok(fs.readFileSync(path.join(tmp, REVIEW), "utf8").includes("| home | default | 1 | ok | |"));
+      assert.deepEqual(problems(), []);
+    });
+
+    it("accepts a pending verdict with no comment", () => {
+      assert.ok(fs.readFileSync(path.join(tmp, REVIEW), "utf8").includes("| home | error | 1 | pending | |"));
+      assert.deepEqual(problems(), []);
     });
   });
 
@@ -433,8 +493,20 @@ describe("aidd-ui records and history", () => {
       assert.deepEqual(problems(), [`${JOURNEY}: no row in history.md`]);
     });
 
-    it("names the system without a publication row", () => {
+    it("accepts the system without a publication row: its content row is enough", () => {
       change(HISTORY, "| system | 1.0.0 | first system | no | aidd_docs/tasks/ds-init | |\n| system | 2.0.0 | old-button retired | yes | aidd_docs/tasks/retire-old-button | |\n", "");
+      assert.deepEqual(problems(), []);
+    });
+  });
+
+  describe("H1 brand and system content history", () => {
+    it("names a brand without a row in history.md", () => {
+      change(HISTORY, "| brand | 1 | created | no | aidd_docs/tasks/ds-init | |\n", "");
+      assert.deepEqual(problems(), [`${BRAND}: no row in history.md`]);
+    });
+
+    it("names a system with publications but no integer row", () => {
+      change(HISTORY, "| system | 1 | created | no | aidd_docs/tasks/ds-init | |\n", "");
       assert.deepEqual(problems(), [`${SYSTEM}: no row in history.md`]);
     });
   });
@@ -460,6 +532,18 @@ describe("aidd-ui records and history", () => {
       change(BUTTON, "version: 1", "version: 3");
       addHistory(tmp, ["button", "3", "larger", "no", "aidd_docs/tasks/ds-init"]);
       assert.deepEqual(problems(), [`${BUTTON}: history jumps from 1 to 3`]);
+    });
+  });
+
+  describe("H3 brand and system versions", () => {
+    it("names a system version above its highest integer row", () => {
+      change(SYSTEM, "version: 1", "version: 2");
+      assert.deepEqual(problems(), [`${SYSTEM}: version 2 is not the highest history row, 1`]);
+    });
+
+    it("names a brand version above its highest row", () => {
+      change(BRAND, "version: 1", "version: 2");
+      assert.deepEqual(problems(), [`${BRAND}: version 2 is not the highest history row, 1`]);
     });
   });
 
@@ -731,6 +815,7 @@ describe("aidd-ui records and history", () => {
 // Every rule case above notes the problems it saw; each carries a fix, and this table pins the rule, message, excerpt
 // and fix of all of them (`-` for no excerpt). It reads what the cases before it saw, so it runs with the whole file.
 const FIXES = [
+  "H1 | no row in history.md | - | run bump --task <folder> --created brand",
   "H1 | no row in history.md | - | run bump --task <folder> --created onboarding",
   "H1 | no row in history.md | - | run bump --task <folder> --created system",
   "H2 | two changes claim version 2 of old-button, renumber one | \"old-button 2\" | renumber one of the rows",
@@ -768,7 +853,9 @@ const FIXES = [
   "R12 | step 2 names screen \"ghost\", which no screen or wireframe has | \"ghost\" | name a screen or a wireframe that exists, or add a wireframe",
   "R12 | step 3 names screen \"search-flow\", which no screen or wireframe has | \"search-flow\" | name a screen or a wireframe that exists, or add a wireframe",
   "R13 | no verdict row for home / loading at version 1 | - | add a row for home / loading at version 1 to \"## Verdicts\"",
-  "R13 | verdict \"maybe\" for home / default must be ok, ko or pending | \"maybe\" | set the verdict to ok, ko or pending",
+  "R13 | verdict \"ko\" for home / loading must be ok, revise or pending | \"ko\" | set the verdict to ok, revise or pending",
+  "R13 | verdict \"maybe\" for home / default must be ok, revise or pending | \"maybe\" | set the verdict to ok, revise or pending",
+  "R13 | verdict \"revise\" for home / loading has no comment | - | write what to change in the Comment cell",
   "R14 | lacks \"## Users\" | - | add a \"## Users\" section",
   "R15 | file \"missing.svg\" does not exist beside it | \"missing.svg\" | add the file beside the record, or correct file",
   "R16 | status \"deprecated\" is for elements: reviews are proposed or validated | \"deprecated\" | set status to proposed or validated",
@@ -776,6 +863,9 @@ const FIXES = [
   "R18 | expects component \"filter-chip\", which the design system does not hold yet | \"filter-chip\" | add the component to the design system before a screen dresses this wireframe",
   "R18 | expects component \"old-button\", which is deprecated | \"old-button\" | expect what replaces it instead",
   "R18 | expects component \"home\", which is a screen, not a component | \"home\" | name a component, or the one the design system will add",
+  "R19 | has no wireframe | - | add wireframe: <id> naming the wireframe this screen dresses",
+  "R19 | wireframe \"button\" is an atom, not a wireframe | \"button\" | name a wireframe",
+  "R19 | wireframe \"ghost\" is no record | \"ghost\" | name a wireframe that exists, or add it",
   "R2 | kind \"atom\" does not belong in constructor/ | \"atom\" | move it to the folder of its kind, or change its kind",
   "R2 | kind \"atom\" does not belong in screens/ | \"atom\" | move it to the folder of its kind, or change its kind",
   "R2 | kind \"wireframe\" does not belong in screens/ | \"wireframe\" | move it to the folder of its kind, or change its kind",
@@ -783,6 +873,7 @@ const FIXES = [
   "R2 | unknown kind \"toString\" | \"toString\" | set kind to system, brand, atom, molecule, organism, screen, journey, wireframe, asset or review",
   "R2 | unknown kind \"widget\" | \"widget\" | set kind to system, brand, atom, molecule, organism, screen, journey, wireframe, asset or review",
   "R3 | missing key \"alt\" | - | add the key \"alt\" to the front matter",
+  "R3 | missing key \"status\" | - | add status: proposed",
   "R3 | missing key \"format\" | - | add the key \"format\" to the front matter",
   "R3 | missing key \"locales\" | - | add the key \"locales\" to the front matter",
   "R3 | missing key \"persona\" | - | add the key \"persona\" to the front matter",
@@ -792,6 +883,7 @@ const FIXES = [
   "R3 | missing key \"states\" | - | add the key \"states\" to the front matter",
   "R3 | missing key \"uses\" | - | add the key \"uses\" to the front matter",
   "R3 | missing key \"version\" | - | add the key \"version\" to the front matter",
+  "R3 | missing key \"version\" | - | add version: 1",
   "R3 | missing key \"zones\" | - | add the key \"zones\" to the front matter",
   "R3 | status \"done\" must be proposed, validated or deprecated | \"done\" | set status to proposed, validated or deprecated",
   "R3 | type \"photo\" must be icon, image or illustration | \"photo\" | set type to icon, image or illustration",

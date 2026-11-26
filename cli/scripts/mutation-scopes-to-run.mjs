@@ -5,35 +5,40 @@ import { fileURLToPath } from "node:url";
 
 const CLI_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-/** Files that reshape every scope's run at once, relative to the repository root. */
+/** Files that reshape every scope's run at once, relative to the repository root. A change to
+ * a dependency, the workflow or a test kit file is not one: it moves only the scopes whose
+ * source it modifies. */
 export const HARNESS = [
   "cli/mutation-scopes.json",
   "cli/stryker.conf.json",
   "cli/vitest.mutation.config.ts",
-  "cli/scripts/run-mutation.mjs",
-  "cli/scripts/mutation-scopes-to-run.mjs",
-  "cli/scripts/mutation-shards.mjs",
-  "cli/package.json",
-  "cli/pnpm-lock.yaml",
-  ".github/workflows/cli-ci.yml",
 ];
 
-/** A scope runs when its source, its mirrored tests, a shared test helper or the harness
- * changed; with no usable diff, every scope runs. */
+/** Only a scope that declares a floor can fail a run, so only it is run per change. */
+const blocks = (scope) => scope.break !== undefined;
+
+/** Whether `file` lies under `glob`: a prefix ending in `/**`, otherwise one file. Globs are
+ * relative to `cli/`, changed files to the repository root. */
+function covers(glob, file) {
+  const wild = glob.indexOf("/**");
+  return wild === -1 ? file === `cli/${glob}` : file.startsWith(`cli/${glob.slice(0, wild)}/`);
+}
+
+/** Per change, the gated scopes whose source or tests changed: a deleted or weakened test
+ * lowers the kill rate, and only mutation sees it. Every scope runs for a harness file or with
+ * no usable diff (the schedule, a manual run); a scope with no floor never fails. */
 export function scopesToRun(changed, scopes, { all = false } = {}) {
-  const everything =
-    all || changed.some((file) => HARNESS.includes(file) || file.startsWith("cli/tests/helpers/"));
+  const everything = all || changed.some((file) => HARNESS.includes(file));
   return Object.entries(scopes)
-    .filter(([, { mutate }]) =>
-      [mutate].flat().some((glob) => {
-        if (glob.startsWith("!")) return false;
-        const source = `cli/${glob.slice(0, glob.indexOf("/**"))}/`;
-        const tests = source.replace("cli/src/", "cli/tests/");
-        return (
-          everything || changed.some((file) => file.startsWith(source) || file.startsWith(tests))
-        );
-      })
-    )
+    .filter(([, scope]) => {
+      if (everything) return [scope.mutate].flat().some((glob) => !glob.startsWith("!"));
+      if (!blocks(scope)) return false;
+      const globs = [
+        ...[scope.mutate].flat().filter((glob) => !glob.startsWith("!")),
+        ...(scope.tests ?? []),
+      ];
+      return globs.some((glob) => changed.some((file) => covers(glob, file)));
+    })
     .map(([name]) => name);
 }
 
@@ -41,18 +46,26 @@ export function scopesToRun(changed, scopes, { all = false } = {}) {
 export function legsOf(names, scopes) {
   return names.flatMap((scope) => {
     const of = scopes[scope].shards ?? 1;
-    return Array.from({ length: of }, (_, i) => ({ scope, shard: i + 1, of }));
+    const blocking = blocks(scopes[scope]);
+    return Array.from({ length: of }, (_, i) => ({ scope, shard: i + 1, of, blocking }));
   });
+}
+
+/** The sharded scopes among `names`, each scored once over its legs. */
+export function shardedOf(names, scopes) {
+  return names
+    .filter((scope) => (scopes[scope].shards ?? 1) > 1)
+    .map((scope) => ({ scope, blocking: blocks(scopes[scope]) }));
 }
 
 if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const scopes = JSON.parse(readFileSync(join(CLI_ROOT, "mutation-scopes.json"), "utf8")).scopes;
-  const changed = (process.env.CHANGED ?? "").split("\n").filter(Boolean);
+  // The changed files arrive on stdin: a pull request's list outgrows what one environment
+  // variable can carry to a child process.
+  const changed = readFileSync(0, "utf8").split("\n").filter(Boolean);
   const names = scopesToRun(changed, scopes, { all: process.env.ALL === "true" });
   // `legs` feeds the mutation matrix; `sharded` the jobs that score a split scope once.
   const output =
-    process.env.OUTPUT === "sharded"
-      ? names.filter((name) => (scopes[name].shards ?? 1) > 1)
-      : legsOf(names, scopes);
+    process.env.OUTPUT === "sharded" ? shardedOf(names, scopes) : legsOf(names, scopes);
   process.stdout.write(JSON.stringify(output));
 }

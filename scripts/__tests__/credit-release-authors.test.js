@@ -354,45 +354,23 @@ const creditStep = () => {
   return steps.find((step) => step.run && /credit-release-authors\.cjs/.test(step.run));
 };
 
-test("W1: the credit step runs only when releases were created", () => {
+const creditIndex = () => workflow().jobs["release-please"].steps.findIndex((step) => step.run && /credit-release-authors\.cjs/.test(step.run));
+
+test("the credit step runs after the release, only when releases were created, and never blocks build and publish", () => {
+  const steps = workflow().jobs["release-please"].steps;
   const step = creditStep();
 
   assert.ok(step, "no step in the release-please job runs credit-release-authors.cjs");
+  assert.ok(creditIndex() > steps.findIndex((candidate) => candidate.id === "release"), "the credit step must run after the release step");
   assert.equal(step.if, "${{ steps.release.outputs.releases_created == 'true' }}");
+  assert.equal(step.env.GH_TOKEN, "${{ steps.app-token.outputs.token }}");
+  assert.equal(step.env.RELEASE_OUTPUTS, "${{ toJSON(steps.release.outputs) }}");
+  assert.equal(step["continue-on-error"], true);
 });
 
-test("W2: the credit step runs after the release step, with the App token", () => {
-  const steps = workflow().jobs["release-please"].steps;
-  const releaseIndex = steps.findIndex((step) => step.id === "release");
-  const creditIndex = steps.findIndex((step) => step.run && /credit-release-authors\.cjs/.test(step.run));
+test("a checkout runs immediately before the credit step so the script exists, and never blocks the release", () => {
+  const checkout = workflow().jobs["release-please"].steps[creditIndex() - 1];
 
-  assert.ok(releaseIndex >= 0 && creditIndex >= 0);
-  assert.ok(creditIndex > releaseIndex, "the credit step must run after the release step");
-  assert.equal(creditStep().env.GH_TOKEN, "${{ steps.app-token.outputs.token }}");
-});
-
-test("W4: the credit step's RELEASE_OUTPUTS carries steps.release.outputs verbatim", () => {
-  assert.equal(creditStep().env.RELEASE_OUTPUTS, "${{ toJSON(steps.release.outputs) }}");
-});
-
-test("W5: a checkout step runs immediately before the credit step, so the script exists on disk", () => {
-  const steps = workflow().jobs["release-please"].steps;
-  const creditIndex = steps.findIndex((step) => step.run && /credit-release-authors\.cjs/.test(step.run));
-  const precedingStep = steps[creditIndex - 1];
-
-  assert.ok(precedingStep, "no step precedes the credit step");
-  assert.match(precedingStep.uses || "", /actions\/checkout@/, "the step immediately before the credit step must be a checkout");
-});
-
-test("W3: a crediting failure never blocks the release's build and publish jobs", () => {
-  assert.equal(creditStep()["continue-on-error"], true);
-});
-
-test("W6: the checkout step added for crediting never blocks build and publish either", () => {
-  const steps = workflow().jobs["release-please"].steps;
-  const creditIndex = steps.findIndex((step) => step.run && /credit-release-authors\.cjs/.test(step.run));
-  const checkoutStep = steps[creditIndex - 1];
-
-  assert.ok(checkoutStep, "no step precedes the credit step");
-  assert.equal(checkoutStep["continue-on-error"], true, "a checkout failure must not fail the release-please job either");
+  assert.match(checkout?.uses || "", /actions\/checkout@/);
+  assert.equal(checkout["continue-on-error"], true);
 });

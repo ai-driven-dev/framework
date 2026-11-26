@@ -57,6 +57,8 @@ const TASK = "aidd_docs/tasks/ds-init";
 const created = (id) => [id, "1", "created", "no", TASK];
 
 const ROWS = [
+  ["system", "1", "created", "no", TASK],
+  ["brand", "1", "created", "no", TASK],
   ["system", "1.0.0", "first system", "no", TASK],
   ["system", "2.0.0", "old-button retired", "yes", "aidd_docs/tasks/retire-old-button"],
   ...["icon-search", "button", "search-field", "dialog", "old-button", "home", "onboarding", "first-pass", "search-flow"].map(created),
@@ -75,6 +77,8 @@ const SYSTEM = record(
   [
     "id: system",
     "kind: system",
+    "status: proposed",
+    "version: 1",
     "format: 1",
     "platforms: [web]",
     "themes: [light, dark]",
@@ -89,7 +93,7 @@ const SYSTEM = record(
 );
 
 const BRAND = record(
-  ["id: brand", "kind: brand"],
+  ["id: brand", "kind: brand", "status: proposed", "version: 1"],
   "# Brand",
   "## Project\n\nA search tool.",
   "## Users\n\nAnalysts.",
@@ -228,6 +232,7 @@ const HOME = record(
     "states: [default, empty, loading, error]",
     "breakpoints: [mobile, desktop]",
     "route: /",
+    "wireframe: search-flow",
     "code: src/ui/HomePage.tsx#HomePage@1",
   ],
   "# Home"
@@ -255,9 +260,11 @@ const REVIEW = record(
     "",
     "| Screen | State | Version | Verdict | Comment |",
     "| --- | --- | --- | --- | --- |",
+    "| brand | default | 1 | ok | |",
+    "| system | default | 1 | ok | |",
     "| home | default | 1 | ok | |",
     "| home | empty | 1 | ok | |",
-    "| home | loading | 1 | ko | spinner too small |",
+    "| home | loading | 1 | revise | spinner too small |",
     "| home | error | 1 | pending | |",
   ].join("\n")
 );
@@ -335,7 +342,7 @@ function stamp(dir) {
   const stamped = fs.readFileSync(file, "utf8").split("\n").map((line) => {
     const cells = line.split("|").slice(1, -1).map((cell) => cell.trim());
     const record = held.get(`${cells[0]} ${cells[1]}`);
-    return record && ["atom", "molecule", "organism", "screen", "asset"].includes(record.frontMatter.kind) ? row(...cells.slice(0, 5), fingerprint(project, record)) : line;
+    return record && ["atom", "molecule", "organism", "screen", "asset", "wireframe"].includes(record.frontMatter.kind) ? row(...cells.slice(0, 5), fingerprint(project, record)) : line;
   });
   fs.writeFileSync(file, stamped.join("\n"));
 }
@@ -423,4 +430,17 @@ function fixLedger() {
   };
 }
 
-module.exports = { fixLedger, UI, HISTORY, PATHS, HOOKS, LIB, ENGINE, makeTmp, removeTmp, filesUnder, engine, engineIn, lines, validate, addHistory, writeProject, generateStylesheet, edit, editTokens, propose, put, record, history };
+/** The first inline script of a page, cut out by position: a tag pattern misreads HTML. */
+const scriptOf = (html) => {
+  const start = html.indexOf("<script>") + "<script>".length;
+  return html.slice(start, html.indexOf("</script>", start));
+};
+
+/** A page without its script and style blocks, cut out by position for the same reason. */
+const withoutCode = (html) =>
+  ["script", "style"].reduce((text, tag) => text.split(`</${tag}>`).map((part) => part.split(`<${tag}`)[0]).join(""), html);
+
+/** A pattern matching `text` as written. */
+const literally = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+module.exports = { scriptOf, withoutCode, literally, fixLedger, UI, HISTORY, PATHS, HOOKS, LIB, ENGINE, makeTmp, removeTmp, filesUnder, engine, engineIn, lines, validate, addHistory, writeProject, generateStylesheet, edit, editTokens, propose, put, record, history };

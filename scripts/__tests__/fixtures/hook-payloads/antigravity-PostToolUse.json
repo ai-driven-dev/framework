@@ -1,0 +1,86 @@
+{
+  "host": "antigravity",
+  "event": "PostToolUse",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "artifactDirectoryPath": "/Users/user/.gemini/antigravity-cli/brain/00000000-0000-4000-8000-000000000000",
+        "conversationId": "00000000-0000-4000-8000-000000000000",
+        "cwd": "/Users/user/project",
+        "error": "",
+        "hookEventName": "PostToolUse",
+        "lastUserInput": "write notes.md, then run echo hi",
+        "modelName": "gemini-3.8-flash-low",
+        "stepIdx": 2,
+        "toolCall": {
+          "args": {
+            "Content": "hello",
+            "Path": "/Users/user/project/notes.md"
+          },
+          "id": "call_0",
+          "name": "write_file"
+        },
+        "transcriptPath": "/Users/user/.gemini/antigravity-cli/brain/00000000-0000-4000-8000-000000000000/.system_generated/logs/transcript_full.jsonl",
+        "workspacePaths": [
+          "/Users/user/project"
+        ]
+      },
+      "hookAnswer": {}
+    },
+    {
+      "run": "log",
+      "payload": {
+        "artifactDirectoryPath": "/Users/user/.gemini/antigravity-cli/brain/00000000-0000-4000-8000-000000000000",
+        "conversationId": "00000000-0000-4000-8000-000000000000",
+        "cwd": "/Users/user/project",
+        "error": "",
+        "hookEventName": "PostToolUse",
+        "lastUserInput": "write notes.md, then run echo hi",
+        "modelName": "gemini-3.8-flash-low",
+        "stepIdx": 3,
+        "toolCall": {
+          "args": {
+            "CommandLine": "echo hi",
+            "WaitMsBeforeAsync": 5000,
+            "toolSummary": "Print hi"
+          },
+          "id": "call_0",
+          "name": "run_command"
+        },
+        "transcriptPath": "/Users/user/.gemini/antigravity-cli/brain/00000000-0000-4000-8000-000000000000/.system_generated/logs/transcript_full.jsonl",
+        "workspacePaths": [
+          "/Users/user/project"
+        ]
+      },
+      "hookAnswer": {}
+    },
+    {
+      "run": "log",
+      "payload": {
+        "artifactDirectoryPath": "/Users/user/.gemini/antigravity-cli/brain/00000000-0000-4000-8000-000000000000",
+        "conversationId": "00000000-0000-4000-8000-000000000000",
+        "cwd": "/Users/user/project",
+        "error": "",
+        "hookEventName": "PostToolUse",
+        "lastUserInput": "Create notes.md containing hello, then replace line1 with line2 in existing.txt using your edit tool, then run: echo hi",
+        "modelName": "gemini-3.8-flash-low",
+        "stepIdx": 8,
+        "toolCall": {
+          "args": {
+            "Path": "/Users/user/project/existing.txt",
+            "Replacement": "line2",
+            "Target": "line1"
+          },
+          "id": "call_4001715564439189241",
+          "name": "edit_file"
+        },
+        "transcriptPath": "/Users/user/.gemini/antigravity-cli/brain/00000000-0000-4000-8000-000000000000/.system_generated/logs/transcript_full.jsonl",
+        "workspacePaths": [
+          "/Users/user/project"
+        ]
+      },
+      "hookAnswer": {}
+    }
+  ]
+}

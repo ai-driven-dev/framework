@@ -3,10 +3,10 @@ import { existsSync, readFileSync } from "node:fs";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { createServer, type Server } from "node:http";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
-import { cliPath } from "./helpers.js";
+import { cliPath, failedRunOf } from "../shared/testing/cli-sandbox.builder.js";
 
 const execFileAsync = promisify(execFile);
 const FAKE_TAG = "v999.0.0"; // current CLI is 4.6.x → always outdated against this
@@ -49,8 +49,6 @@ function startFakeRelease(tag: string): Promise<FakeRelease> {
 interface TestEnv {
   projectDir: string;
   cachePath: string;
-  /** Where this cache lived before it moved under `cache/` — still read, never written. */
-  legacyCachePath: string;
   env: Record<string, string>;
   server: FakeRelease;
   cleanup: () => Promise<void>;
@@ -63,16 +61,15 @@ async function setupEnv(prefix: string): Promise<TestEnv> {
   await mkdir(join(projectDir, ".aidd"), { recursive: true });
   await writeFile(
     join(projectDir, ".aidd", "manifest.json"),
-    JSON.stringify({ version: 8, tools: {} }),
+    JSON.stringify({ version: 9, tools: {} }),
     "utf-8"
   );
   const server = await startFakeRelease(FAKE_TAG);
   return {
     projectDir,
     // Under `cache/`, beside the other disposable things, rather than loose among the files
-    // a person chose. The path before the move is `legacyCachePath` below, still read.
+    // a person chose.
     cachePath: join(configDir, "cache", "update-check.json"),
-    legacyCachePath: join(configDir, "update-check.json"),
     env: {
       HOME: tempDir,
       AIDD_USER_CONFIG_DIR: configDir,
@@ -100,12 +97,12 @@ async function runCli(
     });
     return { stdout, stderr, exitCode: 0 };
   } catch (error) {
-    const err = error as { stdout?: string; stderr?: string; code?: number };
-    return { stdout: err.stdout ?? "", stderr: err.stderr ?? "", exitCode: err.code ?? 1 };
+    const { stdout, stderr, code } = failedRunOf(error);
+    return { stdout, stderr, exitCode: code ?? 1 };
   }
 }
 
-describe("E2E: update-check piggyback", () => {
+describe("update-check piggyback", () => {
   it("hot path is read-only and offline: cold offline command makes no request and writes no cache", async () => {
     const t = await setupEnv("cold");
     try {
@@ -157,23 +154,13 @@ describe("E2E: update-check piggyback", () => {
     }
   });
 
-  it("still reads a cache written before it moved, rather than refetching every install at once", async () => {
-    // Nothing rewrites the old path, but reading it keeps the move from costing every
-    // existing install a network call on its first online command.
-    const t = await setupEnv("legacy");
+  it("update --check reports the newer version without installing", async () => {
+    const t = await setupEnv("check");
     try {
-      await mkdir(dirname(t.legacyCachePath), { recursive: true });
-      await writeFile(
-        t.legacyCachePath,
-        JSON.stringify({ checkedAt: Date.now(), latest: "99.0.0" }),
-        "utf-8"
-      );
+      const { exitCode, stdout } = await runCli(["update", "--check"], t.projectDir, t.env);
 
-      const { stderr } = await runCli(["doctor"], t.projectDir, t.env);
-
-      // `doctor` is offline: the notice can only have come from the file on disk.
-      expect(t.server.hits()).toBe(0);
-      expect(stderr).toContain("99.0.0");
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("New version available: 999.0.0");
     } finally {
       await t.cleanup();
     }

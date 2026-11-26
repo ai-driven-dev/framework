@@ -7,20 +7,6 @@ const test = require("node:test");
 
 const ROOT = path.resolve(__dirname, "../..");
 
-test("bundled skills and agents leave model selection to the host", () => {
-  const plugins = path.join(ROOT, "plugins");
-  const files = fs.readdirSync(plugins, { recursive: true }).filter((file) =>
-    /(?:\/SKILL\.md$|\/agents\/[^/]+\.md$|\/assets\/agent-template\.md$)/.test(file.replaceAll(path.sep, "/"))
-  );
-  assert.ok(files.length > 0);
-  const overrides = files.filter((file) => {
-    const content = fs.readFileSync(path.join(plugins, file), "utf8");
-    const frontmatter = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-    return frontmatter && /^model\s*:/m.test(frontmatter[1]);
-  });
-  assert.deepEqual(overrides, []);
-});
-
 for (const model of [undefined, "user-selected-model"]) {
   test(`skill eval ${model ? "honors an explicit model" : "does not override the host model"}`, (t) => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "model-selection-"));

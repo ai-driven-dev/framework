@@ -20,6 +20,7 @@ const { spawn, spawnSync } = require("node:child_process");
 const { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } = require("node:fs");
 const { homedir, tmpdir } = require("node:os");
 const { basename, join, resolve, sep } = require("node:path");
+const { pause, versionOf } = require("./lib/hook-sandbox.cjs");
 
 const MARKETPLACE = "aidd-framework";
 const INSTRUCTIONS_MARKER = "<!-- aidd_global_instructions:start -->";
@@ -63,7 +64,7 @@ function run(binary, args) {
 }
 
 function installed(binary) {
-  return spawnSync(binary, ["--version"], { cwd, stdio: "ignore" }).error === undefined;
+  return versionOf(binary, cwd) !== null;
 }
 
 function json(text) {
@@ -72,10 +73,6 @@ function json(text) {
   } catch {
     return null;
   }
-}
-
-function pause(ms) {
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 }
 
 function fileHolds(path, text) {

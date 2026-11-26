@@ -1,21 +1,21 @@
 ---
-source: <source_path>
-generated_at: <generated_at>
+source: {{source_path}}
+generated_at: {{generated_at}}
 # status: clean
 ---
 
 # Shadow Areas Report
 
-Source: `<source_path>`
-Generated: `<generated_at>`
+Source: `{{source_path}}`
+Generated: `{{generated_at}}`
 
-Total gaps: <total_count> | Blocker: <blocker_count> | Major: <major_count> | Minor: <minor_count>
+Total gaps: {{total_count}} | Blocker: {{blocker_count}} | Major: {{major_count}} | Minor: {{minor_count}}
 
 ---
 
 ## Warnings
 
-- <warning text>
+- {{warning text}}
 
 ---
 

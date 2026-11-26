@@ -1,0 +1,15 @@
+{
+  "kind": "review",
+  "unit": "file",
+  "scope": ["aidd_docs/**/review.md"],
+  "rules": {
+    "REVIEW-01": {
+      "op": "template",
+      "in": "review.md",
+      "template": "../assets/review-template.md",
+      "optional": ["Criteria", "Assumptions", "Findings", "Limits"],
+      "why": "a round that follows the template is read the same way by every reader",
+      "fix": "follow review-template.md, one round per pass"
+    }
+  }
+}

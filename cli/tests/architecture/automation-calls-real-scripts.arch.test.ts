@@ -1,13 +1,28 @@
 /**
  * CI and the git hooks live outside this package, so a script renamed here goes on being
- * called there while every local check passes. Only calls that run against this package
- * count: a `cd cli && pnpm x` line, or a call in a `run:` block that `cd`s here first —
+ * called there while every local check passes. The same distance hides a job that runs a script
+ * on a bare checkout: a script of this package that imports a package from `node_modules` fails
+ * there unless the job installs this package's dependencies first, and every local run already
+ * has them.
+ *
+ * Calls: Only calls that run against this package
+ * count: a `cd cli && pnpm x` line, or a call in a `run:` block that `cd`s here first -
  * `cd` on one line still governs a `pnpm` call two lines later, in the same shell.
  */
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { CLI_ROOT } from "./helpers.js";
+import { wireTools } from "../../src/composition/contexts/tools.js";
+import { buildTargetModesOf } from "../../src/contexts/translate/contract/build-targets.js";
+import { present } from "../shared/testing/present.builder.js";
+import { CLI_ROOT } from "./source-graph.js";
+import {
+  jobsOf,
+  packagesReachedFrom,
+  pnpmCallsAgainst,
+  runBodies,
+  scriptsCalledBeforeInstall,
+} from "./workflow-text.js";
 
 const REPO_ROOT = join(CLI_ROOT, "..");
 const WORKFLOWS = join(REPO_ROOT, ".github", "workflows");
@@ -50,70 +65,6 @@ function automationFiles(): string[] {
   return files;
 }
 
-/** Leading spaces only: YAML forbids a tab for indentation. */
-function indentOf(line: string): number {
-  return /^(\s*)/.exec(line)?.[1]?.length ?? 0;
-}
-
-/**
- * A `run: value` is a body of one line; `run: |` opens a block scalar whose body is every
- * line indented further than the `run:` key, ending at the first line back at or above that
- * indentation rather than at the next blank line.
- */
-function runBodies(text: string): string[][] {
-  const lines = text.split("\n");
-  const bodies: string[][] = [];
-  let i = 0;
-  while (i < lines.length) {
-    const line = lines[i] as string;
-    const match = /^(\s*)(?:-\s+)?run:\s*(.*)$/.exec(line);
-    if (!match) {
-      i++;
-      continue;
-    }
-    const keyIndent = indentOf(line);
-    const rest = (match[2] as string).trim();
-    if (/^[|>][+-]?$/.test(rest)) {
-      const body: string[] = [];
-      i++;
-      while (i < lines.length) {
-        const bodyLine = lines[i] as string;
-        if (bodyLine.trim() !== "" && indentOf(bodyLine) <= keyIndent) break;
-        body.push(bodyLine);
-        i++;
-      }
-      bodies.push(body);
-    } else {
-      bodies.push([rest]);
-      i++;
-    }
-  }
-  return bodies;
-}
-
-/**
- * Tracked line by line the way the shell runs the block: a `cd` governs every later `pnpm`
- * call in the same body, and the state does not survive into the next `run:`, which is its
- * own shell process.
- */
-function pnpmCallsAgainst(dir: string, body: readonly string[]): string[] {
-  let cwd: string | null = null;
-  const calls: string[] = [];
-  for (const rawLine of body) {
-    for (const segment of rawLine.split("&&")) {
-      const trimmed = segment.trim();
-      const cd = /^cd\s+(\S+)/.exec(trimmed);
-      if (cd) {
-        cwd = cd[1] as string;
-        continue;
-      }
-      const pnpm = /^pnpm\s+([a-z][\w:.-]*)/.exec(trimmed);
-      if (pnpm && cwd === dir) calls.push(pnpm[1] as string);
-    }
-  }
-  return calls;
-}
-
 function undeclaredScriptCalls(text: string, declared: ReadonlySet<string>): string[] {
   const missing: string[] = [];
   for (const body of runBodies(text)) {
@@ -133,7 +84,7 @@ describe("this package's program stops at this package", () => {
   it("compiles nothing outside cli/, so a CI job needs no sibling's dependencies", () => {
     expect(
       foreignIncludes(readFileSync(join(CLI_ROOT, "tsconfig.json"), "utf8")),
-      "tsconfig reaches outside the package — every job running tsc must then install that sibling's dependencies, and dropping one breaks CI while every local check stays green"
+      "tsconfig reaches outside the package - every job running tsc must then install that sibling's dependencies, and dropping one breaks CI while every local check stays green"
     ).toEqual([]);
   });
 });
@@ -165,7 +116,32 @@ describe("the automation calls scripts this package still has", () => {
   });
 });
 
-describe("the guard itself", () => {
+describe("the automation lists the tools the catalog registers", () => {
+  it("builds each (tool, mode) pair the catalog supports in ci.yml, and no other", () => {
+    const pairs = [
+      ...readFileSync(join(WORKFLOWS, "ci.yml"), "utf8").matchAll(
+        /-\s*\{\s*tool:\s*(\w+),\s*mode:\s*(\w+)\s*\}/g
+      ),
+    ].map(([, tool, mode]) => `${tool}:${mode}`);
+    const supported = buildTargetModesOf(wireTools()).map(
+      ({ target, mode }) => `${target}:${mode}`
+    );
+
+    expect(pairs.sort()).toEqual(supported.sort());
+  });
+
+  it("names the AI tools and the IDE tools of the catalog in smoke-tools.sh, in help order", () => {
+    const script = readFileSync(join(CLI_ROOT, "scripts", "smoke-tools.sh"), "utf8");
+    const listed = (name: string) =>
+      new RegExp(`^${name}=\\(([^)]*)\\)`, "m").exec(script)?.[1]?.trim().split(/\s+/);
+    const catalog = wireTools();
+
+    expect(listed("AI_TOOLS")).toEqual([...catalog.inHelpOrder("ai")]);
+    expect(listed("IDE_TOOLS")).toEqual([...catalog.inHelpOrder("ide")]);
+  });
+});
+
+describe("the call guard itself", () => {
   it("names a script the manifest lost and stays silent on one it still declares", () => {
     const workflow = ["      - run: |", "          cd cli", "          pnpm gone", ""].join("\n");
 
@@ -197,7 +173,7 @@ describe("the guard itself", () => {
         "          npm install -g ./dist/ai-driven-dev-cli-*.tgz --force",
       ],
     ]);
-    expect(pnpmCallsAgainst("cli", runBodies(block)[0] as string[])).toContain("build");
+    expect(pnpmCallsAgainst("cli", present(runBodies(block)[0]))).toContain("build");
   });
 
   it("does not let cd cross into a later, unrelated run: body", () => {
@@ -211,5 +187,24 @@ describe("the guard itself", () => {
     for (const body of runBodies(twoSteps)) {
       expect(pnpmCallsAgainst("cli", body)).toEqual([]);
     }
+  });
+});
+
+function jobsMissingTheirInstall(): string[] {
+  return readdirSync(WORKFLOWS)
+    .filter((name) => /\.ya?ml$/.test(name))
+    .flatMap((entry) =>
+      [...jobsOf(readFileSync(join(WORKFLOWS, entry), "utf8"))].flatMap(([job, lines]) =>
+        scriptsCalledBeforeInstall(lines).flatMap((script) => {
+          const packages = packagesReachedFrom(join(CLI_ROOT, "scripts", script));
+          return packages.length > 0 ? [`${entry} ${job}: ${script} needs ${packages[0]}`] : [];
+        })
+      )
+    );
+}
+
+describe("CI installs what the cli scripts it runs import", () => {
+  it("installs this package's dependencies before a job runs a script that reaches one", () => {
+    expect(jobsMissingTheirInstall()).toEqual([]);
   });
 });

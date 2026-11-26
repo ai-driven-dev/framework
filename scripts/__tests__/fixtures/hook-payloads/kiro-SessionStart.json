@@ -1,0 +1,24 @@
+{
+  "host": "kiro",
+  "event": "SessionStart",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "session_id": "sess_00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "SessionStart",
+        "cwd": "/Users/user/project"
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "answer",
+      "payload": {
+        "session_id": "sess_00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "SessionStart",
+        "cwd": "/Users/user/project"
+      },
+      "hookAnswer": "The session token is ZEBRA-4417."
+    }
+  ]
+}
