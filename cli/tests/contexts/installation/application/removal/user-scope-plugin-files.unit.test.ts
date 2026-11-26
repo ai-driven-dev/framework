@@ -1,0 +1,48 @@
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { UserScopePluginFiles } from "../../../../../src/contexts/installation/application/removal/user-scope-plugin-files.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+
+const homedir = (): string => "/home/dev";
+
+const HOME = "/fake-home";
+const tool = registeredTools().aiProfile(TOOL.cursor);
+const plugin = RecordedPlugin.fromMetadata({
+  name: "aidd-context",
+  version: "1.0.0",
+  source: { kind: "local", path: "/p" },
+  strict: false,
+  scope: "user",
+}).plugin;
+
+describe("proving a user-scope plugin's files", () => {
+  it("answers what the proof answers for this plugin, tool and home", async () => {
+    const proof = new Map([["skills/x.md", "digest"]]);
+    const seen: unknown[] = [];
+    const files = new UserScopePluginFiles(new InMemoryFileAdapter(), async (...args) => {
+      seen.push(args);
+      return proof;
+    });
+
+    await expect(files.proven(plugin, tool, HOME)).resolves.toBe(proof);
+    expect(seen).toEqual([[plugin, tool, HOME]]);
+  });
+});
+
+describe("deleting a user-scope plugin's files", () => {
+  it("deletes the given files from the user plugins directory of the tool", async () => {
+    const fs = new InMemoryFileAdapter();
+    const target = join(tool.plugins()?.userPluginsBaseDir(homedir()) ?? "", "skills", "x.md");
+    fs.setFile(target, "x");
+
+    await new UserScopePluginFiles(fs, async () => new Map()).remove(
+      new Map([["skills/x.md", "digest"]]),
+      tool,
+      { projectRoot: "/project", home: homedir() }
+    );
+
+    expect(fs.has(target)).toBe(false);
+  });
+});

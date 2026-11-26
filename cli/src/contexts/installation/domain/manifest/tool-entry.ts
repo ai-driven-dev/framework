@@ -1,0 +1,103 @@
+import type { InstallationFile } from "../../../../shared/domain/installation-file.js";
+import type { MergeFileEntry } from "../../../../shared/domain/merge.js";
+import type { ToolId } from "../../../../shared/domain/tool.js";
+import { DuplicatePluginError, PluginNotFoundError } from "../../contract/installation.error.js";
+import type { PluginEntryData } from "../plugins/plugin-entry.js";
+import { RecordedPlugin } from "../plugins/recorded-plugin.js";
+import {
+  type MergeFileEntryData,
+  parseMergeFileEntries,
+  toMergeFileEntryData,
+} from "./merge-files.js";
+import {
+  parseTrackedFiles,
+  type TrackedFile,
+  type TrackedFileData,
+  toTrackedFileData,
+  toTrackedFiles,
+} from "./tracked-files.js";
+
+export interface ToolEntry {
+  readonly toolId: ToolId;
+  readonly version: string;
+  readonly files: readonly TrackedFile[];
+  readonly mergeFiles: readonly MergeFileEntry[];
+  readonly plugins: readonly RecordedPlugin[];
+}
+
+export interface ToolEntryData {
+  toolId: string;
+  version: string;
+  files: TrackedFileData[];
+  mergeFiles?: MergeFileEntryData[];
+  plugins?: PluginEntryData[];
+}
+
+export function createToolEntry(params: {
+  toolId: ToolId;
+  version: string;
+  files: InstallationFile[];
+  mergeFiles: readonly MergeFileEntry[];
+  existingPlugins: readonly RecordedPlugin[];
+}): ToolEntry {
+  return {
+    toolId: params.toolId,
+    version: params.version,
+    files: toTrackedFiles(params.files),
+    mergeFiles: params.mergeFiles,
+    plugins: params.existingPlugins,
+  };
+}
+
+export function addPluginToEntry(entry: ToolEntry, plugin: RecordedPlugin): ToolEntry {
+  if (entry.plugins.some((p) => p.plugin.name === plugin.plugin.name)) {
+    throw new DuplicatePluginError(plugin.plugin.name);
+  }
+  return { ...entry, plugins: [...entry.plugins, plugin] };
+}
+
+export function removePluginFromEntry(entry: ToolEntry, name: string): ToolEntry {
+  if (!entry.plugins.some((p) => p.plugin.name === name)) {
+    throw new PluginNotFoundError(name);
+  }
+  return { ...entry, plugins: entry.plugins.filter((p) => p.plugin.name !== name) };
+}
+
+/** Replaces the plugin of that name. A recorded plugin replaces it whole; an installed plugin
+ * replaces only what installation owns, keeping the recorded provenance, host reference and claim. */
+export function updatePluginInEntry(entry: ToolEntry, plugin: RecordedPlugin): ToolEntry {
+  const { name } = plugin.plugin;
+  if (!entry.plugins.some((p) => p.plugin.name === name)) throw new PluginNotFoundError(name);
+  return {
+    ...entry,
+    plugins: entry.plugins.map((p) => (p.plugin.name === name ? plugin : p)),
+  };
+}
+
+export function serializeToolEntry(entry: ToolEntry): ToolEntryData {
+  return {
+    toolId: entry.toolId,
+    version: entry.version,
+    files: toTrackedFileData(entry.files),
+    mergeFiles: toMergeFileEntryData(entry.mergeFiles),
+    ...(entry.plugins.length > 0 && { plugins: entry.plugins.map((p) => p.toJSON()) }),
+  };
+}
+
+export function parseToolEntry(toolId: ToolId, data: ToolEntryData): ToolEntry {
+  const plugins: RecordedPlugin[] = [];
+  for (const stored of data.plugins ?? []) {
+    const plugin = RecordedPlugin.fromJSON(stored);
+    if (plugins.some((p) => p.plugin.name === plugin.plugin.name)) {
+      throw new DuplicatePluginError(plugin.plugin.name);
+    }
+    plugins.push(plugin);
+  }
+  return {
+    toolId,
+    version: data.version,
+    files: parseTrackedFiles(data.files),
+    mergeFiles: parseMergeFileEntries(data.mergeFiles ?? []),
+    plugins,
+  };
+}

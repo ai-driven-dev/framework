@@ -1,0 +1,20 @@
+function readEvent() {
+  current = undefined;
+  const raw = readPayload();
+  const event = raw === undefined ? undefined : EVENTS.get(raw.hook_event_name);
+  if (event === undefined) return undefined;
+  const cwd = typeof raw.cwd === "string" && raw.cwd !== "" ? raw.cwd : process.cwd();
+  const tool = event === "PostToolUse" || event === "PreToolUse" ? raw.tool_name : undefined;
+  const input = raw.tool_input;
+  current = {
+    host: HOST,
+    event,
+    files: filesOf(event, writtenFiles(tool, input, cwd)),
+    ...(SHELLS.has(tool) && typeof input?.command === "string" ? { command: input.command } : {}),
+    stopActive: raw.stop_hook_active === true,
+    sessionId: typeof raw.session_id === "string" ? raw.session_id : null,
+    cwd,
+    raw,
+  };
+  return current;
+}

@@ -105,4 +105,4 @@ function headOf(cwd, env) {
   return { branch: currentBranchOf(head), role: branchRoleOf(head, originHead) };
 }
 
-module.exports = { git, branchRoleOf, currentBranchOf, parseBranchConfig, branchDeclaration, headOf, cleanEnv };
+module.exports = { git, branchRoleOf, parseBranchConfig, branchDeclaration, headOf, cleanEnv };

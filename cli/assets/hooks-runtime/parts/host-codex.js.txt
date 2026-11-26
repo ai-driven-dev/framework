@@ -1,0 +1,57 @@
+"use strict";
+/**
+ * Codex's side of the one interface every framework hook speaks: `readEvent()` turns
+ * the host's stdin into a neutral event, `answer()` and `continueTurn()` print the host's own
+ * answer. The build puts one such adapter per tool at `hooks/lib/host.cjs`; the plugin tree
+ * ships Claude Code's. Node built-ins only; anything unreadable is no event, and prints nothing.
+ */
+// @part requires
+
+const HOST = "codex";
+const EVENTS = new Map([
+  ["SessionStart", "SessionStart"],
+  ["PreToolUse", "PreToolUse"],
+  ["PostToolUse", "PostToolUse"],
+  ["Stop", "Stop"],
+]);
+const SHELLS = new Set(["Bash"]);
+
+// @part current
+
+// @part read-payload
+
+// @part patched-files
+
+/** A file write arrives as an `apply_patch`, its patch in `tool_input.command`. */
+function writtenFiles(_tool, input, cwd) {
+  return typeof input?.command === "string" ? patchedFiles(input.command, cwd) : [];
+}
+
+// @part files-of
+
+// @part read-event
+
+// @part print
+
+// @part continue-turn
+
+// @part has-person
+
+// @part show-person
+
+/** Level 1 informs the model, level 2 requires a fix after a write. At Stop, any answer
+ * continues the turn: there is no other way to reach the model there. With no `text`, only
+ * `person` is shown, at any event; beside a `text`, it is ignored. */
+function answer({ level, text, person } = {}) {
+  if (current === undefined) return;
+  if (typeof text !== "string" || text === "") return showPerson(person);
+  if (current.event === "Stop") return continueTurn(text);
+  if (level === 2 && current.event === "PostToolUse") {
+    return print({ decision: "block", reason: text });
+  }
+  print({ hookSpecificOutput: { hookEventName: current.event, additionalContext: text } });
+}
+
+// @part refuse-in-hook-output
+
+module.exports = { readEvent, answer, continueTurn, refuse };

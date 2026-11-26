@@ -1,12 +1,7 @@
 #!/usr/bin/env bash
-# (Re)install every plugin into Claude, Codex, OpenCode, Kilo, Copilot and Cursor from THIS
-# checkout, the way a user does: `aidd setup --global` with this checkout as the framework
-# source, so the reload exercises the shipped machine-wide install.
-# A managed OpenCode host delegates to its fixed-purpose reload helper instead.
-#
-# NOT live: the install copies built files, so an edit needs a re-run. Idempotent; a tool
-# whose CLI is absent is skipped, and the first run needs network.
-# The agents' provider is whatever `aidd setup --global --provider` last recorded.
+# Reloads this checkout into every detected host, the way `make reload` documents it:
+# see "Reload flow" in CONTRIBUTING.md, the one description of the steps, the flags and the
+# report. Needs a built CLI to take --agents-only.
 #
 # Global rules: sync only the Agents section in the managed block, preserving personal
 # rules. First OpenCode sync keeps its Claude personal-rule fallback unless disabled. Kilo
@@ -77,20 +72,38 @@ claude_marketplace_used_by_a_project() {
   ' "$MKT"
 }
 
-release_native_plugins() {
-  local name
-  for name in "${targets[@]}"; do
-    [ "$HAVE_CLAUDE" = 0 ] || claude plugin uninstall "$name@$MKT" --scope user >/dev/null 2>&1 || true
-    [ "$HAVE_CODEX" = 0 ] || codex plugin remove "$name@$MKT" >/dev/null 2>&1 || true
-  done
-  if [ "$HAVE_CLAUDE" = 1 ]; then
-    if claude_marketplace_used_by_a_project; then
-      claude plugin marketplace remove "$MKT" --scope user >/dev/null 2>&1 || true
-    else
-      (cd "$HOME" && claude plugin marketplace remove "$MKT") >/dev/null 2>&1 || true
-    fi
+# Run the CLI from HOME, outside this checkout's project-level plugin declarations.
+# Warnings can mean a skipped native activation even with exit 0: never report them as OK.
+run_aidd() {
+  printf '+ aidd'; printf ' %q' "$@"; printf '\n'
+  local output
+  if ! output="$(cd "$HOME" && aidd_cli "$@" 2>&1)"; then
+    printf '%s\n' "$output" >&2
+    return 1
   fi
-  [ "$HAVE_CODEX" = 0 ] || codex plugin marketplace remove "$MKT" >/dev/null 2>&1 || true
+  printf '%s\n' "$output"
+  if printf '%s\n' "$output" | grep '^Warning:' >/dev/null; then return 2; fi
+}
+
+release_native_plugins() {
+  local host="$1" name
+  echo "+ refresh $host plugin copies"
+  for name in "${targets[@]}"; do
+    if [ "$host" = claude ]; then
+      claude plugin uninstall "$name@$MKT" --scope user || return 1
+    else
+      codex plugin remove "$name@$MKT" || return 1
+    fi
+  done
+  if [ "$host" = claude ]; then
+    if claude_marketplace_used_by_a_project; then
+      claude plugin marketplace remove "$MKT" --scope user
+    else
+      (cd "$HOME" && claude plugin marketplace remove "$MKT")
+    fi
+  else
+    codex plugin marketplace remove "$MKT"
+  fi
 }
 
 hosts=()
@@ -109,24 +122,52 @@ for d in "$FW"/plugins/*/; do
   [ -f "$d.claude-plugin/plugin.json" ] && targets+=("$(basename "$d")")
 done
 
+results=()
+failed=0
+report() {
+  printf '\nReload report (CLI install and registration checks):\n'
+  printf '  %s\n' "${results[@]}"
+}
 if [ "$HAVE_MANAGED_OPENCODE" = 1 ]; then
   printf '%-22s' "reload opencode"
-  aidd-opencode-reload
+  if aidd-opencode-reload; then
+    results+=("opencode  DELEGATED (managed helper)")
+  else
+    status=$?
+    results+=("opencode  FAIL (managed helper)")
+    report
+    exit "$status"
+  fi
 fi
 
-if [ "${#hosts[@]}" -gt 0 ]; then
-  printf '%-22s' "global install"
-  release_native_plugins
-  # From HOME, not this checkout: its own .claude/settings.json enables the plugins at project
-  # scope, which the host CLIs report and setup --global would refuse as refs it does not own.
-  output="$(cd "$HOME" && aidd_cli setup --global --source local --path "$FW" --ide "$(IFS=,; echo "${hosts[*]}")" \
-    --plugins all --yes 2>&1)" || {
-    echo "FAIL"; printf '%s\n' "$output" >&2
-    echo "aidd setup --global failed for ${hosts[*]}; their plugins were released, so rerun make reload once fixed." >&2; exit 1
-  }
-  echo "ok ($(IFS=,; echo "${hosts[*]}"))"
-  # A warning leaves setup at exit 0: what it skipped must stay visible.
-  printf '%s\n' "$output" | sed 's/^/  /'
+for host in ${hosts[@]+"${hosts[@]}"}; do
+  setup=(setup --global --source local --path "$FW" --ide "$host" --plugins all --yes)
+  configured=("${setup[@]}" --agents-only)
+  status=0
+  run_aidd "${configured[@]}" || status=$?
+  # Prepare source, agents and ownership before releasing native copies. A failed first
+  # setup leaves those copies in place. The refresh itself is not transactional.
+  if [ "$status" = 0 ] && { [ "$host" = claude ] || [ "$host" = codex ]; }; then
+    if (cd "$HOME" && release_native_plugins "$host"); then
+      run_aidd "${setup[@]}" || status=$?
+    else
+      status=1
+    fi
+  fi
+  if [ "$status" = 0 ]; then
+    run_aidd doctor --global --tool "$host" || status=$?
+  fi
+  case "$status" in
+    0) results+=("$host  OK") ;;
+    2) results+=("$host  WARN (see CLI output)"); failed=1 ;;
+    *) results+=("$host  FAIL (see CLI output)"); failed=1 ;;
+  esac
+done
+
+report
+if [ "$failed" != 0 ]; then
+  echo "Reload incomplete. Resolve the errors above and rerun make reload; global instructions were not synced." >&2
+  exit 1
 fi
 
 instructions=()
@@ -148,4 +189,4 @@ if [ "${#instructions[@]}" -gt 0 ]; then
   echo "ok (delegation guidance only)"
 fi
 
-echo "Done. Restart hosts or reload their configuration for refreshed plugins and instructions."
+echo "Done. Restart hosts to load the changes; this report does not run an agent session."

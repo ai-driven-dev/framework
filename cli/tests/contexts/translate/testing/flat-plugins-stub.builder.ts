@@ -1,0 +1,30 @@
+import type {
+  FlatLayout,
+  FlatPluginAnswers,
+  HooksAcceptance,
+} from "../../../../src/contexts/tools/contract/tool-profile.js";
+import { pluginDeliveryAccepting } from "./plugin-delivery-stub.builder.js";
+
+export interface FlatPluginsStub {
+  readonly namespacePrefix?: string;
+  readonly hooks?: HooksAcceptance;
+  readonly layout?: Partial<FlatLayout>;
+}
+
+/** A tool injecting a plugin into the project tree, placing no hook unless its layout names a
+ * directory for them. */
+export function flatPluginsStub(stub: FlatPluginsStub = {}): FlatPluginAnswers {
+  const { namespacePrefix = "fake-", hooks = { accepts: false, reason: "synthetic" } } = stub;
+  const layout: FlatLayout = {
+    skillLayout: "nested",
+    rules: "nested",
+    namespacePrefix,
+    ...stub.layout,
+  };
+  return {
+    ...pluginDeliveryAccepting(hooks),
+    kind: "flat",
+    flatLayout: () => layout,
+    hookScript: (_pluginPath, content) => content,
+  };
+}

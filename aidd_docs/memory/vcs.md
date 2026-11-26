@@ -1,21 +1,15 @@
 # VCS
 
-The version-control conventions this project follows: branches, commits, and the platform.
-
-> CLI-specific notes: [`cli/aidd_docs/memory/vcs.md`](../../cli/aidd_docs/memory/vcs.md).
-
 ## Setup
 
-- Production branch: `main`. Integration branch: `next`, the target for day-to-day work.
-- GitHub's default branch is `main`, so `gh pr create` without `--base next` targets production.
-- Platform: GitHub, repository `ai-driven-dev/framework`, driven through `gh`. Tickets are GitHub Issues.
+- GitHub, `ai-driven-dev/framework`, driven through `gh`; tickets are GitHub Issues.
+- `main` is production and GitHub's default; `next` is integration. `gh pr create` needs `--base next`.
 - Pull request template: `.github/PULL_REQUEST_TEMPLATE.md`.
-- The release model — weekly promotion, hotfix path — is in [`RELEASE.md`](../../RELEASE.md); the tooling behind it is in `deployment.md`.
+- Release model: [`RELEASE.md`](../../RELEASE.md); its tooling: `deployment.md`.
 
 ## Branches
 
-- Format: `type/short-description`.
-- The **prefix alone decides the PR target**, not an issue type and not a board field. `aidd-vcs:02-pull-request` reads this table to set the base automatically.
+- Format: `type/short-description`. The prefix alone decides the PR target; `aidd-vcs:02-pull-request` reads this table.
 
 | I want to… | Issue template | Branch | Commit | Issue type | PR targets |
 | ---------- | -------------- | ------ | ------ | ---------- | ---------- |
@@ -27,20 +21,21 @@ The version-control conventions this project follows: branches, commits, and the
 | add or update tests | 📋 Detailed Contribution | `test/…` | `test:` | `Task` | `next` |
 | 🚨 urgent production fix | 🐛 Bug Report | `hotfix/…` | `fix:` | `Bug` | **`main`** |
 
-- Everything batches on `next` and ships in the weekly release. **Only `hotfix/*` targets `main`.**
-- The issue type categorizes, it never routes, and the form stamps it — never set it by hand. Labels exist only where a bot or a human reads one (`.github/labels.yml`).
-- The board does not advance on its own; it is moved by hand, by a human or an agent through `gh`. Board conventions are in `backlog.md`.
-- Automation owns `promote/*` and `back-merge/*`, which follow neither the format nor the table.
+- Only `hotfix/*` targets `main`; everything else ships in the weekly release.
+- The issue type categorizes; it never routes.
+- Automation owns `promote/*` and `back-merge/*`, outside this table.
+- Board conventions: `backlog.md`.
 
 ## Pull requests
 
-- A pull request stacked on another targets that branch, not `next`. Before merging the base, retarget the dependent one: `gh pr edit <n> --base next`. GitHub closes a pull request whose base branch is deleted, unless the deletion is the merge's own, so never delete a branch another open pull request targets.
-- A squash merge of the base leaves the dependent branch carrying the base's original commits, and it conflicts with `next`. Replay only its own commits: `git rebase --onto origin/next <base's last commit>`, then push with `--force-with-lease`.
+- A stacked pull request targets its base branch. Retarget it with `gh pr edit <n> --base next` before merging the base.
+- Never delete a branch another open pull request targets: GitHub closes that pull request.
+- After a squash merge of the base, replay only the dependent's commits: `git rebase --onto origin/next <base's last commit>`, then `--force-with-lease`.
 
 ## Commits
 
-- Convention: [Conventional Commits](https://www.conventionalcommits.org/), enforced by `commitlint.config.cjs`. **Read that file before composing a message; if this page and the config disagree, the config wins.**
-- Format: `type(scope): description`, description in the imperative, lowercase, no trailing period. The enforced header limit is 100.
-- Scope is optional and must be kebab-case. The encouraged list lives in `scope-enum` at warning level, so an unknown scope warns without blocking. Introduce a new one only when none fits.
-- The scope never routes a release: release-please attributes by changed path.
-- A breaking change goes in the footer as `BREAKING CHANGE: …`.
+- Conventional Commits, enforced by `commitlint.config.cjs`; read it first, it wins over this page.
+- `type(scope): description`: imperative, lowercase, no trailing period, header at most 100 characters.
+- Scope is optional and kebab-case; `scope-enum` only warns. `cli` is the CLI's scope.
+- release-please attributes a change by path, never by scope.
+- A breaking change goes in the footer: `BREAKING CHANGE: …`.

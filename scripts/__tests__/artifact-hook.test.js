@@ -411,13 +411,13 @@ test("a copied contract made invalid is one line naming it, exit 0", () => {
   const s = session("aidd-pm", "claude", { [STORY]: GOOD_STORY });
   const contract = path.join(hookFor("aidd-pm", "claude"), "lib/contracts/02-user-stories/scripts/contract.json");
   const original = fs.readFileSync(contract, "utf8");
-  fs.writeFileSync(contract, original.replace('"version": 1', '"version": 2'));
+  fs.writeFileSync(contract, original.replace('"unit": "file"', '"unit": "nope"'));
   try {
     s.start();
     s.wrote(STORY);
     const found = lines(s.stop());
     assert.equal(found.length, 1);
-    assert.match(found[0], /^02-user-stories: .*version must be 1/u);
+    assert.match(found[0], /^02-user-stories: .*unit must be folder or file/u);
   } finally {
     fs.writeFileSync(contract, original);
   }
@@ -462,8 +462,8 @@ test("aidd-context answers the four context artifacts in one answer", () => {
 
 // Only the hosts whose writer output passes the shared contract unchanged are in scope.
 test("aidd-context: answers an agent or command written for another host in scope, not one out of scope", () => {
-  const inScope = [".cursor/agents/a.md", ".github/prompts/c.prompt.md", ".opencode/commands/c.md", ".kilo/commands/c.md"];
-  const outOfScope = [".opencode/agents/a.md", ".cursor/commands/c.md", ".cursor/rules/x.mdc", ".github/agents/a.agent.md", ".codex/prompts/p.toml"];
+  const inScope = [".cursor/agents/a.md", ".opencode/agents/a.md", ".kilo/agents/a.md", ".github/agents/a.agent.md", ".agents/agents/a/agent.md", ".github/prompts/c.prompt.md", ".opencode/commands/c.md", ".kilo/commands/c.md"];
+  const outOfScope = [".cursor/commands/c.md", ".cursor/rules/x.mdc", ".codex/agents/a.toml", ".codex/prompts/p.toml"];
   const all = [...inScope, ...outOfScope];
   const s = session("aidd-context", "claude", contextFiles(Object.fromEntries(all.map((rel) => [rel, "# nope\n"]))));
   s.start();
@@ -471,6 +471,15 @@ test("aidd-context: answers an agent or command written for another host in scop
   const found = lines(s.stop());
   for (const rel of inScope) assert.ok(found.some((line) => line.startsWith(`${rel}:`)), rel);
   for (const rel of outOfScope) assert.ok(!found.some((line) => line.startsWith(`${rel}:`)), rel);
+});
+
+test("aidd-context: answers a Kiro agent and skill, now that Kiro runs the turn-end check", () => {
+  const written = [".kiro/agents/a.md", ".kiro/skills/s/SKILL.md"];
+  const s = session("aidd-context", "claude", contextFiles(Object.fromEntries(written.map((rel) => [rel, "# nope\n"]))));
+  s.start();
+  for (const rel of written) s.wrote(rel);
+  const found = lines(s.stop());
+  for (const rel of written) assert.ok(found.some((line) => line.startsWith(`${rel}:`)), rel);
 });
 
 test("aidd-context: the shell turn answers the rule modified after the reference, not the older one", () => {

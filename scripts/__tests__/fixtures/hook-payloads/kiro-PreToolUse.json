@@ -1,0 +1,69 @@
+{
+  "host": "kiro",
+  "event": "PreToolUse",
+  "samples": [
+    {
+      "run": "deny",
+      "payload": {
+        "session_id": "sess_00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "PreToolUse",
+        "cwd": "/Users/user/project",
+        "tool_name": "fs_write",
+        "tool_input": {
+          "path": "/Users/user/project/aidd_docs/tasks/2026_01/2026_01_02_export/spec.md",
+          "text": "new"
+        }
+      },
+      "hookAnswer": null,
+      "hookExit": 2,
+      "hookStderr": "aidd_docs/tasks/2026_01/2026_01_02_export/spec.md is locked: only the person who approves it sets its status back to draft. Write nothing to it."
+    },
+    {
+      "run": "log",
+      "payload": {
+        "session_id": "sess_00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "PreToolUse",
+        "cwd": "/Users/user/project",
+        "tool_name": "fs_write",
+        "tool_input": {
+          "path": "/Users/user/project/notes.md",
+          "text": "hello"
+        }
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "log",
+      "payload": {
+        "session_id": "sess_00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "PreToolUse",
+        "cwd": "/Users/user/project",
+        "tool_name": "str_replace",
+        "tool_input": {
+          "path": "/Users/user/project/notes.md",
+          "oldStr": "hello",
+          "newStr": "hi",
+          "replace_all": false
+        }
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "log",
+      "payload": {
+        "session_id": "sess_00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "PreToolUse",
+        "cwd": "/Users/user/project",
+        "tool_name": "execute_bash",
+        "tool_input": {
+          "command": "echo done",
+          "description": "Echo done to shell",
+          "cwd": null,
+          "run_in_background": false,
+          "timeout": null
+        }
+      },
+      "hookAnswer": null
+    }
+  ]
+}

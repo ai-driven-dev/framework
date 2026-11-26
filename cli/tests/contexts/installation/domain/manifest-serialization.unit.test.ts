@@ -1,0 +1,57 @@
+import { describe, expect, it } from "vitest";
+import {
+  InvalidManifestDataError,
+  InvalidManifestToolIdError,
+} from "../../../../src/contexts/installation/contract/installation.error.js";
+import { parseManifestTools } from "../../../../src/contexts/installation/domain/manifest-serialization.js";
+import { resolveRegisteredToolId, TOOL } from "../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../shared/testing/saying.builder.js";
+
+describe("parseManifestTools - the tools section of a manifest document", () => {
+  it.each([
+    ["missing", undefined],
+    ["null", null],
+    ["a string", "x"],
+    ["an array", []],
+  ])("refuses a document whose tools section is %s", (_, tools) => {
+    expect(() => parseManifestTools({ version: 9, tools }, resolveRegisteredToolId)).toThrow(
+      saying("Invalid manifest data: tools: expected an object.")
+    );
+    expect(() => parseManifestTools({ version: 9, tools }, resolveRegisteredToolId)).toThrow(
+      InvalidManifestDataError
+    );
+  });
+
+  it("refuses a tool id this CLI does not know, naming it", () => {
+    const raw = { version: 8, tools: { nope: { toolId: "nope", version: "1.0.0", files: [] } } };
+
+    expect(() => parseManifestTools(raw, resolveRegisteredToolId)).toThrow(
+      new InvalidManifestToolIdError("nope").message
+    );
+    expect(() => parseManifestTools(raw, resolveRegisteredToolId)).toThrow(
+      InvalidManifestToolIdError
+    );
+  });
+
+  it("says a tool's files are missing when the entry has none", () => {
+    const raw = { version: 8, tools: { claude: { toolId: TOOL.claude, version: "1.0.0" } } };
+
+    expect(() => parseManifestTools(raw, resolveRegisteredToolId)).toThrow(
+      saying("Invalid manifest data: tools.claude.files: expected an array, got missing.")
+    );
+    expect(() => parseManifestTools(raw, resolveRegisteredToolId)).toThrow(
+      InvalidManifestDataError
+    );
+  });
+
+  it("names the type it found when a tool's files are not an array", () => {
+    const raw = {
+      version: 8,
+      tools: { claude: { toolId: TOOL.claude, version: "1.0.0", files: "nope" } },
+    };
+
+    expect(() => parseManifestTools(raw, resolveRegisteredToolId)).toThrow(
+      saying("Invalid manifest data: tools.claude.files: expected an array, got string.")
+    );
+  });
+});

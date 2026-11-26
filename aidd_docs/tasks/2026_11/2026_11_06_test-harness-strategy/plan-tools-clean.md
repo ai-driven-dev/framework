@@ -1,0 +1,282 @@
+---
+status: draft
+---
+
+# Plan: tools context, clean rebuild
+
+Scope: `cli/src/contexts/tools/` (7265 lines) and `cli/tests/contexts/tools/`. This context becomes the model the other contexts copy. The frozen surface (§14) does not change: commands, flags, help bytes, exit codes, manifest v8, `auth.json` shape, translate output, dist. Goldens and e2e stay byte-identical and are never regenerated. Counts rechecked against the tree: 7 files outside the context call `resolvePluginsCapability`, 78 import `tools/domain` deeply, 55 `src` and 41 `tests` files import the registry.
+
+## 0. Findings this plan answers
+
+| # | Finding | Evidence |
+| --- | --- | --- |
+| F1 | `PluginsCapability` is anemic: 23 public readonly fields, its rules in `registry.ts` | `domain/capabilities/plugins-capability.ts`; `registry.ts` `frameworkBuildModeFor`, `supportsUserScopeActivation`, `pluginEnablementIsMachineGlobal` |
+| F2 | Structure leaks to other contexts | 12 framework files cast `capabilities as Record<string, unknown>`; `translate/domain/content-translator.ts` reads 12 plugins fields and probes `"x" in capabilities` (lines 82-406) |
+| F3 | Missing construction invariants | native mode without `pluginRootToken`; `marketplaceSettings` without `nativeActivation` |
+| F4 | Profiles are untyped literals | `capabilities: unknown` in `registered-profiles.ts`; `vscode` holds `settings` at top level |
+| F5 | Hooks descriptor unbranded | `declareHooks` returns a plain object; builders accept the structural `HooksRouting` |
+| F6 | `domain/` impure | `formats/mcp-format.ts:1` and `profiles/codex/toml.ts:1` import `smol-toml`; `profiles/antigravity/antigravity-hooks.ts:31` uses `Buffer` |
+| F7 | Domain does I/O through a port | `registry.ts` `hasToolSignals(fs, ...)`, `McpCapability.resolveOutputPath(projectRoot, fs)`, kilo `resolveKiloConfigPath` |
+| F8 | `getAllRegisteredTools` has two meanings | catalog method in registration order; free function sorted by id |
+| F9 | Wrong error label | an empty or duplicate native list reports `unknown-event` |
+| F10 | A tool cannot evolve inside its own folder | `kilo/profile.ts` imports `../opencode/build.js`; `kilo/hooks.ts` and `opencode/hooks.ts` near-copies |
+| F11 | Measured duplicates | `acceptsFileName` x4; `serialize` per capability; `buildInstallPath` closures per profile; 3-branch plugins constructor; `FlatHooksBridge` defined twice; `if (!isAiTool) return null` per catalog method; settings array normalization in 4 files |
+| F12 | Layout breaks the folder limit | `domain/` holds 10 files plus 5 folders; `domain/ports/` under `domain/`; `codex/` and `copilot/` hold `native-marketplace-source.ts` |
+
+## 1. Domain model
+
+### 1.1 Aggregates and value objects
+
+| Element | Kind | Owns | Refused at construction |
+| --- | --- | --- | --- |
+| `ToolProfile` | aggregate root, built only by `defineAiTool` or `defineIdeTool` (branded) | id, displayName, directory, suffix, sections, build contracts, `rewriteContent` | id not in `AI_TOOL_IDS` or IDE ids; `directory` absolute or not ending in `/`; AI tool without build contract; unknown section key |
+| `ToolSuffix` | VO | suffix; `strip(name)`; `isForeign(fileName)` | not `^\.[a-z]+\.md$` |
+| `ForeignSuffixFilter` | VO, built once from `AI_TOOL_IDS` | the `accepts(fileName)` the 4 capabilities share | none, derived |
+| `ProfileSections` | typed optional record: `agents`, `commands`, `rules`, `skills`, `mcp`, `hooks`, `settings[]`, `plugins` | section instances | unknown key refused at runtime by `refuseUnknownSections` only: the generic `C extends ProfileSections` does not refuse extra keys at compile time, so the compile-time refusal this row first claimed does not hold; `settings` normalized once |
+| `PluginDelivery` | discriminated union: `NativePlugins`, `FlatPlugins`, `UnsupportedPlugins` | delivery rules (section 3) | native without `pluginRootToken` (new); `MarketplaceRegistration` without `NativeActivation` (new); user scope without `userPluginsDir`; project hooks without path and format |
+| `NativeActivation` | VO | binary, verbs, args, registry paths | empty binary; missing verb |
+| `MarketplaceRegistration` | VO, formerly `marketplaceSettings` | settings path function, shape | required with native activation |
+| `HooksDescriptor` | branded class, built only by `declareHooks` | events, routes, adapter stamp | `unknown-event`; `empty-native-list` (new label); `duplicate-native-event` (new label); project without file; loader with file; root token without file; path outside directory; adapter not stamped |
+| `HooksCapability` | entity in the section | output path, merge strategy, consumed refs | output path absolute or with `..` (new; every profile passes) |
+| `ToolCatalog` | domain service over immutable data, published in `contract/` | ordered profiles, lookup | duplicate id |
+
+Each new refusal has a negative unit test, and every registered profile passes it: no behaviour change.
+
+### 1.2 The factory
+
+| Today (claude `profile.ts`) | Target |
+| --- | --- |
+| `new SkillsCapability({ directory: DIRECTORY, toolSuffix: TOOL_SUFFIX, buildInstallPath: (n) => ... })` | `s.skills({ installUnder: "skills/" })` |
+| `DIRECTORY` and `TOOL_SUFFIX` passed to each capability | bound once by the factory |
+| `capabilities: unknown` | `sections: ProfileSections` |
+
+The brand is a private symbol: a literal cannot pass for a profile.
+
+### 1.3 Capability typing
+
+- `ToolProfile.section<K extends keyof ProfileSections>(k)`.
+- `ToolProfile.configCapabilities()`: mcp, hooks, settings in a fixed order; replaces the 4 normalizations.
+- `params` private on every capability; callers use named answers.
+
+### 1.4 Target layout (at most 10 files per folder)
+
+| Folder | Files |
+| --- | --- |
+| `tools/` | `glossary.md` |
+| `contract/` | `tool-catalog.ts`, `tool-profile.ts`, `plugin-delivery.ts`, `config-capability.ts`, `hooks-delivery.ts` |
+| `domain/profile/` | `tool-profile.ts`, `define-tool.ts`, `profile-sections.ts`, `tool-suffix.ts`, `foreign-suffix-filter.ts`, `tool-catalog.ts`, `profile-error.ts` |
+| `domain/capabilities/` | agents, commands, rules, skills, mcp, hooks, settings, config-refs |
+| `domain/plugins/` | `plugin-delivery.ts`, `native-plugins.ts`, `flat-plugins.ts`, `unsupported-plugins.ts`, `native-activation.ts`, `marketplace-registration.ts`, `global-files.ts`, `plugin-translation-mode.ts`, `plugin-install-notice.ts` |
+| `domain/build/` | `build-contract.ts`, `artifact-contract.ts`, `marketplace-catalog.ts`, `marketplace-entry.ts` |
+| `domain/hooks/` | `hook-events.ts`, `hooks-descriptor.ts`, `declare-hooks.ts`, `hooks-routes.ts`, `hooks-merge.ts`, `plugin-hooks-shape.ts`, `event-bridge.ts` |
+| `domain/formats/` | agent-format, command, mcp-format, opencode-mcp-merge, vscode-mcp-merge, portable-agent, plugin-root-token, mcp-launch-command, `toml.ts`, `base64.ts` |
+| `domain/profiles/<id>/` | per tool, minus `native-marketplace-source.ts`; `registered-profiles.ts` at `profiles/` |
+| `application/` | `detect-tool-signals.ts` |
+| `ports/` | empty after the moves: native ports to host-registration (D2); `file-merger` to `shared/ports`, `schema-validator` to `translate/domain/ports` |
+| `infrastructure/` | empty after host-registration leaves |
+
+## 2. Ports and adapters
+
+| Concern | Today | Target |
+| --- | --- | --- |
+| TOML | `smol-toml` in 2 domain files | one file `domain/formats/toml.ts` (E-T4), or a `TomlCodec` port (D5) |
+| `Buffer` | `antigravity-hooks.ts:31` | `domain/formats/base64.ts`, pure UTF-8 encoder |
+| Globals | no rule | Biome `noRestrictedGlobals` on `domain/**`: `Buffer`, `process`, `require`, `__dirname` |
+| File signals | `hasToolSignals(fs, ...)` | `application/detect-tool-signals.ts` over the kernel `FileReader`; domain keeps `signalPattern`, `signalDir` |
+| MCP output path | `resolveOutputPath(root, fs)`, kilo `resolveKiloConfigPath(fs)` | the mcp capability answers `resolveOutputPath(exists)`: it probes its declared candidates in order and takes the first that exists. No application file |
+| Native host CLIs and registries | `domain/ports`, `infrastructure/` | `host-registration` (D2) |
+| `FileMerger` | `domain/ports` | `shared/ports/file-merger.ts` |
+| `SchemaValidator` | `domain/ports` | `translate/domain/ports/schema-validator.ts` |
+| Hooks host adapters (`.cjs`) | E-T3 `EVENTS` tables | unchanged (D6) |
+
+Deviation from §1.4 and the line above, decided at P8.
+- `SchemaValidator` has one consumer, translate; codebase-map places a port used by one context in its own `ports/`, so it does not go to `shared/ports`.
+- `FileMerger` goes to `shared/ports` while its only consumer is framework, whose `domain/ports` is blocked: `old-layout-count` holds `src/contexts/framework/` at 125, so one more file there is red. Limit: single consumer, an adapter in `runtime/filesystem/`.
+
+## 3. Public surface: answers, not fields
+
+### 3.1 Read views in `contract/`
+
+`ToolProfile`: `id`, `displayName`, `directory`, `kind`, `section(k)`, `configCapabilities()`, `plugins()`, `supportedInstallScope()`, `rulesInstalledLocation()`, `rewriteContent(s)`, `buildContract(mode)`.
+
+| `PluginDelivery` method | Replaces |
+| --- | --- |
+| `buildMode()` | `mode === "flat"`, `translationMode`, `frameworkBuildModeFor` |
+| `isNative()` | `mode === "native"` |
+| `requiresUserScope()` | `installScope === "user"` |
+| `deliversHooksToProject()` | `hooksDestination === "project"` |
+| `projectPluginsDir()` | `pluginsDir`, `resolvePluginsBaseDir` |
+| `userPluginsBaseDir(home)` | `userPluginsBaseDir` |
+| `manifestPath()` | `pluginManifestRelativePath` |
+| `rootToken()` | `pluginRootToken` |
+| `hooksAcceptance()` | `acceptsHooks`, `hooksUnsupportedReason` |
+| `trustNotice()` | `hooksTrustNotice` |
+| `flatLayout()` | `flatSkillLayout`, `flatNamespacePrefix`, `flatHooksDir`, `flatHooksLoaderEntry`, `flatHooksBridge` |
+| `activation()` | `nativeActivation`, `nativeActivationOf` |
+| `marketplaceRegistration()` | `marketplaceSettings`, `machineLocalFilesOf` |
+| `enablementIsMachineGlobal()` | `pluginEnablementIsMachineGlobal` |
+| `supportsUserScopeActivation()` | registry function |
+| `copiesFilesGlobally()`, `globalFiles()` | `copiesPluginFilesGlobally`, `globalFilesOf` |
+| `projectHooksDelivery()` | `projectHooksDeliveryOf`, `projectHooksFileOf` |
+
+Deviation from §3.1, decided at P7 and settled by the orchestrator decisions D0 to D4.
+- The tool id rules (`toolIdsForCategory`, `isIdeToolId`, `assertToolIdsMatchCategory`) are not catalog members. They read the kernel's id lists and nothing a profile declares, so they live in `kernel/tool.ts` beside `isAiToolId`. No file is added: the `old-layout-count` kernel path set is exact.
+- A caller that asked only the category of an id (`update-one-tool`, `setup-tools`, `uninstall-tools`) now asks `isAiToolId`, not `isAiTool(getToolConfig(id))`. Limit: an id no profile registers no longer fails at that line with `UnregisteredToolError`.
+- The published surface is `tools/contract/` and nothing else (D1). `ToolCatalog` has three members: `profile(id)`, `inHelpOrder(category)` and `sortedById()`. The catalog is built once by `wireTools()` in `cli.ts` and handed to every command, then to `createDeps` (D0).
+- `AiToolProfile` publishes: `kind`, `toolId`, `directory`, `distributionProbes`, `buildContract(mode)`, `rewriteContent`, `plugins()`, `supportsUserScopeActivation()`, `markdownSection(kind)`, `skillsSection()`, `nativeActivation()`, `configFiles()`, `runtimeFiles()`, `mcpConfig()`, `settingsFiles()`, `machineLocalFiles()`. `IdeToolProfile` publishes `kind`, `toolId` and `settingsFiles()`.
+- `buildContract(mode)` is an answer, not a field: a tool that declares no contract for a mode answers `null`. `supportsUserScopeActivation()` is one answer on the profile, replacing the check written in `setup.ts` twice and in `registry.ts`; a profile with no plugins answers `false`.
+- The old `section(k)` is split in two: `markdownSection(kind)` for commands, agents and rules, which share one answer shape, and `skillsSection()`, whose shape differs. A caller outside the context never names a section key.
+- Tool-named mcp functions are folded into the mcp capability (D4): `mcpConfig()` answers `outputPath()`, `isFrameworkPrimeJson(fileName)`, `resolveOutputPath(exists)` and `frameworkConfigOver(...)`. `resolve-mcp-output-path.ts` no longer exists.
+- `contract/tool-profile-lookup.ts` holds `profileOf`, `aiProfileOf` and `ideProfileOf`: they find a profile in the list an install was handed and refuse an id it was not handed. They live in `contract/` because the framework use cases receive `readonly ToolProfile[]`, not the catalog, and each looked one up by id; one lookup in the published surface replaces a copy per caller.
+- `SchemaName` and `ConfigAsset` are defined once, in `kernel/file.ts`, which both `kernel/ports/asset-provider.ts` and the contract import. The contract may not import a `ports/` folder, the kernel's included, and the kernel receives no new file.
+- `hooksAcceptance()` is declared once, on `PluginDelivery`, and `FRAMEWORK_BUILD_MODES` in `contract/tool-profile.ts` is the one list of build modes.
+
+Deviation from D0, decided at P7: `createDeps(projectRoot, options, output?, tools = <one default catalog>)` carries a default for the catalog. `tests/e2e/helpers.ts` calls the three-argument form and is a frozen surface. Every product caller passes the catalog from `cli.ts`; `tests/runtime/wiring/create-deps.integration.test.ts` proves `createDeps` reads the catalog it was handed and builds none of its own when one is passed. Limit: a caller that omits it gets one default catalog, built once, never the one `cli.ts` wired. `tests/architecture/create-deps-takes-the-catalog.arch.test.ts` fails any `createDeps(` call under `src/` that passes fewer than four arguments, so only the frozen helper uses the default, and the graph cache is keyed on the catalog first. The default disappears when the e2e helper passes one.
+
+Helper setup plumbing under `tests/e2e/` may follow a signature change; e2e assertions, fixtures, goldens and snapshots stay byte-identical.
+
+Known limit: `detectToolSignals` lives in `framework/application/init-use-case.ts` and `doctor-layout-use-case.ts` imports it from there, because `folder-size` and `old-layout-count` leave no room for a file of its own; revisit when framework splits in stage C.
+
+D0 note, per-call profiles. The edge hands each use case `catalog.sortedById()`, every profile, in `setup.ts`, `clean.ts`, `plugin.ts`, `framework.ts` (six sites), `translate.ts` and `framework.ts` in `runtime/wiring/`. That is the whole registered list, not the profiles of the tools a command acts on. It is the set the use cases need where the acting tools are discovered inside them: `setup` picks interactively or from detected signals, `clean`, `update` and `plugin install --tool all` read the installed tools from the manifest, and an IDE install propagates to the AI tools the manifest holds. The edge cannot name those tools before the use case runs. Where the edge does know the tool (`framework install|update|remove --tool <id>`, `plugin install --tool <id>`), the use case still receives the full list and looks the profile up by id with `aiProfileOf`. Decision: edges pass `catalog.sortedById()` as the candidate list (design-p7 §3 rule 1), and narrowing those known-tool sites is refused. `post-install-pipeline-use-case.ts` looks up the profile of every tool the manifest holds, to collect their machine-local gitignore entries, so a use case narrowed to the acting tool breaks it: narrowing `installAiTool` turned red "installs an AI tool at the version the graph reports, plugins carried along" in `framework-wiring` and "propagates the catalog version to a new tool when the manifest recorded a drifted one" in `setup.integration`.
+
+Declared values approved as stored answers, outside the table above. Each is a value the caller needs as written, kept in the arch guard's allowlist (`tests/architecture/plugins-are-asked-not-read.arch.test.ts`) with its reason, shrink-only:
+
+| Member | Why it stays a stored answer |
+| --- | --- |
+| `HooksCapability.outputPath`, `McpCapability.outputPath`, `SettingsCapability.outputPath` | the declared destination, written into the manifest by the framework install use cases |
+| `HooksCapability.mergeStrategy`, `McpCapability.mergeStrategy`, `SettingsCapability.mergeStrategy` | the declared merge mode, recorded on each installed file or handed to the file merge |
+| `McpCapability.outputPathCandidates` | the declared places the capability's own `resolveOutputPath(exists)` probes in order |
+| `SettingsCapability.requiredTool` | the declared tool a section applies to, matched against the installed one |
+| `NativePlugins.hooksFilePath` | the declared hooks file, placed by `translate/domain/content-translator.ts` |
+| `NativeActivation.cliShape` | the whole declared shape configures the host CLI adapter once in the composition root |
+
+
+### 3.2 External caller migration
+
+| Caller | Today | Replacement |
+| --- | --- | --- |
+| `translate/domain/content-translator.ts` | `plugins.mode`, plugins fields, `"x" in capabilities` | `plugins()` answers, `section(k)` |
+| `translate/domain/{plugin-format,build-target}` | `ToolConfig`, `isAiTool`, `getAllRegisteredTools` | `ToolProfile`, `kind`, `sortedById()` or `inHelpOrder()` (pinned in P0) |
+| `framework/domain/config-capability.ts`, install use cases, `generate-tool-distribution-use-case.ts` | casts, normalization | `configCapabilities()`, `section("mcp")` |
+| `framework/domain/install-scope.ts` | cast to `installScope` | `supportedInstallScope()` |
+| `doctor-registration-use-case.ts` | cast to `marketplaceSettings` | `plugins()?.marketplaceRegistration()` |
+| `resolve-plugin-translator.ts`, `plugin-translator-factory.ts` | casts, `installScope`, `translationMode` | `plugins()`, `requiresUserScope()`, `buildMode()` |
+| `mode-b-flat-materialization-translator.ts`, `built-tree-materialization-translator.ts`, `user-plugin-file-updater.ts` | `mode`, `installScope`, `hooksDestination`, flat fields | `isNative()`, `requiresUserScope()`, `deliversHooksToProject()`, `flatLayout()` |
+| `flat-mcp-materializer.ts`, `project-plugin-cleanup.ts`, `plugin-remove-use-case.ts` | cast to `mcp`, `nativeActivation` | `section("mcp")`, `activation()` |
+| `plugin-target-resolution.ts`, `user-scope-plugin-files.ts`, `presentation/commands/setup.ts` | `userPluginsBaseDir`, `mode === "flat"`, `resolvePluginsCapability` | `plugins()?.userPluginsBaseDir(home)`, `buildMode()` |
+| `marketplace-sync-settings-use-case.ts` | `marketplaceSettings` | `marketplaceRegistration()` |
+| `list-installed-rules-use-case.ts` | `capabilities.rules.installedLocation()` | `rulesInstalledLocation()` |
+| `runtime/wiring/{translate,tools}.ts` | `buildContractFor`, `nativeActivationOf` | `profile.buildContract(mode)`, `plugins()?.activation()` |
+| 55 `src` and 41 `tests` files importing `registry.js` | free functions | `contract/tool-catalog.ts` (D1) |
+
+Every deep import into `domain/` ends; `PUBLIC_MODULES.tools` (E-T2) is deleted.
+
+## 4. Patterns
+
+| Pattern | Removes |
+| --- | --- |
+| Branded factory | untyped literals; repeated `DIRECTORY`/`TOOL_SUFFIX`; per-profile `buildInstallPath` closures |
+| Discriminated union with polymorphic answers (`PluginDelivery`) | 3-branch constructor; `mode ===` branches in 5 files |
+| One read view for AI and IDE tools | `if (!isAiTool) return null` in each catalog method and 3 callers |
+| `ForeignSuffixFilter` | 4 `acceptsFileName` copies; hard-coded `ALL_TOOL_SUFFIXES` |
+| Typed section record | 12 casts, 4 normalizations |
+| Shared `event-bridge.ts` | kilo and opencode `hooks.ts` near-copy |
+| Single `FlatHooksRoute` | second definition in `build-contract.ts` |
+
+Rejected: visitor (one switch site), strategy registry (the catalog is the registry), builder classes, abstract base profile.
+
+## 5. Adding a tool, evolving a tool
+
+| Adding an AI tool | Required |
+| --- | --- |
+| `kernel/tool.ts` | yes, M-T1 |
+| `profiles/<id>/profile.ts` | yes |
+| `profiles/<id>/{hooks,build,paths,agent}.ts` | only what the tool has |
+| `profiles/registered-profiles.ts` | one line |
+| `.cjs` `EVENTS` table | only with hooks (E-T3) |
+| goldens and help | change by definition: a product change |
+
+| Evolving a tool | Files |
+| --- | --- |
+| path, suffix, section option, rewrite rule | `profiles/<id>/*` |
+| hooks routes | `profiles/<id>/hooks.ts` |
+| kilo MCP transform | `formats/opencode-mcp-merge.ts` after P6 |
+| shared kilo and opencode bridge behaviour | `domain/hooks/event-bridge.ts` (E-T5) |
+
+Written limits:
+
+- A new host-registry layout is one union member, one reader in `host-registration/infrastructure/` and one table line in `src/composition/host-registration.ts`; `tsc` forces all three.
+- A config asset a tool needs at runtime is one entry in `src/runtime/assets/asset-loader.ts`; nothing else finds it.
+- The codex plugin registry is read from `~/.codex/config.toml` and ignores `CODEX_HOME`, frozen on purpose in `profiles/codex/profile.ts`; the user settings file follows `CODEX_HOME`.
+
+## 6. Phases
+
+Each phase: green commits, no behaviour change, an inverted proof.
+
+| Phase | Scope | Inverted proof |
+| --- | --- | --- |
+| P0 Characterization | pin every catalog answer for every tool, both listing orders; walks `REGISTERED_PROFILES` | flip one field in one profile: red |
+| P1 Purity | `toml.ts`, `base64.ts`, `noRestrictedGlobals`, E-T4 | plant `Buffer.from` or `smol-toml` in domain: Biome red |
+| P2 I/O out | `detect-tool-signals.ts`, `outputPathCandidates`, kilo config path | reverse candidate order: red |
+| P3 Hooks | brand `HooksDescriptor`, labels, one `FlatHooksRoute`, `event-bridge.ts` | plain object to a builder: `@ts-expect-error` holds; empty list reports `empty-native-list` |
+| P4 Value objects | `ToolSuffix`, `ForeignSuffixFilter`, `NativeActivation`, `MarketplaceRegistration`, hooks path check, the two new invariants | remove a refusal: its negative test red |
+| P5a Answers | section 3.1 methods beside the fields (E-T6) | swap two answers: P0 red |
+| P5b Framework callers | framework rows of 3.2 | goldens and e2e byte-identical |
+| P5c Translate callers | `content-translator.ts` and related | translate goldens byte-identical |
+| P5d Fields gone | split the union, fields private, delete E-T6 | re-add a field read: arch test red |
+| P6 Factory | `defineAiTool`, `defineIdeTool`, `ProfileSections`; kilo imports nothing from opencode | literal profile: type check red; cross-profile import: arch red |
+| P7 Contract | publish `contract/*`, switch deep imports, delete E-T2, tools in `HELD_BY_BIOME` | deep `domain/` import from framework: Biome red |
+| P8 Host registration | if D2: move ports, adapters, 3 domain files, 2 `native-marketplace-source.ts` | edge outside `ALLOWED`: context-graph red |
+| P9 Catalog | `inHelpOrder`, `sortedById`; free functions gone if D1 | swap the orderings: help golden red |
+
+Order: P0; P1 to P3 in any order; P4; P5a to P5d; P6; P7; P8 and P9.
+
+## 7. Test plan
+
+| Level | What |
+| --- | --- |
+| Unit, domain | VO refusals, union answers, factory, descriptor |
+| Characterization | P0 table, kept as the regression net |
+| Conformance | `tests/testing/profile-conformance.ts` walks `REGISTERED_PROFILES`; adds the new refusals |
+| Integration | the 4 `hooks-*.integration` files, unchanged |
+| Contract suites | none left in tools after P7 and P8; native-port suites move with host-registration; `FileMerger` to `shared`, `SchemaValidator` to `translate` |
+| Architecture | no plugins field reads, no cross-profile import, no deep import, purity by Biome |
+| Goldens and e2e | byte-identical, never regenerated |
+
+Kit additions: `a-profile.ts`, a minimal valid spec each refusal test mutates; `catalog-of.ts`, which replaces the `registerTool` override.
+
+Mutation: default keeps per-profile scopes, merges the rest plus vscode into `tools` (D4); floor set from the score measured after P6 (D7).
+
+## 8. Exceptions
+
+| Id | Status | Content |
+| --- | --- | --- |
+| E-T1 | removed if D1 inject, otherwise narrowed to a published immutable instance | module-level catalog, `registerTool` test override |
+| E-T2 | removed in P7 | `PUBLIC_MODULES.tools` |
+| E-T3 | kept | `.cjs` `EVENTS` tables, frozen dist (D6) |
+| M-T1 | kept | `AiToolId` in `kernel/tool.ts` |
+| E-T4 | added | `domain/formats/toml.ts` imports `smol-toml` |
+| E-T5 | added | kilo and opencode bridge shared in `domain/hooks/event-bridge.ts` |
+| E-T6 | removed | fields and methods coexisted P5a to P5d; the fields are now private |
+
+## 9. Risks and decisions
+
+| Risk | Mitigation |
+| --- | --- |
+| translate bytes drift in P5c | goldens, P0 table |
+| help order mixed up | `inHelpOrder` and `sortedById` pinned in P0 |
+| base64 differs from `Buffer` on non-ASCII | P1 equivalence test over every hook command plus a non-ASCII sample |
+| 55 to 78 files change in P5 and P7 | split by caller group, each commit green |
+| `registerTool` overrides in tests | `catalog-of.ts` before E-T1 goes |
+
+| Id | Decision | Default |
+| --- | --- | --- |
+| D1 | inject `ToolCatalog` (about 55 files) or publish one immutable instance | publish now, inject per caller later |
+| D2 | create `host-registration` now or keep a sub-area in tools | create it in P8 |
+| D3 | profiles inside the context or in `composition/` | inside |
+| D4 | mutation: full merge or per-profile scopes | per-profile, rest merged |
+| D5 | TOML: E-T4 or a `TomlCodec` port | E-T4 |
+| D6 | generate the `.cjs` `EVENTS` tables | later PR, byte equality checked |
+| D7 | mutation floor | measured after P6 |
+| D8 | `.agents/skills/` hard-coded in `SkillsCapability` | separate PR, behaviour change |
+| D9 | shipped-agents hand table | derive from profiles, separate PR |

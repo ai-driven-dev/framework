@@ -1,0 +1,5 @@
+/** Before a tool runs nothing is written yet: only where it is about to write is known, so a file
+ * carries its path and no text. */
+function filesOf(event, files) {
+  return event === "PreToolUse" ? files.map(({ path }) => ({ path })) : files;
+}

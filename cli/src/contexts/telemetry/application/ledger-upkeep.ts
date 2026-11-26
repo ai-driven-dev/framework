@@ -1,5 +1,5 @@
-import type { LoadedLedger, UsageLedger } from "../domain/ports/usage-ledger.js";
 import { daysAround, type StoredUsage, upsertUsage } from "../domain/stored-usage.js";
+import type { LoadedLedger, UsageLedger } from "../ports/usage-ledger.js";
 
 export interface Stored {
   readonly added: number;

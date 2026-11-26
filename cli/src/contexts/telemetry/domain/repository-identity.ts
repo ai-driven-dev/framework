@@ -17,6 +17,7 @@ export function addressOf(url: string): RemoteAddress | null {
   const text = url.trim();
   if (SCHEME.test(text)) {
     let parsed: URL;
+    // biome-ignore lint/plugin: a remote that is no URL has no address to read
     try {
       parsed = new URL(text);
     } catch {
@@ -26,8 +27,8 @@ export function addressOf(url: string): RemoteAddress | null {
       ? null
       : { host: parsed.hostname, path: parsed.pathname, scp: false };
   }
-  const scp = SCP_LIKE.exec(text);
-  return scp === null ? null : { host: scp[1] as string, path: scp[2] as string, scp: true };
+  const [, host, path] = SCP_LIKE.exec(text) ?? [];
+  return host === undefined || path === undefined ? null : { host, path, scp: true };
 }
 
 /** `owner/repo`, leading slashes, `.git` and trailing slashes dropped; `null` with no owner. */

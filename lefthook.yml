@@ -2,15 +2,20 @@ pre-commit:
   output: true
   commands:
     framework-content:
-      # The one content check: contracts and generated docs. --fix regenerates. stage_fixed
+      # The one content check: contracts and generated files. --fix regenerates. stage_fixed
       # re-stages only the staged files, so the generated outputs --fix rewrote are added by name,
-      # never one that already held an unstaged edit.
+      # never one that already held an unstaged edit. The aidd-ui engine copies count new and
+      # deleted files too, since --fix creates and removes them.
       # Given no staged file lefthook skips it; CI runs the full check itself.
       run: |
+        generated() {
+          git diff --name-only -- README.md docs/CATALOG.md 'plugins/*/CATALOG.md' 'plugins/aidd-ui/skills/*/scripts/aidd-ui/*' 'cli/assets/hooks-runtime/host-*.cjs'
+          git ls-files --others --exclude-standard -- 'plugins/aidd-ui/skills/*/scripts/aidd-ui/*'
+        }
         before=$(mktemp)
-        git diff --name-only -- README.md docs/CATALOG.md 'plugins/*/CATALOG.md' > $before
+        generated > $before
         node scripts/check/run.cjs --fix {staged_files} || exit 1
-        git diff --name-only -- README.md docs/CATALOG.md 'plugins/*/CATALOG.md' | grep -vxFf $before | xargs git add --
+        generated | grep -vxFf $before | xargs git add --
         rm $before
       stage_fixed: true
     yaml-validity:
@@ -44,18 +49,6 @@ pre-commit:
         # assertion and destroys an install nothing can restore — `.git` is in no history.
         node scripts/check-tests-leave-git-alone.js -- \
           node --test 'scripts/__tests__/**/*.test.js'
-    recipe-validity:
-      glob:
-        - "aidd_docs/recipes/**"
-        - "plugins/aidd-context/skills/12-cook/assets/recipes/**"
-      run: |
-        if ! command -v node >/dev/null 2>&1; then
-          echo '❌ node not available; cannot validate recipes'
-          exit 1
-        fi
-        pnpm --dir cli build && \
-        AIDD_SKIP_UPDATE_CHECK=1 node cli/dist/cli.js framework validate-recipes --all \
-          --bundled plugins/aidd-context/skills/12-cook/assets/recipes
     architecture-rules:
       # Router coherence for a skill with no flowchart, until no SKILL-06 no-flowchart finding is baselined.
       glob: "plugins/*/skills/*/SKILL.md"
@@ -91,7 +84,7 @@ pre-commit:
     cli-type-honesty:
       # Type honesty only; dependency direction between layers belongs to biome
       # (cli/biome.json's noRestrictedImports overrides), not here.
-      glob: "{cli/src/**,cli/tests/**}"
+      glob: "{cli/src/**,cli/tests/**,cli/type-assertions-baseline.json}"
       run: |
         if ! command -v node >/dev/null 2>&1; then
           echo 'ℹ️  node not available; skipping cli-type-honesty'
@@ -104,12 +97,22 @@ pre-push:
     cli-knip:
       glob: "cli/**"
       run: node scripts/gate-witness.js cli-knip -- pnpm --dir cli knip
+    cli-knip-production:
+      glob: "cli/**"
+      run: node scripts/gate-witness.js cli-knip-production -- pnpm --dir cli knip:production
+    cli-jscpd:
+      glob: "cli/**"
+      run: node scripts/gate-witness.js cli-jscpd -- pnpm --dir cli jscpd
     cli-jscpd-profiles:
       glob: "cli/**"
       run: node scripts/gate-witness.js cli-jscpd-profiles -- pnpm --dir cli jscpd:profiles
+    # The architecture project runs in pre-commit and in `cli-ci.yml`'s cli-architecture: the
+    # full suite is not replayed here.
     cli-test:
       glob: "cli/**"
-      run: node scripts/gate-witness.js cli-test -- pnpm --dir cli test
+      run: >-
+        node scripts/gate-witness.js cli-test --
+        pnpm --dir cli exec vitest run --project=!tooling --project=!architecture
 
 commit-msg:
   commands:

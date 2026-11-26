@@ -1,0 +1,3 @@
+function print(output) {
+  process.stdout.write(`${JSON.stringify(output)}\n`);
+}

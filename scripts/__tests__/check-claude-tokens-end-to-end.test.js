@@ -83,38 +83,32 @@ describe("the report of a real claude run, judged against what the API billed", 
 });
 
 const DECLARED = "00000000-0000-4000-8000-00000000000a";
-const CLEARED = "00000000-0000-4000-8000-00000000000b";
 
-/** What a person's session left when it held: nothing billed before the declaration, the
- * declaration answered by the hook, and the declared session carried across `/clear`. */
+/** What a person's session left when it held: the first call billed before the declaration, and
+ * the declaration made by the command. */
 function attended(overrides = {}) {
   return {
-    billedBeforeDeclaring: 0,
-    sessions: [{ session_id: DECLARED, task: "demo", ticket: "T-1", none: false, by: "hook-intercept" }],
-    carries: [{ session_id: CLEARED, from: DECLARED }],
+    billedBeforeDeclaring: 1,
+    sessions: [{ session_id: DECLARED, task: "demo", ticket: "T-1", none: false, by: "command" }],
     ...overrides,
   };
 }
 
 describe("a person's session, judged from what it left", () => {
-  it("passes when asked first, answered by the hook and carried across /clear", () => {
+  it("passes when the first prompt was billed unblocked and the task declared by the command", () => {
     assert.equal(judgeAttended(attended()).code, 0);
   });
 
-  it("fails when a prompt reached the API before the task was declared", () => {
-    assert.match(judgeAttended(attended({ billedBeforeDeclaring: 1 })).message, /before the task was declared/u);
+  it("fails when the first prompt was held back from the API", () => {
+    assert.match(judgeAttended(attended({ billedBeforeDeclaring: 0 })).message, /expected 1 call billed before the declaration, got 0/u);
   });
 
-  it("fails when the declaration was made by the command, not answered by the hook", () => {
-    const byCommand = attended({ sessions: [{ ...attended().sessions[0], by: "command" }] });
-    assert.equal(judgeAttended(byCommand).code, 1);
+  it("fails when the declaration was not made by the command", () => {
+    const byHook = attended({ sessions: [{ ...attended().sessions[0], by: "hook-intercept" }] });
+    assert.equal(judgeAttended(byHook).code, 1);
   });
 
-  it("fails when /clear carried another session than the declared one", () => {
-    assert.equal(judgeAttended(attended({ carries: [{ session_id: CLEARED, from: CLEARED }] })).code, 1);
-  });
-
-  it("fails when nothing was carried", () => {
-    assert.match(judgeAttended(attended({ carries: [] })).message, /0 carries/u);
+  it("fails when nothing was declared", () => {
+    assert.match(judgeAttended(attended({ sessions: [] })).message, /0 declarations/u);
   });
 });

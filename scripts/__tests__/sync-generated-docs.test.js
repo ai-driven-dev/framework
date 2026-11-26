@@ -25,8 +25,20 @@ function scratchTree() {
         directory: ".claude/",
         pluginMode: "native",
         nativeCli: "claude",
+        pluginTree: null,
         builds: {
           marketplace: { skills: "yes", agents: "yes", mcp: "yes", hooks: "bridge", rules: "no", commands: "no" },
+          flat: { skills: "yes", agents: "yes", mcp: "no", hooks: "bridge", rules: "no", commands: "no" },
+        },
+      },
+      {
+        id: "codex",
+        name: "Codex",
+        directory: ".codex/",
+        pluginMode: "native",
+        nativeCli: "codex",
+        pluginTree: ".agents/plugins/",
+        builds: {
           flat: { skills: "yes", agents: "yes", mcp: "no", hooks: "bridge", rules: "no", commands: "no" },
         },
       },
@@ -45,6 +57,7 @@ test("an empty block is reported stale, and syncing fills it from the support re
     assert.equal(run(["--root", root]).status, 0);
     const compatibility = fs.readFileSync(path.join(root, "docs/COMPATIBILITY.md"), "utf8");
     assert.match(compatibility, /\| Claude Code \| `\.claude\/` \| ✅ \| ✅ \| ✅ \| ✅ \| Marketplace only \| Some events \|/);
+    assert.match(compatibility, /\| Codex \| `\.codex\/` \| Plugin directory `\.agents\/plugins\/` \| ✅ \|/);
     assert.doesNotMatch(compatibility, /Rules|Commands/);
     const readme = fs.readFileSync(path.join(root, "README.md"), "utf8");
     assert.match(readme, /<tr><td><b>Claude Code<\/b><\/td><td align="center">✅<\/td><td align="center">✅<\/td><td align="center">✅<\/td><\/tr>/);

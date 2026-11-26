@@ -1,0 +1,286 @@
+import { describe, expect, it } from "vitest";
+import { LoadConsentLog } from "../../../../../src/contexts/telemetry/application/consent/load-consent-log.use-case.js";
+import { DeclareOnBranch } from "../../../../../src/contexts/telemetry/application/declaration/declare-on-branch.use-case.js";
+import {
+  DeclareTask,
+  sessionBindingOf,
+} from "../../../../../src/contexts/telemetry/application/declaration/declare-task.use-case.js";
+import { FindConsentedRepository } from "../../../../../src/contexts/telemetry/application/find-consented-repository.use-case.js";
+import { SnapshotBindings } from "../../../../../src/contexts/telemetry/application/snapshot-bindings.use-case.js";
+import type { DeclarationRequest } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
+import type { LocatedDirectory } from "../../../../../src/contexts/telemetry/domain/resolution/located-directory.js";
+import { cloneOf, grantedBy } from "../../testing/clone.builder.js";
+import { FakeBindings } from "../../testing/fake-bindings.fake.js";
+import { FakeBranchStore } from "../../testing/fake-branch-store.fake.js";
+import { FakeConsents } from "../../testing/fake-consents.fake.js";
+import { FakeLocator } from "../../testing/fake-locator.fake.js";
+import { InMemoryBindingsLock } from "../../testing/in-memory-bindings-lock.fake.js";
+import { InMemoryConsentHistory } from "../../testing/in-memory-consent-history.fake.js";
+import { InMemorySessions } from "../../testing/in-memory-sessions.fake.js";
+import { InMemorySnapshots } from "../../testing/in-memory-snapshots.fake.js";
+
+const CWD = "/work/repo";
+const REPOSITORY: LocatedDirectory = {
+  status: "repository",
+  root: CWD,
+  mainRoot: CWD,
+  clone: cloneOf(`${CWD}/.git`),
+  remote: "git@github.com:acme/widgets.git",
+  rootCommit: "abc",
+};
+const TASK: DeclarationRequest = { kind: "task", task: "checkout-fix", ticket: "PROJ-12" };
+
+function setup(options: { refusedByEnvironment?: boolean; sessionId?: string | null } = {}) {
+  const events: string[] = [];
+  const locator = new FakeLocator();
+  locator.directories.set(CWD, REPOSITORY);
+  const consents = new FakeConsents();
+  consents.values.set(CWD, grantedBy(cloneOf(`${CWD}/.git`)));
+  const history = new InMemoryConsentHistory();
+  history.consented(cloneOf(`${CWD}/.git`));
+  const sessions = new InMemorySessions(events);
+  const branches = new FakeBranchStore(events);
+  const lock = new InMemoryBindingsLock(events);
+  const source = new FakeBindings();
+  const snapshotStore = new InMemorySnapshots(events);
+  const snapshots = new SnapshotBindings({
+    source,
+    store: snapshotStore,
+    lock,
+    now: () => new Date("2026-10-09T10:00:01.000Z"),
+  });
+  const useCase = new DeclareTask({
+    repositories: new FindConsentedRepository(locator, consents, new LoadConsentLog(history), {
+      get: () => (options.refusedByEnvironment ? "0" : undefined),
+    }),
+    bindSession: sessionBindingOf(sessions, lock),
+    branches: new DeclareOnBranch(branches, snapshots),
+    sessionId: options.sessionId === undefined ? "sess-1234567890" : options.sessionId,
+    now: () => new Date("2026-10-09T10:00:00.000Z"),
+  });
+  return {
+    useCase,
+    locator,
+    consents,
+    history,
+    sessions,
+    branches,
+    source,
+    snapshotStore,
+    events,
+    lock,
+  };
+}
+
+describe("declaring a task", () => {
+  it("binds the session from now and the working branch, then snapshots at once", async () => {
+    const { useCase, sessions, branches, source, snapshotStore, events } = setup();
+    source.bindingsByRoot.set(CWD, [
+      {
+        branch: "feat/x",
+        task: "checkout-fix",
+        ticket: "PROJ-12",
+        declared_at: "2026-10-09T10:00:00.000Z",
+        none: false,
+      },
+    ]);
+    const result = await useCase.execute({ cwd: CWD, request: TASK });
+    expect(result).toMatchObject({
+      status: "declared",
+      sessionId: "sess-1234567890",
+      branch: { status: "bound", branch: "feat/x" },
+    });
+    expect(sessions.lines).toEqual([
+      {
+        session_id: "sess-1234567890",
+        task: "checkout-fix",
+        ticket: "PROJ-12",
+        none: false,
+        declared_at: "2026-10-09T10:00:00.000Z",
+        by: "command",
+      },
+    ]);
+    expect(branches.declared).toHaveLength(1);
+    expect(branches.declared[0]).toMatchObject({ root: CWD, branch: "feat/x" });
+    // The snapshot sees the declaration, so it follows the git config write. The session line
+    // and the snapshot each take the bindings lock, one after the other, and never the ledger's.
+    expect(events).toEqual([
+      "bindings-lock",
+      "append",
+      "bindings-unlock",
+      "declare",
+      "bindings-lock",
+      "snapshot",
+      "bindings-unlock",
+    ]);
+    expect(snapshotStore.appended).toHaveLength(1);
+  });
+
+  it("stores the declaration as made by the command", async () => {
+    const { useCase, sessions } = setup();
+    await useCase.execute({ cwd: CWD, request: TASK });
+    expect(sessions.lines[0]?.by).toBe("command");
+  });
+
+  it("declares none as none, with neither task nor ticket", async () => {
+    const { useCase, sessions, branches } = setup();
+    await useCase.execute({ cwd: CWD, request: { kind: "none" } });
+    expect(sessions.lines[0]).toMatchObject({ task: null, ticket: null, none: true });
+    expect(branches.declared[0]?.declaration).toMatchObject({
+      task: null,
+      ticket: null,
+      none: true,
+    });
+  });
+
+  it("keeps both declarations of one session, each with its own time", async () => {
+    const { useCase, sessions } = setup();
+    await useCase.execute({ cwd: CWD, request: TASK });
+    await useCase.execute({ cwd: CWD, request: { kind: "none" } });
+    expect(sessions.lines.map((line) => line.none)).toEqual([false, true]);
+  });
+
+  it("binds the session only, and says so, on the default branch", async () => {
+    const { useCase, sessions, branches, events } = setup();
+    branches.heads_ = { head: "refs/heads/main", originHead: "refs/remotes/origin/main" };
+    const result = await useCase.execute({ cwd: CWD, request: TASK });
+    expect(result).toMatchObject({
+      status: "declared",
+      branch: { status: "untouched", reason: "default-branch", branch: "main" },
+    });
+    expect(branches.declared).toEqual([]);
+    expect(sessions.lines).toHaveLength(1);
+    expect(events).toEqual(["bindings-lock", "append", "bindings-unlock"]);
+  });
+
+  it("binds the session only, and says so, on a detached head", async () => {
+    const { useCase, branches } = setup();
+    branches.heads_ = { head: null, originHead: null };
+    const result = await useCase.execute({ cwd: CWD, request: TASK });
+    expect(result).toMatchObject({
+      branch: { status: "untouched", reason: "detached", branch: null },
+    });
+    expect(branches.declared).toEqual([]);
+  });
+
+  it("binds the branch only outside a session", async () => {
+    const { useCase, sessions, branches } = setup({ sessionId: null });
+    const result = await useCase.execute({ cwd: CWD, request: TASK });
+    expect(result).toMatchObject({ sessionId: null, branch: { status: "bound" } });
+    expect(sessions.lines).toEqual([]);
+    expect(branches.declared).toHaveLength(1);
+  });
+});
+
+describe("refusing to declare", () => {
+  it("refuses a project that has not opted in, and writes nothing", async () => {
+    const { useCase, consents, sessions, branches, events } = setup();
+    consents.values.set(CWD, "true");
+    expect(await useCase.execute({ cwd: CWD, request: TASK })).toEqual({
+      status: "refused",
+      reason: "no-consent",
+    });
+    expect(sessions.lines).toEqual([]);
+    expect(branches.declared).toEqual([]);
+    expect(events).toEqual([]);
+  });
+
+  it("refuses a clone turned off as turned off, and writes nothing", async () => {
+    const { useCase, consents, sessions, branches, events } = setup();
+    consents.values.set(CWD, "off");
+    expect(await useCase.execute({ cwd: CWD, request: TASK })).toEqual({
+      status: "refused",
+      reason: "turned-off",
+    });
+    expect(sessions.lines).toEqual([]);
+    expect(branches.declared).toEqual([]);
+    expect(events).toEqual([]);
+  });
+
+  it("refuses a clone with no consent, and one whose git config cannot be read, differently", async () => {
+    const none = setup();
+    none.consents.values.delete(CWD);
+    expect(await none.useCase.execute({ cwd: CWD, request: TASK })).toMatchObject({
+      reason: "no-consent",
+    });
+    const broken = setup();
+    broken.consents.unreadable.add(CWD);
+    expect(await broken.useCase.execute({ cwd: CWD, request: TASK })).toMatchObject({
+      reason: "unreadable-consent",
+    });
+  });
+
+  it("refuses a key that names no interval open for the clone, and a damaged log", async () => {
+    const forged = setup();
+    forged.consents.values.set(CWD, "2:forged");
+    expect(await forged.useCase.execute({ cwd: CWD, request: TASK })).toMatchObject({
+      reason: "no-consent",
+    });
+    const hand = setup();
+    hand.consents.values.set(CWD, "2");
+    expect(await hand.useCase.execute({ cwd: CWD, request: TASK })).toMatchObject({
+      reason: "no-consent",
+    });
+    const damaged = setup();
+    damaged.history.damaged = true;
+    expect(await damaged.useCase.execute({ cwd: CWD, request: TASK })).toMatchObject({
+      reason: "unreadable-consent",
+    });
+    const neverAsked = setup();
+    neverAsked.consents.values.delete(CWD);
+    neverAsked.history.damaged = true;
+    expect(await neverAsked.useCase.execute({ cwd: CWD, request: TASK })).toMatchObject({
+      reason: "no-consent",
+    });
+    const copied = setup();
+    copied.locator.directories.set(CWD, { ...REPOSITORY, clone: cloneOf("/elsewhere/.git") });
+    expect(await copied.useCase.execute({ cwd: CWD, request: TASK })).toMatchObject({
+      reason: "no-consent",
+    });
+    const unidentified = setup();
+    unidentified.locator.directories.set(CWD, { ...REPOSITORY, clone: null });
+    expect(await unidentified.useCase.execute({ cwd: CWD, request: TASK })).toMatchObject({
+      reason: "unreadable-consent",
+    });
+  });
+
+  it("asks a linked worktree's own root, which shares the main clone's git config", async () => {
+    const { useCase, locator, consents } = setup();
+    locator.directories.set(CWD, { ...REPOSITORY, root: CWD, mainRoot: "/work/main" });
+    await useCase.execute({ cwd: CWD, request: TASK });
+    expect(consents.reads).toEqual([CWD]);
+  });
+
+  it("refuses under AIDD_TELEMETRY=0 before reading anything", async () => {
+    const { useCase, locator, sessions } = setup({ refusedByEnvironment: true });
+    expect(await useCase.execute({ cwd: CWD, request: TASK })).toEqual({
+      status: "refused",
+      reason: "environment",
+    });
+    expect(locator.asked).toEqual([]);
+    expect(sessions.lines).toEqual([]);
+  });
+
+  it("refuses a directory git or the file system would not answer for as unreadable, not outside", async () => {
+    const s = setup();
+    s.locator.directories.set(CWD, { status: "unreadable" });
+    expect(await s.useCase.execute({ cwd: CWD, request: TASK })).toMatchObject({
+      reason: "unreadable-consent",
+    });
+    expect(s.sessions.lines).toEqual([]);
+  });
+
+  it("refuses outside a repository, and in one nothing can name", async () => {
+    const outside = setup();
+    outside.locator.directories.set(CWD, { status: "outside-repository" });
+    expect(await outside.useCase.execute({ cwd: CWD, request: TASK })).toMatchObject({
+      reason: "outside-repository",
+    });
+    const unnamed = setup();
+    unnamed.locator.directories.set(CWD, { ...REPOSITORY, remote: null, rootCommit: null });
+    expect(await unnamed.useCase.execute({ cwd: CWD, request: TASK })).toMatchObject({
+      reason: "unidentified-repository",
+    });
+    expect(unnamed.sessions.lines).toEqual([]);
+  });
+});

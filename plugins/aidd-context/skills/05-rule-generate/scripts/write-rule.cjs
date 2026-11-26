@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 "use strict";
 // Usage: node write-rule.cjs --project <abs dir> (--input <request.json> --tools <ids> | --remove <category>/<slug> | --publish [--tools <ids>]) [--plan] [--force]
-// Tool ids: claude,cursor,copilot,antigravity,codex,opencode,kilo.
+// Tool ids: claude,cursor,copilot,antigravity,codex,opencode,kilo,kiro,kimi.
 // Writes a rule source under aidd_docs/rules and publishes it to each host it targets.
 // Exit 0 ok, 1 refusal, 2 usage error, 3 filesystem error. Prints one JSON object on stdout.
 const fs = require("node:fs");
@@ -44,12 +44,23 @@ const LEGACY_INDEX_SIGNATURE = /^ sha256=([a-f0-9]{64}) separator=([01]) $/;
 const CURRENT_INDEX_SUFFIX = " ";
 
 const quote = (value) => JSON.stringify(value);
+const BRACE_GROUP = /\{([^{}]*,[^{}]*)\}/;
 const isScoped = (rule) => rule.paths.length > 0;
 const yamlList = (globs) => globs.map((glob) => `  - ${quote(glob)}\n`).join("");
 const joinedGlobs = (rule) => quote(rule.paths.join(","));
 const codeList = (globs) => globs.map((glob) => `\`${glob}\``).join(", ");
 
-// Each host's copy path and frontmatter, in `targets` order. Codex has no rule files: it reads a line of the root AGENTS.md index.
+// A host reads a glob list with no brace syntax, so each `{a,b}` becomes one glob per alternative, innermost first.
+function expandBraces(glob) {
+  const group = BRACE_GROUP.exec(glob);
+  if (!group) return [glob];
+  const before = glob.slice(0, group.index);
+  const after = glob.slice(group.index + group[0].length);
+  return group[1].split(",").flatMap((alternative) => expandBraces(`${before}${alternative}${after}`));
+}
+
+// Each host's copy path and frontmatter, in `targets` order. Codex and Kimi have no rule files: they read a line of the root AGENTS.md index.
+// Kilo also reads the OpenCode config, so a rule targeting both is published through OpenCode alone.
 // Kilo and OpenCode ignore copy frontmatter and load copies only through a glob in a config's `instructions`; the first config is created when none exists.
 const HOSTS = {
   claude: {
@@ -70,6 +81,7 @@ const HOSTS = {
     maxBytes: 24000,
   },
   codex: { indexed: true },
+  kimi: { indexed: true },
   opencode: {
     path: (rule) => `.opencode/rules/${rule.category}-${rule.slug}.md`,
     config: { glob: ".opencode/rules/*.md", files: ["opencode.json", "opencode.jsonc"] },
@@ -77,6 +89,10 @@ const HOSTS = {
   kilo: {
     path: (rule) => `.kilo/rules/${rule.category}-${rule.slug}.md`,
     config: { glob: ".kilo/rules/*.md", files: ["kilo.jsonc", "kilo.json", ".kilo/kilo.jsonc", ".kilo/kilo.json"] },
+  },
+  kiro: {
+    path: (rule) => `.kiro/steering/${rule.category}-${rule.slug}.md`,
+    frontmatter: (rule) => `inclusion: ${isScoped(rule) ? `fileMatch\nfileMatchPattern: [${rule.paths.map(quote).join(", ")}]` : "always"}\n`,
   },
 };
 const TOOLS = Object.keys(HOSTS);
@@ -120,6 +136,7 @@ function parseTools(list) {
 
 const isSingleLine = (value) => typeof value === "string" && value.trim() !== "" && !LINE_BREAK.test(value);
 const isGlob = (value) => typeof value === "string" && value !== "" && !GLOB_FORBIDDEN.test(value);
+const isGlobRequest = (value) => typeof value === "string" && expandBraces(value).every(isGlob);
 
 function validateRule(rule) {
   const categoryIndex = CATEGORIES.indexOf(rule.category);
@@ -127,8 +144,8 @@ function validateRule(rule) {
   if (categoryIndex < 0 || !slugMatches) refuse("Invalid category or slug.");
   if (!isSingleLine(rule.description)) refuse("Description must be a non-empty single line.");
   if (typeof rule.body !== "string" || !rule.body.trim()) refuse("Body must be non-empty.");
-  if (!Array.isArray(rule.paths) || !rule.paths.every(isGlob)) refuse("Paths must be non-empty strings without commas or newlines.");
-  return { ...rule, targets: parseTools(rule.targets) };
+  if (!Array.isArray(rule.paths) || !rule.paths.every(isGlobRequest)) refuse("Paths must be non-empty globs without a comma outside a brace group, or a newline.");
+  return { ...rule, paths: [...new Set(rule.paths.flatMap(expandBraces))], targets: parseTools(rule.targets) };
 }
 
 function parseJson(text, message) {
@@ -200,7 +217,7 @@ function renderCopy(rule, tool) {
   return text;
 }
 
-const copyTools = (rule) => rule.targets.filter((tool) => HOSTS[tool].path);
+const copyTools = (rule) => rule.targets.filter((tool) => HOSTS[tool].path && !(tool === "kilo" && rule.targets.includes("opencode")));
 const isIndexed = (rule) => rule.targets.some((tool) => HOSTS[tool].indexed);
 const sha256 = (text) => createHash("sha256").update(text).digest("hex");
 
@@ -338,7 +355,7 @@ function planChanges(project, options) {
   const plan = { writes: new Map(), conflicts: [] };
   const finalSources = planRuleFiles(plan, project, items, sources);
   for (const host of Object.values(HOSTS).filter((candidate) => candidate.config)) {
-    const targeted = items.some((item) => !item.deleting && item.rule.targets.some((tool) => HOSTS[tool] === host));
+    const targeted = items.some((item) => !item.deleting && copyTools(item.rule).some((tool) => HOSTS[tool] === host));
     if (targeted) planConfig(plan, project, host.config);
   }
   // An existing block is rebuilt too, so lines for hosts that now take copies disappear.
@@ -363,8 +380,15 @@ function planRuleFiles(plan, project, items, sources) {
       const previous = prior && renderCopy(prior, tool);
       planCopy(plan, project, HOSTS[tool].path(rule), wanted, previous);
     }
+    if (!deleting) planSupersededKiloCopy(plan, project, rule, prior);
   }
   return finalSources;
+}
+
+// A Kilo copy the writer produced before OpenCode was targeted would load a second time, so it goes.
+function planSupersededKiloCopy(plan, project, rule, prior) {
+  const superseded = rule.targets.includes("kilo") && !copyTools(rule).includes("kilo");
+  if (superseded && prior?.targets.includes("kilo")) planCopy(plan, project, HOSTS.kilo.path(rule), null, renderCopy(prior, "kilo"));
 }
 
 // A copy is the writer's when absent, legacy-signed or what the prior source rendered; any other differing copy conflicts.
@@ -498,4 +522,6 @@ function run() {
   }
 }
 
-run();
+if (require.main === module) run();
+
+module.exports = { TOOLS };

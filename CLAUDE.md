@@ -64,6 +64,23 @@ Project docs, memory, specs, and plans live in `aidd_docs/`.
 @aidd_docs/memory/vcs.md
 
 <!-- read on demand, not auto-loaded -->
+- aidd_docs/memory/internal/cli/architecture.md
+- aidd_docs/memory/internal/cli/auth.md
+- aidd_docs/memory/internal/cli/codebase-map.md
+- aidd_docs/memory/internal/cli/commands.md
+- aidd_docs/memory/internal/cli/decisions/clean-drives-the-host-cli.md
+- aidd_docs/memory/internal/cli/decisions/framework-source-is-machine-scope.md
+- aidd_docs/memory/internal/cli/decisions/manifest-reads-v9-and-splits-v8.md
+- aidd_docs/memory/internal/cli/decisions/marketplace-identity-is-name-plus-plugins.md
+- aidd_docs/memory/internal/cli/decisions/plugin-enablement-carries-its-scope.md
+- aidd_docs/memory/internal/cli/decisions/self-update-version-source-npm.md
+- aidd_docs/memory/internal/cli/deployment.md
+- aidd_docs/memory/internal/cli/distribution.md
+- aidd_docs/memory/internal/cli/host-registration.md
+- aidd_docs/memory/internal/cli/mutation.md
+- aidd_docs/memory/internal/cli/smoke-real.md
+- aidd_docs/memory/internal/cli/telemetry.md
+- aidd_docs/memory/internal/cli/testing.md
 - aidd_docs/memory/internal/decisions/a-price-table-is-the-destination-s.md
 - aidd_docs/memory/internal/decisions/measurement-may-reach-a-hosted-destination.md
 

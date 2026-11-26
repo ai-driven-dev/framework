@@ -15,6 +15,7 @@
 | render attributes | `data-variant`, `data-<axis>`, `data-state` |
 | render theme, platform | `data-theme` and `data-platform` on `<html>` alone. The base needs none. Another is another document, or a toggle of that attribute. Never a wrapper |
 | render style | `var()` of its tokens and of the elements it uses. No colour literal. No length literal but a hairline, as below. Logical properties when a declared locale is right to left |
+| render text | font family, size and line height from tokens, set on `body` |
 | element no render shows faithfully | rendered as close as tokens allow. The gap named to the user |
 | molecule render | copies the markup and style of the elements it uses |
 | length no token holds | up to 2px, a warning. Larger, the nearest token, the gap named to the user |

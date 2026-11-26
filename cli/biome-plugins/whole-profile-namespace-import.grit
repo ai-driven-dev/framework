@@ -1,0 +1,10 @@
+language js
+
+// A namespace import of the profile module reaches every member, the whole profile among them.
+or {
+  `import * as $ns from $source`,
+  `import type * as $ns from $source`
+} as $statement where {
+  $source <: r".*tools/contract/tool-profile\.js.*",
+  register_diagnostic(span=$statement, message="a namespace import reaches the whole tool profile: import the section types by name", severity="error")
+}

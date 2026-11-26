@@ -9,6 +9,7 @@
 // --update-baseline records the baseline when scripts/check/baseline.json is missing; otherwise it only lowers counts and drops entries, never adds a finding. Exit 2 is a usage or contract error.
 const fs = require("node:fs");
 const path = require("node:path");
+const { readOrNull } = require("./read-or-null.cjs");
 const { check, loadContract, format, ContractError, isUsage, globRegex } = require("./engine/engine.cjs");
 const { sync, syncHooks, describeHook } = require("./engine/sync.cjs");
 
@@ -44,7 +45,8 @@ function main(argv, { generators = require("./generators/index.cjs"), out = (tex
   if (update && given.length) throw new ContractError(`--update-baseline takes no files. ${USAGE}`);
   const scoped = given.length > 0;
   const baselineFile = path.join(root, BASELINE);
-  const recorded = fs.existsSync(baselineFile) ? JSON.parse(fs.readFileSync(baselineFile, "utf8")) : undefined;
+  const recordedText = readOrNull(baselineFile, "utf8");
+  const recorded = recordedText === null ? undefined : JSON.parse(recordedText);
   const rel = (file) => path.relative(root, file).split(path.sep).join("/");
 
   const findings = [];

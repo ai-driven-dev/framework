@@ -3,29 +3,24 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import * as fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { DirectoryResolver } from "../../../../src/contexts/telemetry/application/directory-resolver.js";
-import { IngestUsageUseCase } from "../../../../src/contexts/telemetry/application/ingest-usage-use-case.js";
-import { ReadUsageUseCase } from "../../../../src/contexts/telemetry/application/read-usage-use-case.js";
-import { SnapshotBindingsUseCase } from "../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
+import { IngestUsage } from "../../../../src/contexts/telemetry/application/ingest-usage.use-case.js";
+import { ReadUsage } from "../../../../src/contexts/telemetry/application/read-usage.use-case.js";
+import { SnapshotBindings } from "../../../../src/contexts/telemetry/application/snapshot-bindings.use-case.js";
 import { cloneKey } from "../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
-import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/domain/formats/claude-transcript-usage.js";
-import type { TranscriptSource } from "../../../../src/contexts/telemetry/domain/ports/transcript-source.js";
-import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/claude-transcript-source-adapter.js";
-import { UsageLedgerAdapter } from "../../../../src/contexts/telemetry/infrastructure/usage-ledger-adapter.js";
-import { PrivateStorageAdapter } from "../../../../src/runtime/filesystem/private-storage-adapter.js";
-import {
-  ALREADY_MIGRATED,
-  cloneOf,
-  FakeBindings,
-  FakeConsents,
-  FakeLocator,
-  grantedBy,
-  InMemoryBindingsLock,
-  InMemoryConsentHistory,
-  InMemoryResolutions,
-  InMemorySnapshots,
-} from "../../../helpers/ports/in-memory-telemetry.js";
-import { WholeTranscriptReader } from "../../../helpers/whole-transcript-reader.js";
+import { ClaudeUsageSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-usage-source-adapter.js";
+import type { UsageSource } from "../../../../src/contexts/telemetry/ports/usage-source.js";
+import { machinePrivateStorage } from "../../../shared/testing/machine-private-storage.builder.js";
+import { cloneOf, grantedBy } from "../testing/clone.builder.js";
+import { directoryResolverOf } from "../testing/directory-resolver.builder.js";
+import { FakeBindings } from "../testing/fake-bindings.fake.js";
+import { FakeConsents } from "../testing/fake-consents.fake.js";
+import { FakeLocator } from "../testing/fake-locator.fake.js";
+import { InMemoryBindingsLock } from "../testing/in-memory-bindings-lock.fake.js";
+import { InMemoryConsentHistory } from "../testing/in-memory-consent-history.fake.js";
+import { InMemoryResolutions } from "../testing/in-memory-resolutions.fake.js";
+import { InMemorySnapshots } from "../testing/in-memory-snapshots.fake.js";
+import { ledgerOver } from "../testing/ledger-adapters.builder.js";
+import { WholeTranscriptReader } from "../testing/whole-transcript-reader.fake.js";
 
 let root: string;
 let runs = 0;
@@ -109,10 +104,10 @@ const transcript = fc
     });
   });
 
-function machine(source: TranscriptSource) {
+function machine(source: UsageSource) {
   runs += 1;
   const dir = join(root, `ledger-${runs}`);
-  const ledger = new UsageLedgerAdapter(dir, new PrivateStorageAdapter());
+  const ledger = ledgerOver(dir, machinePrivateStorage());
   const locator = new FakeLocator();
   const consents = new FakeConsents();
   const history = new InMemoryConsentHistory();
@@ -132,22 +127,27 @@ function machine(source: TranscriptSource) {
     }
   }
   locator.directories.set("/work/none", { status: "outside-repository" });
-  const ingest = new IngestUsageUseCase(
-    [new ReadUsageUseCase(source, () => readClaudeUsageLine)],
+  const ingest = new IngestUsage({
+    readers: [new ReadUsage(source)],
     ledger,
-    new DirectoryResolver(locator, consents, new InMemoryResolutions(), history, {
-      caseInsensitiveFileSystem: false,
+    directories: directoryResolverOf({
+      locator,
+      consentSource: consents,
+      store: new InMemoryResolutions(),
+      history: history,
+      environment: {
+        caseInsensitiveFileSystem: false,
+        now: () => NOW,
+      },
+    }),
+    snapshots: new SnapshotBindings({
+      source: new FakeBindings(),
+      store: new InMemorySnapshots(),
+      lock: new InMemoryBindingsLock(),
       now: () => NOW,
     }),
-    new SnapshotBindingsUseCase(
-      new FakeBindings(),
-      new InMemorySnapshots(),
-      new InMemoryBindingsLock(),
-      () => NOW
-    ),
-    { refusedByEnvironment: false },
-    ALREADY_MIGRATED
-  );
+    options: { environment: { get: () => undefined } },
+  });
   const locked = cloneKey(cloneOf("/work/locked/.git", { ino: "/work/locked" }));
   const lock = (refused: boolean) =>
     refused ? consents.unreadableClones.add(locked) : consents.unreadableClones.delete(locked);
@@ -165,6 +165,30 @@ async function bytes(dir: string): Promise<Record<string, string>> {
   return Object.fromEntries(Object.entries(found).sort(([a], [b]) => (a < b ? -1 : 1)));
 }
 
+type Transcript = typeof transcript extends fc.Arbitrary<infer T> ? T : never;
+
+/** Write each transcript as far as this step has got, the last step writing all of it. */
+async function writeStep(
+  projects: string,
+  files: readonly Transcript[],
+  step: number,
+  last: boolean
+) {
+  for (const [index, file] of files.entries()) {
+    const cut = last ? file.bytes.length : (file.cuts[step] ?? file.bytes.length);
+    await writeFile(join(projects, `${index}.jsonl`), file.bytes.subarray(0, cut));
+  }
+}
+
+async function ingestBoth(machines: ReturnType<typeof machine>[], last: boolean) {
+  const results = [];
+  for (const m of machines) {
+    m.lock(!last);
+    results.push(await m.ingest.execute());
+  }
+  return results;
+}
+
 describe("ingesting transcripts read as a stream", () => {
   it("writes the same ledger, offsets and left-out bytes, and says the same, as the whole tail read at once, at any block size and however the transcripts were written between ingests", async () => {
     await fc.assert(
@@ -174,20 +198,13 @@ describe("ingesting transcripts read as a stream", () => {
         async (files, block) => {
           const projects = join(root, `projects-${runs}`, "p");
           await mkdir(projects, { recursive: true });
-          const streamed = machine(new ClaudeTranscriptSourceAdapter(projects, block));
+          const streamed = machine(new ClaudeUsageSourceAdapter(projects, block));
           const whole = machine(new WholeTranscriptReader(projects));
           const steps = Math.max(...files.map((file) => file.cuts.length)) + 1;
           for (let step = 0; step < steps; step += 1) {
             const last = step === steps - 1;
-            for (const [index, file] of files.entries()) {
-              const cut = last ? file.bytes.length : (file.cuts[step] ?? file.bytes.length);
-              await writeFile(join(projects, `${index}.jsonl`), file.bytes.subarray(0, cut));
-            }
-            const results = [];
-            for (const m of [streamed, whole]) {
-              m.lock(!last);
-              results.push(await m.ingest.execute());
-            }
+            await writeStep(projects, files, step, last);
+            const results = await ingestBoth([streamed, whole], last);
             expect(results[0]).toEqual(results[1]);
             expect(await bytes(streamed.dir)).toEqual(await bytes(whole.dir));
           }

@@ -6,7 +6,7 @@ const { spawnSync } = require("node:child_process");
 const { test } = require("node:test");
 
 const skill = path.resolve(__dirname, "../../plugins/aidd-context/skills/06-agent-generate");
-const ALL = "claude,cursor,copilot,antigravity,codex,opencode,kilo";
+const ALL = "claude,cursor,copilot,antigravity,codex,opencode,kilo,kiro,kimi";
 const agent = {
   name: "code-reviewer",
   description: "Reviews a diff for defects. Use to check a change before merge.",
@@ -48,8 +48,10 @@ test("renders each host's native file from the CLI mapping", (t) => {
   assert.equal(read(".cursor/agents/code-reviewer.md"), `---\nname: code-reviewer\ndescription: ${desc}\nmodel: "sonnet[effort=high]"\n---\n\n${body}`);
   assert.equal(read(".opencode/agents/code-reviewer.md"), `---\ndescription: ${desc}\nmodel: "sonnet#high"\nmode: subagent\n---\n\n${body}`);
   assert.equal(read(".kilo/agents/code-reviewer.md"), `---\ndescription: ${desc}\nmodel: sonnet\nvariant: high\nmode: subagent\n---\n\n${body}`);
+  assert.equal(read(".kiro/agents/code-reviewer.md"), `---\nname: code-reviewer\ndescription: ${desc}\ntools:\n  - "*"\n---\n\n${body}`);
+  assert.equal(read(".kimi-code/agents/code-reviewer.md"), `---\nname: code-reviewer\ndescription: ${desc}\ntools:\n  - Read\n  - Grep\n---\n\n${body}`);
   assert.equal(read(".github/agents/code-reviewer.agent.md"), `---\nname: code-reviewer\ndescription: ${desc}\nmodel: sonnet\nreasoningEffort: high\ninclude-custom-instructions: true\n---\n\n${body}`);
-  assert.equal(read(".agents/agents/code-reviewer/agent.md"), `---\nname: code-reviewer\ndescription: ${desc}\nmodel: inherit\ntools:\n  - Read\n  - Grep\n---\n\n${body}`);
+  assert.equal(read(".agents/agents/code-reviewer/agent.md"), `---\nname: code-reviewer\ndescription: ${desc}\nmodel: inherit\ntools:\n  - view_file\n  - grep_search\n---\n\n${body}`);
   assert.equal(read(".codex/agents/code-reviewer.toml"), `name = "code-reviewer"\ndescription = "${desc}"\nmodel = "sonnet"\nmodel_reasoning_effort = "high"\ndeveloper_instructions = '''\n${body}'''\n`);
 });
 
@@ -62,6 +64,94 @@ test("reports every field a host drops", (t) => {
     { tool: "antigravity", field: "effort" },
     { tool: "antigravity", field: "color" },
   ]);
+});
+
+test("reports what Kiro and Kimi cannot carry", (t) => {
+  const { run } = fixture(t);
+  const r = run(agent, "kiro,kimi");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.deepEqual(json(r).dropped, [
+    { tool: "kiro", field: "model" },
+    { tool: "kiro", field: "effort" },
+    { tool: "kiro", field: "tools" },
+    { tool: "kiro", field: "color" },
+    { tool: "kimi", field: "model" },
+    { tool: "kimi", field: "effort" },
+    { tool: "kimi", field: "color" },
+  ]);
+});
+
+test("a Kimi agent declaring no tools writes none, and Kiro grants every tool", (t) => {
+  const { run, read } = fixture(t);
+  const r = run({ name: "scout", description: "Finds files. Use to locate code.", body: "x\n" }, "kiro,kimi");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.equal(read(".kimi-code/agents/scout.md"), "---\nname: scout\ndescription: Finds files. Use to locate code.\n---\n\nx\n");
+  assert.equal(read(".kiro/agents/scout.md"), '---\nname: scout\ndescription: Finds files. Use to locate code.\ntools:\n  - "*"\n---\n\nx\n');
+});
+
+test("a Kimi agent lists Kimi's own tool names and loses a tool Kimi has no name for", (t) => {
+  const { run, read } = fixture(t);
+  const r = run({ name: "scout", description: "Finds files. Use to locate code.", tools: "Read, WebFetch, Task, NotebookEdit", body: "x\n" }, "kimi");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.equal(read(".kimi-code/agents/scout.md"), "---\nname: scout\ndescription: Finds files. Use to locate code.\ntools:\n  - Read\n  - FetchURL\n  - Agent\n---\n\nx\n");
+});
+
+test("a Kimi agent whose tools none map writes an empty list, never none, and keeps an MCP tool", (t) => {
+  const { run, read } = fixture(t);
+  const head = "---\nname: nb\ndescription: Edits notebooks. Use to change one.\n";
+  const base = { name: "nb", description: "Edits notebooks. Use to change one.", body: "x\n" };
+  assert.equal(run({ ...base, tools: "NotebookEdit" }, "kimi").status, 0);
+  assert.equal(read(".kimi-code/agents/nb.md"), `${head}tools: []\n---\n\nx\n`);
+  assert.equal(run({ ...base, tools: "NotebookEdit, mcp__github__get_issue" }, "kimi", ["--force"]).status, 0);
+  assert.equal(read(".kimi-code/agents/nb.md"), `${head}tools:\n  - mcp__github__get_issue\n---\n\nx\n`);
+});
+
+test("the Kimi tool table equals the one the CLI's Kimi profile holds", () => {
+  const profile = fs.readFileSync(path.resolve(__dirname, "../../cli/src/composition/tool-profiles/kimi.ts"), "utf8");
+  const blockMatch = profile.match(/const AGENT_TOOLS[^=]*= new Map\(\[([\s\S]*?)\]\);/);
+  assert.ok(blockMatch, "kimi profile AGENT_TOOLS map not found");
+  const block = blockMatch[1];
+  const pairs = [...block.matchAll(/\["([^"]+)", "([^"]+)"\]/g)].map(([, claude, kimi]) => [claude, kimi]);
+  assert.ok(pairs.length > 0);
+  assert.deepEqual([...require(path.join(skill, "scripts/write-agent.cjs")).KIMI_TOOLS], pairs);
+});
+
+test("the Antigravity tool table equals the one the CLI's Antigravity profile holds", () => {
+  const profile = fs.readFileSync(path.resolve(__dirname, "../../cli/src/composition/tool-profiles/antigravity.ts"), "utf8");
+  const blockMatch = profile.match(/const AGENT_TOOLS[^=]*= new Map\(\[([\s\S]*?)\]\);/);
+  assert.ok(blockMatch, "antigravity profile AGENT_TOOLS map not found");
+  const pairs = [...blockMatch[1].matchAll(/\["([^"]+)", "([^"]+)"\]/g)].map(([, claude, agy]) => [claude, agy]);
+  assert.ok(pairs.length > 0);
+  assert.deepEqual([...require(path.join(skill, "scripts/write-agent.cjs")).ANTIGRAVITY_TOOLS], pairs);
+});
+
+test("an Antigravity agent lists agy names, drops a tool with none, and lists every mapped tool when it declares none", (t) => {
+  const { run, read } = fixture(t);
+  const listed = () => read(".agents/agents/scout/agent.md").match(/tools:\n((?:  - .+\n)+)/)[1].trimEnd().split("\n").map((line) => line.slice(4));
+  assert.equal(run({ name: "scout", description: "Finds files. Use to locate code.", tools: "Read, Glob, Bash, mcp__x__y, Read", body: "x\n" }, "antigravity").status, 0);
+  assert.deepEqual(listed(), ["view_file", "run_command"]);
+  assert.equal(run({ name: "scout", description: "Finds files. Use to locate code.", body: "x\n" }, "antigravity", ["--force"]).status, 0);
+  assert.deepEqual(listed(), ["view_file", "grep_search", "replace_file_content", "write_file", "run_command"]);
+});
+
+test("a Kimi agent lists the tools the CLI's Kimi build lists for the same declaration", (t) => {
+  const built = fs.readFileSync(path.resolve(__dirname, "../../cli/tests/contexts/translate/application/sinks/kimi-flat-build.integration.test.ts"), "utf8");
+  const declaredMatch = built.match(/\\ntools: ([^\\]+)\\n---/);
+  const expectedMatch = built.match(/frontmatter\.tools\)\.toBe\('(\[.*\])'\)/);
+  assert.ok(declaredMatch && expectedMatch, "kimi flat-build fixture shape changed");
+  const declared = declaredMatch[1];
+  const expected = JSON.parse(expectedMatch[1]);
+  const { run, read } = fixture(t);
+  assert.equal(run({ name: "tooled", description: "Declares Claude tools.", tools: declared, body: "x\n" }, "kimi").status, 0);
+  const written = read(".kimi-code/agents/tooled.md").match(/tools:\n((?:  - .+\n)+)/)[1];
+  const items = written.trimEnd().split("\n").map((line) => line.replace(/^ {2}- /, "").replace(/^"(.*)"$/, "$1"));
+  assert.deepEqual(items, expected);
+});
+
+test("a Kimi agent names a tool once when two Claude tools map to it", (t) => {
+  const { run, read } = fixture(t);
+  assert.equal(run({ name: "scout", description: "Finds files. Use to locate code.", tools: "Task, Agent", body: "x\n" }, "kimi").status, 0);
+  assert.equal(read(".kimi-code/agents/scout.md"), "---\nname: scout\ndescription: Finds files. Use to locate code.\ntools:\n  - Agent\n---\n\nx\n");
 });
 
 test("keeps the Claude-only keys of an existing agent", (t) => {
