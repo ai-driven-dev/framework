@@ -273,6 +273,8 @@ export interface AiToolProfile {
   machineLocalFiles(): readonly string[];
   /** Where it takes a plugin's hooks inside the project, or null when it takes none there. */
   projectHooksDelivery(): ProjectHooksLocation | null;
+  /** Where an earlier release merged a plugin's hooks into the project, or null when none did. */
+  releasedProjectHooks(): ProjectHooksLocation | null;
   /** Where its installed rules live and what they end in, or null when it installs none. */
   installedRulesLocation(): { readonly directory: string; readonly extension: string } | null;
   /** Where its own commands sit in the project at `projectRoot`, or null when it declares none. */

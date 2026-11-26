@@ -12,6 +12,19 @@ import { registeredTools, TOOL } from "../../../../../shared/testing/registered-
 const BUILT = "/built";
 
 describe("reading a built user plugin's files", () => {
+  it("prefixes every path by the directory the tool keeps the plugin in", async () => {
+    const fs = new InMemoryFileAdapter({ "/built/plugins/aidd-dev/skills/a.md": "a" }, [BUILT]);
+
+    const files = await readBuiltUserPluginFiles(fs, {
+      builtDir: BUILT,
+      name: "aidd-dev",
+      root: ".agents/plugins/aidd-dev/",
+      platform: process.platform,
+    });
+
+    expect(files.map((f) => f.relativePath)).toEqual([".agents/plugins/aidd-dev/skills/a.md"]);
+  });
+
   it("reads the plugin subtree with every path prefixed by the plugin name", async () => {
     const fs = new InMemoryFileAdapter(
       { "/built/plugins/aidd-dev/skills/a.md": "a", "/built/plugins/other/x.md": "x" },
@@ -21,6 +34,7 @@ describe("reading a built user plugin's files", () => {
     const files = await readBuiltUserPluginFiles(fs, {
       builtDir: BUILT,
       name: "aidd-dev",
+      root: "aidd-dev/",
       platform: process.platform,
     });
 
@@ -36,11 +50,24 @@ describe("leaving out the files an install drops", () => {
 
     const kept = withoutDroppedFiles(
       [file("aidd-dev/hooks/run.js"), file("aidd-dev/skills/a.md"), file("other/hooks/x.js")],
-      "aidd-dev",
+      "aidd-dev/",
       (path) => path.startsWith("hooks/")
     );
 
     expect(kept.map((f) => f.relativePath)).toEqual(["aidd-dev/skills/a.md", "other/hooks/x.js"]);
+  });
+
+  it("slices the directory a tool keeps the plugin in, whatever its length", () => {
+    const file = (relativePath: string) =>
+      new InstallationFile({ relativePath, content: "", hash: FileHash.of("") });
+
+    const kept = withoutDroppedFiles(
+      [file(".agents/plugins/aidd-dev/hooks/run.js"), file(".agents/plugins/aidd-dev/a.md")],
+      ".agents/plugins/aidd-dev/",
+      (path) => path.startsWith("hooks/")
+    );
+
+    expect(kept.map((f) => f.relativePath)).toEqual([".agents/plugins/aidd-dev/a.md"]);
   });
 });
 

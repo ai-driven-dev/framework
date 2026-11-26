@@ -34,7 +34,7 @@ function storedBaseline(): GoldenSnapshot {
   return JSON.parse(readFileSync(SNAPSHOT_FILE, "utf-8")) as GoldenSnapshot;
 }
 
-const MARKETPLACE_TARGETS = ["copilot", "codex", "claude", "cursor"] as const;
+const MARKETPLACE_TARGETS = ["copilot", "codex", "claude", "cursor", "antigravity"] as const;
 const FLAT_TARGETS = catalogOf().idsInCanonicalOrder("ai");
 const CELL_COUNT = MARKETPLACE_TARGETS.length + FLAT_TARGETS.length;
 
