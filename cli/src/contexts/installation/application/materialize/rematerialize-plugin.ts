@@ -32,9 +32,8 @@ export type RematerializationDeps = BuiltPlacement & { readonly fs: PluginFilesy
  * single entry an install would have produced. A tool that lists rules in a guidance file has
  * them written, listed and recorded again; any other file the registration recorded goes.
  *
- * Returns how many files were actually (re)written: not the plugin's total file count: so
- * a no-op restore reports zero. `written` is undefined for a placement that writes no files, and
- * is reported as 0 rather than guessed.
+ * Returns how many files a built tree wrote; the marketplace route reports 0, rules it rewrote
+ * included.
  */
 export async function rematerializePlugin(
   rematerialization: PluginRematerialization,

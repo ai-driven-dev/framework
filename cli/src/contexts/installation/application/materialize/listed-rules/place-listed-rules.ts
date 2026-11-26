@@ -1,4 +1,3 @@
-import { join } from "node:path";
 import type { InstallationFile } from "../../../../../shared/domain/installation-file.js";
 import type { PluginDistribution } from "../../../../../shared/domain/plugin/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../../../shared/domain/plugin/plugin-translation-skip.js";
@@ -12,7 +11,7 @@ import {
 import { resolveScopeForInstall } from "../../plugin/plugin-target-resolution.js";
 import type { AddPluginRequest } from "../add-plugin-request.js";
 import { registerMarketplacePlugin } from "../register-marketplace-plugin.js";
-import { listRulesIn, unlistRulesIn } from "./list-placed-rules.js";
+import { syncRulesListing } from "./list-placed-rules.js";
 
 /** Places the rules a tool lists in its guidance file beside the registration, refusing first a
  * file whose block a person broke. A rule the plugin no longer ships goes, with its listing. */
@@ -33,13 +32,8 @@ async function placeListedRules(
   const previous = command.previousFiles.get(tool.toolId);
   const index = tool.rulesIndex();
   const plugin = dist.manifest.name;
-  const glob = index?.globOf(plugin) ?? null;
-  if (index === null || glob === null) return new Map();
-  const rules = files.filter((file) => index.globIn(plugin, [file.relativePath]) !== null);
-  const path = join(projectRoot, index.relativePath);
-  const listing = { index, glob };
-  if (rules.length === 0) await unlistRulesIn(fs, path, listing);
-  else await listRulesIn(fs, path, listing);
+  if (index === null) return new Map();
+  const rules = await syncRulesListing(fs, { index, projectRoot }, { plugin, files });
   const base = { dir: projectRoot, scope: resolveScopeForInstall(tool) };
   await replacePluginFiles({ files: rules, base, previous }, fs);
   return new Map(rules.map((file) => [file.relativePath, file.hash.value]));

@@ -44,18 +44,22 @@ export async function listPlacedRules(
   await listRulesIn(fs, join(projectRoot, index.relativePath), { index, glob: rulesGlob });
 }
 
-/** Lists the rules among `files` the plugin places natively, refusing a broken block before any
- * file is written. A plugin that no longer ships a rule keeps its listing: it matches nothing. */
-export async function listRulesOfFiles(
+/** Brings the guidance file in line with the plugin's placed `files`: the rules glob is listed
+ * when they hold a rule, taken out when they hold none. Refuses a broken block before any file is
+ * written. Returns the rules among `files`. */
+export async function syncRulesListing<F extends { readonly relativePath: string }>(
   fs: FileReader & FileWriter,
-  at: { readonly index: RulesIndexAnswers | null; readonly projectRoot: string },
-  placed: { readonly plugin: string; readonly files: readonly { readonly relativePath: string }[] }
-): Promise<void> {
+  at: { readonly index: RulesIndexAnswers; readonly projectRoot: string },
+  placed: { readonly plugin: string; readonly files: readonly F[] }
+): Promise<F[]> {
   const { index, projectRoot } = at;
-  const glob = index?.globIn(
-    placed.plugin,
-    placed.files.map((file) => file.relativePath)
+  const glob = index.globOf(placed.plugin);
+  if (glob === null) return [];
+  const rules = placed.files.filter(
+    (file) => index.globIn(placed.plugin, [file.relativePath]) !== null
   );
-  if (index === null || index === undefined || glob === null || glob === undefined) return;
-  await listRulesIn(fs, join(projectRoot, index.relativePath), { index, glob });
+  const path = join(projectRoot, index.relativePath);
+  if (rules.length === 0) await unlistRulesIn(fs, path, { index, glob });
+  else await listRulesIn(fs, path, { index, glob });
+  return rules;
 }

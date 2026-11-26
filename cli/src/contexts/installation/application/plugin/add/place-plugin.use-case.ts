@@ -14,7 +14,7 @@ import type { ProjectHooksProvenance } from "../../../domain/plugins/plugin-entr
 import { RecordedPlugin } from "../../../domain/plugins/recorded-plugin.js";
 import type { EnsurePluginRuntimeFiles } from "../../install/config/ensure-plugin-runtime-files.use-case.js";
 import type { BuiltPlacement } from "../../materialize/add-plugin-request.js";
-import { listRulesOfFiles } from "../../materialize/listed-rules/list-placed-rules.js";
+import { syncRulesListing } from "../../materialize/listed-rules/list-placed-rules.js";
 import { registerWithListedRules } from "../../materialize/listed-rules/place-listed-rules.js";
 import { placementModeOf } from "../../materialize/plugin-placement.js";
 import { hashOutputFiles } from "../../shared/hash-output-files.js";
@@ -156,7 +156,9 @@ async function materializeNativePlugin(
   }
   const scope = resolveScopeForInstall(tool);
   const index = tool.rulesIndex();
-  await listRulesOfFiles(fs, { index, projectRoot }, { plugin: dist.manifest.name, files });
+  if (index !== null) {
+    await syncRulesListing(fs, { index, projectRoot }, { plugin: dist.manifest.name, files });
+  }
   const previous = command.previousFiles.get(tool.toolId);
   await replacePluginFiles({ files, base: { dir: projectRoot, scope }, previous }, fs);
   const entry = { dist, source, files, scope, componentPaths, marketplace };
