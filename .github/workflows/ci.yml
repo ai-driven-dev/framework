@@ -62,7 +62,7 @@ jobs:
       version: ${{ steps.release.outputs.version }}
       paths_released: ${{ steps.release.outputs.paths_released }}
     steps:
-      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+      - uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
         id: app-token
         with:
           app-id: ${{ secrets.AIDD_BOT_APP_ID }}
@@ -245,7 +245,7 @@ jobs:
       fail-fast: false
       matrix:
         # Every plugin `marketplace.json` lists, and nothing else — asserted by
-        # scripts/__tests__/release-covers-every-plugin.test.js, since a plugin missing here
+        # scripts/check/contracts/repo.json (REPO-02), since a plugin missing here
         # is tagged with no archive and nothing else notices.
         plugin:
           [
@@ -370,7 +370,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+      - uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
         id: app-token
         with:
           app-id: ${{ secrets.AIDD_BOT_APP_ID }}

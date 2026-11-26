@@ -13,6 +13,6 @@ See `INSTALL.md`.
 
 ## Conventions
 
-- Commits: conventional commits (`<type>(<scope>): description`).
+- Commits: conventional commits (`{{type}}({{scope}}): description`).
 - The CI pipeline runs the test suite on every push; keep it green.
 - Do not put business logic in route stubs until you replace them with real handlers.

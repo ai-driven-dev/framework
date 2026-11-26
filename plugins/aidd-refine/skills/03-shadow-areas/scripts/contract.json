@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "kind": "shadow",
+  "unit": "file",
+  "scope": ["**/*-shadow-report.md"],
+  "rules": {
+    "SHADOW-01": { "op": "template", "in": "*-shadow-report.md", "template": "../assets/report-template.md", "optional": ["status", "Warnings", "Closed", "Still Open", "Newly Introduced"], "values": { "status": ["clean"] }, "why": "whoever closes the gaps reads every report the same way, run after run", "fix": "follow report-template.md" },
+    "SHADOW-02": { "op": "custom", "in": "*-shadow-report.md", "check": "categories", "why": "a gap sorted under an unknown or misordered category is missed by whoever walks the taxonomy" },
+    "SHADOW-03": { "op": "custom", "in": "*-shadow-report.md", "check": "gaps", "why": "the next run matches gaps by these lines, and the author acts first on the most severe question" },
+    "SHADOW-04": { "op": "custom", "in": "*-shadow-report.md", "check": "totals", "why": "the header is what a reader trusts before reading the gaps" },
+    "SHADOW-05": { "op": "custom", "in": "*-shadow-report.md", "check": "status", "why": "a clean stamp lets the artifact move on, so it holds only when nothing blocks or causes rework" }
+  }
+}

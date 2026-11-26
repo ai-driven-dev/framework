@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "kind": "story",
+  "unit": "file",
+  "scope": ["aidd_docs/backlog/stories/*.md"],
+  "rules": {
+    "STORY-01": {
+      "op": "template",
+      "in": "*.md",
+      "template": "../assets/user-story-template.md",
+      "optional": ["Cancellation"],
+      "values": { "status": ["proposed", "ready", "in-progress", "done", "cancelled"] },
+      "why": "the backlog reads every story the same way",
+      "fix": "follow user-story-template.md"
+    }
+  }
+}

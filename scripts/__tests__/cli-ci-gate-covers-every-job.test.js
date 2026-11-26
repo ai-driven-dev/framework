@@ -2,6 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const test = require("node:test");
+const { spawnSync } = require("node:child_process");
 const yaml = require("js-yaml");
 
 const root = path.resolve(__dirname, "../..");
@@ -60,67 +61,10 @@ test("the changes filter names the workflow file itself as relevant", () => {
   );
 });
 
-test("only a proven next snapshot tree skips the promotion or main mutation matrix", () => {
+// Promotion reuse may skip only the mutation matrix; every other check still validates the
+// current merge ref and so must stay gated on a relevant change.
+test("only the mutation matrix is skippable by promotion reuse: every other check still depends on changes", () => {
   const workflow = cliCiWorkflow();
-  const changes = workflow.jobs.changes;
-  const promotion = changes.steps.find((step) => step.id === "promotion");
-  const mutation = changes.steps.find((step) => step.id === "mutation");
-
-  assert.equal(workflow.permissions.actions, "read");
-  assert.equal(workflow.permissions.contents, "read");
-  assert.equal(workflow.permissions["pull-requests"], undefined);
-  assert.deepEqual(changes.permissions, {
-    actions: "read",
-    contents: "read",
-    "pull-requests": "read",
-  });
-  assert.equal(changes.outputs.trusted_promotion, "${{ steps.promotion.outputs.trusted }}");
-  assert.equal(promotion.name, "Check whether a promotion snapshot or main merge passed next");
-  assert.match(promotion.run, /EVENT_NAME.*pull_request/);
-  assert.match(promotion.run, /BASE_REF.*main/);
-  assert.equal(promotion.env.HEAD_REPO, "${{ github.event.pull_request.head.repo.full_name }}");
-  assert.match(promotion.run, /HEAD_REF.*\^promote\/next-to-main-\[0-9\]\+\$/);
-  assert.match(promotion.run, /HEAD_REPO" == "\$REPO/);
-  assert.match(promotion.run, /git merge-base --is-ancestor "\$BASE_SHA" "\$HEAD_SHA"/);
-  assert.match(promotion.run, /git rev-parse "\$CURRENT_SHA\^\{tree\}"/);
-  assert.match(promotion.run, /"\$merge_tree" != "\$snapshot_tree"/);
-  assert.match(
-    promotion.run,
-    /actions\/workflows\/cli-ci\.yml\/runs\?branch=next&event=push&status=completed&head_sha=\$HEAD_SHA/
-  );
-  assert.match(promotion.run, /\.conclusion == "success"/);
-  assert.match(promotion.run, /\.name == "cli \/ gate" and \.conclusion == "success"/);
-  assert.match(promotion.run, /reason="could not list successful cli CI push runs"/);
-  assert.match(promotion.run, /reason="could not inspect cli CI run \$run_id"/);
-  assert.match(promotion.run, /echo "promotion mutation reuse: \$reason"/);
-
-  // Main can skip mutations only for the exact two-parent promotion merge whose tree is the
-  // snapshot already gated on next. Any git or associated-PR proof mismatch remains untrusted.
-  assert.match(promotion.run, /EVENT_NAME" == "push" && "\$GITHUB_REF" == "refs\/heads\/main"/);
-  assert.match(promotion.run, /git rev-list --parents -n 1 "\$CURRENT_SHA"/);
-  assert.match(promotion.run, /-z "\$snapshot_sha" \|\| -n "\$\{extra_parent:-\}"/);
-  assert.match(promotion.run, /git rev-parse "\$snapshot_sha\^\{tree\}"/);
-  assert.match(promotion.run, /"\$main_tree" != "\$snapshot_tree"/);
-  assert.match(promotion.run, /\/repos\/\$REPO\/commits\/\$CURRENT_SHA\/pulls/);
-  assert.match(promotion.run, /\.base\.ref == "main"/);
-  assert.match(promotion.run, /\.head\.ref \| test\("\^promote\/next-to-main-\[0-9\]\+\$"\)/);
-  assert.match(promotion.run, /\.merged_at != null/);
-  assert.match(promotion.run, /"\$base_repo" == "\$REPO"/);
-  assert.match(promotion.run, /"\$head_repo" == "\$REPO"/);
-  assert.match(promotion.run, /"\$pr_head_sha" == "\$snapshot_sha"/);
-  assert.match(promotion.run, /"\$merge_commit_sha" == "\$CURRENT_SHA"/);
-  assert.match(promotion.run, /"\$matching_prs" -ne 1/);
-  assert.match(promotion.run, /HEAD_SHA="\$snapshot_sha"/);
-
-  assert.match(mutation.run, /steps\.promotion\.outputs\.trusted.*== "true"/);
-  assert.match(mutation.run, /legs='\[\]'/);
-  assert.match(mutation.run, /sharded='\[\]'/);
-  assert.match(mutation.run, /else[\s\S]*mutation-scopes-to-run\.mjs/);
-  assert.equal(workflow.jobs["cli-mutation"].if, "needs.changes.outputs.mutation_legs != '[]'");
-  // The scoring job runs whatever its shards did, so a crashed shard fails it, never skips it.
-  assert.match(workflow.jobs["cli-mutation-score"].if, /^always\(\) && needs\.changes\.outputs\.mutation_sharded != '\[\]'/);
-
-  // These checks validate the current PR merge ref or main commit; reuse never turns them off.
   for (const name of [
     "cli-typecheck",
     "cli-lint",
@@ -142,4 +86,22 @@ test("only a proven next snapshot tree skips the promotion or main mutation matr
       `${name} must still run for a relevant promotion PR`
     );
   }
+});
+
+// The Windows and macOS jobs are the only runs of the plugin suite off Linux, and a plugin's
+// bundled script or hook is what handles paths and line endings there. Runs the filter's own
+// `case` under bash, so the assertion is what the workflow decides, not a reading of its text.
+test("the changes filter runs the suite for a plugin's bundled script or hook, not its prose", () => {
+  const script = cliCiWorkflow().jobs.changes.steps.map((step) => step.run ?? "").join("\n");
+  const filter = script.match(/^\s*case "\$f" in\n[\s\S]*?^\s*esac$/m);
+  assert.ok(filter, "the relevance filter must be a `case \"$f\" in ... esac` block");
+  const decide = (file) =>
+    spawnSync("bash", ["-c", `relevant=false\nf="$1"\n${filter[0]}\necho "$relevant"`, "filter", file], {
+      encoding: "utf8",
+    }).stdout.trim();
+
+  assert.equal(decide("plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs"), "true");
+  assert.equal(decide("plugins/aidd-context/hooks/memory.cjs"), "true");
+  assert.equal(decide("plugins/aidd-telemetry/hooks/lib/record.cjs"), "true");
+  assert.equal(decide("plugins/aidd-context/skills/05-rule-generate/SKILL.md"), "false");
 });

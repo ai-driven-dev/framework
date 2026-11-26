@@ -8,12 +8,15 @@ How the project is tested: the layers, the tools, and the conventions. Where tes
 
 | Surface | Validated by |
 | --- | --- |
-| Skills, agents, rules (markdown) | each action's own `## Test`, run end to end against a real project |
+| Skills, agents, hook configs, plugin manifests | the contract of each kind, run over the tree by `node scripts/check/run.cjs` (CI job `lefthook`, step "Check framework content"): only findings absent from the baseline in `scripts/check/baseline.json` fail. The pre-commit hook `framework-content` runs it on the staged files with `--fix`; `architecture-rules` keeps router coherence for a skill with no flowchart |
+| Plans, runs, rules, commands, stories | the contract beside the skill that writes them, run by its `validate-<kind>.cjs`; archived plans are not validated in CI. New kind: copy `02-user-stories/scripts/` (`contract.json`, `validate-story.cjs`), add `scope` for the turn-end check (`"shell": false` when an install writes the kind: a shell turn then judges only the files a command names), then run `node scripts/check/engine/sync.cjs` |
 | `scripts/` and bundled hooks | `node --test` under the wrapper below |
 | `cli/` | vitest, four projects — see the CLI bank |
 | `kanban/` | its own vitest suite. It shares no code with `cli/` |
 | Per-tool distributions | golden snapshots in `cli/tests/golden/`, mirrored by the `build-per-tool` CI matrix; Claude Code's own `plugin validate` over a fresh claude build, in `cli-ci.yml` |
 | Browser journeys | `aidd-qa:01-acceptance-qa`, see below |
+
+Baseline keys in `scripts/check/baseline.json` start with the file path. On a skill rename, rewrite that path prefix in its keys in the same commit, or `run.cjs` reports the old findings as fresh and the old keys as gone.
 
 ## Tools
 
@@ -28,6 +31,7 @@ How the project is tested: the layers, the tools, and the conventions. Where tes
 
 - A plugin never holds its own tests: `hooks/` ships recursively into user projects. Tests for a bundled script go in `scripts/__tests__/`.
 - The scripts suite writes into a git repository. Run it wrapped, never bare: unwrapped it can overwrite this repository's own `.git/hooks`, and `.git` is in no history.
+- A new or rewritten skill runs end to end on at least two small models from different providers before it ships, in a throwaway repository whose sessions are deleted after. It must stop at each wait and write only once approved.
 
 ## Run
 
