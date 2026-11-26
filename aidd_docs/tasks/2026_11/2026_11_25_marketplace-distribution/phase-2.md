@@ -1,6 +1,8 @@
 ---
-status: done
+status: superseded
 ---
+
+> Superseded: no legacy Claude catalog ships. The hosted catalogs carry only the distribution name; see `spec.md` and `plan.md`.
 
 # Instruction: Preserve the legacy Claude catalog and document installation
 
