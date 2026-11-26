@@ -18,6 +18,7 @@ Run from `cli/`.
 - `pnpm test` never builds `dist/`; `tooling` is not among its projects.
 - `pnpm golden:update [name]` rewrites stored goldens, or those under `cli/tests/golden/<name>*`; refused in CI.
 - `pnpm smoke` runs the built binary over `cli/scripts/smoke-tools.sh`, hermetic; `smoke:full` and `smoke:collision` add the remote fetch and a seeded own install.
+- `AIDD_SMOKE_KIRO=1 pnpm smoke:kiro` runs a logged-in `kiro-cli` turn over a project set up for Kiro; opt-in, never in CI, skipped without the variable.
 - `pnpm test:host-contract` replays recorded host behaviour on installed hosts; a weekly CI job.
 - `pnpm smoke:real` reaches real host registries: [`smoke-real.md`](smoke-real.md).
 

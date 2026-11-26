@@ -44,7 +44,7 @@
       "op": "custom",
       "in": "marketplace.json",
       "check": "no-model-override",
-      "why": "a model set in a bundled skill or agent overrides the model the user chose"
+      "why": "a model or effort set in a bundled skill or agent overrides the one the user chose"
     },
     "REPO-09": {
       "op": "json",
