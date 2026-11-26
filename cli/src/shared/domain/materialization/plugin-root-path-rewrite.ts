@@ -3,6 +3,13 @@ import { asPlainObject } from "../reading/plain-object.js";
 // Written as a split literal to avoid biome's noTemplateCurlyInString warning.
 /** The variable plugins are authored against: the one spelling of it in the source. */
 export const SOURCE_PLUGIN_ROOT_TOKEN = "$" + "{CLAUDE_PLUGIN_ROOT}";
+/** Where a plugin keeps the adapter between its hooks and the host: Claude Code's, as shipped,
+ * which a build for another tool replaces with that tool's. */
+export const HOST_ADAPTER_PATH = "hooks/lib/host.cjs";
+
+export const shipsHostAdapter = (hooks: readonly { readonly relativePath: string }[]): boolean =>
+  hooks.some(({ relativePath }) => relativePath === HOST_ADAPTER_PATH);
+
 const SOURCE_ROOT_PREFIX = `${SOURCE_PLUGIN_ROOT_TOKEN}/`;
 const DEFAULT_RELATIVE_PREFIX = "./";
 

@@ -53,6 +53,14 @@ describe("one plugin's hooks and MCP servers", () => {
     ]);
   });
 
+  it("tells the flat writer the plugin ships the host adapter", async () => {
+    const { deps, hooks } = depsOver();
+
+    await writePluginHooks(deps, flatTarget(), { name: "plug", hooks: "{}", hostAdapter: true });
+
+    expect(hooks.map((step) => step.hostAdapter)).toEqual([true]);
+  });
+
   it("writes nothing for a plugin the engine handed no hooks", async () => {
     const { deps, hooks } = depsOver();
     const logger = deps.logger;

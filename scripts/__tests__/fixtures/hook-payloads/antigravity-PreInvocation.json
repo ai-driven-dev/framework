@@ -1,0 +1,50 @@
+{
+  "host": "antigravity",
+  "event": "PreInvocation",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "artifactDirectoryPath": "/Users/user/.gemini/antigravity-cli/brain/00000000-0000-4000-8000-000000000000",
+        "conversationId": "00000000-0000-4000-8000-000000000000",
+        "cwd": "/Users/user/project",
+        "hookEventName": "PreInvocation",
+        "initialNumSteps": 1,
+        "invocationNum": 0,
+        "lastUserInput": "Create a file named notes.txt containing hello using write_file, then reply DONE.",
+        "modelName": "gemini-4-hydrogen-low",
+        "transcriptPath": "/Users/user/.gemini/antigravity-cli/brain/00000000-0000-4000-8000-000000000000/.system_generated/logs/transcript_full.jsonl",
+        "workspacePaths": [
+          "/Users/user/project"
+        ]
+      },
+      "hookAnswer": {}
+    },
+    {
+      "run": "relay",
+      "payload": {
+        "artifactDirectoryPath": "/Users/user/.gemini/antigravity-cli/brain/00000000-0000-4000-8000-000000000000",
+        "conversationId": "00000000-0000-4000-8000-000000000000",
+        "cwd": "/Users/user/project",
+        "hookEventName": "PreInvocation",
+        "initialNumSteps": 3,
+        "invocationNum": 1,
+        "lastUserInput": "Create a file named notes.txt containing hello using write_file, then reply DONE.",
+        "modelName": "gemini-4-hydrogen-low",
+        "transcriptPath": "/Users/user/.gemini/antigravity-cli/brain/00000000-0000-4000-8000-000000000000/.system_generated/logs/transcript_full.jsonl",
+        "workspacePaths": [
+          "/Users/user/project"
+        ]
+      },
+      "hookAnswer": {
+        "injectSteps": [
+          {
+            "systemMessage": {
+              "systemMessage": "Project formatting check failed for notes.txt: every file in this project must end with the line -- end --. Fix notes.txt before you reply."
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

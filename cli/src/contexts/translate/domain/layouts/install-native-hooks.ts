@@ -24,7 +24,11 @@ interface HooksTarget {
  * other file a script the host runs, beside it. */
 export function nativeHooksPlan(
   file: PluginComponentFile,
-  at: HooksTarget & { readonly pluginRoot: string; readonly pluginName: string }
+  at: HooksTarget & {
+    readonly pluginRoot: string;
+    readonly pluginName: string;
+    readonly hostAdapter: boolean;
+  }
 ): ComponentPlan | null {
   const { tool, plugins, pluginRoot } = at;
   if (!plugins.hooksAcceptance().accepts) return null;
@@ -35,7 +39,7 @@ export function nativeHooksPlan(
       source,
       path,
       content,
-      shape: hooksManifestShape(tool, at.pluginName),
+      shape: hooksManifestShape(tool, at.pluginName, at.hostAdapter),
       rootToken: plugins.rootToken(),
     };
   }
@@ -56,10 +60,15 @@ export function nativeHooksPlan(
 // that reads it in a form of its own.
 function hooksManifestShape(
   tool: TranslatedAiTool,
-  pluginName: string
+  pluginName: string,
+  hostAdapter: boolean
 ): ComponentPlan["shape"] | undefined {
   const hooks = tool.buildContract("marketplace")?.artifacts.hooks;
-  const transform = hooks?.supported ? hooks.transform : undefined;
+  if (!hooks?.supported) return undefined;
+  const { convertHooks, transform } = hooks;
+  if (convertHooks !== undefined) {
+    return (text) => convertHooks(text, pluginName, hostAdapter).content;
+  }
   return transform === undefined
     ? undefined
     : (text) => transform(text, pluginName, baseOf(PLUGIN_HOOKS_RELATIVE));

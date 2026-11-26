@@ -1,5 +1,6 @@
 import { reshapeFrontmatter, serializeFrontmatter } from "../../../../shared/domain/markdown.js";
 import type { ReadonlyNoticeList } from "../../../../shared/domain/materialization/plugin-install-notice.js";
+import { shipsHostAdapter } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import type {
   PluginComponentFile,
   PluginDistribution,
@@ -29,7 +30,13 @@ export function nativeInstallPlan(
 } {
   const { tool, plugins, manifestPaths } = target;
   const pluginRoot = plugins.pluginOutputDir(dist.manifest.name);
-  const at = { tool, plugins, pluginRoot, pluginName: dist.manifest.name };
+  const at = {
+    tool,
+    plugins,
+    pluginRoot,
+    pluginName: dist.manifest.name,
+    hostAdapter: shipsHostAdapter(dist.components.hooks),
+  };
   const plans = dist.files.flatMap((file) => nativeFilePlan(file, at) ?? []);
   const manifest = manifestPlan(dist, { tool, plugins, pluginRoot, manifestPaths });
   if (manifest !== null) plans.push(manifest);
@@ -42,6 +49,7 @@ export function nativeInstallPlan(
 interface NativeAt extends NativeTarget {
   readonly pluginRoot: string;
   readonly pluginName: string;
+  readonly hostAdapter: boolean;
 }
 
 function nativeFilePlan(file: PluginComponentFile, at: NativeAt): ComponentPlan | null {

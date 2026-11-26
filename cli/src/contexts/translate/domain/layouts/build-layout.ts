@@ -4,6 +4,7 @@ import type {
   SupportedArtifact,
   ToolBuildContract,
 } from "../../../../shared/domain/materialization/build-contract.js";
+import { shipsHostAdapter } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import { PLUGIN_HOOKS_RELATIVE, PLUGIN_MCP_RELATIVE } from "../canon-format.js";
 import { agentLinks } from "../rules/agent-markdown.js";
@@ -84,9 +85,12 @@ function marketplaceHooks(
 ): PlannedComponents {
   const plugin = canon.manifest.name;
   const warnings: string[] = [];
+  const hostAdapter = shipsHostAdapter(canon.components.hooks);
   const plans = canon.components.hooks.map(({ relativePath, content }) => {
     const converted =
-      relativePath === PLUGIN_HOOKS_RELATIVE ? artifact.convertHooks?.(content, plugin) : undefined;
+      relativePath === PLUGIN_HOOKS_RELATIVE
+        ? artifact.convertHooks?.(content, plugin, hostAdapter)
+        : undefined;
     warnings.push(...(converted?.warnings ?? []));
     return {
       source: relativePath,

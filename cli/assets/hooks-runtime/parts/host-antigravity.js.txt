@@ -4,6 +4,9 @@
  * the host's stdin into a neutral event, `answer()` and `continueTurn()` print the host's own
  * answer. The build puts one such adapter per tool at `hooks/lib/host.cjs`; the plugin tree
  * ships Claude Code's. Node built-ins only; anything unreadable is no event, and prints nothing.
+ * `agy` takes context from SessionStart, PreInvocation and PostInvocation, never from PostToolUse:
+ * a level 2 PostToolUse answer is held, and released at the next model call by this file run as the
+ * PreInvocation hook's command.
  */
 // @part requires
 
@@ -75,13 +78,29 @@ function continueTurn(text) {
   print({ decision: "continue", reason: text });
 }
 
+/** What `agy` hands the model as a system message, one step per text. */
+function injected(texts) {
+  return { injectSteps: texts.map((text) => ({ systemMessage: { systemMessage: text } })) };
+}
+
+// @part own-folder
+
+// @part held-answers
+
+/** Prints what was held for the conversation of the PreInvocation on stdin. */
+function release() {
+  const texts = takeHeld(readPayload()?.conversationId);
+  if (texts.length > 0) print(injected(texts));
+}
+
 /** A Stop answer continues the turn. A SessionStart answer is an injected system message, which
- * `agy` hands the model before its first call. A PostToolUse answer is never carried: `agy` takes
- * no context from it. */
-function answer({ text } = {}) {
+ * `agy` hands the model before its first call. A PostToolUse answer is held when it requires
+ * something (level 2), for `release`; one that only informs is dropped. */
+function answer({ level, text } = {}) {
+  if (typeof text !== "string" || text === "") return;
   if (current?.event === "Stop") return continueTurn(text);
-  if (current?.event !== "SessionStart" || typeof text !== "string" || text === "") return;
-  print({ injectSteps: [{ systemMessage: { systemMessage: text } }] });
+  if (current?.event === "PostToolUse" && level === 2) return hold(text);
+  if (current?.event === "SessionStart") print(injected([text]));
 }
 
 /** Refuses the tool call about to run, with `reason` as what the model is told. Does nothing at any
@@ -93,4 +112,6 @@ function refuse(reason) {
   print({ decision: "deny", reason });
 }
 
-module.exports = { readEvent, answer, continueTurn, refuse };
+module.exports = { readEvent, answer, continueTurn, refuse, release };
+
+if (require.main === module) release();

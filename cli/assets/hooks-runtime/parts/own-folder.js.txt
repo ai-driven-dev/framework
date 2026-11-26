@@ -1,0 +1,18 @@
+const os = require("node:os");
+
+const OTHERS_BITS = 0o077;
+
+/** The folder the user's hooks keep their hand-offs in, `<tmpdir>/aidd-hooks-<uid>`: made when
+ * `create`, and null unless it is this user's alone. */
+function ownFolder(create) {
+  const uid = typeof process.getuid === "function" ? process.getuid() : undefined;
+  const folder = path.join(os.tmpdir(), uid === undefined ? "aidd-hooks" : `aidd-hooks-${uid}`);
+  try {
+    if (create) fs.mkdirSync(folder, { mode: 0o700, recursive: true });
+    const stat = fs.lstatSync(folder);
+    const own = uid === undefined || (stat.uid === uid && (stat.mode & OTHERS_BITS) === 0);
+    return own ? folder : null;
+  } catch {
+    return null;
+  }
+}
