@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AfterPreflight } from "../../../src/contexts/installation/application/plugin/update-plugin-command.js";
+import { PluginNotFoundError } from "../../../src/contexts/installation/contract/installation.error.js";
 import { RecordedPlugin } from "../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { UserPluginUpdatePartialError } from "../../../src/orchestration/orchestration.error.js";
 import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.use-case.js";
@@ -126,5 +127,44 @@ describe("updating a user plugin", () => {
         applied
       );
     });
+  });
+});
+
+describe("updating a user plugin only a host's own server holds", () => {
+  const selection = {
+    isQualifiedRef: () => false,
+    refSelectedBy: () => true,
+    claimsOf: () => [],
+    holdersOf: () => [],
+    pluginClaimsOf: () => [],
+    loadRecords: async () => new Map(),
+  };
+  const COMMAND = {
+    toolIds: [],
+    projectRoot: "/A",
+    scope: "user" as const,
+    pluginNames: ["aidd-dev"],
+  };
+
+  function setup(held: boolean) {
+    return new UpdateUserPlugin(
+      {
+        execute: async () => {
+          throw new PluginNotFoundError("aidd-dev");
+        },
+      },
+      { execute: async () => ({ apply() {} }) },
+      () => true,
+      selection,
+      { execute: async () => held }
+    );
+  }
+
+  it("updates nothing for it, leaving its refresh to the server", async () => {
+    expect(await setup(true).execute(COMMAND)).toEqual([]);
+  });
+
+  it("still reports a plugin no server holds as not found", async () => {
+    await expect(setup(false).execute(COMMAND)).rejects.toThrow(PluginNotFoundError);
   });
 });

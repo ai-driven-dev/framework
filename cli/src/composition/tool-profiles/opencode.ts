@@ -85,7 +85,7 @@ const FLAT_PLACEMENT = flatPlacement({
 // `hooks/`, namespaced per plugin, and nothing there is ever imported.
 const hooks = declareBridgeHooks(
   { toolId: "opencode", directory: DIRECTORY, adapter },
-  // SessionStart runs on the first event naming a session; `session.created` is the label of a new one (see the bridge module doc).
+  // SessionStart runs on the first event naming a session; `session.created` marks a new one.
   ["session.created", "tool.execute.after", "session.idle", "tool.execute.before", "chat.message"],
   {
     // The loader scans `{plugin,plugins}/*.{ts,js}`, one level: only a plugin's own module, or
@@ -143,6 +143,8 @@ export const opencode = defineAiTool(
     buildContracts: {
       flat: contract(buildOpencodeFlatContract, hooks, OPENCODE_FLAT_LAYOUT, {
         agentMarkdown: { frontmatter: AGENT_FRONTMATTER },
+        // Limit: no plugin ships a command, so no command link to a `.opencode/commands/` path is observed.
+        commandMarkdown: { namePrefix: FLAT_PLACEMENT.namespacePrefix, linkSyntax: [] },
         config: FLAT_CONFIG_CANDIDATES,
       }),
     },

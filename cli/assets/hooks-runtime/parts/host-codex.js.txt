@@ -52,6 +52,10 @@ function answer({ level, text, person } = {}) {
   print({ hookSpecificOutput: { hookEventName: current.event, additionalContext: text } });
 }
 
-// @part refuse-in-hook-output
+// @part refuse
 
-module.exports = { readEvent, answer, continueTurn, refuse };
+// @part deny-in-hook-output
+
+// @part own-folder
+
+module.exports = { readEvent, answer, continueTurn, refuse, ownFolder, hooksFolder };

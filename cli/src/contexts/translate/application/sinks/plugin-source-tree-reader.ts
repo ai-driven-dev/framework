@@ -1,9 +1,9 @@
 import { relative } from "node:path";
+import { PLUGIN_MCP_RELATIVE } from "../../../../shared/domain/plugin/canon-paths.js";
 import type { PluginComponentFile } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import { PLUGIN_MCP_RELATIVE } from "../../domain/canon-format.js";
 import type { PluginSource } from "../../ports/disk-sink-deps.js";
 
 /** A plugin's canon as one distribution: every file under its folder, read once, as the

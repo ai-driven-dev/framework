@@ -62,10 +62,8 @@ export interface NativeActivationSpec {
    * Permits reclaiming a name, so declare it only alongside `sourceCheckVerb`. */
   forceRemoveArgs?: readonly string[];
   /** Verb after `plugin marketplace` whose exit code separates a registration whose source
-   * is gone from one that resolves. Measured: copilot's `update` discriminates and Claude's
-   * reports success on a path that does not exist. Codex's `upgrade` was reported to refuse a
-   * local marketplace on 0.169.1, which its source does not show (it skips non-git ones and
-   * exits 0): unverified, so nothing relies on it. */
+   * is gone from one that resolves.
+   * Limit: proven on copilot only; Claude reports success on a missing path. */
   sourceCheckVerb?: string;
   /** Verb this CLI uses to re-index its marketplaces, after `plugin marketplace`. Omit when
    * plugins are not enabled through the CLI. */
@@ -127,6 +125,21 @@ export interface MarketplaceSettings {
   toEntryKey(input: MarketplaceSettingsInput): string | null;
 }
 
+/** A host that takes plugins through a server it starts on demand, not through plugin verbs: how
+ * to start it, how to read where it listens, and the route and refusal its plugin calls use. */
+export interface PluginServerSpec {
+  readonly binary: string;
+  /** What starts the server on a free port and opens nothing. */
+  readonly args: readonly string[];
+  /** A regular expression over what the host prints on starting: its first group is the server's
+   * address, its second the token every call carries as a bearer. */
+  readonly bannerPattern: string;
+  /** The route plugins are installed to and listed from; one is removed at `<route>/<id>:remove`. */
+  readonly pluginsPath: string;
+  /** The refusal code that says a plugin is not installed, which a removal reads as done. */
+  readonly notInstalledCode: number;
+}
+
 /** What a tool's own plugin CLI declares about itself. */
 export interface NativeActivationAnswers {
   /** The executable the host's own plugin CLI is run by: the key its driver and registry answer to. */
@@ -168,6 +181,8 @@ export interface MarketplaceRegistrationAnswers {
  * tool's own plugin CLI, and where that CLI records marketplaces in the shared settings file. */
 export interface NativeRegistrationSection {
   readonly activation?: NativeActivationSpec;
+  /** A host with no plugin verbs, which takes plugins through its own server. */
+  readonly pluginServer?: PluginServerSpec;
   readonly marketplace?: MarketplaceSettings;
 }
 
@@ -176,6 +191,8 @@ export interface NativeRegistrationSection {
 export interface NativeRegistrationAnswers {
   /** The tool's native plugin CLI declaration, or undefined when it has none. */
   nativeActivation(): NativeActivationAnswers | undefined;
+  /** The server the tool takes plugins through, or undefined when it has none. */
+  pluginServer(): PluginServerSpec | undefined;
   /** Its marketplace registration in the shared settings file, or null for a tool driving none. */
   marketplaceRegistration(): MarketplaceRegistrationAnswers | null;
   /** Whether a ref the host's registry lists is a plugin in use: an enabled one always, a disabled

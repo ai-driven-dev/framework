@@ -18,7 +18,7 @@ const pluginInstall = vi.fn();
 const pluginSearch = vi.fn();
 const pluginUpdate = vi.fn();
 const userPluginUpdate = vi.fn();
-const activation = vi.fn();
+const activation = vi.fn().mockResolvedValue({ errors: [], failed: false });
 const menuSelect = vi.fn();
 const spawn = vi.fn();
 

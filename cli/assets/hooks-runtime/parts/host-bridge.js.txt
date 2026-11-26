@@ -66,7 +66,10 @@ function answer({ level, text, person } = {}) {
   });
 }
 
-// The bridge throws the reason out of the host's hook before the tool.
-// @part refuse-by-exit-code
+// @part refuse
 
-module.exports = { readEvent, answer, continueTurn, refuse };
+// @part deny-by-exit-code
+
+// @part own-folder
+
+module.exports = { readEvent, answer, continueTurn, refuse, ownFolder, hooksFolder };

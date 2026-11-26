@@ -4,16 +4,13 @@ import type {
 } from "../../../../../shared/domain/materialization/build-contract.js";
 import type { ProjectHooksFormat } from "../../../contract/tool-vocabulary.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
+import { pluginScriptDir, pluginScriptPath } from "../../hooks/hooks-merge.js";
 import { toolWarning } from "../../hooks/hooks-warnings.js";
-import {
-  type WrappedCommandHooksTarget,
-  wrappedCommandHooksScriptPath,
-} from "../../hooks/wrapped-command-hooks-convert.js";
+import type { WrappedCommandHooksTarget } from "../../hooks/wrapped-command-hooks-convert.js";
 import {
   isWrappedCommandHooksFileEmpty,
   unmergeWrappedCommandHooks,
   wrappedCommandHookEntries,
-  wrappedCommandHooksScriptDir,
 } from "../../hooks/wrapped-command-hooks-file.js";
 import { mergeWrappedCommandHooks } from "../../hooks/wrapped-command-hooks-merge.js";
 import type { HooksSection, PluginFileDelivery } from "../../sections/hooks-section.js";
@@ -66,8 +63,8 @@ function releasedHooksFormat(hooks: AntigravityHooks): ProjectHooksFormat {
     unmerge: unmergeWrappedCommandHooks,
     contributedEntries: (content, name) => wrappedCommandHookEntries(target, content, name),
     isEmpty: isWrappedCommandHooksFileEmpty,
-    scriptPath: (name, rel) => wrappedCommandHooksScriptPath(target, name, rel),
-    scriptDir: (name) => wrappedCommandHooksScriptDir(target, name),
+    scriptPath: (name, rel) => pluginScriptPath(target.descriptor.flat.scriptsDir, name, rel),
+    scriptDir: (name) => pluginScriptDir(target.descriptor.flat.scriptsDir, name),
   };
 }
 

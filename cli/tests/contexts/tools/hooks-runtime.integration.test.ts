@@ -138,6 +138,7 @@ describe("Antigravity CLI", () => {
           temp,
           typeof process.getuid === "function" ? `aidd-hooks-${process.getuid()}` : "aidd-hooks"
         );
+      const heldFolder = () => join(hooksFolder(), "held-answers");
       const hold = (level: 1 | 2, held: string, payload: unknown = ran) => {
         vi.restoreAllMocks();
         read("antigravity", payload).adapter.answer({ level, text: held });
@@ -175,14 +176,11 @@ describe("Antigravity CLI", () => {
       });
 
       it("removes a held file it cannot read, so nothing is left behind", () => {
-        fs.mkdirSync(hooksFolder(), { mode: 0o700 });
-        fs.writeFileSync(
-          join(hooksFolder(), `held-answer-${nextCall.conversationId}`),
-          "not json\n"
-        );
+        fs.mkdirSync(heldFolder(), { recursive: true, mode: 0o700 });
+        fs.writeFileSync(join(heldFolder(), `${nextCall.conversationId}`), "not json\n");
         release();
 
-        expect([fs.readdirSync(hooksFolder()), printed]).toStrictEqual([[], []]);
+        expect([fs.readdirSync(heldFolder()), printed]).toStrictEqual([[], []]);
       });
 
       it("injects each held text as a step of its own, in the order held", () => {
@@ -369,5 +367,18 @@ describe.each(HOSTS)("%s's adapter on what is no event", (host) => {
     const run = spawnSync(process.execPath, ["-e", hook], { input: "{oops", encoding: "utf8" });
 
     expect([run.status, run.stdout, run.stderr]).toStrictEqual([0, "", ""]);
+  });
+});
+
+describe("the bridge's adapter outside a Stop", () => {
+  it("continues nothing", () => {
+    const { adapter } = read("bridge", {
+      hook_event_name: "PostToolUse",
+      session_id: SESSION,
+      cwd: CWD,
+    });
+    adapter.continueTurn("go on");
+
+    expect(printed).toStrictEqual([]);
   });
 });

@@ -1,6 +1,9 @@
 import { join } from "node:path";
 import pkg from "../../package.json" with { type: "json" };
 import { hostPortsOver } from "../contexts/host-registration/application/host-ports-over.js";
+import { HeldServerPlugins } from "../contexts/host-registration/application/server/held-server-plugins.use-case.js";
+import { RemoveServerPlugins } from "../contexts/host-registration/application/server/remove-server-plugins.use-case.js";
+import { SyncServerPlugins } from "../contexts/host-registration/application/server/sync-server-plugins.use-case.js";
 import { WithdrawFromHost } from "../contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import { JsonFileMergerAdapter } from "../contexts/installation/infrastructure/json-file-merger-adapter.js";
 import { ManifestRepositoryAdapter } from "../contexts/installation/infrastructure/manifest-repository-adapter.js";
@@ -19,7 +22,11 @@ import { FileAdapter } from "../shared/infrastructure/file-adapter.js";
 import { HttpClient } from "../shared/infrastructure/http-client.js";
 import { wireAuth } from "./contexts/auth.js";
 import { wireDistribution } from "./contexts/distribution.js";
-import { wireHostRegistration } from "./contexts/host-registration.js";
+import {
+  pluginServerHostsOver,
+  serverPluginLedgerFile,
+  wireHostRegistration,
+} from "./contexts/host-registration.js";
 import {
   heldByMachineLock,
   registrationRecordStore,
@@ -76,6 +83,7 @@ function wireHost(parts: {
     marketplaceRegistries: hostMarketplaceRegistries,
     marketplaceSources: nativeSources,
     pluginRegistries: hostPluginRegistries,
+    pluginServers,
   } = wireHostRegistration(tools, home);
   const withdrawFromHost = new WithdrawFromHost(
     fs,
@@ -93,6 +101,7 @@ function wireHost(parts: {
     hostPluginRegistries,
     nativeSources,
     withdrawFromHost,
+    pluginServerHosts: pluginServerHostsOver(pluginServers),
   };
 }
 
@@ -115,7 +124,8 @@ function wireStorage({ projectRoot, tools }: BaseOptions, logger: Logging) {
       userRecords
     )
   );
-  return { fs, manifestRepo, userManifestRepo };
+  const serverPluginLedger = serverPluginLedgerFile(userConfigDir, files);
+  return { fs, manifestRepo, userManifestRepo, serverPluginLedger };
 }
 
 /** What reaches beyond the machine: the network, the token and the marketplaces. */
@@ -151,8 +161,12 @@ export function wireBase(options: BaseOptions) {
   // Built ahead of every use case that reads a shared-source claim: it depends only on `fs`
   // and `userConfigDir`, neither of which distribution's own wiring produces.
   const { userSourceReferences } = wireMachineClaims(storage.fs);
+  const serverPlugins = { hosts: host.pluginServerHosts, ledger: storage.serverPluginLedger };
   return {
     ...host,
+    syncServerPlugins: new SyncServerPlugins(serverPlugins),
+    removeServerPlugins: new RemoveServerPlugins(serverPlugins),
+    heldServerPlugins: new HeldServerPlugins(storage.serverPluginLedger),
     ...remote,
     ...storage,
     homedir,

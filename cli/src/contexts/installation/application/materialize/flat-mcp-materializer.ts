@@ -58,7 +58,7 @@ export async function materializeFlatMcp(materialization: {
     fs.fileExists(join(projectRoot, relativePath))
   );
   const outputPath = join(projectRoot, outputRelPath);
-  const existingContent = await readExistingJson(fs, outputPath);
+  const existingContent = await whenAbsent(() => fs.readFile(outputPath), null);
   const merged = mergedServers(mcpCap, { existingContent, declaration, previousMcpEntries });
   const content =
     rulesGlob === null ? merged.content : mcpCap.withInstruction(merged.content, rulesGlob);
@@ -96,10 +96,6 @@ function mergedServers(
   }
   const touched = merged.contributedEntries.size > 0 || previousMcpEntries.size > 0;
   return { ...merged, content: touched ? merged.mergedContent : existingContent };
-}
-
-async function readExistingJson(fs: FileReader, path: string): Promise<string | null> {
-  return whenAbsent(() => fs.readFile(path), null);
 }
 
 /**

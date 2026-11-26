@@ -11,6 +11,7 @@ import { buildCodexContract } from "../../contexts/tools/domain/behaviours/codex
 import { mergeCodexConfigToml } from "../../contexts/tools/domain/behaviours/codex/codex-config.model.js";
 import { buildCodexFlatContract } from "../../contexts/tools/domain/behaviours/codex/codex-flat-build.model.js";
 import {
+  CODEX_INSTRUCTIONS_DIR,
   codexGlobalFilePath,
   OUTPUT_CODEX_MANIFEST_RELATIVE,
 } from "../../contexts/tools/domain/behaviours/codex/codex-paths.model.js";
@@ -21,6 +22,7 @@ import {
   nativeHooksSupport,
 } from "../../contexts/tools/domain/formats/hooks/routes.js";
 import { PLUGIN_ROOT_TOKEN } from "../../contexts/tools/domain/formats/plugin-root-token.js";
+import { descriptionOnlyRule } from "../../contexts/tools/domain/formats/rule-frontmatter.js";
 import { tomlContract } from "../../contexts/tools/domain/profile/contract-builders.js";
 import type {
   DeclaredSections,
@@ -29,6 +31,7 @@ import type {
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
 import { singlePythonRepo } from "../../contexts/tools/domain/profile/recommendation.js";
 import type { AiToolSpec } from "../../contexts/tools/domain/profile/tool-spec.js";
+import { installUnder } from "../../contexts/tools/domain/profile/tool-suffix.js";
 import { nativeLayout } from "../../contexts/tools/domain/sections/layout-section.js";
 import { manifestSection } from "../../contexts/tools/domain/sections/manifest-section.js";
 import { acceptedPluginMcp } from "../../contexts/tools/domain/sections/mcp-section.js";
@@ -52,6 +55,8 @@ const CODEX_FLAT: { readonly layout: FlatArtifactLayout; readonly configPath: st
   layout: flatArtifactLayout(".codex/", {
     skillsDir: ".agents/skills/",
     skills: "single-level",
+    rules: "top-level-no-frontmatter",
+    rulesDir: `${DIRECTORY}${CODEX_INSTRUCTIONS_DIR}`,
     agent: { ext: ".toml" },
   }),
   configPath: ".codex/config.toml",
@@ -141,11 +146,17 @@ const MCP_CONFIG: McpTomlDeclaration = {
   consumes: [MCP_CONFIG_REF],
 };
 
-// No `rules` capability: Codex reads markdown guidance only from AGENTS.md, and
-// `.codex/rules/` takes Starlark command policy (https://developers.openai.com/codex/rules).
+// Codex reads markdown guidance only from AGENTS.md, and `.codex/rules/` takes Starlark command
+// policy (https://developers.openai.com/codex/rules): a plugin's rules are placed in
+// `.codex/instructions/` and listed in AGENTS.md, by the flat build and by an install alike.
 const CODEX_CAPABILITIES = {
   agents: { format: "toml", frontmatter: tomlAgentFrontmatter },
   skills: { agentsSkillsDirectory: true },
+  rules: {
+    buildInstallPath: installUnder(DIRECTORY, TOOL_SUFFIX, CODEX_INSTRUCTIONS_DIR),
+    convertFrontmatter: descriptionOnlyRule,
+    listedInAgentsFile: CODEX_FLAT.layout,
+  },
   mcp: { config: MCP_CONFIG, plugin: PLUGIN_MCP },
   hooks: { config: hooksConfigPart(hooks), delivery: hooksSupport.delivery },
   layout: CODEX_LAYOUT,
@@ -171,7 +182,7 @@ export const codexSpec = {
   configAssets: CODEX_CONFIG_ASSETS,
   hooks,
   buildContracts: {
-    marketplace: tomlContract(buildCodexContract, hooks),
+    marketplace: tomlContract(buildCodexContract, hooks, CODEX_FLAT.layout),
     flat: tomlContract(buildCodexFlatContract, hooks, CODEX_FLAT),
   },
 

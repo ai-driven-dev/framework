@@ -10,3 +10,6 @@ export const HOST_ADAPTER_PATH = "hooks/lib/host.cjs";
 
 export const shipsHostAdapter = (hooks: readonly { readonly relativePath: string }[]): boolean =>
   hooks.some(({ relativePath }) => relativePath === HOST_ADAPTER_PATH);
+
+/** Where a plugin declares its MCP servers, relative to the plugin. */
+export const PLUGIN_MCP_RELATIVE = ".mcp.json";

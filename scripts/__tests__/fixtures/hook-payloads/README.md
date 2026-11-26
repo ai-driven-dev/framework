@@ -58,7 +58,7 @@ is `/tmp`. Nothing else is altered.
 SessionStart, Stop, and PostToolUse for a file write and a shell command on Claude Code, Codex,
 Copilot, OpenCode and Kilo; Cursor's `sessionStart`, `postToolUse` and `stop`. PreToolUse on Claude Code, Codex, Copilot, Antigravity and Kiro: a write to a locked spec refused, a file created, a file edited, a shell call, in each host's own session; Cursor's is not captured (no quota left). Codex's
 `transcript_path` carries a value. Copilot's file write arrives as `Edit` with a `*** Begin Patch`
-string. Claude Code's `Edit` and its `PowerShell` tool, enabled by
+string. Copilot's camelCase `preToolUse`, from a `.github/hooks/*.json` file the hook generator wrote, in `copilot-camel-preToolUse.json`, since a case-insensitive disk cannot hold it beside `copilot-PreToolUse.json`: `toolName` is `bash`, and `toolArgs` an object holding `command`. Claude Code's `Edit` and its `PowerShell` tool, enabled by
 `CLAUDE_CODE_USE_POWERSHELL_TOOL=1`. Cursor's edit, sent as a `Write` carrying the whole file, and
 its `Delete`. OpenCode's and Kilo's `edit` and `apply_patch` arguments. Kiro's SessionStart, from
 its CLI on the V3 engine: the session id carries a `sess_` prefix, and the model was seen reading
@@ -70,7 +70,11 @@ PostToolUse (an `fs_write` creating a file, a `str_replace` edit, an `execute_ba
 --model qwen3-coder-next "<prompt>"`. Their stdin carries no `stop_hook_active`. After a Stop hook
 printed `{"decision": "block", "reason": ...}` the model answered the reason and Stop fired once
 for that prompt, never again on the continuation turn. Output printed by a PostToolUse hook, in
-every shape tried, was not read by the model.
+every shape tried, was not read by the model. Kimi's SessionStart, UserPromptSubmit, TurnStarted and
+StopFailure, from `kimi` 0.42.0 started with `kimi web` and a plugin installed over
+`POST /api/v1/plugins`, then `kimi --output-format stream-json -p`: the model turn itself was
+refused (403), so no tool or Stop payload exists. The host's `session_` prefix on the session id is
+kept.
 
 ## How the harder ones were reached
 

@@ -8,6 +8,7 @@ import type { FileWriter } from "../../../../../shared/ports/file-writer.js";
 import type { AiToolProfile } from "../../../../tools/contract/tool-profile.js";
 import type { InstalledPlugin } from "../../../domain/plugins/installed-plugin.js";
 import type { UserScopeFileGuard } from "../../../ports/plugin/user-plugin-materialization.js";
+import { assertUserRulesListable } from "../../materialize/listed-rules/list-user-rules.js";
 import { scopeBaseOf } from "../plugin-target-resolution.js";
 import { assertGlobalFilesWritable } from "./global-plugin-files.js";
 
@@ -34,7 +35,7 @@ export async function assertUserPluginWritable(
 ): Promise<void> {
   const { plugin, tool, files, home, isWithinUserScope } = write;
   if (tool.plugins()?.globalFiles() != null) {
-    await assertGlobalFilesWritable({
+    const baseDir = await assertGlobalFilesWritable({
       fs: proof.fs,
       tool,
       plugin,
@@ -43,6 +44,7 @@ export async function assertUserPluginWritable(
       homedir: home,
       isWithinUserScope,
     });
+    await assertUserRulesListable(proof.fs, { tool, baseDir, home, plugin: plugin.name, files });
     return;
   }
   const baseDir = scopeBaseOf(tool, { scope: "user", projectRoot: "", homedir: () => home });

@@ -1,0 +1,77 @@
+{
+  "host": "kimi",
+  "version": "0.42.0",
+  "banner": "\n  ▐█▛█▛█▌  Kimi server ready  0.42.0\n  ▐█████▌  Local web UI is available from this machine.\n\n  Local:    http://127.0.0.1:<port>/#token=<token>\n  Network:  off  use --host to enable\n\n  Token:    <token>\n\n  Logs:     off  use --log-level info to enable\n  Stop:     Ctrl+C\n",
+  "steps": [
+    {
+      "id": "unauthenticated",
+      "method": "GET",
+      "path": "/api/v1/plugins",
+      "body": null,
+      "status": 401,
+      "response": "{\"code\":40101,\"msg\":\"Unauthorized\",\"data\":null,\"request_id\":\"<request>\"}"
+    },
+    {
+      "id": "list-empty",
+      "method": "GET",
+      "path": "/api/v1/plugins",
+      "body": null,
+      "status": 200,
+      "response": "{\"code\":0,\"msg\":\"success\",\"data\":{\"plugins\":[]},\"request_id\":\"<request>\"}"
+    },
+    {
+      "id": "install",
+      "method": "POST",
+      "path": "/api/v1/plugins",
+      "body": {
+        "source": "<scratch>/probes/kimi-plugins3/plug"
+      },
+      "status": 200,
+      "response": "{\"code\":0,\"msg\":\"success\",\"data\":{\"id\":\"probe-plug\",\"displayName\":\"probe-plug\",\"version\":\"0.0.1\",\"enabled\":true,\"state\":\"ok\",\"skillCount\":1,\"mcpServerCount\":1,\"enabledMcpServerCount\":1,\"hookCount\":0,\"commandCount\":0,\"hasErrors\":false,\"source\":\"local-path\",\"originalSource\":\"<scratch>/probes/kimi-plugins3/plug\",\"root\":\"<scratch>/probes/kimi-plugins3/home/.kimi-code/plugins/managed/probe-plug\",\"installedAt\":\"<time>\",\"updatedAt\":\"<time>\",\"manifestKind\":\"kimi-plugin-dir\",\"manifestPath\":\"<scratch>/probes/kimi-plugins3/home/.kimi-code/plugins/managed/probe-plug/.kimi-plugin/plugin.json\",\"manifest\":{\"name\":\"probe-plug\",\"version\":\"0.0.1\",\"description\":\"probe\",\"skills\":[\"<scratch>/probes/kimi-plugins3/home/.kimi-code/plugins/managed/probe-plug/skills\"],\"agents\":[\"<scratch>/probes/kimi-plugins3/home/.kimi-code/plugins/managed/probe-plug/agents\"],\"mcpServers\":{\"docs\":{\"transport\":\"http\",\"url\":\"https://example.com/mcp\"}}},\"mcpServers\":[{\"name\":\"docs\",\"runtimeName\":\"plugin-probe-plug:docs\",\"enabled\":true,\"transport\":\"http\",\"url\":\"https://example.com/mcp\"}],\"diagnostics\":[]},\"request_id\":\"<request>\"}"
+    },
+    {
+      "id": "install-again",
+      "method": "POST",
+      "path": "/api/v1/plugins",
+      "body": {
+        "source": "<scratch>/probes/kimi-plugins3/plug"
+      },
+      "status": 200,
+      "response": "{\"code\":0,\"msg\":\"success\",\"data\":{\"id\":\"probe-plug\",\"displayName\":\"probe-plug\",\"version\":\"0.0.1\",\"enabled\":true,\"state\":\"ok\",\"skillCount\":1,\"mcpServerCount\":1,\"enabledMcpServerCount\":1,\"hookCount\":0,\"commandCount\":0,\"hasErrors\":false,\"source\":\"local-path\",\"originalSource\":\"<scratch>/probes/kimi-plugins3/plug\",\"root\":\"<scratch>/probes/kimi-plugins3/home/.kimi-code/plugins/managed/probe-plug\",\"installedAt\":\"<time>\",\"updatedAt\":\"<time>\",\"manifestKind\":\"kimi-plugin-dir\",\"manifestPath\":\"<scratch>/probes/kimi-plugins3/home/.kimi-code/plugins/managed/probe-plug/.kimi-plugin/plugin.json\",\"manifest\":{\"name\":\"probe-plug\",\"version\":\"0.0.1\",\"description\":\"probe\",\"skills\":[\"<scratch>/probes/kimi-plugins3/home/.kimi-code/plugins/managed/probe-plug/skills\"],\"agents\":[\"<scratch>/probes/kimi-plugins3/home/.kimi-code/plugins/managed/probe-plug/agents\"],\"mcpServers\":{\"docs\":{\"transport\":\"http\",\"url\":\"https://example.com/mcp\"}}},\"mcpServers\":[{\"name\":\"docs\",\"runtimeName\":\"plugin-probe-plug:docs\",\"enabled\":true,\"transport\":\"http\",\"url\":\"https://example.com/mcp\"}],\"diagnostics\":[]},\"request_id\":\"<request>\"}"
+    },
+    {
+      "id": "list",
+      "method": "GET",
+      "path": "/api/v1/plugins",
+      "body": null,
+      "status": 200,
+      "response": "{\"code\":0,\"msg\":\"success\",\"data\":{\"plugins\":[{\"id\":\"probe-plug\",\"displayName\":\"probe-plug\",\"version\":\"0.0.1\",\"enabled\":true,\"state\":\"ok\",\"skillCount\":1,\"mcpServerCount\":1,\"enabledMcpServerCount\":1,\"hookCount\":0,\"commandCount\":0,\"hasErrors\":false,\"source\":\"local-path\",\"originalSource\":\"<scratch>/probes/kimi-plugins3/plug\"}]},\"request_id\":\"<request>\"}"
+    },
+    {
+      "id": "remove",
+      "method": "POST",
+      "path": "/api/v1/plugins/probe-plug:remove",
+      "body": null,
+      "status": 200,
+      "response": "{\"code\":0,\"msg\":\"success\",\"data\":{\"ok\":true},\"request_id\":\"<request>\"}"
+    },
+    {
+      "id": "remove-absent",
+      "method": "POST",
+      "path": "/api/v1/plugins/probe-plug:remove",
+      "body": null,
+      "status": 200,
+      "response": "{\"code\":40419,\"msg\":\"Plugin \\\"probe-plug\\\" is not installed\",\"data\":null,\"request_id\":\"<request>\"}"
+    },
+    {
+      "id": "install-bad-path",
+      "method": "POST",
+      "path": "/api/v1/plugins",
+      "body": {
+        "source": "<scratch>/probes/kimi-plugins3/missing"
+      },
+      "status": 200,
+      "response": "{\"code\":40409,\"msg\":\"Plugin root does not exist: <scratch>/probes/kimi-plugins3/missing\",\"data\":null,\"request_id\":\"<request>\"}"
+    }
+  ]
+}

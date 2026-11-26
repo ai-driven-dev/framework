@@ -8,6 +8,7 @@ import type {
   ArtifactContract,
   ToolBuildContract,
 } from "../../src/shared/domain/materialization/build-contract.js";
+import type { PluginPresence } from "../../src/shared/domain/materialization/plugin-presence.js";
 import { pluginModeOf } from "../contexts/tools/testing/plugin-mode.builder.js";
 import { catalogOf, registeredAiConfig } from "../shared/testing/catalog-of.builder.js";
 import { REPOSITORY_ROOT } from "../shared/testing/repository-root.builder.js";
@@ -32,15 +33,35 @@ interface ToolSupport {
   /** The directory of the project where the tool loads each plugin's tree that `aidd` writes there
    * itself, a native plugin install and no marketplace the tool could register; or null. */
   pluginTree: string | null;
-  /** What a user gets per output layout the tool supports: build output, plus rules from the install profile. */
+  /** What a user gets per output layout the tool supports: build output, plus the rules and commands the install
+   * profile ships. */
   builds: Record<string, Record<Surface, Support>>;
 }
 
+const ONE_SERVER: PluginPresence = {
+  hasAgents: false,
+  agentsList: [],
+  skillsList: [],
+  hasHooksJson: false,
+  hooks: {},
+  hasMcpJson: true,
+  mcpServers: { probe: {} },
+};
+
+/** Whether the plugin manifest the build synthesizes carries a plugin's servers itself. */
+function carriesMcpInManifest(build: ToolBuildContract): boolean {
+  return "mcpServers" in (build.synthesizeManifest?.({}, ONE_SERVER) ?? {});
+}
+
 /** What a user gets through `aidd` for one layout: a build file, the config artifact the build folds MCP
- * into, or the rules section the install profile ships (rules are not part of what `translate` emits). */
-function supportOf(surface: Surface, build: ToolBuildContract, installsRules: boolean): Support {
-  if (surface === "rules" && installsRules) return "yes";
-  if (surface === "mcp" && foldsFlatMcp(build)) return "yes";
+ * into, the manifest that carries it, or a section the install profile ships. */
+function supportOf(
+  surface: Surface,
+  build: ToolBuildContract,
+  installs: ReadonlySet<Surface>
+): Support {
+  if (installs.has(surface)) return "yes";
+  if (surface === "mcp" && (foldsFlatMcp(build) || carriesMcpInManifest(build))) return "yes";
   const declared: Partial<Record<string, ArtifactContract>> = build.artifacts;
   const contract = declared[surface];
   if (!contract?.supported) return "no";
@@ -48,6 +69,14 @@ function supportOf(surface: Surface, build: ToolBuildContract, installsRules: bo
     return "bridge";
   }
   return "yes";
+}
+
+/** The sections the install profile ships, whichever layout the build is read for. */
+function installedSurfaces(tool: AiToolProfile): ReadonlySet<Surface> {
+  return new Set<Surface>([
+    ...(tool.installedRulesLocation() === null ? [] : (["rules"] as const)),
+    ...(tool.markdownSection("commands") === null ? [] : (["commands"] as const)),
+  ]);
 }
 
 function pluginTreeOf(plugins: ReturnType<AiToolProfile["plugins"]>): string | null {
@@ -71,7 +100,7 @@ function capture(): ToolSupport[] {
         builds[mode] = Object.fromEntries(
           SURFACES.map((surface) => [
             surface,
-            supportOf(surface, contract, tool.installedRulesLocation() !== null),
+            supportOf(surface, contract, installedSurfaces(tool)),
           ])
         ) as Record<Surface, Support>;
       }

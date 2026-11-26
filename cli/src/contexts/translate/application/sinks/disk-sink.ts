@@ -121,7 +121,9 @@ export class DiskSink implements PluginTreeSink {
     if (!contract.synthesizeManifest || !contract.manifestFileRelative) return 0;
     const raw = await this.deps.fs.readFile(join(pluginSrc, SOURCE_PLUGIN_MANIFEST_RELATIVE));
     const source = asPlainObject(JSON.parse(raw)) ?? {};
-    const synthesized = contract.synthesizeManifest(source, presenceOf(canon));
+    const synthesized = contract.synthesizeManifest(source, presenceOf(canon), (warning) =>
+      this.deps.logger.warn(warning)
+    );
     if (contract.manifestSchemaName) {
       this.deps.schemaCheck.validate(contract.manifestSchemaName, synthesized);
     }

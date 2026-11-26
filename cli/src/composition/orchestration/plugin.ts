@@ -108,7 +108,7 @@ function wireUserPluginRemoval(base: Base) {
     tools
   );
   return underMachineHome(
-    new RemoveMachinePlugin(removal, recordsOf(userManifestRepo)),
+    new RemoveMachinePlugin(removal, recordsOf(userManifestRepo), base.removeServerPlugins),
     base.homedir()
   );
 }
@@ -201,7 +201,8 @@ function wirePluginUpdate(base: Base, inst: Installation) {
       base.nativeSources
     ),
     isStrictlyWithin,
-    recordsOf(userManifestRepo)
+    recordsOf(userManifestRepo),
+    base.heldServerPlugins
   );
   return {
     updatePlugin,

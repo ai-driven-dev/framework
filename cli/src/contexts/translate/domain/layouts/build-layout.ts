@@ -4,9 +4,13 @@ import type {
   SupportedArtifact,
   ToolBuildContract,
 } from "../../../../shared/domain/materialization/build-contract.js";
-import { shipsHostAdapter } from "../../../../shared/domain/plugin/canon-paths.js";
+import { basename } from "../../../../shared/domain/paths.model.js";
+import {
+  PLUGIN_MCP_RELATIVE,
+  shipsHostAdapter,
+} from "../../../../shared/domain/plugin/canon-paths.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
-import { PLUGIN_HOOKS_RELATIVE, PLUGIN_MCP_RELATIVE } from "../canon-format.js";
+import { PLUGIN_HOOKS_RELATIVE } from "../canon-format.js";
 import { agentLinks } from "../rules/agent-markdown.js";
 import {
   agentShape,
@@ -16,7 +20,8 @@ import {
 import { relativeLinks } from "../rules/links.js";
 import type { FrameworkBuildMode } from "../translate-profile.js";
 import { buildFlatPlans } from "./build-flat.js";
-import { agentFiles, baseOf, isEntry } from "./build-shared.js";
+import { flatRules } from "./build-flat-rules.js";
+import { agentFiles, hooksPath, isEntry } from "./build-shared.js";
 
 /** Where a build puts one plugin for a tool and which rules each file goes through. The files
  * are named from the output directory; a flat layout leaves its MCP servers and hooks file to the
@@ -33,7 +38,7 @@ function marketplacePlans(
   canon: PluginDistribution,
   contract: ToolBuildContract
 ): PlannedComponents {
-  const { agents, hooks, mcp, skills } = contract.artifacts;
+  const { agents, hooks, mcp, rules, skills } = contract.artifacts;
   const { pluginRootToken } = contract;
   const hookPlans = hooks.supported
     ? marketplaceHooks(canon, hooks, pluginRootToken)
@@ -43,6 +48,7 @@ function marketplacePlans(
       ...(agents.supported ? marketplaceAgents(canon, agents) : []),
       ...hookPlans.plans,
       ...(mcp.supported ? marketplaceMcp(canon, mcp, pluginRootToken) : []),
+      ...(rules?.supported ? marketplaceRules(canon, rules) : []),
       ...(skills.supported ? marketplaceSkills(canon, skills) : []),
     ],
     warnings: hookPlans.warnings,
@@ -66,7 +72,7 @@ export function marketplaceAgentPlan(
   artifact: SupportedArtifact,
   { relativePath, content }: { relativePath: string; content: string }
 ): ComponentPlan {
-  const base = baseOf(relativePath);
+  const base = basename(relativePath);
   const place = { plugin, outName: base, from: `agents/${base}`, unshaped: "carry" } as const;
   return {
     source: relativePath,
@@ -78,6 +84,15 @@ export function marketplaceAgentPlan(
   };
 }
 
+/** The rules a tool lists in its own guidance file, placed inside the plugin's output where the
+ * flat build places them in a project: a machine-scope install copies them out of the built tree. */
+function marketplaceRules(canon: PluginDistribution, artifact: SupportedArtifact): ComponentPlan[] {
+  return flatRules(canon, artifact).map((plan) => ({
+    ...plan,
+    path: `plugins/${canon.manifest.name}/${plan.path}`,
+  }));
+}
+
 function marketplaceHooks(
   canon: PluginDistribution,
   artifact: SupportedArtifact,
@@ -85,11 +100,13 @@ function marketplaceHooks(
 ): PlannedComponents {
   const plugin = canon.manifest.name;
   const warnings: string[] = [];
-  const hostAdapter = shipsHostAdapter(canon.components.hooks);
-  const plans = canon.components.hooks.map(({ relativePath, content }) => {
+  const shipped = canon.components.hooks.filter(
+    ({ relativePath }) => !(artifact.skipHooksJson && relativePath === PLUGIN_HOOKS_RELATIVE)
+  );
+  const plans = shipped.map(({ relativePath, content }) => {
     const converted =
       relativePath === PLUGIN_HOOKS_RELATIVE
-        ? artifact.convertHooks?.(content, plugin, hostAdapter)
+        ? artifact.convertHooks?.(content, plugin, shipsHostAdapter(canon.components.hooks))
         : undefined;
     warnings.push(...(converted?.warnings ?? []));
     return {
@@ -98,20 +115,13 @@ function marketplaceHooks(
       content: converted?.content ?? content,
       shape:
         converted === undefined && artifact.transform && relativePath.endsWith(".json")
-          ? (text: string) => artifact.transform?.(text, plugin, baseOf(relativePath)) ?? text
+          ? (text: string) => artifact.transform?.(text, plugin, basename(relativePath)) ?? text
           : undefined,
       rootToken,
       script: (text: string) => artifact.script?.(relativePath, text) ?? text,
     };
   });
   return { plans, warnings };
-}
-
-// Only the hooks manifest has a place of its own; a script stays where the plugin ships it.
-function hooksPath(artifact: SupportedArtifact, plugin: string, relativePath: string): string {
-  return relativePath === PLUGIN_HOOKS_RELATIVE
-    ? artifactPath(artifact, plugin, relativePath)
-    : relativePath;
 }
 
 function marketplaceMcp(

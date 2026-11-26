@@ -19,8 +19,7 @@ export interface SetAgentModelsRequest {
   /** Refreshes the agents alone: the main session's model and the record of what it replaced
    * are left as they are. */
   readonly agentsOnly?: boolean;
-  /** Each host keeps the provider saved for it, a host saved on no provider stays on the IDE's
-   * model, and a host never set takes its tool's first. Same meaning as `RecordAgentProviders`'s. */
+  /** As `RecordAgentProvidersRequest.keepSaved`. */
   readonly keepSaved?: boolean;
 }
 

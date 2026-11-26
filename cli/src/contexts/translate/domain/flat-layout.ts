@@ -54,7 +54,7 @@ export function flatAgentPath(
   return artifactPath(artifact, pluginName, `agents/${basename(agentFile)}`);
 }
 
-/** Where the tool places a path inside a plugin: agents, skills and hooks move. Nothing for any
+/** Where the tool places a path inside a plugin: agents, skills, commands and hooks move. Nothing for any
  * other folder, which the tool has no place for. */
 function placedPluginSuffix(
   contract: ToolBuildContract,
@@ -68,13 +68,16 @@ function placedPluginSuffix(
   if (suffix.startsWith("skills/") && art.skills.supported) {
     return artifactPath(art.skills, pluginName, suffix);
   }
+  if (suffix.startsWith("commands/") && art.commands?.supported) {
+    return artifactPath(art.commands, pluginName, suffix);
+  }
   if (suffix.startsWith("hooks/") && art.hooks.supported) {
     return artifactPath(art.hooks, pluginName, suffix);
   }
   return null;
 }
 
-/** Where a path inside a plugin lands in the flat layout: agents, skills and hooks move, anything
+/** Where a path inside a plugin lands in the flat layout: agents, skills, commands and hooks move, anything
  * else stays where it is. */
 export function flatPathOfPluginSuffix(
   contract: ToolBuildContract,
@@ -124,7 +127,7 @@ export function mergeFlatHooks(
   });
 }
 
-/** Where a markdown link's target lands in the flat layout: only agents and skills move. */
+/** Where a markdown link's target lands in the flat layout: only agents, skills and commands move. */
 export function flatLinkTarget(
   contract: ToolBuildContract,
   pluginName: string,

@@ -8,8 +8,8 @@
  * PreInvocation hook's command: agy injects context only there (https://antigravity.google/docs/hooks).
  */
 const fs = require("node:fs");
-const path = require("node:path");
 const os = require("node:os");
+const path = require("node:path");
 
 const HOST = "antigravity";
 const EVENTS = new Set(["SessionStart", "PreToolUse", "PostToolUse", "Stop"]);
@@ -30,10 +30,15 @@ function readPayload() {
   }
 }
 
+/** The first non-empty string of `roots`, else the process's own folder. */
+function firstRootOr(roots) {
+  const [root] = Array.isArray(roots) ? roots : [];
+  return typeof root === "string" && root !== "" ? root : process.cwd();
+}
+
 /** The session's folder is the first workspace path: `agy` runs a hook from its plugin's root. */
 function folderOf(raw) {
-  const [root] = Array.isArray(raw.workspacePaths) ? raw.workspacePaths : [];
-  return typeof root === "string" && root !== "" ? root : process.cwd();
+  return firstRootOr(raw.workspacePaths);
 }
 
 function writtenFiles(tool, args, cwd) {
@@ -97,39 +102,14 @@ function injected(texts) {
   return { injectSteps: texts.map((text) => ({ systemMessage: { systemMessage: text } })) };
 }
 
-const OTHERS_BITS = 0o077;
-const HOOKS_FOLDER =
-  typeof process.getuid === "function" ? `aidd-hooks-${process.getuid()}` : "aidd-hooks";
-
-/** Whether `folder` is a folder of this user's alone, created when `create` and missing. */
-function ownFolder(folder, create) {
-  if (create) {
-    try {
-      fs.mkdirSync(folder, { mode: 0o700 });
-    } catch (error) {
-      if (error.code !== "EEXIST") return false;
-    }
-  }
-  try {
-    const stat = fs.lstatSync(folder);
-    if (!stat.isDirectory()) return false;
-    return (
-      typeof process.getuid !== "function" ||
-      (stat.uid === process.getuid() && (stat.mode & OTHERS_BITS) === 0)
-    );
-  } catch {
-    return false;
-  }
-}
-
 const SAFE_ID = /^[A-Za-z0-9_-]{1,128}$/u;
-const HELD_PREFIX = "held-answer-";
+const HELD_FOLDER = "held-answers";
 
 /** Where the texts held for a conversation wait, or null when there is no safe place. */
 function heldFile(conversationId, create) {
   if (!SAFE_ID.test(conversationId)) return null;
-  const folder = path.join(os.tmpdir(), HOOKS_FOLDER);
-  return ownFolder(folder, create) ? path.join(folder, `${HELD_PREFIX}${conversationId}`) : null;
+  const folder = hooksFolder(HELD_FOLDER, create);
+  return folder === null ? null : path.join(folder, conversationId);
 }
 
 /** Holds `text` for the session's next model call, one JSON line per text. A session ended before
@@ -179,14 +159,49 @@ function answer({ level, text } = {}) {
 }
 
 /** Refuses the tool call about to run, with `reason` as what the model is told. Does nothing at any
- * other event: a hook that refuses is written once and is harmless where nothing can be refused.
- * `agy` runs the tool on `allow` and on no answer, and denies on an empty object, so only an
- * explicit deny refuses. */
+ * other event: a hook that refuses is written once and is harmless where nothing can be refused. */
 function refuse(reason) {
   if (current?.event !== "PreToolUse" || typeof reason !== "string" || reason === "") return;
+  denyToolCall(reason);
+}
+
+/** `agy` runs the tool on `allow` and on no answer, and denies on an empty object, so only an
+ * explicit deny refuses. */
+function denyToolCall(reason) {
   print({ decision: "deny", reason });
 }
 
-module.exports = { readEvent, answer, continueTurn, refuse, release };
+/** Whether `folder` is a folder of this user's alone, created when `create` and missing; its parent must exist. */
+function ownFolder(folder, create) {
+  if (create) {
+    try {
+      fs.mkdirSync(folder, { mode: 0o700 });
+    } catch (error) {
+      if (error.code !== "EEXIST") return false;
+    }
+  }
+  try {
+    const stat = fs.lstatSync(folder);
+    if (!stat.isDirectory()) return false;
+    return (
+      typeof process.getuid !== "function" ||
+      (stat.uid === process.getuid() && (stat.mode & 0o077) === 0)
+    );
+  } catch {
+    return false;
+  }
+}
+
+/** `<tmpdir>/aidd-hooks-<uid>/<name>` when it and the hooks folder above it are this user's alone, else null. */
+function hooksFolder(name, create) {
+  const hooks = path.join(
+    os.tmpdir(),
+    typeof process.getuid === "function" ? `aidd-hooks-${process.getuid()}` : "aidd-hooks"
+  );
+  const own = path.join(hooks, name);
+  return ownFolder(hooks, create) && ownFolder(own, create) ? own : null;
+}
+
+module.exports = { readEvent, answer, continueTurn, refuse, release, ownFolder, hooksFolder };
 
 if (require.main === module) release();

@@ -40,9 +40,32 @@ describe("deleting a user-scope plugin's files", () => {
     await new UserScopePluginFiles(fs, async () => new Map()).remove(
       new Map([["skills/x.md", "digest"]]),
       tool,
-      { projectRoot: "/project", home: homedir() }
+      { projectRoot: "/project", home: homedir(), plugin: plugin.name }
     );
 
     expect(fs.has(target)).toBe(false);
+  });
+});
+
+describe("deleting the files of a user-scope plugin whose tool lists its rules in a guidance file", () => {
+  const codex = registeredTools().aiProfile(TOOL.codex);
+  const base = codex.plugins()?.userPluginsBaseDir(homedir()) ?? "";
+  const listing =
+    "# Mine\n\n<!-- aidd_plugin_rules:start -->\n- `~/.codex/instructions/aidd-context-*.md`\n<!-- aidd_plugin_rules:end -->\n";
+
+  it("takes the plugin's listing out of that file, the person's own text kept", async () => {
+    const fs = new InMemoryFileAdapter({ [join(base, "AGENTS.md")]: listing }, [base]);
+    fs.setFile(join(base, "instructions/aidd-context-1-x.md"), "x");
+
+    await new UserScopePluginFiles(fs, async () => new Map()).remove(
+      new Map([["instructions/aidd-context-1-x.md", "digest"]]),
+      codex,
+      { projectRoot: "/project", home: homedir(), plugin: plugin.name }
+    );
+
+    expect([
+      fs.has(join(base, "instructions/aidd-context-1-x.md")),
+      fs.getFile(join(base, "AGENTS.md")),
+    ]).toEqual([false, "# Mine\n"]);
   });
 });

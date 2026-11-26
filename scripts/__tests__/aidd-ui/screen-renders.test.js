@@ -4,8 +4,7 @@ const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 const { fixLedger, UI, PATHS, LIB, makeTmp, removeTmp, writeProject, generateStylesheet, edit, editTokens } = require("../fixtures/aidd-ui/project.js");
 
-// V11 and V12 read a screen's render through the tokens the stylesheet resolves; the colours here
-// are synthetic, chosen for the contrast ratio each case needs.
+// The colours are synthetic, chosen for the contrast each case needs.
 const { load } = require(path.join(LIB, "project.cjs"));
 const tokens = require(path.join(LIB, "tokens.cjs"));
 const renders = require(path.join(LIB, "renders.cjs"));

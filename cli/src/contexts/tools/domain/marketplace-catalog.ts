@@ -7,10 +7,8 @@
  * reach this instead.
  */
 import { join } from "node:path";
-import type {
-  BuildFileReader,
-  PluginPresence,
-} from "../../../shared/domain/materialization/build-contract.js";
+import type { BuildFileReader } from "../../../shared/domain/materialization/build-contract.js";
+import type { PluginPresence } from "../../../shared/domain/materialization/plugin-presence.js";
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import { InvalidSourceMarketplaceError } from "../../../shared/domain/shared.error.js";
 
@@ -55,7 +53,8 @@ const IDENTITY: readonly (readonly [string, (value: unknown) => boolean])[] = [
   ["keywords", Array.isArray],
 ];
 
-function identityFields(source: Record<string, unknown>): Record<string, unknown> {
+/** The source manifest's identity fields a tool keeps, in the order the output keeps them. */
+export function identityFields(source: Record<string, unknown>): Record<string, unknown> {
   const fields: Record<string, unknown> = {};
   for (const [key, accepts] of IDENTITY) if (accepts(source[key])) fields[key] = source[key];
   return fields;

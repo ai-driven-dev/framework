@@ -1,7 +1,6 @@
 import type { Command } from "commander";
 import type { ToolCatalog } from "../../../contexts/tools/contract/tool-catalog.js";
 
-/** The options that choose the models the agents run on. */
 export function declareAgentModelOptions(command: Command, catalog: ToolCatalog): Command {
   return command
     .option(

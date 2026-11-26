@@ -128,6 +128,7 @@ export function configAnswers(
 export function deliveryAnswers(displayName: string, capabilities: ProfileSections) {
   return {
     machineLocalFiles: (): readonly string[] => [],
+    rulesIndex: () => capabilities.rules?.agentsIndex() ?? null,
     installedRulesLocation: () => capabilities.rules?.installedLocation() ?? null,
     projectHooksDelivery: () => {
       const placement =

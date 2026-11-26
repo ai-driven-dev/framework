@@ -36,7 +36,7 @@
     "node": ">=22.12"
   },
   "packageManager": "pnpm@12.16.1",
-  "bundleBudgetKB": 917,
+  "bundleBudgetKB": 941,
   "scripts": {
     "build": "tsup && node scripts/check-bundle-size.mjs",
     "build:check-size": "node scripts/check-bundle-size.mjs",
@@ -61,6 +61,7 @@
     "smoke:real": "pnpm build && bash scripts/smoke-real.sh",
     "smoke:collision": "pnpm build && bash scripts/smoke-collision.sh",
     "test:host-contract": "AIDD_HOST_CONTRACT=1 vitest run --project=contract host-actions.contract host-behavior.contract",
+    "smoke:kiro": "pnpm build && bash scripts/smoke-kiro.sh",
     "smoke:antigravity": "pnpm build && bash scripts/smoke-antigravity.sh",
     "typecheck": "tsc --noEmit",
     "lint": "biome check --error-on-warnings .",

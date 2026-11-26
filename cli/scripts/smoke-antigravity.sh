@@ -14,6 +14,8 @@ FRAMEWORK="$(cd "$ROOT/.." && pwd)"
 CLI="$ROOT/dist/cli.js"
 TURN_SECONDS="${SMOKE_AGY_TIMEOUT:-60}"
 
+source "$ROOT/scripts/smoke-host.sh"
+
 SKILL="aidd-context-11-explore"
 AGENT="aidd-orchestrator-executor"
 GHOST_AGENT="aidd-orchestrator-ghost"
@@ -48,25 +50,9 @@ pty_run() {
 # How many named hooks agy loads, from its log: user-global hooks included.
 hook_count() { grep -Eo 'loaded [0-9]+ named hooks' "$1" 2>/dev/null | head -1 | grep -Eo '[0-9]+'; }
 
-FAIL=0
-pass() { echo "  PASS  $1"; echo "        $2"; }
-fail() { echo "  FAIL  $1"; FAIL=$((FAIL + 1)); }
-
 echo "agy $(agy --version 2>&1 | head -1), $(date '+%Y-%m-%d %H:%M %Z')"
 
-# A project with a memory bank and an empty memory block, so the hook has something to fill.
-mkdir -p "$WS/aidd_docs/memory"
-printf '# Architecture\n' >"$WS/aidd_docs/memory/architecture.md"
-printf '# Project\n\n## Memory Management\n\n<!-- aidd_project_memory:start -->\n<!-- aidd_project_memory:end -->\n' >"$WS/AGENTS.md"
-git -C "$WS" init -q
-git -C "$WS" -c user.email=smoke@aidd -c user.name=smoke commit -q --allow-empty -m init
-
-if ! (cd "$WS" && node "$CLI" setup --source local --path "$FRAMEWORK" --ai antigravity --plugins recommended --yes) >"$TMP/setup.log" 2>&1; then
-  echo "FATAL: aidd setup failed"; tail -5 "$TMP/setup.log"; exit 1
-fi
-for f in ".agents/skills/$SKILL/SKILL.md" ".agents/hooks.json" ".agents/agents/$AGENT/agent.md"; do
-  [[ -f "$WS/$f" ]] || { echo "FATAL: setup did not write $f"; exit 1; }
-done
+smoke_setup --ai antigravity ".agents/skills/$SKILL/SKILL.md" ".agents/hooks.json" ".agents/agents/$AGENT/agent.md"
 
 # One interactive session logging to $1, killed once `$2…` succeeds or the bound runs out.
 session() {
@@ -106,8 +92,7 @@ else
   fail "hooks: .agents/hooks.json adds no loaded hook (${with:-?} with, ${without:-?} without)"
 fi
 
-line="$(grep -m1 'aidd_docs/memory/architecture.md' "$WS/AGENTS.md")"
-[[ -n "$line" ]] && pass "memory refreshed at the repo root" "AGENTS.md: $line" || fail "memory: AGENTS.md block still empty, the SessionStart hook did not run at the repo root"
+smoke_assert_memory
 
 # The expansion is logged before the model answers, so a short bound is enough.
 SKILL_LOG="$TMP/agy-skill.log"
@@ -125,6 +110,4 @@ else
   fail "agents: /agents does not list \"$AGENT\" (or lists the invented $GHOST_AGENT)"
 fi
 
-echo
-[[ "$FAIL" -eq 0 ]] && { echo "smoke-antigravity: all passed"; exit 0; }
-echo "smoke-antigravity: $FAIL failed"; exit 1
+smoke_finish smoke-antigravity

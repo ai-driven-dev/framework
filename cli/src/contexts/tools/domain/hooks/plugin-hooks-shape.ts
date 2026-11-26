@@ -2,6 +2,7 @@ import {
   escapeRegExp,
   SOURCE_PLUGIN_ROOT_TOKEN,
 } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
+import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 
 /**
  * The hooks source a plugin ships: matcher groups of commands keyed by event name. Each tool's
@@ -11,6 +12,18 @@ import {
 export type PluginHookItem = { type?: string; command?: string; [key: string]: unknown };
 export type PluginMatcherGroup = { matcher?: string; hooks: PluginHookItem[] };
 export type PluginHooksShape = { hooks?: Record<string, PluginMatcherGroup[]> };
+
+function isGroup(value: unknown): value is PluginMatcherGroup {
+  const group = asPlainObject(value);
+  return group !== null && Array.isArray(group.hooks);
+}
+
+/** A plugin's hooks by event; an event whose groups are not groups of hooks is none. */
+export function matcherGroupsByEvent(hooks: unknown): [string, PluginMatcherGroup[]][] {
+  return Object.entries(asPlainObject(hooks) ?? {}).flatMap(([event, groups]) =>
+    Array.isArray(groups) && groups.every(isGroup) ? [[event, groups]] : []
+  );
+}
 
 /** A command a generated bridge replays: the script under `hooks/`, its arguments, and its
  * group's matcher. */
@@ -39,7 +52,6 @@ function bridgedCall(command: string | undefined): BridgeHookCall | null {
 const FILE_WRITE_TOOLS = new Set(["edit", "write"]);
 const PATCH_TOOL = "apply_patch";
 
-/** The lowercased tool names a plugin matcher lists. */
 export function matcherNames(matcher: string): readonly string[] {
   return matcher.split("|").map((name) => name.toLowerCase());
 }
