@@ -4,7 +4,7 @@ import type {
   SupportedArtifact,
   ToolBuildContract,
 } from "../../../../shared/domain/materialization/build-contract.js";
-import { shipsHostAdapter } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
+import { shipsHostAdapter } from "../../../../shared/domain/plugin/canon-paths.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import { PLUGIN_HOOKS_RELATIVE, PLUGIN_MCP_RELATIVE } from "../canon-format.js";
 import { agentLinks } from "../rules/agent-markdown.js";

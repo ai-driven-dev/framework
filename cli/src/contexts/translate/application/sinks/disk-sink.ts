@@ -1,7 +1,9 @@
 import { join } from "node:path";
 import { placedRulesGlobOf } from "../../../../shared/domain/materialization/artifact-path.js";
-import { shipsHostAdapter } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
-import { SOURCE_PLUGIN_MANIFEST_RELATIVE } from "../../../../shared/domain/plugin/canon-paths.js";
+import {
+  SOURCE_PLUGIN_MANIFEST_RELATIVE,
+  shipsHostAdapter,
+} from "../../../../shared/domain/plugin/canon-paths.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { PluginName } from "../../../../shared/domain/plugin/plugin-name.js";
 import type { SourceMarketplaceRef } from "../../../../shared/domain/plugin/source-refs.js";

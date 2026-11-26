@@ -1,6 +1,6 @@
 import { reshapeFrontmatter, serializeFrontmatter } from "../../../../shared/domain/markdown.js";
 import type { ReadonlyNoticeList } from "../../../../shared/domain/materialization/plugin-install-notice.js";
-import { shipsHostAdapter } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
+import { shipsHostAdapter } from "../../../../shared/domain/plugin/canon-paths.js";
 import type {
   PluginComponentFile,
   PluginDistribution,

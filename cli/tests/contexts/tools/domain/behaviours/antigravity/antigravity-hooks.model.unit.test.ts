@@ -96,7 +96,7 @@ describe("how agy takes what a PostToolUse handler requires", () => {
   });
 
   it.each([
-    ["an installed plugin", () => convertHooks?.(post, "aidd-dev")?.content],
+    ["an installed plugin", () => convertHooks?.(post, "aidd-dev", false)?.content],
     [
       "the project's hooks file",
       () => flatMerge?.(null, { json: post, plugin: "aidd-dev" })?.content,

@@ -85,7 +85,7 @@ export type ArtifactPlacement =
 export type ConvertHooks = (
   json: string,
   plugin: string,
-  hostAdapter?: boolean
+  hostAdapter: boolean
 ) => { content: string; warnings: readonly string[] };
 
 export type ArtifactContract =

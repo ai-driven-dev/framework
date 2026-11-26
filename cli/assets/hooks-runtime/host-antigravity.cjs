@@ -4,12 +4,12 @@
  * the host's stdin into a neutral event, `answer()` and `continueTurn()` print the host's own
  * answer. The build puts one such adapter per tool at `hooks/lib/host.cjs`; the plugin tree
  * ships Claude Code's. Node built-ins only; anything unreadable is no event, and prints nothing.
- * `agy` takes context from SessionStart, PreInvocation and PostInvocation, never from PostToolUse:
- * a level 2 PostToolUse answer is held, and released at the next model call by this file run as the
- * PreInvocation hook's command.
+ * A level 2 PostToolUse answer is held, and released at the next model call by this file run as the
+ * PreInvocation hook's command: agy injects context only there (https://antigravity.google/docs/hooks).
  */
 const fs = require("node:fs");
 const path = require("node:path");
+const os = require("node:os");
 
 const HOST = "antigravity";
 const EVENTS = new Set(["SessionStart", "PreToolUse", "PostToolUse", "Stop"]);
@@ -97,22 +97,28 @@ function injected(texts) {
   return { injectSteps: texts.map((text) => ({ systemMessage: { systemMessage: text } })) };
 }
 
-const os = require("node:os");
-
 const OTHERS_BITS = 0o077;
+const HOOKS_FOLDER =
+  typeof process.getuid === "function" ? `aidd-hooks-${process.getuid()}` : "aidd-hooks";
 
-/** The folder the user's hooks keep their hand-offs in, `<tmpdir>/aidd-hooks-<uid>`: made when
- * `create`, and null unless it is this user's alone. */
-function ownFolder(create) {
-  const uid = typeof process.getuid === "function" ? process.getuid() : undefined;
-  const folder = path.join(os.tmpdir(), uid === undefined ? "aidd-hooks" : `aidd-hooks-${uid}`);
+/** Whether `folder` is a folder of this user's alone, created when `create` and missing. */
+function ownFolder(folder, create) {
+  if (create) {
+    try {
+      fs.mkdirSync(folder, { mode: 0o700 });
+    } catch (error) {
+      if (error.code !== "EEXIST") return false;
+    }
+  }
   try {
-    if (create) fs.mkdirSync(folder, { mode: 0o700, recursive: true });
     const stat = fs.lstatSync(folder);
-    const own = uid === undefined || (stat.uid === uid && (stat.mode & OTHERS_BITS) === 0);
-    return own ? folder : null;
+    if (!stat.isDirectory()) return false;
+    return (
+      typeof process.getuid !== "function" ||
+      (stat.uid === process.getuid() && (stat.mode & OTHERS_BITS) === 0)
+    );
   } catch {
-    return null;
+    return false;
   }
 }
 
@@ -121,8 +127,9 @@ const HELD_PREFIX = "held-answer-";
 
 /** Where the texts held for a conversation wait, or null when there is no safe place. */
 function heldFile(conversationId, create) {
-  const folder = SAFE_ID.test(conversationId) ? ownFolder(create) : null;
-  return folder === null ? null : path.join(folder, `${HELD_PREFIX}${conversationId}`);
+  if (!SAFE_ID.test(conversationId)) return null;
+  const folder = path.join(os.tmpdir(), HOOKS_FOLDER);
+  return ownFolder(folder, create) ? path.join(folder, `${HELD_PREFIX}${conversationId}`) : null;
 }
 
 /** Holds `text` for the session's next model call, one JSON line per text. A session ended before

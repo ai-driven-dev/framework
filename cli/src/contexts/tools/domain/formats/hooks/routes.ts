@@ -4,7 +4,7 @@ import type {
   ArtifactContract,
   ConvertHooks,
 } from "../../../../../shared/domain/materialization/build-contract.js";
-import { HOST_ADAPTER_PATH } from "../../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
+import { HOST_ADAPTER_PATH } from "../../../../../shared/domain/plugin/canon-paths.js";
 import { CapabilityConfigError } from "../../../contract/errors/tools.error.js";
 import type { HookScript } from "../../../contract/tool-vocabulary.js";
 import type { HooksFileFormat } from "../../hooks/hooks-entry-shape.js";
@@ -52,7 +52,7 @@ export function pluginTreeHooksArtifact(
     script: hookScript(descriptor),
     ...(convertHooks === undefined
       ? {}
-      : { convertHooks, transform: (json, plugin) => convertHooks(json, plugin).content }),
+      : { convertHooks, transform: (json, plugin) => convertHooks(json, plugin, false).content }),
   };
 }
 

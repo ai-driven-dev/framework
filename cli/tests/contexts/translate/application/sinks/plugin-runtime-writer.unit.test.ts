@@ -46,28 +46,24 @@ describe("one plugin's hooks and MCP servers", () => {
     const { deps, hooks } = depsOver();
 
     await expect(
-      writePluginHooks(deps, flatTarget(), { name: "plug", hooks: '{"hooks":{}}' })
+      writePluginHooks(deps, flatTarget(), {
+        name: "plug",
+        hooks: '{"hooks":{}}',
+        hostAdapter: false,
+      })
     ).resolves.toBe(1);
     expect(hooks.map((step) => [step.pluginName, step.hooksJson])).toEqual([
       ["plug", '{"hooks":{}}'],
     ]);
   });
 
-  it("tells the flat writer the plugin ships the host adapter", async () => {
-    const { deps, hooks } = depsOver();
-
-    await writePluginHooks(deps, flatTarget(), { name: "plug", hooks: "{}", hostAdapter: true });
-
-    expect(hooks.map((step) => step.hostAdapter)).toEqual([true]);
-  });
-
   it("writes nothing for a plugin the engine handed no hooks", async () => {
     const { deps, hooks } = depsOver();
     const logger = deps.logger;
 
-    await expect(writePluginHooks(deps, flatTarget(), { name: "plug", hooks: null })).resolves.toBe(
-      0
-    );
+    await expect(
+      writePluginHooks(deps, flatTarget(), { name: "plug", hooks: null, hostAdapter: false })
+    ).resolves.toBe(0);
     expect([hooks, logger.warnMessages]).toEqual([[], []]);
   });
 
@@ -85,7 +81,9 @@ describe("one plugin's hooks and MCP servers", () => {
       { mode: "flat" }
     );
 
-    await expect(writePluginHooks(deps, target, { name: "plug", hooks: "{}" })).resolves.toBe(0);
+    await expect(
+      writePluginHooks(deps, target, { name: "plug", hooks: "{}", hostAdapter: false })
+    ).resolves.toBe(0);
     expect(hooks).toEqual([]);
     expect(deps.logger.warnMessages).toEqual([
       "Skipping hooks/ in plugin 'plug' (hooks not supported for this target).",
