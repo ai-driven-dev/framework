@@ -1,8 +1,5 @@
 "use strict";
-/**
- * Only SessionStart is read: it is the one captured event a framework script reads. Kimi's tool
- * and Stop events were never captured, so a payload naming one reads as no event.
- */
+// Kimi's tool and Stop events were never captured: a payload naming one reads as no event.
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
@@ -53,8 +50,7 @@ function readEvent() {
   return current;
 }
 
-/** Kimi documents SessionStart as observation-only, so its output never reaches the model
- * (https://www.kimi.com/code/docs/en/kimi-code-cli/customization/hooks.html): nothing is printed. */
+/** Unverified: whether SessionStart stdout reaches the model, as every model turn was refused. */
 function answer() {}
 
 /** No Stop payload was captured, so no answer to it is known to take effect. */

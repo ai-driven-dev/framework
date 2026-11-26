@@ -69,6 +69,13 @@ describe("telling what a plugin ships", () => {
     });
   });
 
+  it("reads the hooks file once however often the hooks are read", async () => {
+    const canon = await canonOf({ [`${PLUGIN_SRC}/hooks/hooks.json`]: '{"hooks":{"Stop":[]}}' });
+    const presence = presenceOf(canon);
+
+    expect(presence.hooks).toBe(presence.hooks);
+  });
+
   it("names the plugin whose mcp declaration cannot be parsed", async () => {
     const canon = await canonOf({ [`${PLUGIN_SRC}/.mcp.json`]: "{ not json" });
 

@@ -171,11 +171,6 @@ function kimiPluginManifest(hooks: KimiHooks) {
   };
 }
 
-/** The scripts ship, the hooks file does not: Kimi reads a plugin's hooks from its manifest only. */
-function kimiHooksArtifact(hooks: KimiHooks) {
-  return { ...pluginTreeHooksArtifact(hooks), skipHooksJson: true };
-}
-
 /** The tree `aidd translate --to kimi --as marketplace` builds and the user-scope install hands
  * to Kimi's own plugin server: skills and agents under the plugin, the servers and hooks in the
  * manifest. */
@@ -197,7 +192,7 @@ export function buildKimiPluginContract({ agentTools, hooks }: KimiPluginSpec): 
         agentMarkdown: kimiAgentMarkdown(agentTools),
       },
       mcp: { supported: false, reason: "Kimi reads a plugin's servers from its manifest" },
-      hooks: kimiHooksArtifact(hooks),
+      hooks: pluginTreeHooksArtifact(hooks),
     },
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,

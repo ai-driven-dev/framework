@@ -53,6 +53,7 @@ export function pluginTreeHooksArtifact(
         ? { kind: "relative" }
         : { kind: "file", at: descriptor.pluginFile },
     script: hookScript(descriptor),
+    ...(descriptor.manifestListsHooks === true ? { skipHooksJson: true } : {}),
     ...(convertHooks === undefined
       ? {}
       : { convertHooks, transform: (json, plugin) => convertHooks(json, plugin).content }),

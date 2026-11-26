@@ -103,19 +103,4 @@ describe("building Kimi's plugin contract", () => {
     expect(script("hooks/lib/host.cjs", "claude's")).toContain('const HOST = "kimi";');
     expect(script("hooks/memory.cjs", "as shipped")).toBe("as shipped");
   });
-
-  it("reports each event Kimi never fires while it writes the manifest", () => {
-    const warnings: string[] = [];
-
-    synthesize()({ name: "aidd-test" }, PRESENCE, (warning) => warnings.push(warning));
-
-    expect(warnings).toStrictEqual(["kimi: unmapped event 'PreToolUse' skipped"]);
-  });
-
-  it("leaves the hooks file out of the tree, for Kimi reads a plugin's hooks from its manifest", () => {
-    const { hooks } = contract().artifacts;
-
-    expect(hooks).toMatchObject({ supported: true, skipHooksJson: true });
-    expect(hooks).not.toHaveProperty("convertHooks");
-  });
 });

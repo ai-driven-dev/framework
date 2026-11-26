@@ -68,6 +68,7 @@ const hooks = declareHooks(
   {
     // Only the events a plugin's hooks fired on Kimi, as captured, are delivered.
     undeclaredEvents: "skipped",
+    manifestListsHooks: true,
     events: { SessionStart: "SessionStart", UserPromptSubmit: "UserPromptSubmit" },
   }
 );

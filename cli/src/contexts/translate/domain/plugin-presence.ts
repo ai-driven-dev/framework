@@ -31,13 +31,15 @@ export function presenceOf(dist: PluginDistribution): PluginPresence {
     const parts = relativePath.slice("skills/".length).split("/");
     if (parts.length >= 2 && parts.at(-1) === PLUGIN_SKILL_ENTRY_FILE) skillNames.add(parts[0]);
   }
+  let hooks: Readonly<Record<string, unknown>> | undefined;
   return {
     hasAgents: agentsList.length > 0,
     agentsList,
     skillsList: [...skillNames].sort(),
     hasHooksJson: dist.components.hooks.some((file) => file.relativePath === PLUGIN_HOOKS_RELATIVE),
     get hooks() {
-      return hooksOf(dist);
+      hooks ??= hooksOf(dist);
+      return hooks;
     },
     hasMcpJson: dist.components.mcp.length > 0,
     mcpServers: mcpServersOf(dist),
