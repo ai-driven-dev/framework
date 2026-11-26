@@ -22,11 +22,11 @@ A `-` means the host has no event for that moment.
 
 | Moment | Claude, Codex | Cursor | Copilot | Antigravity | OpenCode, Kilo |
 | --- | --- | --- | --- | --- | --- |
-| session start | `SessionStart` | `sessionStart` | `sessionStart` | `SessionStart` | `session.created` |
-| prompt submitted | `UserPromptSubmit` | `beforeSubmitPrompt` | `userPromptSubmitted` | `PreInvocation` | `chat.message` |
+| session start | `SessionStart` | `sessionStart` | `sessionStart` | `SessionStart` | - |
+| prompt submitted | `UserPromptSubmit` | `beforeSubmitPrompt` | `userPromptSubmitted` | `PreInvocation` | - |
 | before a tool runs | `PreToolUse` | `preToolUse` | `preToolUse` | `PreToolUse` | `tool.execute.before` |
-| after a tool runs | `PostToolUse` | `postToolUse` | `postToolUse` | `PostToolUse` | `tool.execute.after` |
-| turn stop | `Stop` | `stop` | `agentStop` | `Stop` | `session.idle` |
+| after a tool runs | `PostToolUse` | `postToolUse` | `postToolUse` | `PostToolUse` | - |
+| turn stop | `Stop` | `stop` | `agentStop` | `Stop` | - |
 | session end | `SessionEnd` | `sessionEnd` | `sessionEnd` | - | - |
 
 A matcher is a pattern on the tool's name, on tool events only, never on Copilot. The shell tool is `Bash` on Claude and Codex, `run_command` on Antigravity, `bash` on Kilo, and `bash` or `shell` on OpenCode, so `^(bash|shell)$` covers both of its versions.
@@ -35,11 +35,11 @@ A matcher is a pattern on the tool's name, on tool events only, never on Copilot
 
 | Intent | Claude | Codex | Cursor | Copilot | Antigravity | OpenCode, Kilo |
 | --- | --- | --- | --- | --- | --- | --- |
-| inform the model | `additionalContext` | `additionalContext`, not at `Stop` | `additional_context` | `additionalContext` | `injectSteps` systemMessage, not after a tool | system prompt at start, tool output after a tool |
+| inform the model | `additionalContext` | `additionalContext`, not at `Stop` | `additional_context` | `additionalContext` | - | - |
 | block before a tool runs | exit 2 or `deny` | exit 2 or `deny` | exit 2 or `permission: deny` | exit 2 | `decision: deny` | exit 2, reason on stderr |
 | ask before a tool runs | `ask` | - | - | `ask` | `decision: ask` | - |
 | require a fix after a write | `decision: block` | `decision: block` | - | - | - | - |
-| keep the turn going at stop | `decision: block` | `decision: block` | `followup_message` | - | `decision: continue` | follow-up turn |
+| keep the turn going at stop | `decision: block` | `decision: block` | `followup_message` | - | `decision: continue` | - |
 
 Claude and Codex read decisions under `hookSpecificOutput`. Antigravity reads JSON on stdout only, and blocks when the script fails.
 
