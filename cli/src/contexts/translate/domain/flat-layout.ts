@@ -5,6 +5,7 @@ import {
 } from "../../../shared/domain/materialization/artifact-path.js";
 import type {
   FlatHooksBridge,
+  ShippedHooks,
   SupportedArtifact,
   ToolBuildContract,
 } from "../../../shared/domain/materialization/build-contract.js";
@@ -115,12 +116,13 @@ type FlatHooksFile = NonNullable<
 export function mergeFlatHooks(
   { file, contract }: { file: FlatHooksFile; contract: ToolBuildContract },
   existing: string | null,
-  shipped: { json: string; plugin: string }
+  shipped: Pick<ShippedHooks, "json" | "plugin"> & { readonly carriesRelease: boolean }
 ): { content: string; warnings: readonly string[] } {
-  const { json, plugin } = shipped;
+  const { json, plugin, carriesRelease } = shipped;
   return file.merge(existing, {
     json,
     plugin,
+    carriesRelease,
     locate: (pluginPath) => `./${flatCommandPath(contract, pluginPath, plugin)}`,
   });
 }

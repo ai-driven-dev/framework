@@ -11,7 +11,7 @@ import {
 } from "../../../../src/contexts/distribution/contract/distribution.error.js";
 
 describe("when InvalidMarketplaceScopeError is raised", () => {
-  it("carries its data and says nothing itself", () => {
+  it("carries its data and says nothing itself when cached", () => {
     const error = new InvalidMarketplaceScopeError("global");
     expect({ name: error.name, scope: error.scope, message: error.message }).toStrictEqual({
       name: "InvalidMarketplaceScopeError",
@@ -26,7 +26,7 @@ describe("when InvalidMarketplaceScopeError is raised", () => {
 });
 
 describe("when MalformedMarketplaceCatalogError is raised", () => {
-  it("carries its data and says nothing itself", () => {
+  it("carries its data and says nothing itself when not cached", () => {
     const error = new MalformedMarketplaceCatalogError("/c.json", "not json", true);
     expect({
       name: error.name,

@@ -227,7 +227,7 @@ describe("building Antigravity's plugin tree contract", () => {
       hooks: { SessionEnd: [{ hooks: [{ type: "command", command: "node end.cjs" }] }] },
     });
 
-    expect(hooks.convertHooks?.(incoming, "aidd-context").warnings).toEqual([
+    expect(hooks.convertHooks?.(incoming, "aidd-context", false).warnings).toEqual([
       "antigravity: unmapped event 'SessionEnd' skipped",
     ]);
   });

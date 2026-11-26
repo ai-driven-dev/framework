@@ -4,6 +4,9 @@
  * the host's stdin into a neutral event, `answer()` and `continueTurn()` print the host's own
  * answer. The build puts one such adapter per tool at `hooks/lib/host.cjs`; the plugin tree
  * ships Claude Code's. Node built-ins only; anything unreadable is no event, and prints nothing.
+ * A level 2 PostToolUse answer is held, and released at the next model call by this file run as the
+ * PreInvocation hook's command: agy takes no context from a PostToolUse answer, and that call's
+ * PreInvocation is where it can still inject (https://antigravity.google/docs/hooks).
  */
 const fs = require("node:fs");
 const os = require("node:os");
@@ -95,13 +98,66 @@ function continueTurn(text) {
   print({ decision: "continue", reason: text });
 }
 
+/** What `agy` hands the model as a system message, one step per text. */
+function injected(texts) {
+  return { injectSteps: texts.map((text) => ({ systemMessage: { systemMessage: text } })) };
+}
+
+const HELD_FOLDER = "held-answers";
+
+/** Where the texts held for a conversation wait, or null when there is no safe place. The file is
+ * named by a digest of the id, which the host does not promise is a plain name. */
+function heldFile(conversationId, create) {
+  if (typeof conversationId !== "string") return null;
+  const folder = hooksFolder(HELD_FOLDER, create);
+  const name = require("node:crypto").createHash("sha256").update(conversationId).digest("hex");
+  return folder === null ? null : path.join(folder, name);
+}
+
+/** Holds `text` for the session's next model call, one JSON line per text. A session ended before
+ * that call leaves its file in the temp directory. */
+function hold(text) {
+  try {
+    const file = heldFile(current.sessionId, true);
+    if (file === null) return;
+    fs.appendFileSync(file, `${JSON.stringify(text)}\n`, { mode: 0o600 });
+  } catch {}
+}
+
+/** The texts held for a conversation, in the order held, which are held no more. The file is
+ * renamed before it is read, so a flat and a plugin install of the owner release it once. */
+function takeHeld(conversationId) {
+  const file = heldFile(conversationId, false);
+  if (file === null) return [];
+  const claimed = `${file}.${process.pid}`;
+  try {
+    fs.renameSync(file, claimed);
+  } catch {
+    return [];
+  }
+  try {
+    return fs.readFileSync(claimed, "utf8").split("\n").filter(Boolean).map(JSON.parse);
+  } catch {
+    return [];
+  } finally {
+    fs.rmSync(claimed, { force: true });
+  }
+}
+
+/** Prints what was held for the conversation of the PreInvocation on stdin. */
+function release() {
+  const texts = takeHeld(readPayload()?.conversationId);
+  if (texts.length > 0) print(injected(texts));
+}
+
 /** A Stop answer continues the turn. A SessionStart answer is an injected system message, which
- * `agy` hands the model before its first call. A PostToolUse answer is never carried: `agy` takes
- * no context from it. */
-function answer({ text } = {}) {
+ * `agy` hands the model before its first call. A PostToolUse answer is held when it requires
+ * something (level 2), for `release`; one that only informs is dropped. */
+function answer({ level, text } = {}) {
+  if (typeof text !== "string" || text === "") return;
   if (current?.event === "Stop") return continueTurn(text);
-  if (current?.event !== "SessionStart" || typeof text !== "string" || text === "") return;
-  print({ injectSteps: [{ systemMessage: { systemMessage: text } }] });
+  if (current?.event === "PostToolUse" && level === 2) return hold(text);
+  if (current?.event === "SessionStart") print(injected([text]));
 }
 
 /** Refuses the tool call about to run, with `reason` as what the model is told. Does nothing at any
@@ -148,4 +204,6 @@ function hooksFolder(name, create) {
   return ownFolder(hooks, create) && ownFolder(own, create) ? own : null;
 }
 
-module.exports = { readEvent, answer, continueTurn, refuse, ownFolder, hooksFolder };
+module.exports = { readEvent, answer, continueTurn, refuse, release, ownFolder, hooksFolder };
+
+if (require.main === module) release();
