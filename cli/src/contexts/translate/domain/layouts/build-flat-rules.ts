@@ -8,13 +8,12 @@ import type {
 import type { ComponentPlan } from "../rules/component-pipeline.js";
 import { ruleFilePlan } from "../rules/rule-scope.js";
 
-/** A rule placed the way an install places it. */
 export function flatRules(canon: PluginDistribution, artifact: SupportedArtifact): ComponentPlan[] {
   const plugin = canon.manifest.name;
   return canon.components.rules.map((file) => flatRulePlan(artifact, plugin, file));
 }
 
-/** One rule placed the way an install places it. */
+/** A rule placed as an install places it, so build and install write the same bytes. */
 export function flatRulePlan(
   artifact: SupportedArtifact,
   plugin: string,

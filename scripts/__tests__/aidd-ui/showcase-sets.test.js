@@ -6,9 +6,6 @@ const { scriptOf, literally, UI, LIB, makeTmp, removeTmp, engine, writeProject, 
 const { load } = require(path.join(LIB, "project.cjs"));
 const { showcaseOf, copiedOf, keptOf, entriesOf, blockedOf, remainingOf, pickedOf, LABELS } = require(path.join(LIB, "showcase.cjs"));
 
-// The sets of variants are chosen inside the showcase: a page per set, in the navigation and the
-// review panel beside the records. The pages are judged as text, the command as a subprocess.
-
 let tmp;
 
 beforeEach(() => {

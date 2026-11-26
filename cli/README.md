@@ -129,6 +129,7 @@ Counts the tokens of Claude Code and Codex sessions, locally. Details: [FAQ](../
 | `codex` | The same, plus the plugins' agents in `~/.codex/agents/` |
 | `opencode`, `kilo` | Copies the plugins' skills and agents into `~/.config/opencode/` or `~/.config/kilo/` |
 | `cursor` | Copies the plugins into `~/.cursor/plugins/local/`; Cursor must allow local plugin imports |
+| `kimi` | Installs the plugins through the server its CLI starts (`kimi web`) |
 
 Files without recorded AIDD ownership are refused even when their content matches. This includes
 copies from an older `make reload`, or files left by an interrupted install before ownership was
@@ -175,6 +176,7 @@ The token resolves from the first hit:
 
 - It records nothing in the manifest, unlike `aidd sync`.
 - It is the author-side command: it produces what consumers install.
+- `--provider <provider>` runs the agents on that provider's models, `none` leaves each on the IDE's.
 
 | `--as` | Output |
 | --- | --- |
@@ -189,9 +191,9 @@ The token resolves from the first hit:
 | `codex` | yes | yes | `.codex/` |
 | `opencode` | no | yes | `.opencode/` |
 | `kilo` | no | yes | `.kilo/` |
-| `antigravity` | no | yes | `.agents/` |
+| `antigravity` | yes | yes | `.agents/` |
 | `kiro` | no | yes | `.kiro/` |
-| `kimi` | no | yes | `.kimi-code/` |
+| `kimi` | yes | yes | `.kimi-code/` |
 
 ## Environment variables
 

@@ -3,7 +3,6 @@ import {
   isWrappedCommandHooksFileEmpty,
   unmergeWrappedCommandHooks,
   wrappedCommandHookEntries,
-  wrappedCommandHooksScriptDir,
 } from "../../../../../src/contexts/tools/domain/hooks/wrapped-command-hooks-file.js";
 
 /** The project hooks file the released CLI wrote for aidd-context, with a hook of the person's own
@@ -32,12 +31,6 @@ describe("the project hooks file an earlier release wrote", () => {
     expect(Object.keys(JSON.parse(kept))).toStrictEqual(["lint"]);
     expect(isWrappedCommandHooksFileEmpty(kept)).toBe(false);
     expect(isWrappedCommandHooksFileEmpty(unmergeWrappedCommandHooks(kept, "lint"))).toBe(true);
-  });
-
-  it("names the folder the release copied a plugin's scripts to", () => {
-    expect(wrappedCommandHooksScriptDir(TARGET, "aidd-context")).toBe(
-      ".agents/hooks/aidd-context/"
-    );
   });
 
   it("refuses a group whose event is no list", () => {

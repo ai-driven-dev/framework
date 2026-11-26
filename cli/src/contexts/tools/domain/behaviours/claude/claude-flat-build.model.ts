@@ -1,6 +1,10 @@
 /** Claude's flat build contract: direct workspace materialization. */
 
-import { agentsIn, skillsIn } from "../../../../../shared/domain/materialization/artifact-path.js";
+import {
+  agentsIn,
+  flatMcpFileArtifact,
+  skillsIn,
+} from "../../../../../shared/domain/materialization/artifact-path.js";
 import type { ToolBuildContract } from "../../../../../shared/domain/materialization/build-contract.js";
 import type { FlatArtifactLayout } from "../../../../../shared/domain/materialization/flat-paths.js";
 import type { AgentFrontmatter } from "../../formats/agents/agent-format.js";
@@ -34,12 +38,7 @@ export function buildClaudeFlatContract(
           pluginPrefixedName: true,
         },
       },
-      mcp: {
-        supported: true,
-        source: { kind: "configFile", srcPath: ".mcp.json" },
-        placement: { kind: "file", at: ".mcp.json" },
-        mcpServersKey: "mcpServers",
-      },
+      mcp: flatMcpFileArtifact(".mcp.json"),
       hooks: flatHooksArtifact(hooks, { tool: "claude" }),
     },
     buildMarketplaceCatalog: null,

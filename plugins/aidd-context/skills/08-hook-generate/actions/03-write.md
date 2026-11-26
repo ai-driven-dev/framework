@@ -1,6 +1,6 @@
 # 03 - Write
 
-Write the approved hook to each host.
+Write or remove the approved hook on each host.
 
 ## Input
 
@@ -8,11 +8,11 @@ The approved input file and paths.
 
 ## Process
 
-1. Run the writer per [writer.md](../references/writer.md) with the plan's options, without `--plan`, and delete the input file with its folder in the same command.
-   - Approved `update`: add `--force`.
+1. Run the writer per [writer.md](../references/writer.md), without `--plan`.
+   - Planned `update`: add `--force`.
    - Non-zero exit: quote the writer's output, then stop.
 2. Report each path written with its operation, one per line.
-3. Read [verify](04-verify.md), except on remove.
+3. Add or update: read [verify](04-verify.md).
 
 ## Output
 

@@ -428,6 +428,34 @@ test("every host names its shell tool, and a captured name is one the host reall
   }
 });
 
-test("a Copilot fact never cites a capture: its captures used another route", (t) => {
-  for (const fact of facts(describe(t, "--hosts", "copilot").copilot)) assert.match(fact.source, /^https:\/\//);
+test("every host names the argument its shell tool takes the command in, as a capture holds it", (t) => {
+  for (const [id, host] of Object.entries(describe(t))) {
+    assert.ok("command" in host.shell, `${id}: names its shell command argument, or null when undocumented`);
+    if (!host.shell.source.startsWith("capture:")) continue;
+    const [nameField, inputField] = host.moments["before-tool"].payload;
+    const call = capture(host.shell.source).samples.find((sample) => dotted(sample.payload, nameField) === host.shell.value);
+    assert.equal(typeof dotted(call.payload, inputField)?.[host.shell.command], "string", `${id}: ${host.shell.command} in ${host.shell.source}`);
+  }
+});
+
+test("a Copilot fact cites only a capture of the camelCase route the writer writes", (t) => {
+  for (const fact of facts(describe(t, "--hosts", "copilot").copilot)) assert.match(fact.source, /^(https:\/\/|capture:copilot-camel-)/);
+});
+
+test("Copilot names the Claude Code hooks it also runs", (t) => {
+  const { alsoRuns } = describe(t, "--hosts", "copilot").copilot;
+  assert.match(alsoRuns?.value ?? "", /\.claude\/settings\.json/);
+  assert.match(alsoRuns.source, /^https:\/\//);
+});
+
+test("a write that succeeds deletes its input file, and a plan or a refusal keeps it", (t) => {
+  const { dir, run, write } = fixture(t);
+  const input = path.join(dir, "input.json");
+  assert.equal(run(hook, ["--plan"]).status, 0);
+  assert.ok(fs.existsSync(input), "a plan keeps the input");
+  assert.equal(run().status, 0);
+  assert.ok(!fs.existsSync(input), "a write deletes the input");
+  write(".claude/hooks/guard-shell.cjs", "edited by hand\n");
+  assert.equal(run().status, 1);
+  assert.ok(fs.existsSync(input), "a refusal keeps the input");
 });

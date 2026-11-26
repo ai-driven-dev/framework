@@ -28,7 +28,7 @@ function replacedByWrite(response) {
   return response?.type === "create" && response.originalFile === null ? "" : undefined;
 }
 
-function writtenFiles(tool, input, response, cwd) {
+function writtenFiles(tool, input, cwd, response) {
   if (!WRITES.has(tool) || typeof input?.file_path !== "string") return [];
   const file = { path: path.resolve(cwd, input.file_path) };
   // A write carries the whole file; an edit carries fragments of it, never `content`.
@@ -44,26 +44,7 @@ function writtenFiles(tool, input, response, cwd) {
 
 // @part files-of
 
-function readEvent() {
-  current = undefined;
-  const raw = readPayload();
-  const event = raw === undefined ? undefined : EVENTS.get(raw.hook_event_name);
-  if (event === undefined) return undefined;
-  const cwd = typeof raw.cwd === "string" && raw.cwd !== "" ? raw.cwd : process.cwd();
-  const tool = event === "PostToolUse" || event === "PreToolUse" ? raw.tool_name : undefined;
-  const input = raw.tool_input;
-  current = {
-    host: HOST,
-    event,
-    files: filesOf(event, writtenFiles(tool, input, raw.tool_response, cwd)),
-    ...(SHELLS.has(tool) && typeof input?.command === "string" ? { command: input.command } : {}),
-    stopActive: raw.stop_hook_active === true,
-    sessionId: typeof raw.session_id === "string" ? raw.session_id : null,
-    cwd,
-    raw,
-  };
-  return current;
-}
+// @part read-event
 
 // @part print
 
@@ -86,7 +67,9 @@ function answer({ level, text, person } = {}) {
   print({ hookSpecificOutput: { hookEventName: current.event, additionalContext: text } });
 }
 
-// @part refuse-in-hook-output
+// @part refuse
+
+// @part deny-in-hook-output
 
 // @part own-folder
 

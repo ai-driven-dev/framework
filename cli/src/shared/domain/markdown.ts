@@ -181,3 +181,9 @@ export function reshapeFrontmatter(content: string, shape: FrontmatterShape): st
     ? shape.serialize(reshaped, body)
     : serializeFrontmatter(reshaped, body, shape.quote);
 }
+
+/** The glob patterns a rule scopes itself to, `paths` before `globs`; none when it declares neither. */
+export function rulePatterns(fm: Record<string, unknown>): unknown[] {
+  if (Array.isArray(fm.paths)) return fm.paths;
+  return Array.isArray(fm.globs) ? fm.globs : [];
+}

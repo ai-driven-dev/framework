@@ -6,9 +6,6 @@ const { LIB } = require("../fixtures/aidd-ui/project.js");
 
 const { escaped, documentOf, inlined, fingerprintOf, STYLESHEET_LINK, FONT_FLOOR } = require(path.join(LIB, "html.cjs"));
 
-// The helpers every page of the engine builds on: text as HTML, a markdown file as a document, a render
-// with its tokens inline, and the hash that tells one shown set from another.
-
 describe("aidd-ui html helpers", () => {
   it("escapes text as HTML text and as an attribute value", () => {
     assert.equal(escaped(`a & b < c > "d"`), "a &amp; b &lt; c &gt; &quot;d&quot;");
