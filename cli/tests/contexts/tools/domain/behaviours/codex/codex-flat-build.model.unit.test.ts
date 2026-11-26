@@ -95,9 +95,26 @@ describe("building Codex's flat contract", () => {
   });
 
   it("reads the project's own config.toml before writing it", () => {
-    expect(configArtifactOf().reads(["aidd-dev"])).toStrictEqual([".codex/config.toml"]);
+    expect(configArtifactOf().reads(["aidd-dev"])).toStrictEqual([
+      ".codex/config.toml",
+      "AGENTS.md",
+    ]);
     expect(configArtifactOf().probes(["aidd-dev"])).toStrictEqual([]);
     expect(configArtifactOf().assets).toStrictEqual({ tool: TOOL.codex, names: [] });
+  });
+
+  it("lists the rules its plugins placed in AGENTS.md beside the config.toml", () => {
+    const files = configArtifactOf().emit({
+      builtPlugins: ["aidd-dev"],
+      pluginMcp: new Map(),
+      rulesGlobs: [".codex/instructions/aidd-dev-*.md"],
+      existing: new Map(),
+      present: new Set(),
+      assets: new Map(),
+    });
+
+    expect(files.map((file) => file.path)).toStrictEqual([".codex/config.toml", "AGENTS.md"]);
+    expect(files[1].content).toContain("- `.codex/instructions/aidd-dev-*.md`");
   });
 
   it("writes one config.toml holding every built plugin's mcp servers, under its plugin prefix", () => {

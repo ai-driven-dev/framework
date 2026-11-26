@@ -102,7 +102,8 @@ export class PurgeMarketplacePlugins {
     await this.withdrawFromHosts(native, command.hostRemoval);
     const where = { projectRoot, home };
     for (const { toolId, plugin, files } of safeFiles) {
-      await this.deps.userScopePluginFiles.remove(files, this.tools.aiProfile(toolId), where);
+      const tool = this.tools.aiProfile(toolId);
+      await this.deps.userScopePluginFiles.remove(files, tool, { ...where, plugin: plugin.name });
       manifest.removePlugin(toolId, plugin.name);
     }
     forgetMarketplaceIn(held.registered, marketplace, records);

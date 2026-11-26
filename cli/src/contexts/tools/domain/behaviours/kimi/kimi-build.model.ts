@@ -1,8 +1,13 @@
-/** Kimi's two build contracts. Flat: skills sit in the shared `.agents/skills/`; agents sit in
- * Kimi's own folder, because `.agents/agents/` belongs to Antigravity, whose tool names Kimi does
- * not read. Plugin: a tree Kimi installs from a local directory, at user scope only. */
+/** Kimi's two build contracts. Flat: rules sit in Kimi's own `instructions/` folder and AGENTS.md
+ * lists them; skills sit in the shared `.agents/skills/`; agents sit in Kimi's own folder, because
+ * `.agents/agents/` belongs to Antigravity. Plugin: a tree Kimi installs from a local directory,
+ * at user scope only. */
 
-import { agentsIn, skillsIn } from "../../../../../shared/domain/materialization/artifact-path.js";
+import {
+  agentsIn,
+  rulesIn,
+  skillsIn,
+} from "../../../../../shared/domain/materialization/artifact-path.js";
 import type {
   AgentMarkdown,
   PluginPresence,
@@ -11,6 +16,7 @@ import type {
 import type { FlatArtifactLayout } from "../../../../../shared/domain/materialization/flat-paths.js";
 import { rewritePluginRootInJson } from "../../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import { portableAgentFrontmatter } from "../../formats/agents/portable-agent.js";
+import { AGENTS_FILE, agentsIndexFiles } from "../../formats/agents-rules-index.js";
 import { hostToolNames } from "../../formats/host-tool-names.js";
 import { identityFields } from "../../marketplace-catalog.js";
 
@@ -52,39 +58,54 @@ export interface KimiFlatSpec {
   readonly hooksReason: string;
 }
 
-export function buildKimiFlatContract({
+function kimiFlatArtifacts({
   layout,
   mcpPath,
   agentTools,
   hooksReason,
-}: KimiFlatSpec): ToolBuildContract {
+}: KimiFlatSpec): ToolBuildContract["artifacts"] {
+  return {
+    skills: {
+      supported: true,
+      source: { kind: "fullTree", srcDir: "skills" },
+      placement: skillsIn(layout),
+      rewriteSkillName: true,
+    },
+    agents: {
+      supported: true,
+      source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
+      placement: agentsIn(layout),
+      agentMarkdown: kimiAgentMarkdown(agentTools),
+    },
+    rules: {
+      supported: true,
+      source: { kind: "fullTree", srcDir: "rules" },
+      placement: rulesIn(layout),
+    },
+    mcp: {
+      supported: true,
+      source: { kind: "configFile", srcPath: ".mcp.json" },
+      placement: { kind: "file", at: mcpPath },
+      mcpServersKey: "mcpServers",
+    },
+    hooks: { supported: false, reason: hooksReason },
+  };
+}
+
+export function buildKimiFlatContract(spec: KimiFlatSpec): ToolBuildContract {
   return {
     manifestFileRelative: null,
     synthesizeManifest: null,
     manifestSchemaName: null,
-    artifacts: {
-      skills: {
-        supported: true,
-        source: { kind: "fullTree", srcDir: "skills" },
-        placement: skillsIn(layout),
-        rewriteSkillName: true,
-      },
-      agents: {
-        supported: true,
-        source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        placement: agentsIn(layout),
-        agentMarkdown: kimiAgentMarkdown(agentTools),
-      },
-      mcp: {
-        supported: true,
-        source: { kind: "configFile", srcPath: ".mcp.json" },
-        placement: { kind: "file", at: mcpPath },
-        mcpServersKey: "mcpServers",
-      },
-      hooks: { supported: false, reason: hooksReason },
-    },
+    artifacts: kimiFlatArtifacts(spec),
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,
+    configArtifact: {
+      reads: () => [AGENTS_FILE],
+      probes: () => [],
+      assets: { tool: "kimi", names: [] },
+      emit: ({ existing, rulesGlobs }) => agentsIndexFiles(existing, rulesGlobs),
+    },
   };
 }
 

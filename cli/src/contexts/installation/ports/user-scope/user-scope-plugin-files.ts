@@ -1,3 +1,5 @@
+// biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input
+import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { PluginPlacement } from "../tool-sections.js";
 
@@ -11,10 +13,11 @@ export interface UserScopePluginFileRemoval {
     tool: PluginPlacement,
     home: string
   ): Promise<ReadonlyMap<string, string>>;
-  /** Deletes the given files from the user plugins directory of `tool`. */
+  /** Deletes the given files from the user plugins directory of `tool`, and takes the plugin's
+   * rules out of the user guidance file the tool lists them in. */
   remove(
     files: ReadonlyMap<string, string>,
-    tool: PluginPlacement,
-    where: { projectRoot: string; home: string }
+    tool: AiToolProfile,
+    where: { projectRoot: string; home: string; plugin: string }
   ): Promise<void>;
 }

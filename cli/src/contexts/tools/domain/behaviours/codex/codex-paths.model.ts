@@ -18,13 +18,29 @@ export const OUTPUT_CODEX_MARKETPLACE_RELATIVE = ".agents/plugins/marketplace.js
 /** Subdirectory name inside each plugin output for staged Codex agent TOML files. */
 export const OUTPUT_CODEX_AGENTS_DIR = "codex-agents";
 
+/** Where Codex's project directory keeps the rules AGENTS.md lists, below it. */
+export const CODEX_INSTRUCTIONS_DIR = "instructions/";
+
 /**
  * A Codex plugin cannot carry agents, and Codex loads them from `~/.codex/agents/` for every
- * project, so a machine-scope install copies each staged TOML there, prefixed with its plugin.
+ * project, so a machine-scope install copies each staged TOML there, prefixed with its plugin. A
+ * rule is carried the same way, under `instructions/` as the flat build names it, for the
+ * AGENTS.md of the same directory to list.
  */
 export function codexGlobalFilePath(builtPath: string, plugin: GlobalPlugin): string | null {
+  return stagedAgentPath(builtPath, plugin) ?? stagedRulePath(builtPath, plugin);
+}
+
+function stagedAgentPath(builtPath: string, plugin: GlobalPlugin): string | null {
   const staged = `plugins/${plugin.name}/${OUTPUT_CODEX_AGENTS_DIR}/`;
   if (!builtPath.startsWith(staged) || !builtPath.endsWith(".toml")) return null;
   const name = builtPath.slice(staged.length);
   return name.includes("/") ? null : `agents/${plugin.name}-${name}`;
+}
+
+function stagedRulePath(builtPath: string, plugin: GlobalPlugin): string | null {
+  const staged = `plugins/${plugin.name}/.codex/${CODEX_INSTRUCTIONS_DIR}${plugin.name}-`;
+  if (!builtPath.startsWith(staged) || !builtPath.endsWith(".md")) return null;
+  const name = builtPath.slice(staged.length);
+  return name.includes("/") ? null : `${CODEX_INSTRUCTIONS_DIR}${plugin.name}-${name}`;
 }

@@ -43,12 +43,14 @@ export class ReplacePluginFiles {
       projectRoot: projectRoot,
       homedir: this.deps.homedir,
     });
-    await deleteOldFiles(plugin.files, { dir: baseDir, scope: plugin.scope }, this.deps.fs);
     const mode = builtTreeModeOf(tool, command.plugin.marketplace);
+    if (mode !== "marketplace") {
+      await deleteOldFiles(plugin.files, { dir: baseDir, scope: plugin.scope }, this.deps.fs);
+    }
     if (mode !== null) {
       await rematerializePlugin(
         { dist, tool, mode, plugin: command.plugin, projectRoot, manifest },
-        this.deps.placeBuiltTree
+        this.deps
       );
       return;
     }
