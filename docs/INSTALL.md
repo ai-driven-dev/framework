@@ -121,7 +121,7 @@ To pin a version, use `--ref codex-v<version>`. For a local catalog, extract `ai
 
 ### Cursor
 
-AIDD hosts no Cursor catalog: `cursor-agent plugin marketplace add` needs a signed-in account, so no install from a Git ref has been verified. [Cursor plugins](https://cursor.com/docs/plugins)
+AIDD hosts no Cursor catalog yet: `cursor-agent plugin marketplace add` takes only a GitHub-style https URL and Cursor installs plugins from its UI, so no install from a Git ref has been verified. [Cursor plugins](https://cursor.com/docs/plugins)
 
 For a local installation where local plugins are enabled:
 
