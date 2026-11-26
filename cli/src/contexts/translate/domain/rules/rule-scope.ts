@@ -1,4 +1,8 @@
-import { parseFrontmatter, reshapeFrontmatter } from "../../../../shared/domain/markdown.js";
+import {
+  parseFrontmatter,
+  reshapeFrontmatter,
+  rulePatterns,
+} from "../../../../shared/domain/markdown.js";
 import type { RuleMarkdown } from "../../../../shared/domain/materialization/build-contract.js";
 import {
   type FlatArtifactLayout,
@@ -10,8 +14,7 @@ import type { ComponentPlan } from "./component-pipeline.js";
  *
  * Limit: `paths` is a list in every shipped rule; a bare string is read as no scope. */
 export function ruleScope(content: string): readonly unknown[] {
-  const { paths } = parseFrontmatter(content).frontmatter;
-  return Array.isArray(paths) ? paths : [];
+  return rulePatterns(parseFrontmatter(content).frontmatter);
 }
 
 /** A rule's plan on every route that places it: for a tool that reads no frontmatter, the scope is

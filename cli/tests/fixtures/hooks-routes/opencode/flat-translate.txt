@@ -275,8 +275,7 @@ script, identical to the plugin source
 script, identical to the plugin source
 
 ## out-flat/.opencode/hooks/opencode-events.js
-// OpenCode 2 hands a plugin hooks of its own: each is mapped onto the hook the bridge hands
-// OpenCode 1, so what a script receives and what its answer does stays the bridge's.
+// Maps OpenCode 2's plugin hooks onto the OpenCode 1 hooks the bridge reads.
 
 // A V2 tool names the file it writes `path`; the bridge reads OpenCode 1's `filePath`.
 function argsOf(input) {
@@ -309,7 +308,6 @@ export async function setupOpencodeEvents(ctx, factory) {
     },
   };
   const hooks = await factory({ directory: ctx.location.directory, client });
-  // What the UserPromptSubmit scripts answered to each session's latest prompt.
   const promptAnswers = new Map();
 
   // A session's first prompt starts it: the run's own session is created before the plugin
@@ -342,8 +340,6 @@ export async function setupOpencodeEvents(ctx, factory) {
     hooks["tool.execute.before"]({ tool: toolOf(call.tool), sessionID: call.sessionID }, { args: argsOf(call.input) })
   );
 
-  // The tool hook is where a finished call's result can change, so a hook's answer lands in the
-  // result the model reads.
   await ctx.tool.hook("execute.after", async (call) => {
     if (call.status !== "completed") return;
     const output = { output: "" };
@@ -493,8 +489,7 @@ function matchesTool(tools, tool) {
   return !tools || tools.includes(tool.toLowerCase());
 }
 
-/** Pure: a tool call -> every hook of one event whose matcher allows its tool. The host names the
- * written file `filePath`; the scripts read Claude Code's `file_path`. */
+/** Pure: a tool call -> every hook of one event whose matcher allows its tool. */
 function toolUseCallsFor(event, hooks, call, args, directory) {
   const tool = call.tool;
   const toolInput = typeof args.filePath === "string" ? { ...args, file_path: args.filePath } : args;
@@ -866,8 +861,7 @@ function matchesTool(tools, tool) {
   return !tools || tools.includes(tool.toLowerCase());
 }
 
-/** Pure: a tool call -> every hook of one event whose matcher allows its tool. The host names the
- * written file `filePath`; the scripts read Claude Code's `file_path`. */
+/** Pure: a tool call -> every hook of one event whose matcher allows its tool. */
 function toolUseCallsFor(event, hooks, call, args, directory) {
   const tool = call.tool;
   const toolInput = typeof args.filePath === "string" ? { ...args, file_path: args.filePath } : args;

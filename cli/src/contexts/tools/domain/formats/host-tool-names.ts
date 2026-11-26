@@ -1,3 +1,5 @@
+import { matcherNames } from "../hooks/plugin-hooks-shape.js";
+
 /** A host's names for the tools a plugin names, each once, in order. A tool the host has no name
  * for is dropped, which narrows a grant and never widens it. `passThrough` marks the names the
  * host reads as the plugin writes them. */
@@ -20,10 +22,7 @@ export function hostToolNamesMatching(
   renames: ReadonlyMap<string, string>
 ): string[] {
   const byLowerName = new Map([...renames].map(([tool, host]) => [tool.toLowerCase(), host]));
-  return hostToolNames(
-    matcher.split("|").map((name) => name.toLowerCase()),
-    byLowerName
-  );
+  return hostToolNames(matcherNames(matcher), byLowerName);
 }
 
 /** What a host hears when a matcher of `event` names no tool it has. */

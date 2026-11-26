@@ -67,10 +67,7 @@ const MATCHER_TOOLS: ReadonlyMap<string, string> = new Map([
 const hooks = declareHooks(
   { toolId: "kiro", directory: DIRECTORY, adapter },
   {
-    // Only the events with a payload captured from kiro-cli V3 (the kiro-* hook-payload fixtures)
-    // are delivered; https://kiro.dev/docs/hooks/types/ names the triggers. SessionEnd is
-    // documented but seen firing in one of six headless runs, so it is dropped from the merge with a
-    // warning, like every other event.
+    // Only events with a captured payload are delivered (https://kiro.dev/docs/hooks/types/); SessionEnd fires unreliably headless, so it is skipped with a warning.
     undeclaredEvents: "skipped",
     events: {
       SessionStart: "SessionStart",

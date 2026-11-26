@@ -5,9 +5,6 @@ const { withoutCode, UI, LIB, makeTmp, removeTmp, writeProject } = require("../f
 const { load } = require(path.join(LIB, "project.cjs"));
 const { showcaseOf, LABELS } = require(path.join(LIB, "showcase.cjs"));
 
-// A French showcase is read by a person who does not code: what the engine writes on it is French, and
-// no page shows a path, a rule code or a check message. The project's own words are left as written.
-
 let tmp;
 
 beforeEach(() => {

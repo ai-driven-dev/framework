@@ -26,7 +26,7 @@ What each AI tool receives from the framework.
 
 ## Hook events
 
-What a project hook can do per host, cited to each host's doc: `node plugins/aidd-context/skills/08-hook-generate/scripts/write-hook.cjs --describe`. The event map is in `cli/src/composition/tool-profiles/`.
+What the CLI delivers for a plugin's hooks per host. The event map is in `cli/src/composition/tool-profiles/`, the refusal in each adapter under `cli/assets/hooks-runtime/`.
 
 | Host | SessionStart | UserPromptSubmit | PreToolUse | PostToolUse | Stop | SessionEnd | SubagentStop | Refuse a write |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -42,7 +42,7 @@ What a project hook can do per host, cited to each host's doc: `node plugins/aid
 
 yes: the CLI writes the event to the host's hook file or bridge. no: it drops the event, and a build warns where it can.
 
-Sources: [Claude Code](https://code.claude.com/docs/en/hooks), [Codex](https://learn.chatgpt.com/docs/hooks), [Copilot](https://docs.github.com/en/copilot/reference/hooks-configuration), [Cursor](https://cursor.com/docs/agent/hooks), [Antigravity](https://antigravity.google/docs/hooks), [Kiro](https://kiro.dev/docs/hooks/types/).
+Sources: [Claude Code](https://code.claude.com/docs/en/hooks), [Codex](https://developers.openai.com/codex/hooks), [Copilot](https://docs.github.com/en/copilot/reference/hooks-configuration), [Cursor](https://cursor.com/docs/hooks), [Antigravity](https://antigravity.google/docs/hooks), [Kiro](https://kiro.dev/docs/hooks/), [OpenCode](https://opencode.ai/docs/plugins/), [Kilo](https://kilo.ai/docs/automate/extending/plugins).
 
 ## Limits
 
@@ -66,7 +66,7 @@ Sources: [Claude Code](https://code.claude.com/docs/en/hooks), [Codex](https://l
 | Limit | What it means for you |
 | --- | --- |
 | Only a project `.cursor/hooks.json` fires | A plugin-scope hooks file does nothing |
-| `postToolUse` takes `additional_context` only, so `decision: block` is dropped ([hooks](https://cursor.com/docs/agent/hooks)) | A `PostToolUse` block does not stop Cursor |
+| `postToolUse` takes `additional_context` only, so `decision: block` is dropped ([hooks](https://cursor.com/docs/hooks)) | A `PostToolUse` block does not stop Cursor |
 | A headless `cursor-agent -p` run delivers no `stop` | A `Stop` hook such as a memory sync does not run headless |
 
 ### OpenCode and Kilo Code
@@ -76,6 +76,7 @@ Sources: [Claude Code](https://code.claude.com/docs/en/hooks), [Codex](https://l
 | A subagent's child session runs neither `SessionStart` nor `Stop` | Hooks fire once per task, not per subagent |
 | One `Stop` hook per plugin can continue a turn | After one blocks, the next stay silent |
 | A `SessionStart` script that exits 2 has its stderr added to the model's system prompt | Claude Code shows it to the person only; do not exit 2 for a message |
+| On OpenCode 2, a refusal reaches only write and edit, and a message for the person is not shown | A hook that refuses a shell command is not stopped there |
 
 ### Codex
 

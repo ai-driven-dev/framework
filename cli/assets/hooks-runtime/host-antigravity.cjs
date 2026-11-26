@@ -28,10 +28,15 @@ function readPayload() {
   }
 }
 
+/** The first non-empty string of `roots`, else the process's own folder. */
+function firstRootOr(roots) {
+  const [root] = Array.isArray(roots) ? roots : [];
+  return typeof root === "string" && root !== "" ? root : process.cwd();
+}
+
 /** The session's folder is the first workspace path: `agy` runs a hook from its plugin's root. */
 function folderOf(raw) {
-  const [root] = Array.isArray(raw.workspacePaths) ? raw.workspacePaths : [];
-  return typeof root === "string" && root !== "" ? root : process.cwd();
+  return firstRootOr(raw.workspacePaths);
 }
 
 function writtenFiles(tool, args, cwd) {
@@ -100,11 +105,15 @@ function answer({ text } = {}) {
 }
 
 /** Refuses the tool call about to run, with `reason` as what the model is told. Does nothing at any
- * other event: a hook that refuses is written once and is harmless where nothing can be refused.
- * `agy` runs the tool on `allow` and on no answer, and denies on an empty object, so only an
- * explicit deny refuses. */
+ * other event: a hook that refuses is written once and is harmless where nothing can be refused. */
 function refuse(reason) {
   if (current?.event !== "PreToolUse" || typeof reason !== "string" || reason === "") return;
+  denyToolCall(reason);
+}
+
+/** `agy` runs the tool on `allow` and on no answer, and denies on an empty object, so only an
+ * explicit deny refuses. */
+function denyToolCall(reason) {
   print({ decision: "deny", reason });
 }
 

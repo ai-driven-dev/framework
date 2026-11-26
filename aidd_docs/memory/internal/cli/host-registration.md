@@ -1,6 +1,6 @@
 # Host registration
 
-What a host (Claude Code, Codex, Copilot) says it registered, and the calls that change it. Language: `cli/src/contexts/host-registration/glossary.md`; record rules: the skill's [`references/contexts/host-registration.md`](../../../../.claude/skills/working-on-cli/references/contexts/host-registration.md).
+What a host (Claude Code, Codex, Copilot, Kimi) says it registered, and the calls that change it. Language: `cli/src/contexts/host-registration/glossary.md`; record rules: the skill's [`references/contexts/host-registration.md`](../../../../.claude/skills/working-on-cli/references/contexts/host-registration.md).
 
 ## Ports
 

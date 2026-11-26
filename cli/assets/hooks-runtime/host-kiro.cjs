@@ -5,10 +5,7 @@
  * build puts one such adapter per tool at `hooks/lib/host.cjs`; the plugin tree ships Claude
  * Code's. Node built-ins only; anything unreadable is no event, and prints nothing.
  *
- * SessionStart, PreToolUse, PostToolUse and Stop are delivered to Kiro: they are the events whose
- * payload was captured, so a payload naming any other event is read as no event. UserPromptSubmit
- * and SubagentStop are captured too and delivered by the profile, but no framework script reads
- * them: like Cursor's, their payloads read as no event until one does.
+ * Limit: a payload naming an event no script reads (UserPromptSubmit, SubagentStop) is no event.
  */
 const fs = require("node:fs");
 const os = require("node:os");
@@ -61,7 +58,7 @@ function readEvent() {
     ...(SHELLS.has(raw.tool_name) && typeof raw.tool_input?.command === "string"
       ? { command: raw.tool_input.command }
       : {}),
-    stopActive: false, // kiro-cli V3 payloads carry no continuation marker
+    stopActive: false, // Kiro payloads carry no continuation marker
     sessionId: typeof raw.session_id === "string" ? raw.session_id : null,
     cwd,
     raw,
@@ -73,11 +70,12 @@ function print(output) {
   process.stdout.write(`${JSON.stringify(output)}\n`);
 }
 
-/** Asks the model to go on before the turn ends, with `text` as what it must do: a block decision
- * at Stop, documented for the Agent Stop trigger (https://kiro.dev/docs/hooks/types/, CLI tab) and
- * seen answered on kiro-cli V3 (other Kiro surfaces unprobed). */
+// A block decision at Stop: https://kiro.dev/docs/hooks/types/ (CLI tab)
+/** Asks the model to go on before the turn ends, with `text` as what it must do. Asks once: a
+ * turn end that is already a continuation is never continued again. */
 function continueTurn(text) {
   if (current?.event !== "Stop" || typeof text !== "string" || text === "") return;
+  if (current.stopActive === true) return;
   print({ decision: "block", reason: text });
 }
 
@@ -90,12 +88,15 @@ function answer({ text } = {}) {
   if (current.event === "SessionStart") process.stdout.write(`${text}\n`);
 }
 
-// kiro-cli V3 was seen to stop the tool on it and hand the reason to the model.
-/** Refuses the tool call about to run, with `reason` as what the model is told: exit code 2 with
- * the reason on standard error. Does nothing at any other event: a hook that refuses is written
- * once and is harmless where nothing can be refused. */
+/** Refuses the tool call about to run, with `reason` as what the model is told. Does nothing at any
+ * other event: a hook that refuses is written once and is harmless where nothing can be refused. */
 function refuse(reason) {
   if (current?.event !== "PreToolUse" || typeof reason !== "string" || reason === "") return;
+  denyToolCall(reason);
+}
+
+/** Exit code 2 with the reason on standard error. */
+function denyToolCall(reason) {
   process.stderr.write(reason);
   process.exitCode = 2;
 }

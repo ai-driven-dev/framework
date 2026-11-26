@@ -37,7 +37,7 @@ function replacedByWrite(response) {
   return response?.type === "create" && response.originalFile === null ? "" : undefined;
 }
 
-function writtenFiles(tool, input, response, cwd) {
+function writtenFiles(tool, input, cwd, response) {
   if (!WRITES.has(tool) || typeof input?.file_path !== "string") return [];
   const file = { path: path.resolve(cwd, input.file_path) };
   // A write carries the whole file; an edit carries fragments of it, never `content`.
@@ -68,7 +68,7 @@ function readEvent() {
   current = {
     host: HOST,
     event,
-    files: filesOf(event, writtenFiles(tool, input, raw.tool_response, cwd)),
+    files: filesOf(event, writtenFiles(tool, input, cwd, raw.tool_response)),
     ...(SHELLS.has(tool) && typeof input?.command === "string" ? { command: input.command } : {}),
     stopActive: raw.stop_hook_active === true,
     sessionId: typeof raw.session_id === "string" ? raw.session_id : null,
@@ -82,7 +82,6 @@ function print(output) {
   process.stdout.write(`${JSON.stringify(output)}\n`);
 }
 
-/** Whether there is a message to show the person. */
 function hasPerson(person) {
   return typeof person === "string" && person !== "";
 }
@@ -121,6 +120,10 @@ function answer({ level, text, person } = {}) {
  * other event: a hook that refuses is written once and is harmless where nothing can be refused. */
 function refuse(reason) {
   if (current?.event !== "PreToolUse" || typeof reason !== "string" || reason === "") return;
+  denyToolCall(reason);
+}
+
+function denyToolCall(reason) {
   print({
     hookSpecificOutput: {
       hookEventName: "PreToolUse",

@@ -7,7 +7,6 @@ export interface ServerHost {
   readonly server: HostPluginServer;
 }
 
-/** The plugin server each tool takes its plugins through. */
 export interface PluginServerHosts {
   /** `undefined` for a tool that declares none. */
   of(toolId: ToolId): ServerHost | undefined;

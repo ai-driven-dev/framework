@@ -3,7 +3,6 @@ import type { PluginDistribution } from "../../../shared/domain/plugin/plugin-di
 import { McpConfigError } from "../../../shared/domain/shared.error.js";
 
 export const PLUGIN_HOOKS_RELATIVE = "hooks/hooks.json";
-export const PLUGIN_MCP_RELATIVE = ".mcp.json";
 export const PLUGIN_AGENT_INPUT_EXT = ".md";
 export const PLUGIN_SKILL_ENTRY_FILE = "SKILL.md";
 

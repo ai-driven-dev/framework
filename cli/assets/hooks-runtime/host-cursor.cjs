@@ -32,11 +32,16 @@ function readPayload() {
   }
 }
 
+/** The first non-empty string of `roots`, else the process's own folder. */
+function firstRootOr(roots) {
+  const [root] = Array.isArray(roots) ? roots : [];
+  return typeof root === "string" && root !== "" ? root : process.cwd();
+}
+
 /** The session's folder is the first workspace root: a shell call's own `cwd` is where that
  * one command ran, never the session's. */
 function folderOf(raw) {
-  const [root] = Array.isArray(raw.workspace_roots) ? raw.workspace_roots : [];
-  return typeof root === "string" && root !== "" ? root : process.cwd();
+  return firstRootOr(raw.workspace_roots);
 }
 
 function writtenFiles(tool, input, cwd) {
@@ -85,13 +90,16 @@ function continueTurn(text) {
   print({ followup_message: text });
 }
 
-/** Both levels inform: Cursor was seen dropping a block after a write, so the model would
- * see nothing. At stop, any answer continues the turn. */
+/** Both levels inform: Cursor drops a block after a write (Limit: observed, undocumented). At stop,
+ * any answer continues the turn. */
 function answer({ text } = {}) {
   if (current === undefined || typeof text !== "string" || text === "") return;
   if (current.event === "Stop") return continueTurn(text);
   print({ additional_context: text });
 }
+
+/** Cursor delivers no tool call a hook can refuse, so refusing is a no-op here. */
+function refuse() {}
 
 /** Whether `folder` is a folder of this user's alone, created when `create` and missing; its parent must exist. */
 function ownFolder(folder, create) {
@@ -124,4 +132,4 @@ function hooksFolder(name, create) {
   return ownFolder(hooks, create) && ownFolder(own, create) ? own : null;
 }
 
-module.exports = { readEvent, answer, continueTurn, ownFolder, hooksFolder };
+module.exports = { readEvent, answer, continueTurn, refuse, ownFolder, hooksFolder };

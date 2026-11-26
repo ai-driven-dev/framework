@@ -1,6 +1,10 @@
 /** Cursor's flat build contract: direct workspace materialization. */
 
-import { agentsIn, skillsIn } from "../../../../../shared/domain/materialization/artifact-path.js";
+import {
+  agentsIn,
+  flatMcpFileArtifact,
+  skillsIn,
+} from "../../../../../shared/domain/materialization/artifact-path.js";
 import type {
   AgentMarkdown,
   ToolBuildContract,
@@ -33,12 +37,7 @@ export function buildCursorFlatContract(
         placement: agentsIn(layout),
         agentMarkdown,
       },
-      mcp: {
-        supported: true,
-        source: { kind: "configFile", srcPath: ".mcp.json" },
-        placement: { kind: "file", at: ".cursor/mcp.json" },
-        mcpServersKey: "mcpServers",
-      },
+      mcp: flatMcpFileArtifact(".cursor/mcp.json"),
       hooks: flatHooksArtifact(hooks, { tool: "cursor" }),
     },
     buildMarketplaceCatalog: null,

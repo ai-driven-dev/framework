@@ -2,7 +2,8 @@
 
 import {
   agentsIn,
-  rulesIn,
+  flatMcpFileArtifact,
+  rulesArtifact,
   skillsIn,
 } from "../../../../../shared/domain/materialization/artifact-path.js";
 import type {
@@ -69,18 +70,8 @@ export function buildAntigravityFlatContract(
         placement: agentsIn(layout),
         agentMarkdown: antigravityAgentMarkdown(agentTools),
       },
-      rules: {
-        supported: true,
-        source: { kind: "fullTree", srcDir: "rules" },
-        placement: rulesIn(layout),
-        ruleMarkdown: { frontmatter: activationTriggersRule, quote: "double" },
-      },
-      mcp: {
-        supported: true,
-        source: { kind: "configFile", srcPath: ".mcp.json" },
-        placement: { kind: "file", at: mcpPath },
-        mcpServersKey: "mcpServers",
-      },
+      rules: rulesArtifact(layout, { frontmatter: activationTriggersRule, quote: "double" }),
+      mcp: flatMcpFileArtifact(mcpPath),
       hooks: flatHooksArtifact(hooks, { tool: "antigravity" }, (existing, shipped) =>
         mergeAntigravityHooks(hooks, existing, shipped)
       ),
