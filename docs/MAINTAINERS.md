@@ -58,21 +58,9 @@ An admin:
 
 Release rules: [Release](../RELEASE.md#rules).
 
-## Marketplace releases and vendor listings
+## Marketplace releases
 
 After the GitHub release goes live, the CI publishes each tool’s marketplace ZIP to its branch and version tag in the [AIDD distribution repository](https://github.com/ai-driven-dev/marketplaces). Check the release recap for failures. A failed tool’s stable branch can still serve the previous release. Compare its branch and version tag before sharing the install link as up to date.
-
-For vendor discovery, prepare one candidate plugin and verify the installed result in that vendor’s client. Record the release tag, commit SHA, plugin path, plugin version, and the steps that demonstrate its main workflow. Use the vendor’s submission process:
-
-- **GitHub Copilot.** Submit an external plugin through the Awesome Copilot issue form. Use a public GitHub repository, a release tag, and the full commit SHA. [External plugin process](https://github.com/github/awesome-copilot/blob/main/CONTRIBUTING.md#adding-external-plugins)
-- **Cursor.** Submit the public repository URL for review. Cursor reviews each update. [Submission](https://cursor.com/docs/reference/plugins#submitting-a-plugin) · [Update review](https://cursor.com/help/security-and-privacy/marketplace-security)
-- **Claude Code.** Submit through the Anthropic developer portal for the public directory. An Anthropic partner contact handles listings in `claude-plugins-official`. [Anthropic directory](https://code.claude.com/docs/en/plugins/publish#submit-to-anthropics-directory)
-- **Codex.** Upload a compatible plugin ZIP from a verified identity in the OpenAI developer dashboard. A skills-only package can enter review. Packages with lifecycle hooks are currently ineligible. [OpenAI submission](https://developers.openai.com/plugins/deploy/submission)
-- **Antigravity.** Validate the plugin with `agy plugin validate`, complete its manifest and assets, and submit the partner intake form. [Antigravity publishing](https://antigravity.google/docs/build-plugins/#publish-to-the-antigravity-marketplace)
-- **Kilo Code.** Submit a tested skill, mode, or MCP integration to the Kilo Marketplace repository. [Kilo contributions](https://kilo.ai/docs/contributing#contributing-to-the-kilo-marketplace)
-- **Kiro.** Package a specific workflow as a Power, publish it in a public GitHub repository, and submit its URL to the registry. [Kiro submission](https://kiro.dev/registry/submit/?type=power)
-- **Kimi Code.** A compatible package can use a custom catalog or install URL. The Curated tab lists partner plugins. [Kimi plugins](https://moonshotai.github.io/kimi-code/en/customization/plugins.html)
-- **OpenCode.** Package a compatible plugin for distribution from npm or Git. [OpenCode plugins](https://opencode.ai/docs/plugins/)
 
 ## Add to the framework
 

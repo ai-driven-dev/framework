@@ -7,7 +7,10 @@
 // which is how its test runs it.
 
 import { readFileSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
+
+const { publishableTools } = createRequire(import.meta.url)("./marketplace-tools.cjs");
 
 const rootFlag = process.argv.indexOf("--root");
 const ROOT =
@@ -65,12 +68,15 @@ function supportTables() {
     return `${carriers.join(" and ")} only`;
   };
 
+  const hosted = new Set(publishableTools(record).map((tool) => tool.id));
+
   return table(
-    ["Tool", "Directory", "Marketplace", "Flat files", ...carried.map(([, label]) => label)],
+    ["Tool", "Directory", "Marketplace", "Hosted catalog", "Flat files", ...carried.map(([, label]) => label)],
     record.map((tool) => [
       tool.name,
       `\`${tool.directory}\``,
       marketplaceCell(tool, { mark: (present) => (present ? "✅" : "❌"), withPath: true }),
+      hosted.has(tool.id) ? "✅" : "❌",
       tool.builds.flat ? "✅" : "❌",
       ...carried.map(([key]) => cell(tool, key)),
     ])

@@ -94,10 +94,10 @@ With GitHub Copilot CLI:
 
 ```sh
 copilot plugin marketplace add https://github.com/ai-driven-dev/marketplaces.git#copilot
-copilot plugin install aidd-context@aidd-framework
+copilot plugin install aidd-context@aidd-marketplace
 ```
 
-To pin a version, use `#copilot-v<version>`. For a local catalog, extract `aidd-framework-copilot-marketplace-<version>.zip` and pass its directory to `copilot plugin marketplace add`.
+To pin a version, use `#copilot-v<version>`. For a local catalog, extract `aidd-framework-copilot-marketplace-<version>.zip` and pass its directory to `copilot plugin marketplace add`. Its plugin IDs use `@aidd-framework`.
 
 ### Codex
 
@@ -113,18 +113,14 @@ Codex loads subagents from its user or project agent directory. Installing from 
 
 ```sh
 codex plugin marketplace add https://github.com/ai-driven-dev/marketplaces.git --ref codex
-codex plugin add aidd-context@aidd-framework
+codex plugin add aidd-context@aidd-marketplace
 ```
 
-To pin a version, use `--ref codex-v<version>`. For a local catalog, extract `aidd-framework-codex-marketplace-<version>.zip` and pass its directory to `codex plugin marketplace add`.
+To pin a version, use `--ref codex-v<version>`. For a local catalog, extract `aidd-framework-codex-marketplace-<version>.zip` and pass its directory to `codex plugin marketplace add`. Its plugin IDs use `@aidd-framework`.
 
 ### Cursor
 
-Cursor Teams and Enterprise offer Git-backed team marketplaces. The AIDD catalog is on the distribution repository’s default branch, `cursor`. The hosted installation in the team client still needs verification. [Cursor team marketplaces](https://cursor.com/docs/plugins)
-
-```sh
-cursor-agent plugin marketplace add https://github.com/ai-driven-dev/marketplaces.git --git-ref cursor
-```
+AIDD publishes the Cursor catalog on the distribution repository's `cursor` branch. Adding it in Cursor is unverified: `cursor-agent plugin marketplace add` needs a signed-in account, so no install from it has been tested. [Cursor plugins](https://cursor.com/docs/plugins)
 
 For a local installation where local plugins are enabled:
 
