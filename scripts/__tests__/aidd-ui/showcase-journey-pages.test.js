@@ -5,8 +5,7 @@ const { UI, LIB, makeTmp, removeTmp, writeProject, put, record } = require("../f
 const { load } = require(path.join(LIB, "project.cjs"));
 const { showcaseOf } = require(path.join(LIB, "showcase.cjs"));
 
-// Record ids are unique per kind, not across kinds: a journey and a wireframe may share one. Each is its
-// own page, and every link to the journey opens the journey.
+// Record ids are unique per kind, not across kinds.
 
 let tmp;
 

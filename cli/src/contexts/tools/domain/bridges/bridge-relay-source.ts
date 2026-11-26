@@ -11,8 +11,7 @@ export const MATCHES_TOOL_SOURCE = `function matchesTool(tools, tool) {
   return !tools || tools.includes(tool.toLowerCase());
 }`;
 
-/** A tool call's arguments as a script reads them, written into `toolUseCallsFor`, whose comment
- * says why. */
+/** The host names the written file `filePath`; scripts read Claude Code's `file_path`. */
 const TOOL_INPUT_SOURCE =
   'const toolInput = typeof args.filePath === "string" ? { ...args, file_path: args.filePath } : args;';
 
@@ -21,8 +20,7 @@ const TOOL_INPUT_SOURCE =
  * exits any other way, is reported and refuses nothing. A PostToolUse answer joins the tool's own output. */
 export const TOOL_USE_SOURCE = `${MATCHES_TOOL_SOURCE}
 
-/** Pure: a tool call -> every hook of one event whose matcher allows its tool. The host names the
- * written file \`filePath\`; the scripts read Claude Code's \`file_path\`. */
+/** Pure: a tool call -> every hook of one event whose matcher allows its tool. */
 function toolUseCallsFor(event, hooks, call, args, directory) {
   const tool = call.tool;
   ${TOOL_INPUT_SOURCE}
@@ -126,23 +124,10 @@ async function addPromptContext(input, output, directory) {
 }`;
 }
 
-/** SessionStart runs on the first event that names a session, so the script knows its session.
- * That event is `session.created` for a new session; a continued one is created no more, and its
- * first event is another. A new session's first event names its folder under info, which every
- * later hook of the session runs in; a continued one's names none, and the host's folder stands.
- * Every script's answer reaches the model in one block, added to the system prompt of each of that
- * session's turns, and their messages for the person are shown once, at the first turn: shown
- * while the host starts, they reach a TUI not yet listening. Not awaited by the event: the
- * session's first turn awaits it. The map is module-level: the host creates the plugin again, and
- * a fresh map would run the scripts again and lose their answer.
+/** SessionStart runs once per session, on its first event; the map is module-level because the host
+ * re-creates the plugin. A child session (it names a parent) runs neither SessionStart nor Stop.
  *
- * Limit: a SessionStart script that exits 2 has its stderr added to the system prompt, where
- * Claude Code shows it to the person only.
- * Limit: a session's entry is never cleared. No captured payload shows a session's deletion, so
- * none is read; the entry stays in memory, session ids being unique.
- *
- * A subagent's child session is created naming its parent (observed on OpenCode 1.19.3): it is
- * the parent's work, not a session of its own, so it runs neither SessionStart nor Stop. */
+ * Limit: a SessionStart exit 2 lands in the system prompt; a session's entry is never cleared. */
 export const SESSION_START_SOURCE = `const sessions = new Map();
 const childSessions = new Set();
 
@@ -183,16 +168,10 @@ async function addSessionContext(input, output, show) {
   show?.(person);
 }`;
 
-/** A turn's end: every Stop script runs, each that blocks sends its reason as the session's next
- * turn, and the Stops after it tell their scripts so through `stop_hook_active`, until a message
- * that is no Stop follow-up (the person's, a queued finding) starts a fresh turn. The host hands
- * every plugin every message, so a follow-up is told apart by its mark, whichever plugin sent it.
- * A Stop never clears it: with two plugins that each sent a follow-up, the host idles between
- * their two turns, and a Stop that cleared it made the second turn read as fresh and every script
- * block again, forever (observed on Kilo 7.7.5 and 7.8.32).
+/** A Stop follow-up is told apart by its mark, never cleared: two plugins' follow-ups idle the host
+ * between their turns.
  *
- * Limit: one Stop hook per plugin: once one blocked, the hooks after it are told the turn
- * continues, and stay silent. */
+ * Limit: one Stop hook per plugin blocks; the ones after it are told the turn continues. */
 export const TURN_END_SOURCE = `const continuedTurns = new Set();
 
 /** An idle session's Stop calls; \`runStop\` adds \`stop_hook_active\` to each payload. */
@@ -212,13 +191,13 @@ function isFollowUp(parts) {
   return parts.some((part) => part.metadata?.aidd === FOLLOW_UP.aidd);
 }
 
-/** Resolves once the scripts ran, with the follow-ups still in flight: the prompt is the session's
- * next turn, and the turn end must not hold it. */
-async function runStop(sessionId, directory, { client, method, show }) {
+/** Returns the follow-ups still in flight: the prompt is the session's next turn, and the turn end
+ * must not hold it. */
+function runStop(sessionId, directory, { client, method, show }) {
   const sends = [];
   for (const call of stopCallsFor(sessionId, directory)) {
     const payload = { ...call.payload, stop_hook_active: continuedTurns.has(sessionId) };
-    const { reason, person } = await stopReasonOf(call.script, call.args, payload, directory);
+    const { reason, person } = stopReasonOf(call.script, call.args, payload, directory);
     show?.(person);
     if (!reason) continue;
     continuedTurns.add(sessionId);
@@ -227,17 +206,10 @@ async function runStop(sessionId, directory, { client, method, show }) {
   return sends;
 }`;
 
-/** The hooks every bridge hands its host, over the host's own client: what differs per host is the
- * folder it starts in, the client call that sends a follow-up, where a message for the person goes
- * and whether a turn end's follow-ups are tracked. A turn ends at `session.idle`, on both hosts.
- * A script that fails is reported and answers nothing; a PreToolUse refusal is thrown, which is
- * how the host stops the call.
+/** The hooks every bridge hands its host, over the host's own client.
  *
- * Limit: a hook throws into the host only on input no capture shows, such as a message with no
- * part. A PostToolUse failure is reported.
- * Limit: every idle is a turn end. No capture shows a host idle twice in one turn; were it to,
- * the second Stop would run told the turn continues when the first blocked, and as a fresh one
- * when it did not. */
+ * Limit: a hook throws only on input no capture shows (a message with no part).
+ * Limit: every idle is a turn end. */
 export const BRIDGE_HOOKS_SOURCE = `function bridgeHooks({ directory, client, followUp, show, track }) {
   const folderOf = (sessionId) => sessionDirectory(sessionId, directory);
   return {
@@ -245,9 +217,8 @@ export const BRIDGE_HOOKS_SOURCE = `function bridgeHooks({ directory, client, fo
       runSessionStart(event, directory);
       const sessionId = event.properties.sessionID;
       if (typeof sessionId !== "string" || event.type !== "session.idle" || childSessions.has(sessionId)) return;
-      const stopping = runStop(sessionId, folderOf(sessionId), { client, method: followUp, show });
-      track?.(stopping.then((sends) => Promise.all(sends)));
-      await stopping;
+      const sends = runStop(sessionId, folderOf(sessionId), { client, method: followUp, show });
+      track?.(Promise.all(sends));
     },
     "experimental.chat.system.transform": (input, output) => addSessionContext(input, output, show),
     "chat.message": async (input, output) => {

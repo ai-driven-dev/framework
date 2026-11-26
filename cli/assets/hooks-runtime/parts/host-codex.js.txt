@@ -52,7 +52,9 @@ function answer({ level, text, person } = {}) {
   print({ hookSpecificOutput: { hookEventName: current.event, additionalContext: text } });
 }
 
-// @part refuse-in-hook-output
+// @part refuse
+
+// @part deny-in-hook-output
 
 // @part own-folder
 

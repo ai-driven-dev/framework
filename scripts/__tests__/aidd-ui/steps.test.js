@@ -4,8 +4,6 @@ const { describe, it } = require("node:test");
 const { LIB } = require("../fixtures/aidd-ui/project.js");
 const { STEPS, CATEGORIES, stepOf, categoryOf, setStepOf, awaitingOf } = require(path.join(LIB, "steps.cjs"));
 
-// The five steps of the method and the categories of the elements, decided from the records alone.
-
 const rec = (frontMatter) => ({ frontMatter });
 const set = (...paths) => ({ id: "s", variants: [{ name: "a", files: paths.map((each) => ({ path: each, text: "" })) }] });
 

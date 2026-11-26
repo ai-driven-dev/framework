@@ -1,10 +1,9 @@
 import type { ShippedHooks } from "../../../../shared/domain/materialization/build-contract.js";
-import { genericFlatHooksScriptPath } from "../../../../shared/domain/materialization/flat-paths.js";
 import { rewritePluginRootInJson } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import type { ProjectHookEntry } from "../../contract/tool-vocabulary.js";
 import { toBase64 } from "../formats/base64.js";
-import { PLUGIN_HOOKS_SOURCE } from "../formats/hooks/descriptor.js";
 import { hostToolNamesMatching, matcherNamesNoToolWarning } from "../formats/host-tool-names.js";
+import { pluginScriptPath, SCRIPTS } from "./hooks-merge.js";
 import { unmappedEventWarning } from "./hooks-warnings.js";
 import type { PluginHookItem, PluginHooksShape } from "./plugin-hooks-shape.js";
 
@@ -45,18 +44,6 @@ export interface WrappedCommandHooksTarget {
   };
 }
 
-export function wrappedCommandHooksScriptPath(
-  target: WrappedCommandHooksTarget,
-  pluginName: string,
-  hooksRelativePath: string
-): string {
-  const prefix = `${PLUGIN_HOOKS_SOURCE.scriptDir}/`;
-  const rest = hooksRelativePath.startsWith(prefix)
-    ? hooksRelativePath.slice(prefix.length)
-    : hooksRelativePath;
-  return genericFlatHooksScriptPath(target.descriptor.flat.scriptsDir, pluginName, rest);
-}
-
 const runsCommand = (hook: PluginHookItem): hook is PluginHookItem & ProjectHookEntry =>
   typeof hook.command === "string";
 
@@ -88,8 +75,8 @@ function scriptPathOf(
 ): string {
   const { pluginName, suffix, locate } = at;
   if (target.runsFrom !== undefined) return `${target.runsFrom.pluginDir(pluginName)}${suffix}`;
-  return suffix.startsWith(`${PLUGIN_HOOKS_SOURCE.scriptDir}/`)
-    ? wrappedCommandHooksScriptPath(target, pluginName, suffix)
+  return suffix.startsWith(SCRIPTS)
+    ? pluginScriptPath(target.descriptor.flat.scriptsDir, pluginName, suffix)
     : locate(suffix);
 }
 

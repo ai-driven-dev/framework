@@ -13,7 +13,6 @@ How to tell each host AI tool is installed in a project.
 | OpenCode / `opencode` | `.opencode/`, `opencode.json` or `opencode.jsonc` |
 | Kilo Code / `kilo` | `.kilo/`, `kilo.json` or `kilo.jsonc` |
 
-- List the project root with hidden entries, since a file search misses an empty marker.
-- Test each listed path itself, never its parent: `.agents/skills/` alone signals no host.
-- Every host reads `AGENTS.md`, so it signals none; when no marker matches, confirm the host.
-- Kimi Code CLI keeps no project hook, only user-level ones, so it is never offered.
+Every host reads `AGENTS.md`, so it signals none. When no signal matches, confirm the host.
+
+Kimi Code CLI keeps no project hook, only user-level ones, so it is never offered.

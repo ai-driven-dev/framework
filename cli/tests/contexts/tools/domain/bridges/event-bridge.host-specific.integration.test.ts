@@ -1,6 +1,6 @@
 /**
  * What OpenCode's generated bridge does its own way, under a fake host that emits its events: its
- * loader, and the follow-ups and scripts its disposal waits for. Kilo's bridge has nothing of its
+ * loader, and the follow-ups its disposal waits for. Kilo's bridge has nothing of its
  * own.
  */
 
@@ -25,16 +25,6 @@ describe("the bridge generated with OpenCode's parameters", () => {
 
     await emit({ type: "session.idle", properties: { sessionID: "s1" } });
     expect(delivered).toStrictEqual([]);
-    await server.dispose();
-
-    expect(delivered).toHaveLength(1);
-  });
-
-  it("waits for a Stop script still running when the host shuts the plugin down", async () => {
-    const { server, delivered } = await open(bridgedHost("opencode"));
-
-    // Not awaited: dispose arrives while the Stop script still runs.
-    void server.event({ event: { type: "session.idle", properties: { sessionID: "s1" } } });
     await server.dispose();
 
     expect(delivered).toHaveLength(1);

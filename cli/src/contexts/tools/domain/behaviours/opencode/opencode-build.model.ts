@@ -5,7 +5,7 @@
 import {
   agentsIn,
   commandsIn,
-  rulesIn,
+  rulesArtifact,
   skillsIn,
 } from "../../../../../shared/domain/materialization/artifact-path.js";
 import type {
@@ -112,11 +112,7 @@ export function buildOpencodeFlatContract(
         placement: agentsIn(layout),
         agentMarkdown,
       },
-      rules: {
-        supported: true,
-        source: { kind: "fullTree", srcDir: "rules" },
-        placement: rulesIn(layout),
-      },
+      rules: rulesArtifact(layout),
       commands: commandsArtifact(layout, commandMarkdown),
       mcp: { supported: false, reason: "carried by the config artifact (opencode.json mcp)" },
       hooks: flatHooksArtifact(hooks, { tool: "opencode", bridge: generateOpencodeHooksBridge }),

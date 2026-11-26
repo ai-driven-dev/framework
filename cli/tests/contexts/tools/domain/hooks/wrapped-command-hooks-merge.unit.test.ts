@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   mergeWrappedCommandHooks,
   type WrappedCommandHooksTarget,
-  wrappedCommandHooksScriptPath,
 } from "../../../../../src/contexts/tools/domain/hooks/wrapped-command-hooks-merge.js";
 
 const target: WrappedCommandHooksTarget = {
@@ -96,13 +95,6 @@ describe("wrapped command hooks", () => {
     const wrapped = Buffer.from(command.split(" ").at(-1) as string, "base64").toString();
 
     expect(wrapped).toBe("./.h/hooks/p/a.sh && ./L/b.sh");
-  });
-
-  it("names the path a plugin's scripts land at", () => {
-    expect([
-      wrappedCommandHooksScriptPath(target, "p", "hooks/a.sh"),
-      wrappedCommandHooksScriptPath(target, "p", "other/a.sh"),
-    ]).toEqual([".h/hooks/p/a.sh", ".h/hooks/p/other/a.sh"]);
   });
 
   it("keeps a path outside hooks/ as it is when no locator is given", () => {

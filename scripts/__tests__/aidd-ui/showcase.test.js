@@ -8,8 +8,6 @@ const colour = require(path.join(LIB, "colour.cjs"));
 const { charteSectionsOf } = require(path.join(LIB, "charte-page.cjs"));
 const { showcaseOf, copiedOf, keptOf, WIDTH, LABELS } = require(path.join(LIB, "showcase.cjs"));
 
-// The showcase is a pure module that renders pages and a command that writes them: the pages are
-// judged as text, and the command as a subprocess, as the skill calls it.
 const pageFile = (id) => (id === "onboarding" ? "_journey-onboarding.html" : `${id}.html`); // the one journey of the project
 const PAGE_IDS = ["brand", "button", "dialog", "home", "icon-search", "old-button", "onboarding", "search-flow", "search-field", "system"];
 const SHOWCASE = `${UI}/showcase`;
