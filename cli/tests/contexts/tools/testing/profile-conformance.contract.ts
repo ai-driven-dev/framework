@@ -173,7 +173,8 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
     expect(Object.keys(profile.buildContracts ?? {}).length).toBeGreaterThan(0);
   }),
   aiCheck("is probed where it publishes a marketplace", (profile) => {
-    if (profile.buildContracts?.marketplace === undefined) return;
+    const marketplace = profile.buildContracts?.marketplace?.();
+    if (marketplace === undefined || marketplace.buildMarketplaceCatalog === null) return;
     expect(profile.distributionPaths("marketplace").length).toBeGreaterThan(0);
   }),
   aiCheck("lets its flat build carry hooks exactly when it accepts them", (profile) => {

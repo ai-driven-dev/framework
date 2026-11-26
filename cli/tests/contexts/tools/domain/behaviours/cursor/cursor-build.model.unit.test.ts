@@ -59,6 +59,7 @@ describe("building Cursor's marketplace contract", () => {
         skillsList: ["01-plan"],
         hasHooksJson: true,
         hasMcpJson: true,
+        mcpServers: {},
       }
     );
 

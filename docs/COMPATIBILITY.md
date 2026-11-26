@@ -14,7 +14,7 @@ What each AI tool receives from the framework.
 | Codex | `.codex/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
 | Antigravity CLI | `.agents/` | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
 | Kiro | `.kiro/` | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Kimi Code CLI | `.kimi-code/` | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Kimi Code CLI | `.kimi-code/` | ✅ | ✅ | ✅ | ✅ | Flat files only | ❌ | ❌ |
 
 <!--support:end-->
 

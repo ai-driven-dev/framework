@@ -1,14 +1,18 @@
-/** Flat only. Skills sit in the shared `.agents/skills/`; agents sit in Kimi's own folder, because
- * `.agents/agents/` belongs to Antigravity, whose tool names Kimi does not read. */
+/** Kimi's two build contracts. Flat: skills sit in the shared `.agents/skills/`; agents sit in
+ * Kimi's own folder, because `.agents/agents/` belongs to Antigravity, whose tool names Kimi does
+ * not read. Plugin: a tree Kimi installs from a local directory, at user scope only. */
 
 import { agentsIn, skillsIn } from "../../../../../shared/domain/materialization/artifact-path.js";
 import type {
   AgentMarkdown,
+  PluginPresence,
   ToolBuildContract,
 } from "../../../../../shared/domain/materialization/build-contract.js";
 import type { FlatArtifactLayout } from "../../../../../shared/domain/materialization/flat-paths.js";
+import { rewritePluginRootInJson } from "../../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import { portableAgentFrontmatter } from "../../formats/agents/portable-agent.js";
 import { hostToolNames } from "../../formats/host-tool-names.js";
+import { identityFields } from "../../marketplace-catalog.js";
 
 /** The Kimi name of each Claude tool an agent may declare; a Claude tool absent from it has no
  * Kimi equivalent. */
@@ -77,6 +81,59 @@ export function buildKimiFlatContract({
         placement: { kind: "file", at: mcpPath },
         mcpServersKey: "mcpServers",
       },
+      hooks: { supported: false, reason: hooksReason },
+    },
+    buildMarketplaceCatalog: null,
+    buildMarketplaceEntry: null,
+  };
+}
+
+/** Where Kimi reads a plugin's manifest: https://www.kimi.com/code/docs/en/kimi-code-cli/customization/plugins.html */
+const PLUGIN_MANIFEST_RELATIVE = ".kimi-plugin/plugin.json";
+
+export interface KimiPluginSpec {
+  readonly agentTools: KimiAgentTools;
+  readonly hooksReason: string;
+}
+
+/** The manifest Kimi installs. Every path starts with `./`, and Kimi finds `agents/` by itself
+ * when the manifest names none. Its servers are an inline object, not a path, with the plugin
+ * root its own directory. `repository` is left out: Kimi lists no such field. */
+function kimiPluginManifest(
+  source: Record<string, unknown>,
+  { skillsList, mcpServers }: PluginPresence
+): Record<string, unknown> {
+  const { repository: _repository, ...identity } = identityFields(source);
+  return {
+    ...identity,
+    ...(skillsList.length > 0 && { skills: "./skills/" }),
+    ...(Object.keys(mcpServers).length > 0 && { mcpServers: rewritePluginRootInJson(mcpServers) }),
+  };
+}
+
+/** The tree `aidd translate --to kimi --as marketplace` builds and the user-scope install hands
+ * to Kimi's own plugin server: skills and agents under the plugin, the servers in the manifest. */
+export function buildKimiPluginContract({
+  agentTools,
+  hooksReason,
+}: KimiPluginSpec): ToolBuildContract {
+  return {
+    manifestFileRelative: PLUGIN_MANIFEST_RELATIVE,
+    synthesizeManifest: kimiPluginManifest,
+    manifestSchemaName: null,
+    artifacts: {
+      skills: {
+        supported: true,
+        source: { kind: "fullTree", srcDir: "skills" },
+        placement: { kind: "relative" },
+      },
+      agents: {
+        supported: true,
+        source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
+        placement: { kind: "relative" },
+        agentMarkdown: kimiAgentMarkdown(agentTools),
+      },
+      mcp: { supported: false, reason: "Kimi reads a plugin's servers from its manifest" },
       hooks: { supported: false, reason: hooksReason },
     },
     buildMarketplaceCatalog: null,

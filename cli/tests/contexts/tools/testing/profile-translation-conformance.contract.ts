@@ -48,6 +48,7 @@ const PRESENCE = {
   skillsList: ["hello"],
   hasHooksJson: true,
   hasMcpJson: true,
+  mcpServers: {},
 };
 
 export const PROFILE_TRANSLATION_CHECKS: readonly ConformanceCheck<TranslationSubject>[] = [

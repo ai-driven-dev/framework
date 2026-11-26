@@ -579,12 +579,15 @@ exports[`the data each registered profile declares > kimi 1`] = `
 {
   "builds": [
     "flat",
+    "marketplace",
   ],
   "configFiles": {},
   "directory": ".kimi-code/",
   "displayName": "Kimi Code CLI",
   "distribution": {
-    "manifest": [],
+    "manifest": [
+      ".kimi-plugin/plugin.json",
+    ],
     "marketplace": [],
   },
   "frontmatter": {

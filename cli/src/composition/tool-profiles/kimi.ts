@@ -1,4 +1,7 @@
-import { buildKimiFlatContract } from "../../contexts/tools/domain/behaviours/kimi/kimi-build.model.js";
+import {
+  buildKimiFlatContract,
+  buildKimiPluginContract,
+} from "../../contexts/tools/domain/behaviours/kimi/kimi-build.model.js";
 import { contract } from "../../contexts/tools/domain/profile/contract-builders.js";
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
 import { flatPlacement } from "../../contexts/tools/domain/sections/layout-section.js";
@@ -45,29 +48,37 @@ const AGENT_TOOLS: ReadonlyMap<string, string> = new Map([
   ["TaskStop", "TaskStop"],
 ]);
 
-/** Kimi documents hooks only as `[[hooks]]` in the user-level `~/.kimi-code/config.toml`, with no
- * project-level hook file: https://www.kimi.com/code/docs/en/kimi-code-cli/customization/hooks.html */
-const USER_LEVEL_ONLY =
-  "Kimi reads hooks only from the user-level config.toml, never from a project";
+/** Kimi reads hooks from `[[hooks]]` in the user-level `~/.kimi-code/config.toml` or from a local
+ * plugin's manifest, never from a project:
+ * https://www.kimi.com/code/docs/en/kimi-code-cli/customization/hooks.html and
+ * https://www.kimi.com/code/docs/en/kimi-code-cli/customization/plugins.html. A plugin's hook was
+ * observed installed and counted, never observed firing, so none is delivered. */
+const USER_CONFIG_REASON =
+  "Kimi reads hooks from the user config.toml or a local plugin, never from a project, and a plugin's hooks are not delivered until a payload is captured";
 
 export const kimi = defineAiTool({
   toolId: "kimi",
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
   displayName: "Kimi Code CLI",
+  distributionProbes: { manifest: [".kimi-plugin/plugin.json"] },
   signalDir: null,
   buildContracts: {
+    marketplace: contract(buildKimiPluginContract, {
+      agentTools: AGENT_TOOLS,
+      hooksReason: USER_CONFIG_REASON,
+    }),
     flat: contract(buildKimiFlatContract, {
       layout: KIMI_FLAT_LAYOUT,
       mcpPath: MCP_PATH,
       agentTools: AGENT_TOOLS,
-      hooksReason: USER_LEVEL_ONLY,
+      hooksReason: USER_CONFIG_REASON,
     }),
   },
 
   capabilities: {
     skills: { agentsSkillsDirectory: true },
-    hooks: { delivery: { kind: "none", reason: USER_LEVEL_ONLY } },
+    hooks: { delivery: { kind: "none", reason: USER_CONFIG_REASON } },
     layout: flatPlacement({ namespacePrefix: "aidd-", artifacts: KIMI_FLAT_LAYOUT }),
   },
 
