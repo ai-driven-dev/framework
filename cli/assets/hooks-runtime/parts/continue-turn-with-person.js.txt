@@ -1,0 +1,11 @@
+/** Asks the model to go on before the turn ends, with `text` as what it must do, and shows the
+ * person `person` where the host allows it. Asks once: a turn end that is already a continuation
+ * is never continued again. */
+function continueTurn(text, person) {
+  if (typeof text !== "string" || text === "" || current?.stopActive === true) return;
+  print({
+    decision: "block",
+    reason: text,
+    ...(hasPerson(person) ? { systemMessage: person } : {}),
+  });
+}

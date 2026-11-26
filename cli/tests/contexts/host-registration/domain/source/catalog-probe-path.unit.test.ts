@@ -14,7 +14,7 @@ describe("naming the catalog probe path", () => {
 
   it.each([
     ["is not an AI tool", TOOL.vscode],
-    ["declares no marketplace catalog", TOOL.antigravity],
+    ["declares no marketplace catalog", TOOL.kiro],
   ])("names nothing for a tool that %s", (_why, tool) => {
     expect(marketplaceCatalogProbePath(registeredTools().profile(tool), DIR)).toBeUndefined();
   });

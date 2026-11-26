@@ -16,7 +16,6 @@ const EVENTS = new Map([
   ["Stop", "Stop"],
 ]);
 const SHELLS = new Set(["Bash"]);
-const PATCH_FILE = /^\*\*\* (Add File|Update File|Delete File|Move to): (.+)$/;
 
 /** The event `readEvent` last returned: an answer is printed in its terms. */
 let current;
@@ -28,6 +27,8 @@ function readPayload() {
     return undefined;
   }
 }
+
+const PATCH_FILE = /^\*\*\* (Add File|Update File|Delete File|Move to): (.+)$/;
 
 /** Every file a patch names, once each, in the order it names them, with the lines the patch
  * added to it and those it removed as what it replaced, empty when none: an added or updated file,

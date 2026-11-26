@@ -4,16 +4,26 @@ exports[`the data each registered profile declares > antigravity 1`] = `
 {
   "builds": [
     "flat",
+    "marketplace",
   ],
   "configFiles": {},
   "directory": ".agents/",
   "displayName": "Antigravity CLI",
   "distribution": {
-    "manifest": [],
-    "marketplace": [],
+    "manifest": [
+      "plugin.json",
+    ],
+    "marketplace": [
+      ".antigravity-plugin/marketplace.json",
+    ],
   },
   "frontmatter": {
-    "agents": null,
+    "agents": {
+      "description": "Review code",
+      "model": "inherit",
+      "name": "reviewer",
+      "tools": "["view_file"]",
+    },
     "commands": null,
     "rules": {
       "a description alone": {
@@ -52,6 +62,13 @@ exports[`the data each registered profile declares > antigravity 1`] = `
   },
   "hooksRootToken": null,
   "installs": {
+    "agents": {
+      ".gitkeep": ".agents/agents/.gitkeep",
+      "helper.txt": ".agents/agents/helper.txt",
+      "reviewer.antigravity.md": ".agents/agents/reviewer.md",
+      "reviewer.md": ".agents/agents/reviewer.md",
+      "team/sub/reviewer.md": ".agents/agents/reviewer.md",
+    },
     "rules": {
       "00-architecture/.gitkeep": ".agents/rules/00-architecture/.gitkeep",
       "01-standards/1-mermaid.md": ".agents/rules/01-standards/1-mermaid.md",
@@ -65,20 +82,19 @@ exports[`the data each registered profile declares > antigravity 1`] = `
   "kind": "ai",
   "plugins": {
     "acceptsHooks": true,
-    "deliversHooksToProject": true,
-    "flatLayout": {
-      "namespacePrefix": "aidd-",
-      "rules": "top-level",
-      "skillLayout": "single-level",
-    },
-    "kind": "flat",
+    "deliversHooksToProject": false,
+    "kind": "native",
+    "rootToken": "\${PLUGIN_ROOT}",
   },
-  "projectHooks": ".agents/hooks.json",
+  "projectHooks": null,
   "sections": [
+    "agents",
     "skills",
     "rules",
+    "mcp",
     "hooks",
     "layout",
+    "manifest",
   ],
   "signalDir": null,
   "toolId": "antigravity",

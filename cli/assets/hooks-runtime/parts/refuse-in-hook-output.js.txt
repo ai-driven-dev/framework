@@ -1,0 +1,12 @@
+/** Refuses the tool call about to run, with `reason` as what the model is told. Does nothing at any
+ * other event: a hook that refuses is written once and is harmless where nothing can be refused. */
+function refuse(reason) {
+  if (current?.event !== "PreToolUse" || typeof reason !== "string" || reason === "") return;
+  print({
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: "deny",
+      permissionDecisionReason: reason,
+    },
+  });
+}

@@ -5,6 +5,7 @@
     "directory": ".claude/",
     "pluginMode": "native",
     "nativeCli": "claude",
+    "pluginTree": null,
     "builds": {
       "marketplace": {
         "skills": "yes",
@@ -30,6 +31,7 @@
     "directory": ".cursor/",
     "pluginMode": "native",
     "nativeCli": null,
+    "pluginTree": null,
     "builds": {
       "marketplace": {
         "skills": "yes",
@@ -55,6 +57,7 @@
     "directory": ".github/",
     "pluginMode": "native",
     "nativeCli": "copilot",
+    "pluginTree": null,
     "builds": {
       "marketplace": {
         "skills": "yes",
@@ -80,6 +83,7 @@
     "directory": ".opencode/",
     "pluginMode": "flat",
     "nativeCli": null,
+    "pluginTree": null,
     "builds": {
       "flat": {
         "skills": "yes",
@@ -97,6 +101,7 @@
     "directory": ".kilo/",
     "pluginMode": "flat",
     "nativeCli": null,
+    "pluginTree": null,
     "builds": {
       "flat": {
         "skills": "yes",
@@ -114,6 +119,7 @@
     "directory": ".codex/",
     "pluginMode": "native",
     "nativeCli": "codex",
+    "pluginTree": null,
     "builds": {
       "marketplace": {
         "skills": "yes",
@@ -137,13 +143,22 @@
     "id": "antigravity",
     "name": "Antigravity CLI",
     "directory": ".agents/",
-    "pluginMode": "flat",
+    "pluginMode": "native",
     "nativeCli": null,
+    "pluginTree": ".agents/plugins/",
     "builds": {
+      "marketplace": {
+        "skills": "yes",
+        "agents": "yes",
+        "mcp": "yes",
+        "hooks": "yes",
+        "rules": "yes",
+        "commands": "no"
+      },
       "flat": {
         "skills": "yes",
         "agents": "yes",
-        "mcp": "no",
+        "mcp": "yes",
         "hooks": "yes",
         "rules": "yes",
         "commands": "no"
@@ -156,6 +171,7 @@
     "directory": ".kiro/",
     "pluginMode": "flat",
     "nativeCli": null,
+    "pluginTree": null,
     "builds": {
       "flat": {
         "skills": "yes",
@@ -173,6 +189,7 @@
     "directory": ".kimi-code/",
     "pluginMode": "flat",
     "nativeCli": null,
+    "pluginTree": null,
     "builds": {
       "marketplace": {
         "skills": "yes",

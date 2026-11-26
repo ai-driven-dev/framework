@@ -97,7 +97,7 @@ describe("replacing a plugin's files", () => {
 
 describe("replacing a plugin that came from no marketplace", () => {
   const FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
-  const HOOKS_FILE = join(PROJECT_ROOT, ".agents/hooks.json");
+  const HOOKS_FILE = join(PROJECT_ROOT, ".kiro/hooks/aidd.json");
 
   /** The project hooks file `place` leaves for the sample plugin on a tool that delivers hooks to the project. */
   async function hooksFileAfter(
@@ -109,7 +109,7 @@ describe("replacing a plugin that came from no marketplace", () => {
     }) => Promise<void>
   ): Promise<string | undefined> {
     const deps = await buildInstallationDeps({ tools: registeredTools() });
-    await initAndInstall(deps, PROJECT_ROOT, TOOL.antigravity);
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.kiro);
     await seedFromDirectory(deps.fs, FIXTURE, { useAbsolutePaths: true });
     const dist = await loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader)(
       { kind: "local", path: FIXTURE },
@@ -122,7 +122,7 @@ describe("replacing a plugin that came from no marketplace", () => {
   }
 
   it("leaves the project hooks file a fresh install leaves", async () => {
-    const tool = registeredTools().aiProfile(TOOL.antigravity);
+    const tool = registeredTools().aiProfile(TOOL.kiro);
     const installed = await hooksFileAfter(async ({ built, dist, manifest }) => {
       await built.placeBuiltTree({
         dist,
@@ -141,11 +141,11 @@ describe("replacing a plugin that came from no marketplace", () => {
         strict: false,
         scope: "project",
       });
-      manifest.addPlugin(TOOL.antigravity, old);
+      manifest.addPlugin(TOOL.kiro, old);
       await new ReplacePluginFiles({ fs, ...built }, registeredTools()).execute({
         plugin: old,
         dist,
-        toolId: TOOL.antigravity,
+        toolId: TOOL.kiro,
         projectRoot: PROJECT_ROOT,
         manifest,
       });

@@ -53,7 +53,7 @@ const SKILLS_REASON =
   "an install shapes the frontmatter of every prose file; a build shapes the entry only";
 
 const DIFFERENCES: readonly Difference[] = [
-  ...["claude", "cursor"].map((tool) => ({
+  ...["claude", "cursor", "antigravity"].map((tool) => ({
     cell: `${tool}:marketplace`,
     component: "skills",
     reason: SKILLS_REASON,
@@ -89,6 +89,12 @@ const ONE_SIDED: readonly OneSided[] = [
     file: /^generated:.*\/plugins\/[^/]+\/\.[a-z-]+\/plugin\.json$/,
     reason: MANIFEST_REASON,
   })),
+  {
+    cell: "antigravity:marketplace",
+    side: "install",
+    file: /^generated:.*\/plugins\/[^/]+\/plugin\.json$/,
+    reason: MANIFEST_REASON,
+  },
   {
     cell: "cursor:marketplace",
     side: "build",
