@@ -220,4 +220,15 @@ describe("building Antigravity's plugin tree contract", () => {
     ]);
     expect(handler.command).toContain("cwd:'../../..'");
   });
+
+  it("reports an event agy never fires, under the tool, instead of dropping it silently", () => {
+    const hooks = supported(tree().artifacts.hooks);
+    const incoming = JSON.stringify({
+      hooks: { SessionEnd: [{ hooks: [{ type: "command", command: "node end.cjs" }] }] },
+    });
+
+    expect(hooks.convertHooks?.(incoming, "aidd-context").warnings).toEqual([
+      "antigravity: unmapped event 'SessionEnd' skipped",
+    ]);
+  });
 });

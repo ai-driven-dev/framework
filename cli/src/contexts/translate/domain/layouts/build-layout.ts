@@ -25,20 +25,27 @@ export function buildPlans(
   contract: ToolBuildContract,
   mode: FrameworkBuildMode
 ): PlannedComponents {
-  return mode === "flat"
-    ? buildFlatPlans(canon, contract)
-    : { plans: marketplacePlans(canon, contract), warnings: [] };
+  return mode === "flat" ? buildFlatPlans(canon, contract) : marketplacePlans(canon, contract);
 }
 
-function marketplacePlans(canon: PluginDistribution, contract: ToolBuildContract): ComponentPlan[] {
+function marketplacePlans(
+  canon: PluginDistribution,
+  contract: ToolBuildContract
+): PlannedComponents {
   const { agents, hooks, mcp, skills } = contract.artifacts;
   const { pluginRootToken } = contract;
-  return [
-    ...(agents.supported ? marketplaceAgents(canon, agents) : []),
-    ...(hooks.supported ? marketplaceHooks(canon, hooks, pluginRootToken) : []),
-    ...(mcp.supported ? marketplaceMcp(canon, mcp, pluginRootToken) : []),
-    ...(skills.supported ? marketplaceSkills(canon, skills) : []),
-  ];
+  const hookPlans = hooks.supported
+    ? marketplaceHooks(canon, hooks, pluginRootToken)
+    : { plans: [], warnings: [] };
+  return {
+    plans: [
+      ...(agents.supported ? marketplaceAgents(canon, agents) : []),
+      ...hookPlans.plans,
+      ...(mcp.supported ? marketplaceMcp(canon, mcp, pluginRootToken) : []),
+      ...(skills.supported ? marketplaceSkills(canon, skills) : []),
+    ],
+    warnings: hookPlans.warnings,
+  };
 }
 
 function marketplaceAgents(
@@ -74,19 +81,26 @@ function marketplaceHooks(
   canon: PluginDistribution,
   artifact: SupportedArtifact,
   rootToken: string | undefined
-): ComponentPlan[] {
+): PlannedComponents {
   const plugin = canon.manifest.name;
-  return canon.components.hooks.map(({ relativePath, content }) => ({
-    source: relativePath,
-    path: `plugins/${plugin}/${hooksPath(artifact, plugin, relativePath)}`,
-    content,
-    shape:
-      artifact.transform && relativePath.endsWith(".json")
-        ? (text) => artifact.transform?.(text, plugin, baseOf(relativePath)) ?? text
-        : undefined,
-    rootToken,
-    script: (text) => artifact.script?.(relativePath, text) ?? text,
-  }));
+  const warnings: string[] = [];
+  const plans = canon.components.hooks.map(({ relativePath, content }) => {
+    const converted =
+      relativePath === PLUGIN_HOOKS_RELATIVE ? artifact.convertHooks?.(content, plugin) : undefined;
+    warnings.push(...(converted?.warnings ?? []));
+    return {
+      source: relativePath,
+      path: `plugins/${plugin}/${hooksPath(artifact, plugin, relativePath)}`,
+      content: converted?.content ?? content,
+      shape:
+        converted === undefined && artifact.transform && relativePath.endsWith(".json")
+          ? (text: string) => artifact.transform?.(text, plugin, baseOf(relativePath)) ?? text
+          : undefined,
+      rootToken,
+      script: (text: string) => artifact.script?.(relativePath, text) ?? text,
+    };
+  });
+  return { plans, warnings };
 }
 
 // Only the hooks manifest has a place of its own; a script stays where the plugin ships it.

@@ -61,7 +61,10 @@ export class ProjectHooksMaterializer {
     guard = {},
   }: ProjectHooksMaterializerRequest): Promise<ProjectHooksMaterializerResult> {
     const location = tool.projectHooksDelivery();
-    if (location === null) return { skipped: [] };
+    if (location === null) {
+      await this.detachPrevious({ dist, tool, projectRoot, previous, guard });
+      return { skipped: [] };
+    }
     if (hooks.manifest === null) {
       await this.detachPrevious({ dist, tool, projectRoot, previous, guard });
       return { skipped: [] };

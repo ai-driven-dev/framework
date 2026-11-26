@@ -118,7 +118,8 @@ function buildLayoutPlan(
 ): LayoutPlan {
   const { contract, mode } = layout;
   const { plans, warnings: bridgeWarnings } = buildPlans(dist, contract, mode);
-  if (mode !== "flat") return { ...UNTRANSLATED, ...NOTHING_FOLDED, plans };
+  if (mode !== "flat")
+    return { ...UNTRANSLATED, ...NOTHING_FOLDED, plans, warnings: bridgeWarnings };
   const own = flatOwnHooksFile(dist, contract);
   return {
     ...UNTRANSLATED,

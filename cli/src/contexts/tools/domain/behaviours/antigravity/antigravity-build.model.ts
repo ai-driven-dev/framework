@@ -103,9 +103,11 @@ export interface AntigravityPluginFiles {
 }
 
 /** A plugin as `agy` loads it from its own directory: the tree the plugin ships, its hooks
- * rewritten into the named group `agy` reads at the plugin's root. No catalog is read, so the one
- * written is the shared shape. Limit: an event `agy` never fires is dropped without a warning,
- * the one a build has no channel for. */
+ * rewritten into the named group `agy` reads at the plugin's root, and an event `agy` never fires
+ * reported by the build. No catalog is read, so the one written is the shared shape. Limit: the
+ * plugin's `hooks.json` belongs to aidd, like every file of its directory: a later install or sync
+ * rewrites it, so a group's `enabled` flag a person set there does not survive, and the install
+ * from a built tree does not show the build's warnings. */
 export function buildAntigravityPluginTreeContract(
   hooks: AntigravityHooks,
   files: AntigravityPluginFiles,
@@ -117,7 +119,7 @@ export function buildAntigravityPluginTreeContract(
       marketplaceRelative: files.marketplace,
       agentMarkdown: antigravityAgentMarkdown(agentTools),
       mcpRelative: files.mcp,
-      hooksTransform: antigravityPluginHooks(hooks, files.pluginsDir),
+      hooksConversion: antigravityPluginHooks(hooks, files.pluginsDir),
     }),
     pluginRootToken: files.rootVariable,
   };

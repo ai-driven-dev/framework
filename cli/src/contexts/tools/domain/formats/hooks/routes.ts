@@ -1,6 +1,9 @@
 /** What the builders read of a descriptor to deliver a tool's hooks: where each route writes them. */
 
-import type { ArtifactContract } from "../../../../../shared/domain/materialization/build-contract.js";
+import type {
+  ArtifactContract,
+  ConvertHooks,
+} from "../../../../../shared/domain/materialization/build-contract.js";
 import { CapabilityConfigError } from "../../../contract/errors/tools.error.js";
 import type { HookScript } from "../../../contract/tool-vocabulary.js";
 import type { HooksFileFormat } from "../../hooks/hooks-entry-shape.js";
@@ -37,10 +40,10 @@ export function withHookScript(descriptor: HooksRouting): { readonly hookScript?
 }
 
 /** A native plugin tree keeps the hooks where, and as, the plugin authored them, the tool's
- * adapter aside: at the file the tool reads them from, in the form `transform` gives them. */
+ * adapter aside: at the file the tool reads them from, in the form `convertHooks` gives them. */
 export function pluginTreeHooksArtifact(
   descriptor: HooksRouting,
-  transform?: (json: string, plugin: string) => string
+  convertHooks?: ConvertHooks
 ): ArtifactContract {
   return {
     supported: true,
@@ -50,7 +53,9 @@ export function pluginTreeHooksArtifact(
         ? { kind: "relative" }
         : { kind: "file", at: descriptor.pluginFile },
     script: hookScript(descriptor),
-    ...(transform === undefined ? {} : { transform }),
+    ...(convertHooks === undefined
+      ? {}
+      : { convertHooks, transform: (json, plugin) => convertHooks(json, plugin).content }),
   };
 }
 

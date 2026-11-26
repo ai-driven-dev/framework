@@ -19,12 +19,12 @@ const jsonResponse = (silent: string, projectRoot: string) =>
 /** The events whose handlers are grouped under the tools they run for. */
 const TOOL_EVENTS: ReadonlySet<string> = new Set(["PreToolUse", "PostToolUse"]);
 
-type HandlerGroup = { matcher: string; hooks: ProjectHookEntry[] };
+export type HandlerGroup = { matcher: string; hooks: ProjectHookEntry[] };
 type NamedHook = {
   enabled?: boolean;
   [key: string]: (ProjectHookEntry | HandlerGroup)[] | boolean | undefined;
 };
-type NamedHooks = Record<string, NamedHook>;
+export type NamedHooks = Record<string, NamedHook>;
 
 /** What a host that keeps hooks as a named, wrapped command is declared by. `label` names the host
  * in an error. */
@@ -135,7 +135,16 @@ function convert(
   return { handlers, warnings };
 }
 
-function serialize(hooks: NamedHooks): string {
+export function readNamedHooks(json: string): NamedHooks {
+  return JSON.parse(json) as NamedHooks;
+}
+
+export function withoutPlugin(existingJson: string, pluginName: string): NamedHooks {
+  const { [pluginName]: _removed, ...kept } = readNamedHooks(existingJson);
+  return kept;
+}
+
+export function serialize(hooks: NamedHooks): string {
   return `${JSON.stringify(hooks, null, 2)}\n`;
 }
 
@@ -147,7 +156,7 @@ export function mergeWrappedCommandHooks(
 ): { content: string; warnings: readonly string[] } {
   const pluginName = shipped.plugin;
   const { [pluginName]: previous, ...kept } =
-    existingJson === null ? {} : (JSON.parse(existingJson) as NamedHooks);
+    existingJson === null ? {} : readNamedHooks(existingJson);
   const { handlers, warnings } = convert(target, shipped);
   const merged =
     Object.keys(handlers).length > 0

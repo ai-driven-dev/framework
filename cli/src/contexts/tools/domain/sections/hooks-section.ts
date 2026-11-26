@@ -98,9 +98,17 @@ export interface NoDelivery {
 
 export type HooksDelivery = PluginFileDelivery | ProjectMergeDelivery | BridgeDelivery | NoDelivery;
 
+/** The project hooks file an earlier release merged a plugin's hooks into, and no release writes
+ * any more: an install and a removal take back out of it what that release recorded, nothing more. */
+export interface ReleasedProjectHooks {
+  readonly relativePath: string;
+  readonly format: ProjectHooksFormat;
+}
+
 /** How a tool takes hooks: `config` is the file the framework itself writes for it, `delivery`
  * how a plugin's hooks reach it. Only `config` is ever written by the install. */
 export interface HooksSection<D extends HooksDelivery = HooksDelivery> {
   readonly config?: HooksConfigPart;
   readonly delivery: D;
+  readonly released?: ReleasedProjectHooks;
 }

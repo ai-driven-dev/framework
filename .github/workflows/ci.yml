@@ -178,8 +178,8 @@ jobs:
       contents: write
     strategy:
       fail-fast: false
-      # Five marketplace plus nine flat — opencode, kilo, kiro and kimi are flat-only. Mirrors the CLI golden
-      # snapshot matrix.
+      # Five marketplace plus nine flat: opencode, kilo, kiro and kimi are flat-only, and the antigravity
+      # "marketplace" asset is a bundle of plugin directories. Mirrors the CLI golden snapshot matrix.
       matrix:
         include:
           - { tool: claude, mode: marketplace }

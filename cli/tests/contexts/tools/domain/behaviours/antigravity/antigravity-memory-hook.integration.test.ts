@@ -22,17 +22,11 @@ import { nativeOf } from "../../../../../shared/testing/native-plugin-answers.bu
 import { present } from "../../../../../shared/testing/present.builder.js";
 import { REPOSITORY_ROOT } from "../../../../../shared/testing/repository-root.builder.js";
 import { supported } from "../../../testing/build-artifacts.builder.js";
+import { sample } from "../../../testing/hooks-runtime-host.builder.js";
 
 const PLUGIN = "aidd-context";
 const PLUGIN_HOOKS = join(REPOSITORY_ROOT, "plugins", PLUGIN, "hooks");
-const PAYLOAD = join(
-  REPOSITORY_ROOT,
-  "scripts",
-  "__tests__",
-  "fixtures",
-  "hook-payloads",
-  "antigravity-SessionStart.json"
-);
+const PLUGIN_ROUTE_SAMPLE = 2;
 const OPEN = "<!-- aidd_project_memory:start -->";
 const CLOSE = "<!-- aidd_project_memory:end -->";
 const LINK = "[aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md)";
@@ -81,12 +75,13 @@ describe("the memory hook under Antigravity", () => {
     return first.command;
   }
 
-  /** The captured payload, its scrubbed project path pointed at this project. */
+  /** The payload captured from a plugin's own `hooks.json`, its scrubbed project path pointed at
+   * this project. */
   function payload(): string {
-    const [sample] = (
-      JSON.parse(readFileSync(PAYLOAD, "utf8")) as { samples: { payload: object }[] }
-    ).samples;
-    return JSON.stringify({ ...sample?.payload, workspacePaths: [root] });
+    return JSON.stringify({
+      ...sample("antigravity-SessionStart.json", PLUGIN_ROUTE_SAMPLE).payload,
+      workspacePaths: [root],
+    });
   }
 
   it("installs Antigravity's own adapter as the hooks' host library", () => {

@@ -6,6 +6,7 @@ import {
   buildAntigravityFlatContract,
   buildAntigravityPluginTreeContract,
 } from "../../contexts/tools/domain/behaviours/antigravity/antigravity-build.model.js";
+import { antigravityHooksSection } from "../../contexts/tools/domain/behaviours/antigravity/antigravity-hooks.model.js";
 import { declareHooks } from "../../contexts/tools/domain/formats/hooks/declaration.js";
 import { pluginFileHooksDelivery } from "../../contexts/tools/domain/formats/hooks/routes.js";
 import { activationTriggersRule } from "../../contexts/tools/domain/formats/rule-frontmatter.js";
@@ -103,12 +104,13 @@ const PLUGIN_FILES = {
   marketplace: ".antigravity-plugin/marketplace.json",
 };
 
-const hooksDelivery = pluginFileHooksDelivery(hooks);
+const hooksSection = antigravityHooksSection(hooks, pluginFileHooksDelivery(hooks));
 
 const PLUGIN_MCP = acceptedPluginMcp(PLUGIN_FILES.mcp);
 
 export const antigravity = defineAiTool({
   toolId: "antigravity",
+  // Where `aidd` finds its own distribution's files; `agy` reads the manifest, never the catalog.
   distributionProbes: {
     manifest: [PLUGIN_FILES.manifest],
     marketplace: [PLUGIN_FILES.marketplace],
@@ -145,7 +147,7 @@ export const antigravity = defineAiTool({
       }),
       plugin: PLUGIN_MCP,
     },
-    hooks: { delivery: hooksDelivery },
+    hooks: hooksSection,
     layout: nativeLayout({ pluginsDir: PLUGINS_DIR, materializes: true }),
     manifest: manifestSection({
       manifestRelativePath: PLUGIN_FILES.manifest,

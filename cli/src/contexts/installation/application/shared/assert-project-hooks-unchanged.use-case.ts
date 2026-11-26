@@ -7,7 +7,7 @@ import type { ProjectHooksFormat } from "../../../tools/contract/tool-vocabulary
 import { ProjectHooksEditedError } from "../../contract/installation.error.js";
 import { driftOf } from "../../domain/drift.js";
 import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.js";
-import { digestEntry } from "../../domain/project-hooks.model.js";
+import { digestEntry, recordedHooksLocation } from "../../domain/project-hooks.model.js";
 import type { ProjectHooksSection } from "../../ports/tool-sections.js";
 import type { AssertProjectPathWithinRoot } from "../ownership/assert-project-path-within-root.use-case.js";
 import { assertScriptPath } from "../ownership/assert-script-path.js";
@@ -34,7 +34,7 @@ export class AssertProjectHooksUnchanged {
 
   async execute(request: RecordedProjectHooks): Promise<{ existing: string | null }> {
     const { pluginName, provenance, tool, projectRoot, guard } = request;
-    const delivery = tool.projectHooksDelivery();
+    const delivery = recordedHooksLocation(tool);
     if (delivery === null) return { existing: null };
     const { format, toolName } = delivery;
     const hooksPath = join(projectRoot, delivery.relativePath);

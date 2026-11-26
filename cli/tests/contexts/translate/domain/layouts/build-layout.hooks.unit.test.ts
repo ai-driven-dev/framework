@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { translate } from "../../../../../src/contexts/translate/domain/engine.js";
 import { translateBuildLayout } from "../../../../shared/testing/build-files.builder.js";
 import { aCanon } from "../../testing/canon-distribution.builder.js";
 import { CLAUDE_ROOT_TOKEN } from "../../testing/engine-kit.builder.js";
@@ -92,5 +93,35 @@ describe("the marketplace layout of a plugin's hooks", () => {
     expect(
       hooksBuilt({ "hooks/hooks.json": "{}" }, { supported: false, reason: "off in this test" })
     ).toEqual({});
+  });
+
+  it("writes the hooks.json the tool converts them to, and reports what the conversion dropped", () => {
+    const convertHooks = (json: string, plugin: string) => ({
+      content: `${plugin}:${json}`,
+      warnings: ["unmapped event 'SessionEnd' skipped"],
+    });
+    const contract = aStubBuildContract();
+    const built = translate(aCanon(PLUGIN, { "hooks/hooks.json": "{}" }), {
+      kind: "build",
+      contract: {
+        ...contract,
+        artifacts: {
+          ...contract.artifacts,
+          hooks: aSupportedArtifact({ convertHooks }),
+          agents: { supported: false, reason: "off in this test" },
+          skills: { supported: false, reason: "off in this test" },
+        },
+      },
+      mode: "marketplace",
+      outDir: "/out",
+    });
+
+    expect({
+      files: built.files.map((file) => [file.relativePath, file.content]),
+      warnings: built.warnings,
+    }).toEqual({
+      files: [["plugins/plug/hooks/hooks.json", "plug:{}"]],
+      warnings: ["unmapped event 'SessionEnd' skipped"],
+    });
   });
 });

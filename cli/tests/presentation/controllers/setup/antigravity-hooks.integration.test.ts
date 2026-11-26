@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 import { createTestEnv } from "../../../shared/testing/cli-sandbox.builder.js";
 import { runInProcess } from "../../../shared/testing/in-process-cli.builder.js";
 import { setupFromFixture } from "../../testing/fixture-setup.builder.js";
@@ -123,5 +124,66 @@ describe("antigravity hooks the user edited after setup", () => {
     expect(existsSync(join(project, OWN_SKILL))).toBe(false);
     expect(await readFile(foreign, "utf-8")).toBe(FOREIGN_SKILL);
     expect(await readJson<Hooks>(userHooksFile())).toEqual({ lint: LINT_HOOK });
+  });
+});
+
+/** What the released CLI wrote for aidd-context: the group in the project's `.agents/hooks.json`
+ * and the entry's digest it recorded, both as captured from that release. */
+const RELEASED_COMMAND =
+  "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC1jb250ZXh0L21lbW9yeS5janMgbG9hZA==";
+const RELEASED_DIGEST = "1daba6a99a2ff06947caaa0ee5d6c2e8";
+const RELEASED_SCRIPT = `.agents/hooks/${PLUGIN}/memory.cjs`;
+const RELEASED_GROUP = {
+  [PLUGIN]: { SessionStart: [{ type: "command", command: RELEASED_COMMAND, timeout: 5 }] },
+};
+
+type Manifest = {
+  tools: { antigravity: { plugins: { name: string; projectHooks?: unknown }[] } };
+};
+
+/** An install of the released CLI over the project: its hooks group, its script, and the
+ * provenance it recorded for both. */
+async function leaveReleasedHooks(): Promise<void> {
+  await mkdir(join(project, ".agents", "hooks", PLUGIN), { recursive: true });
+  await writeFile(join(project, RELEASED_SCRIPT), "released script\n");
+  await writeFile(userHooksFile(), JSON.stringify({ ...RELEASED_GROUP, lint: LINT_HOOK }, null, 2));
+  const path = join(project, ".aidd", "manifest.json");
+  const manifest = await readJson<Manifest>(path);
+  const plugin = manifest.tools.antigravity.plugins.find((p) => p.name === PLUGIN);
+  if (plugin === undefined) throw new Error("plugin not installed");
+  plugin.projectHooks = {
+    entries: [{ event: "SessionStart", command: RELEASED_COMMAND, digest: RELEASED_DIGEST }],
+    scripts: { [RELEASED_SCRIPT]: FileHash.of("released script\n").value },
+  };
+  await writeFile(path, JSON.stringify(manifest, null, 2));
+}
+
+async function installOverReleased(): Promise<void> {
+  const setup = await aidd(setupFromFixture("antigravity", PLUGIN));
+  expect(setup.exitCode, setup.stderr).toBe(0);
+  await leaveReleasedHooks();
+}
+
+describe("antigravity hooks an earlier release merged into the project", () => {
+  it("sync takes the plugin's group and script out of the project's hooks, and keeps the user's", async () => {
+    await installOverReleased();
+
+    const sync = await aidd(["sync", "--force"]);
+
+    expect(sync.exitCode, sync.stderr).toBe(0);
+    expect(await readJson<Hooks>(userHooksFile())).toEqual({ lint: LINT_HOOK });
+    expect(existsSync(join(project, RELEASED_SCRIPT))).toBe(false);
+    const manifest = await readJson<Manifest>(join(project, ".aidd", "manifest.json"));
+    expect(manifest.tools.antigravity.plugins[0]).not.toHaveProperty("projectHooks");
+  });
+
+  it("clean --force takes them out too", async () => {
+    await installOverReleased();
+
+    const clean = await aidd(["clean", "--force"]);
+
+    expect(clean.exitCode, clean.stderr).toBe(0);
+    expect(await readJson<Hooks>(userHooksFile())).toEqual({ lint: LINT_HOOK });
+    expect(existsSync(join(project, RELEASED_SCRIPT))).toBe(false);
   });
 });

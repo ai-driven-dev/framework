@@ -1,6 +1,6 @@
 // `docs/COMPATIBILITY.md` is rendered from the stored file by `scripts/sync-generated-docs.mjs`.
 
-import { join } from "node:path";
+import { join, posix } from "node:path";
 import { describe, it } from "vitest";
 import type { AiToolProfile } from "../../src/contexts/tools/contract/tool-profile.js";
 import { foldsFlatMcp } from "../../src/contexts/translate/domain/rules/flat-mcp.js";
@@ -52,9 +52,9 @@ function supportOf(surface: Surface, build: ToolBuildContract, installsRules: bo
 
 function pluginTreeOf(plugins: ReturnType<AiToolProfile["plugins"]>): string | null {
   if (plugins?.kind !== "native" || plugins.requiresUserScope()) return null;
-  // A plugin's own directory below the tree: no name, so the directory ends in two slashes.
+  // The directory holding one plugin's own, which the answers name only through a plugin.
   return plugins.materializesFromBuiltTree()
-    ? plugins.pluginOutputDir("").replace(/\/\/$/, "/")
+    ? `${posix.dirname(plugins.pluginOutputDir("p").slice(0, -1))}/`
     : null;
 }
 
