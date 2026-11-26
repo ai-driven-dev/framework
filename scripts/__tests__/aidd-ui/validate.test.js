@@ -892,8 +892,8 @@ describe("aidd-ui validator entries", () => {
   });
 
   // Every host reaches the hook through hooks/lib/host.cjs, which the build swaps per tool. A stub
-  // stands in for it here: it hands the hook the neutral event it reads on stdin, and prints what
-  // the hook answers, so these cases hold whatever host the event came from.
+  // stands in for it here: it hands the hook the neutral event it reads on stdin, prints what
+  // the hook answers and borrows the shipped adapter's own folder check, so these cases hold whatever host the event came from.
   describe("E12 the host's neutral event", () => {
     const STUB = [
       'const fs = require("node:fs");',
@@ -908,6 +908,7 @@ describe("aidd-ui validator entries", () => {
       "  },",
       "  answer: ({ level, text }) => print({ answer: level, text }),",
       "  continueTurn: (text) => print({ continueTurn: text }),",
+      '  ownFolder: require("./adapter.cjs").ownFolder,',
       "};",
       "",
     ].join("\n");
@@ -915,6 +916,7 @@ describe("aidd-ui validator entries", () => {
     beforeEach(() => {
       hooks = makeTmp("aidd-ui-hooks-");
       fs.cpSync(HOOKS, hooks, { recursive: true });
+      fs.copyFileSync(path.join(hooks, "lib", "host.cjs"), path.join(hooks, "lib", "adapter.cjs"));
       fs.writeFileSync(path.join(hooks, "lib", "host.cjs"), STUB);
     });
     afterEach(() => removeTmp(hooks));

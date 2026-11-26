@@ -140,4 +140,25 @@ function refuse(reason) {
   });
 }
 
-module.exports = { readEvent, answer, continueTurn, refuse };
+/** Whether `folder` is a folder of this user's alone, created when `create` and missing; its parent must exist. */
+function ownFolder(folder, create) {
+  if (create) {
+    try {
+      fs.mkdirSync(folder, { mode: 0o700 });
+    } catch (error) {
+      if (error.code !== "EEXIST") return false;
+    }
+  }
+  try {
+    const stat = fs.lstatSync(folder);
+    if (!stat.isDirectory()) return false;
+    return (
+      typeof process.getuid !== "function" ||
+      (stat.uid === process.getuid() && (stat.mode & 0o077) === 0)
+    );
+  } catch {
+    return false;
+  }
+}
+
+module.exports = { readEvent, answer, continueTurn, refuse, ownFolder };

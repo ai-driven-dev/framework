@@ -78,4 +78,6 @@ function answer({ text } = {}) {
 // kiro-cli V3 was seen to stop the tool on it and hand the reason to the model.
 // @part refuse-by-exit-code
 
-module.exports = { readEvent, answer, continueTurn, refuse };
+// @part own-folder
+
+module.exports = { readEvent, answer, continueTurn, refuse, ownFolder };

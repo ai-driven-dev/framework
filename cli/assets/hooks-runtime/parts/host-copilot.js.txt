@@ -54,4 +54,6 @@ function refuse(reason) {
   print({ permissionDecision: "deny", permissionDecisionReason: reason });
 }
 
-module.exports = { readEvent, answer, continueTurn, refuse };
+// @part own-folder
+
+module.exports = { readEvent, answer, continueTurn, refuse, ownFolder };

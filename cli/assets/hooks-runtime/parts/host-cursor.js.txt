@@ -82,4 +82,6 @@ function answer({ text } = {}) {
   print({ additional_context: text });
 }
 
-module.exports = { readEvent, answer, continueTurn };
+// @part own-folder
+
+module.exports = { readEvent, answer, continueTurn, ownFolder };
