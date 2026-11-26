@@ -60,7 +60,7 @@ aidd sync --global   # after a framework update
 
 ## 🧠 Models
 
-The main session and the agents run on the IDE's model unless you pick a provider when installing:
+The Claude Code, Cursor, and Copilot per-tool release bundles set AIDD's recommended Anthropic models and effort for the agents. The Codex flat bundle sets the recommended OpenAI models and effort. To select a provider during setup or return to the IDE's model, use `--provider`:
 
 ```bash
 aidd setup --ide opencode --provider mistral   # main session and agents on Mistral models
@@ -88,7 +88,7 @@ Claude Code takes anthropic, Codex openai, Copilot openai or anthropic, Cursor a
 
 - **Tools:** every agent inherits the calling session's tools and permissions; what it writes is an instruction, not a restriction.
 - **Codex:** a Codex plugin cannot carry agents, so only the flat distribution installs them, in `.codex/agents/`, and Codex loads them only in a trusted project; `aidd setup --global` puts them in `~/.codex/agents/` instead.
-- **Models:** OpenCode V1 reads the same file but not the `#<effort>` variant. Only an install through `aidd setup` pins them, not `/plugin install`. `aidd clean` cleans one project and keeps the machine-wide provider; `aidd clean --global --force` forgets it and restores the main session's model.
+- **Models:** OpenCode V1 reads the same file but not the `#<effort>` variant. `aidd translate --provider none` generates a distribution that inherits the IDE's model. `aidd clean` cleans one project and keeps the machine-wide provider. `aidd clean --global --force` forgets it and restores the main session's model.
 - **Updates:** reinstalling replaces the agents still shipped; one removed from the plugin stays where a copy put it until you delete it.
 
 Sources: [Claude Code sub-agents](https://code.claude.com/docs/en/sub-agents), [Copilot custom agents](https://docs.github.com/en/copilot/reference/custom-agents-configuration), [OpenCode agents](https://opencode.ai/v2/docs/agents), [Codex subagents](https://developers.openai.com/codex/subagents), [Cursor subagents](https://cursor.com/docs/subagents).

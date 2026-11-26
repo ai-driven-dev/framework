@@ -3,6 +3,7 @@
   "tools": {
     "claude": {
       "ref": "claude",
+      "recommendedProvider": "anthropic",
       "catalog": ".claude-plugin/marketplace.json",
       "manifest": ".claude-plugin/plugin.json",
       "name": "aidd-marketplace",
@@ -10,18 +11,21 @@
     },
     "codex": {
       "ref": "codex",
+      "recommendedProvider": "openai",
       "catalog": ".agents/plugins/marketplace.json",
       "manifest": ".codex-plugin/plugin.json",
       "clientPackage": "@openai/codex@0.172.0"
     },
     "copilot": {
       "ref": "copilot",
+      "recommendedProvider": "anthropic",
       "catalog": ".plugin/marketplace.json",
       "manifest": ".plugin/plugin.json",
       "clientPackage": "@github/copilot@1.0.114"
     },
     "cursor": {
       "ref": "cursor",
+      "recommendedProvider": "anthropic",
       "catalog": ".cursor-plugin/marketplace.json",
       "manifest": ".cursor-plugin/plugin.json"
     }

@@ -53,6 +53,8 @@ It lists what is installed and what needs fixing.
 
 Use the [AIDD distribution repository](https://github.com/ai-driven-dev/marketplaces) with the ref for your tool. The tool branch follows releases. To stay on one release, use `<tool>-v<version>` as the ref where documented below. The [release ZIPs](https://github.com/ai-driven-dev/framework/releases) remain available for local installs.
 
+The per-tool distributions for Claude Code, Cursor, and Copilot ship AIDD's recommended Anthropic models and effort for the orchestration agents. The Codex distribution includes the recommended OpenAI models and effort. See [agent model settings](SUBAGENTS.md#-models) to use a different provider or inherit the host model.
+
 <details>
 <summary><b>Claude Code</b></summary>
 
@@ -111,6 +113,8 @@ codex plugin add aidd-context@aidd-framework
 ```
 
 To pin a version, use `--ref codex-v<version>`. For a local catalog, extract `aidd-framework-codex-marketplace-<version>.zip` and pass its directory to `codex plugin marketplace add`.
+
+To use the AIDD subagents, install with `aidd setup --global --ide codex --provider openai`, or use the [Codex flat-file ZIP](#flat-files) for the project. Codex loads agents from its user or project agent directory, so installing from the catalog alone leaves the included agent TOMLs inactive.
 
 </details>
 

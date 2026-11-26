@@ -39,7 +39,8 @@ jobs:
           export GIT_CONFIG_VALUE_0
           for TOOL in $(node -p "Object.keys(require('./scripts/marketplace-distribution.json').tools).join(' ')"); do
             OUT="$RUNNER_TEMP/marketplaces/$TOOL"
-            node cli/dist/cli.js translate . --to "$TOOL" --out "$OUT" --as marketplace
+            PROVIDER=$(TOOL="$TOOL" node -p "require('./scripts/marketplace-distribution.json').tools[process.env.TOOL].recommendedProvider")
+            node cli/dist/cli.js translate . --to "$TOOL" --out "$OUT" --as marketplace --provider "$PROVIDER"
             node scripts/publish-marketplace.cjs "$TOOL" v0.0.1 "$OUT" "$REMOTE"
             CLIENT=$(TOOL="$TOOL" node -p "require('./scripts/marketplace-distribution.json').tools[process.env.TOOL].clientPackage || ''")
             if [ -n "$CLIENT" ]; then
@@ -47,6 +48,9 @@ jobs:
             fi
             PATH="$RUNNER_TEMP/marketplace-client-$TOOL/node_modules/.bin:$PATH" node scripts/verify-marketplace.cjs "$TOOL" v0.0.1 "$OUT"
           done
+          REVIEWER="$RUNNER_TEMP/marketplaces/claude/plugins/aidd-orchestrator/agents/reviewer.md"
+          grep -q '^model: ' "$REVIEWER"
+          grep -q '^effort: ' "$REVIEWER"
       - name: Check legacy overlap and release retries
         run: |
           REMOTE="$RUNNER_TEMP/marketplace.git"
