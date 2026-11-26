@@ -13,6 +13,8 @@ Where a skill tree is written, per host.
 | Codex | `.agents/skills/<name>/` | [Skills](https://learn.chatgpt.com/docs/build-skills) |
 | Kilo Code | `.kilo/skills/<name>/` | [Skills](https://kilo.ai/docs/customize/skills) |
 | Antigravity | `.agents/skills/<name>/` | [Skills](https://antigravity.google/docs/skills) |
+| Kiro | `.kiro/skills/<name>/` | [Skills](https://kiro.dev/docs/skills/) |
+| Kimi Code CLI | `.agents/skills/<name>/` | [Skills](https://www.kimi.com/code/docs/en/kimi-code-cli/customization/skills.html) |
 | Plugin source | where the target host's plugin format puts skills | the target host's plugin docs |
 
 ## Frontmatter
