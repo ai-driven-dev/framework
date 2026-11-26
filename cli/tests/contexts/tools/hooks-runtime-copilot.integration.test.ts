@@ -19,6 +19,9 @@ import {
 
 afterEach(restoreHostIo);
 
+/** Each printed line is one JSON document: the host takes a progress line on its own line. */
+const lines = (): unknown[] => printed.map((line) => JSON.parse(line));
+
 describe("reading Copilot hook payloads", () => {
   it("reads SessionStart from its captured payload", () => {
     const { payload } = sample("copilot-SessionStart.json", 0);
@@ -162,6 +165,41 @@ describe("reading Copilot hook payloads", () => {
     const { adapter } = read("copilot", sample("copilot-Stop.json", 2).payload);
     adapter.continueTurn("again");
     adapter.answer({ level: 2, text: "again" });
+
+    expect(printed).toStrictEqual([]);
+  });
+
+  it("shows the person a message with no text as the progress line the host printed to the person", () => {
+    const { adapter } = read("copilot", sample("copilot-SessionStart.json", 0).payload);
+    adapter.answer({ level: 1, person: "measuring is on" });
+
+    expect(lines()).toStrictEqual([{ type: "progress", message: "measuring is on" }]);
+  });
+
+  it("shows the person a message beside a text, ahead of the model's answer", () => {
+    const { adapter } = read("copilot", sample("copilot-PostToolUse.json", 0).payload);
+    adapter.answer({ level: 1, text: "memory", person: "measuring is on" });
+
+    expect(lines()).toStrictEqual([
+      { type: "progress", message: "measuring is on" },
+      { additionalContext: "memory" },
+    ]);
+  });
+
+  it("shows the person a message at Stop and still continues the turn", () => {
+    const { adapter } = read("copilot", sample("copilot-Stop.json", 1).payload);
+    adapter.answer({ level: 1, text: "finish", person: "measuring is on" });
+
+    expect(lines()).toStrictEqual([
+      { type: "progress", message: "measuring is on" },
+      { decision: "block", reason: "finish" },
+    ]);
+  });
+
+  it("prints nothing when neither text nor person is given", () => {
+    const { adapter } = read("copilot", sample("copilot-SessionStart.json", 0).payload);
+    adapter.answer({ level: 1, person: "" });
+    adapter.answer({ level: 1 });
 
     expect(printed).toStrictEqual([]);
   });
