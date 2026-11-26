@@ -53,9 +53,11 @@ Sources: [Claude Code](https://code.claude.com/docs/en/hooks), [Codex](https://l
 | Antigravity CLI | A silent `PreToolUse` script answers `allow` | Print a refusal to block; silence never does |
 | Antigravity CLI, Kimi Code CLI | A subagent's `tools` list keeps only tools with a name on the host | A Claude tool with no host name is dropped from its agent |
 | Cursor | Only a project `.cursor/hooks.json` fires | A plugin-scope hooks file does nothing |
+| Cursor | `postToolUse` takes `additional_context` only, so `decision: block` is dropped ([hooks](https://cursor.com/docs/agent/hooks)) | A `PostToolUse` block does not stop Cursor |
 | Cursor | A headless `cursor-agent -p` run delivers no `stop` | A `Stop` hook such as a memory sync does not run headless |
 | OpenCode, Kilo Code | A subagent's child session runs neither `SessionStart` nor `Stop` | Hooks fire once per task, not per subagent |
 | OpenCode, Kilo Code | One `Stop` hook per plugin can continue a turn | After one blocks, the next stay silent |
 | OpenCode, Kilo Code | A `SessionStart` script that exits 2 has its stderr added to the model's system prompt | Claude Code shows it to the person only; do not exit 2 for a message |
 | Codex | A hook is skipped silently until a person trusts it | Approve it once in an interactive session, or pass `--dangerously-bypass-hook-trust` to `codex exec` |
 | Kiro | A tool matcher becomes Kiro's tool tags, one hook per tag | Only `PostToolUse` takes a matcher; `Write`, `Edit` and `Delete` map to `write`, the shell tools to `shell` |
+| Kiro | Text a `PostToolUse` hook prints was not seen reaching the model | Do not use `PostToolUse` to feed the model on Kiro |
