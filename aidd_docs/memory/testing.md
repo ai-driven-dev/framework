@@ -29,7 +29,7 @@ Baseline keys in `scripts/check/baseline.json` start with the file path. On a sk
 | `node scripts/check-tests-leave-git-alone.js -- node --test 'scripts/__tests__/**/*.test.js'` | repository scripts and hooks |
 | `cd kanban && pnpm test` | the board |
 
-- `validate.yml` reruns the whole pre-commit over the whole tree; `cli-ci.yml` adds jobs no hook has (`internal/deployment.md`).
+- `validate.yml` reruns the whole pre-commit over the whole tree; `cli-ci.yml` adds jobs no hook has (`deployment.md`).
 
 ## Browser QA
 

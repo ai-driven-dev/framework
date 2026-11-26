@@ -11,7 +11,7 @@ import { parseToExit } from "../../shared/testing/parse-to-exit.builder.js";
 const build = vi.fn();
 let buildUseCase: { execute: typeof build } | undefined;
 
-const frameworkBuild = vi.fn(() => buildUseCase);
+const frameworkBuild = vi.fn((_ctx: object) => buildUseCase);
 const containerOf = vi.fn(async () => ({ translate: { frameworkBuild } }));
 
 const { registerTranslateCommand } = await import(
@@ -88,6 +88,36 @@ describe("aidd translate - what it hands the build", () => {
     await run("translate", "framework", "--to", "claude", "--out", "dist-plugins", "--force");
 
     expect(frameworkBuild).toHaveBeenCalledWith(expect.objectContaining({ force: true }));
+  });
+
+  it("hands a provider to the factory only when one is named", async () => {
+    await run("translate", "framework", "--to", "claude", "--out", "dist-plugins");
+    await run(
+      "translate",
+      "framework",
+      "--to",
+      "claude",
+      "--out",
+      "dist-plugins",
+      "--provider",
+      "anthropic"
+    );
+    await run(
+      "translate",
+      "framework",
+      "--to",
+      "claude",
+      "--out",
+      "dist-plugins",
+      "--provider",
+      "none"
+    );
+
+    expect(frameworkBuild.mock.calls.map(([ctx]) => ctx)).toEqual([
+      expect.not.objectContaining({ provider: expect.anything() }),
+      expect.objectContaining({ provider: "anthropic" }),
+      expect.not.objectContaining({ provider: expect.anything() }),
+    ]);
   });
 
   it("builds the graph for this project at this run's verbosity", async () => {
@@ -204,6 +234,11 @@ describe("aidd translate - the help surface", () => {
       ["--out <dir>", "Output directory (marketplace dist or project root)", undefined],
       ["--as <marketplace|flat>", "Output layout", "marketplace"],
       ["--force", "Overwrite existing files at canonical paths under --out", undefined],
+      [
+        "--provider <provider>",
+        "Run the agents on this provider's model for their role (openai, anthropic, mistral), or none to leave each on the IDE's model",
+        undefined,
+      ],
     ]);
     expect(
       translateCommand()

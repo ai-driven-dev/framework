@@ -30,6 +30,9 @@ const TOOL_FILES = Object.freeze({
   codex: "AGENTS.md",
   cursor: "AGENTS.md",
   opencode: "AGENTS.md",
+  kilo: "AGENTS.md",
+  kiro: "AGENTS.md",
+  kimi: "AGENTS.md",
   antigravity: "AGENTS.md",
   copilot: "AGENTS.md",
 });

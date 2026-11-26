@@ -100,7 +100,12 @@ beforeEach(() => {
     return true;
   });
   loadManifest.mockResolvedValue({});
-  setAgentModel.mockResolvedValue({ reinstalled: [], changed: [], skipped: [] });
+  setAgentModel.mockResolvedValue({
+    reinstalled: [],
+    chosen: new Map(),
+    changed: [],
+    skipped: [],
+  });
   resolveSourceIfNeeded.mockResolvedValue(undefined);
   registerIfPresent.mockResolvedValue(undefined);
   activation.mockResolvedValue({ binaryMissing: [], errors: [], failed: false });
@@ -213,9 +218,57 @@ describe("aidd setup - the agents' provider", () => {
       hosts: [SECOND_SYNTHETIC_TOOL],
       provider: "openai",
       scope: "project",
+      keepSaved: false,
     });
     expect(setAgentModel.mock.invocationCallOrder[0]).toBeGreaterThan(
       resolveSourceIfNeeded.mock.invocationCallOrder[0]
+    );
+  });
+
+  it("refreshes the agents alone, and says the main session is unchanged, with --agents-only", async () => {
+    const lines = await run(
+      "--ide",
+      SECOND_SYNTHETIC_TOOL,
+      "--provider",
+      "openai",
+      "--agents-only"
+    );
+
+    expect(setAgentModel).toHaveBeenCalledWith({
+      projectRoot: PROJECT_ROOT,
+      hosts: [SECOND_SYNTHETIC_TOOL],
+      provider: "openai",
+      scope: "project",
+      agentsOnly: true,
+      keepSaved: false,
+    });
+    expect(lines).toContain(
+      "Models on openai, for every project on this machine; main session unchanged:"
+    );
+    expect(lines).toContain(OTHER_PROJECTS(SECOND_SYNTHETIC_TOOL, "openai --agents-only"));
+  });
+
+  it("keeps each tool's saved provider when --agents-only names none, leaving the main session alone", async () => {
+    setAgentModel.mockResolvedValue({
+      reinstalled: [],
+      chosen: new Map([[SECOND_SYNTHETIC_TOOL, "openai"]]),
+      changed: [],
+      skipped: [],
+    });
+
+    const lines = await run("--ide", SECOND_SYNTHETIC_TOOL, "--agents-only");
+
+    expect(setAgentModel).toHaveBeenCalledWith({
+      projectRoot: PROJECT_ROOT,
+      hosts: [SECOND_SYNTHETIC_TOOL],
+      provider: undefined,
+      scope: "project",
+      agentsOnly: true,
+      keepSaved: true,
+    });
+    expect(lines).toContain(`  ${SECOND_SYNTHETIC_TOOL} on openai`);
+    expect(lines).toContain(
+      `Other projects follow at their next install; to update the agents they already have, run \`aidd setup --ide ${SECOND_SYNTHETIC_TOOL} --agents-only\` there.`
     );
   });
 
@@ -248,6 +301,7 @@ describe("aidd setup - the agents' provider", () => {
       SYNTHETIC_IDE_TOOL,
     ],
     [["--ide", SYNTHETIC_IDE_TOOL, "--provider", "bogus"], 'Unknown provider "bogus"'],
+    [["--ide", SYNTHETIC_IDE_TOOL, "--agents-only"], "--agents-only needs --ide with a tool"],
   ])("refuses %j before building or writing anything", async (args, message) => {
     vi.spyOn(process, "exit").mockImplementation((code) => {
       throw new ExitRequested(Number(code ?? 0));

@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 import type { Command } from "commander";
+import { agentModelsRequest } from "../../contexts/tools/contract/agent-models-request.model.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { FrameworkBuildMode } from "../../contexts/tools/contract/tool-profile.js";
 import type {
@@ -31,6 +32,7 @@ interface TranslateExecutionParams {
   target: FrameworkBuildTarget;
   mode: FrameworkBuildMode;
   force: boolean;
+  provider: string | undefined;
 }
 
 /** No build exists for this target in this layout, which ends the run. */
@@ -50,11 +52,17 @@ async function runTranslateCore({
   target,
   mode,
   force,
+  provider,
 }: TranslateExecutionParams): Promise<void> {
   const container = await containerOf(projectRoot, { verbose }, output);
   const useCase =
-    container.translate.frameworkBuild({ target, mode, outDir, force }) ??
-    refuseCombination(output, target, mode);
+    container.translate.frameworkBuild({
+      target,
+      mode,
+      outDir,
+      force,
+      ...(provider !== undefined && { provider }),
+    }) ?? refuseCombination(output, target, mode);
   const result = await useCase.execute({ sourceDir, outDir, target, mode });
   printTranslateResult(output, mode, {
     pluginCount: result.plugins.length,
@@ -88,6 +96,7 @@ interface TranslateCmdOptions {
   out: string;
   as?: string;
   force?: boolean;
+  provider?: string;
 }
 
 export function registerTranslateCommand(
@@ -105,8 +114,13 @@ export function registerTranslateCommand(
     .requiredOption("--out <dir>", "Output directory (marketplace dist or project root)")
     .option("--as <marketplace|flat>", "Output layout", "marketplace")
     .option("--force", "Overwrite existing files at canonical paths under --out")
+    .option(
+      "--provider <provider>",
+      `Run the agents on this provider's model for their role (${tools.agentProviders().join(", ")}), or none to leave each on the IDE's model`
+    )
     .action(async (source: string, cmdOptions: TranslateCmdOptions) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
+      const target = buildTargetOf(cmdOptions.to, tools, output);
 
       await runTranslateCore({
         containerOf,
@@ -115,9 +129,10 @@ export function registerTranslateCommand(
         output,
         sourceDir: resolve(projectRoot, source),
         outDir: resolve(projectRoot, cmdOptions.out),
-        target: buildTargetOf(cmdOptions.to, tools, output),
+        target,
         mode: buildModeOf(cmdOptions.as, output),
         force: cmdOptions.force ?? false,
+        provider: agentModelsRequest(cmdOptions.provider, [target], tools).provider,
       });
     });
 }
