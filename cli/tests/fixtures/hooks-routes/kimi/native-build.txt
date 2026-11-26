@@ -17,56 +17,6 @@
 ## out-marketplace/plugins/aidd-context/hooks/artifacts.cjs
 script, identical to the plugin source
 
-## out-marketplace/plugins/aidd-context/hooks/hooks.json
-{
-  "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs load",
-            "timeout": 5,
-            "statusMessage": "AIDD Context: refresh project memory"
-          },
-          {
-            "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/artifacts.cjs start",
-            "timeout": 5,
-            "statusMessage": "AIDD Context: note turn start"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Write|Edit|Bash|Shell|bash|PowerShell",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/artifacts.cjs mark",
-            "timeout": 5,
-            "statusMessage": "AIDD Context: check written artifacts"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs sync",
-            "timeout": 5,
-            "statusMessage": "AIDD Context: sync project memory"
-          }
-        ]
-      }
-    ]
-  }
-}
-
-
 ## out-marketplace/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/contract.json
 {
   "kind": "skill",
@@ -319,35 +269,6 @@ script, identical to the plugin source
     }
   ]
 }
-
-## out-marketplace/plugins/aidd-telemetry/hooks/hooks.json
-{
-  "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/task.cjs remind",
-            "statusMessage": "AIDD Telemetry: remind the task",
-            "timeout": 5
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/ledger.cjs ingest",
-            "statusMessage": "AIDD Telemetry: update the measurement ledger",
-            "timeout": 5
-          }
-        ]
-      }
-    ]
-  }
-}
-
 
 ## out-marketplace/plugins/aidd-telemetry/hooks/ledger.cjs
 script, identical to the plugin source

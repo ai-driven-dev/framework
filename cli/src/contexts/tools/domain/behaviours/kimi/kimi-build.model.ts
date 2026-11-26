@@ -10,18 +10,17 @@ import {
 } from "../../../../../shared/domain/materialization/artifact-path.js";
 import type {
   AgentMarkdown,
-  ConvertHooks,
   ToolBuildContract,
 } from "../../../../../shared/domain/materialization/build-contract.js";
 import type { FlatArtifactLayout } from "../../../../../shared/domain/materialization/flat-paths.js";
 import type { PluginPresence } from "../../../../../shared/domain/materialization/plugin-presence.js";
 import { rewritePluginRootInJson } from "../../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
-import { hookEventsOf } from "../../../../../shared/domain/reading/hook-events.js";
 import { portableAgentFrontmatter } from "../../formats/agents/portable-agent.js";
 import { AGENTS_FILE, agentsIndexFiles } from "../../formats/agents-rules-index.js";
 import type { HooksRouting } from "../../formats/hooks/descriptor.js";
 import { pluginTreeHooksArtifact } from "../../formats/hooks/routes.js";
 import { hostToolNames } from "../../formats/host-tool-names.js";
+import { shapeEntries } from "../../hooks/hooks-entry-shape.js";
 import { routeEvents } from "../../hooks/hooks-route.js";
 import { toolWarning, unmappedEventWarning } from "../../hooks/hooks-warnings.js";
 import { matcherGroupsByEvent } from "../../hooks/plugin-hooks-shape.js";
@@ -140,7 +139,7 @@ function manifestHooks(shipped: Readonly<Record<string, unknown>>, { eventMap }:
   const { routed, skipped } = routeEvents(
     matcherGroupsByEvent(rewritePluginRootInJson(shipped)),
     eventMap,
-    MANIFEST_ENTRY
+    (groups) => shapeEntries(groups, MANIFEST_ENTRY)
   );
   return {
     entries: routed.flatMap(([event, entries]) => entries.map((entry) => ({ event, ...entry }))),
@@ -148,27 +147,19 @@ function manifestHooks(shipped: Readonly<Record<string, unknown>>, { eventMap }:
   };
 }
 
-/** The build reports each event Kimi never fires; the hooks file itself ships as it is, for Kimi
- * reads a plugin's hooks from its manifest only. */
-function kimiPluginHooks(hooks: KimiHooks): ConvertHooks {
-  return (json) => ({
-    content: json,
-    warnings: manifestHooks(hookEventsOf(json), hooks).skipped.map((event) =>
-      toolWarning("kimi", unmappedEventWarning(event))
-    ),
-  });
-}
-
-/** The manifest Kimi installs. Every path starts with `./`, and Kimi finds `agents/` by itself
- * when the manifest names none. Its servers and hooks are inline, not paths, with the plugin
- * root its own directory. `repository` is left out: Kimi lists no such field. */
+/** The manifest Kimi installs, which also reports each event Kimi never fires. Every path starts
+ * with `./`, and Kimi finds `agents/` by itself when the manifest names none. Its servers and
+ * hooks are inline, not paths, with the plugin root its own directory. `repository` is left
+ * out: Kimi lists no such field. */
 function kimiPluginManifest(hooks: KimiHooks) {
   return (
     source: Record<string, unknown>,
-    { skillsList, mcpServers, hooks: shipped }: PluginPresence
+    { skillsList, mcpServers, hooks: shipped }: PluginPresence,
+    warn?: (warning: string) => void
   ): Record<string, unknown> => {
     const { repository: _repository, ...identity } = identityFields(source);
-    const { entries } = manifestHooks(shipped, hooks);
+    const { entries, skipped } = manifestHooks(shipped, hooks);
+    for (const event of skipped) warn?.(toolWarning("kimi", unmappedEventWarning(event)));
     return {
       ...identity,
       ...(skillsList.length > 0 && { skills: "./skills/" }),
@@ -178,6 +169,11 @@ function kimiPluginManifest(hooks: KimiHooks) {
       ...(entries.length > 0 && { hooks: entries }),
     };
   };
+}
+
+/** The scripts ship, the hooks file does not: Kimi reads a plugin's hooks from its manifest only. */
+function kimiHooksArtifact(hooks: KimiHooks) {
+  return { ...pluginTreeHooksArtifact(hooks), skipHooksJson: true };
 }
 
 /** The tree `aidd translate --to kimi --as marketplace` builds and the user-scope install hands
@@ -201,7 +197,7 @@ export function buildKimiPluginContract({ agentTools, hooks }: KimiPluginSpec): 
         agentMarkdown: kimiAgentMarkdown(agentTools),
       },
       mcp: { supported: false, reason: "Kimi reads a plugin's servers from its manifest" },
-      hooks: pluginTreeHooksArtifact(hooks, kimiPluginHooks(hooks)),
+      hooks: kimiHooksArtifact(hooks),
     },
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,

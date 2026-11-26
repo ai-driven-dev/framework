@@ -19,6 +19,7 @@ import type { ProjectHooksFormat } from "../../../contract/tool-vocabulary.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { hostToolNamesMatching, matcherNamesNoToolWarning } from "../../formats/host-tool-names.js";
 import { pluginScriptDir, pluginScriptPath } from "../../hooks/hooks-merge.js";
+import { routeEvents } from "../../hooks/hooks-route.js";
 import { unmappedEventWarning } from "../../hooks/hooks-warnings.js";
 import {
   type BridgeHookCall,
@@ -149,26 +150,25 @@ export function mergeKiroHooks(
   shipped: ShippedHooks
 ): { content: string; warnings: readonly string[] } {
   const kept = hooksOf(existingJson).filter((hook) => !runs(hooks, hook, shipped.plugin));
-  const added: KiroHook[] = [];
-  const warnings: string[] = [];
-  for (const [event, groups] of matcherGroupsByEvent(hookEventsOf(shipped.json))) {
-    const trigger = Object.hasOwn(hooks.eventMap, event) ? hooks.eventMap[event] : undefined;
-    if (trigger === undefined) {
-      warnings.push(unmappedEventWarning(event));
-      continue;
-    }
-    const built = hooksOfEvent(
-      {
-        scriptsDir: hooks.flat.scriptsDir,
-        plugin: shipped.plugin,
-        trigger,
-        toolNames: hooks.toolNames,
-      },
-      groups
-    );
-    added.push(...built.hooks);
-    warnings.push(...built.warnings);
-  }
+  const { routed, skipped } = routeEvents(
+    matcherGroupsByEvent(hookEventsOf(shipped.json)),
+    hooks.eventMap,
+    (groups, trigger) =>
+      hooksOfEvent(
+        {
+          scriptsDir: hooks.flat.scriptsDir,
+          plugin: shipped.plugin,
+          trigger,
+          toolNames: hooks.toolNames,
+        },
+        groups
+      )
+  );
+  const added = routed.flatMap(([, built]) => built.hooks);
+  const warnings = [
+    ...skipped.map(unmappedEventWarning),
+    ...routed.flatMap(([, built]) => built.warnings),
+  ];
   return { content: serialize(existingJson, [...kept, ...added]), warnings };
 }
 

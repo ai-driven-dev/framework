@@ -137,8 +137,7 @@ export type ArtifactContract =
        * adapter replaces the one the plugin ships. Absent, every script is written as shipped. */
       readonly script?: (pluginPath: string, content: string) => string;
       /** Delivers everything under hooks/ except hooks.json, for a tool whose own side reads
-       * none: OpenCode today, whose scripts are still delivered and whose trigger is
-       * `hooksBridge`. */
+       * none: OpenCode, whose trigger is `hooksBridge`, and Kimi, whose manifest lists them. */
       readonly skipHooksJson?: boolean;
       /** A generated event bridge, for a tool with no hooks.json of its own and no other way
        * to trigger a plugin's declared hooks. Read only when `skipHooksJson` is also true. */
@@ -158,7 +157,11 @@ export interface ToolBuildContract {
 
   /** Synthesize a tool-native plugin manifest from the source manifest + presence flags. null if tool has no manifest. */
   readonly synthesizeManifest:
-    | ((source: Record<string, unknown>, presence: PluginPresence) => Record<string, unknown>)
+    | ((
+        source: Record<string, unknown>,
+        presence: PluginPresence,
+        warn?: (warning: string) => void
+      ) => Record<string, unknown>)
     | null;
 
   readonly manifestSchemaName: SchemaName | null;

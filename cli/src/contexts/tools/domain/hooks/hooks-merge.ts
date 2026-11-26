@@ -10,7 +10,7 @@ import {
   escapeRegExp,
   rewritePluginRootInJson,
 } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
-import type { Entry, HooksFileFormat } from "./hooks-entry-shape.js";
+import { type Entry, type HooksFileFormat, shapeEntries } from "./hooks-entry-shape.js";
 import { routeEvents } from "./hooks-route.js";
 import { unmappedEventWarning } from "./hooks-warnings.js";
 import type { PluginHooksShape } from "./plugin-hooks-shape.js";
@@ -55,7 +55,7 @@ export function mergeHooks(
   const { routed, skipped } = routeEvents(
     Object.entries(rewriteRoot(shipped, target.scriptsDir).hooks ?? {}),
     target.eventMap,
-    target.file
+    (groups) => shapeEntries(groups, target.file)
   );
   for (const [toolEvent, entries] of routed) {
     hooks[toolEvent] = [...(hooks[toolEvent] ?? []), ...entries];

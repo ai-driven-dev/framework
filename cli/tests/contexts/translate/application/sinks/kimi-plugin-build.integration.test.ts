@@ -79,7 +79,6 @@ describe("a plugin build for kimi", () => {
     expect(built.filter((path) => path.includes(".mcp.json"))).toEqual([]);
     expect(built.filter((path) => path.startsWith("plugins/aidd-test/hooks/"))).toEqual([
       "plugins/aidd-test/hooks/check.sh",
-      "plugins/aidd-test/hooks/hooks.json",
       "plugins/aidd-test/hooks/session-start.js",
     ]);
   });
