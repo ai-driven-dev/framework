@@ -30,10 +30,10 @@
 
 ## Run 4
 
-- Left: A release-time publication, which renames the Copilot and Codex catalogs to the distribution name.
+- Left: A release-time publication, which renames the Copilot and Codex catalogs to the distribution name. `docs/INSTALL.md` switches Copilot and Codex to `aidd-marketplace` in the same change that flips `AIDD_PUBLISH_MARKETPLACES`.
 
 | Task | Validation | Result |
 | --- | --- | --- |
-| 1.1 | Run the dry-run workflow on the pull request. | Run 45887022291 succeeded. |
-| 1.1 | Dispatch the App reach check against the distribution repository. | Run 45888997513 succeeded: the token reached the repository. |
+| 1.1 | Run the dry-run workflow on the pull request. | The Marketplace distribution dry run workflow succeeded. |
+| 1.1 | Dispatch the App reach check against the distribution repository. | The reach check from `d3ec7dc97` succeeded: the token reached the repository. |
 | 1.1 | List the distribution repository refs. | The `cursor` branch and tag are deleted: Cursor is not published. Claude Code serves `aidd-marketplace`; Copilot and Codex still serve `aidd-framework`. |

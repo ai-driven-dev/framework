@@ -9,7 +9,7 @@ Users can install and update released AIDD plugins through the documented public
 - A single public AIDD distribution repository hosts the catalogs. Every supported client gets a stable installation URL and version pinning where available.
 - Hosted catalogs, release ZIPs, and flat-file distributions come from the same release. Existing ZIPs remain available from GitHub Releases.
 - Each supported catalog publishes automatically. A failure is visible by tool and does not block other catalog publications.
-- Cursor and Antigravity are not hosted: no client can install their catalog from a Git ref in an automated check. `notHosted` of `scripts/marketplace-distribution.json` lists them; `docs/INSTALL.md` states why.
+- Cursor, Antigravity and Kimi are not hosted: no client can install their catalog from a Git ref in an automated check. `notHosted` of `scripts/marketplace-distribution.json` lists them; `docs/INSTALL.md` states why.
 - The release pins no model for any agent.
 - A tool's stable branch moves only after its immutable version tag is verified with the real client. Deployment memory states the consequence.
 

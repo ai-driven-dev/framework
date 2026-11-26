@@ -45,5 +45,5 @@ Source: [spec.md](spec.md)
 | Decision | Why |
 | --- | --- |
 | Publish isolated tool branches in one distribution repository | Native layouts can occupy identical paths and Git-backed clients can select a ref. |
-| Tag, verify the tag with the real client, then advance the stable branch | A failed verification leaves the previous release live on the branch. |
+| Tag, verify the tag with the real client, then advance the stable branch | A failed verification keeps the stable branch unmoved; consequence in `aidd_docs/memory/deployment.md`. |
 | Host only tools whose catalog a native client can verify | Cursor and Antigravity are not hosted; listed in `notHosted` of `scripts/marketplace-distribution.json`. |

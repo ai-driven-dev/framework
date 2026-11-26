@@ -137,7 +137,9 @@ cp -r aidd-framework-cursor-marketplace-<version>/plugins/aidd-* ~/.cursor/plugi
 
 ### Antigravity CLI
 
-1. Download `aidd-framework-antigravity-marketplace-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest). Antigravity hosts no catalog: `agy` registers no third-party marketplace, only `antigravity-plugins-official` and `antigravity-plugins-partners`, and `agy plugin install <github repo url>` installs one plugin whose `plugin.json` sits at the repository root, with no ref or tag pinning, so the multi-plugin branch layout is not installable. [Antigravity marketplace](https://antigravity.google/docs/marketplace/) Copy its plugin directories.
+AIDD hosts no Antigravity catalog: the docs describe no third-party marketplace and no ref or tag pinning, and a plugin repository carries its `plugin.json` at the repository root, so the multi-plugin branch layout is not installable. [Marketplace](https://antigravity.google/docs/marketplace/), [build plugins](https://antigravity.google/docs/build-plugins/)
+
+1. Download `aidd-framework-antigravity-marketplace-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest).
 2. Unzip it.
 3. From your project's root, copy the plugins:
 
@@ -146,13 +148,15 @@ mkdir -p .agents/plugins
 cp -r aidd-framework-antigravity-marketplace-<version>/plugins/aidd-* .agents/plugins/
 ```
 
+Alternative: install the plugins in Claude Code for every project (user scope), then run `agy plugin import claude`. It stages skills, agents and hooks into `~/.gemini/config/plugins/`. It skips plugins installed for a single project and plugins disabled in Claude Code. Check with `agy plugin list`. [agy plugin help](https://antigravity.google/docs/marketplace?tab=cli)
+
 ### Kimi Code CLI
 
 1. Download `aidd-framework-kimi-marketplace-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest). It holds plugin directories, not a catalog.
 2. Unzip it. The plugins are the `plugins/aidd-*` directories.
 3. Installing them by hand in Kimi's web UI is unverified. `aidd setup --global --ide kimi` installs the plugins through the server Kimi starts.
 
-OpenCode and Kilo Code have no marketplace: use flat files. Kiro also uses flat files. The Antigravity CLI installs each plugin as a directory under `.agents/plugins/`.
+OpenCode and Kilo Code have no marketplace: use flat files. `opencode plugin github:<owner>/<repo>` installs only a code package with a `package.json`; AIDD's markdown plugins have none. Kiro also uses flat files. The Antigravity CLI installs each plugin as a directory under `.agents/plugins/`.
 
 ## Flat files
 
