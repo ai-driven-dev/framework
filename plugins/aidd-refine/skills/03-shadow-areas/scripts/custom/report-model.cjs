@@ -17,10 +17,11 @@ function report(ctx) {
   let gap = null;
   ctx.prose.forEach((prose, index) => {
     if (!prose.trim() || /^# /u.test(prose)) return;
-    const at = { line: index + 1, text: ctx.lines[index].trimEnd() };
+    const raw = ctx.lines[index];
+    const at = { line: index + 1, text: raw.trimEnd() };
     const heading = SECTION.exec(prose);
-    const item = GAP.exec(prose);
-    const quote = QUOTE.exec(prose);
+    const item = GAP.test(prose) && GAP.exec(raw);
+    const quote = QUOTE.test(prose) && QUOTE.exec(raw);
     if (heading) {
       section = { name: heading[1], line: at.line };
       model.sections.push(section);

@@ -16,6 +16,7 @@ Checkout requires a signed-in
 account.
 The system must respond quickly when the cart is submitted.
 On submit, the order is created and a confirmation is shown.
+A failed payment returns \`402\` and redirects to \`/cart?retry=1\`.
 `;
 
 const REPORT = `---
@@ -114,9 +115,16 @@ describe("shadow contract", () => {
     refusedOnlyBy(REPORT.replace("source: prd.md", "source: .."), "SHADOW-04");
   });
 
-  it("SHADOW-05 refuses the same question twice, and the same passage twice in one category", () => {
+  it("SHADOW-05 refuses the same question twice", () => {
     refusedOnlyBy(REPORT.replace("  > respond quickly", "  > respond quickly\n- quel délai maximum signifie « quickly » au submit du panier ?\n  > the cart is submitted").replace("open: 3", "open: 4"), "SHADOW-05");
-    refusedOnlyBy(REPORT.replace("  > respond quickly", "  > respond quickly\n- Is quickly measured from the click?\n  > respond quickly").replace("open: 3", "open: 4"), "SHADOW-05");
+  });
+
+  it("accepts a split question on one passage, and inline code in questions and quotes", () => {
+    const split = REPORT.replace("  > respond quickly", "  > respond quickly\n- Is quickly measured from the click?\n  > respond quickly").replace("open: 3", "open: 4");
+    assert.deepEqual(check(split), { code: 0, out: "", err: "" });
+    const code = (status) => REPORT.replace("  > On submit, the order is created", `  > On submit, the order is created\n- What does \`${status}\` show after \`/cart?retry=1\`?\n  > returns \`${status}\` and redirects to \`/cart?retry=1\``).replace("open: 3", "open: 4");
+    assert.deepEqual(check(code("402")), { code: 0, out: "", err: "" });
+    refusedOnlyBy(code("500"), "SHADOW-04");
   });
 
   it("SHADOW-06 refuses a miscount, closed gaps counted, and a status the count contradicts", () => {
