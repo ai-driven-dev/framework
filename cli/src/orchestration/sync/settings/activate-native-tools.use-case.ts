@@ -16,6 +16,8 @@ import type { SyncedMarketplaces } from "./plugin-refs-run.js";
 
 export interface ActivationRun {
   outcomes: ReadonlyMap<ToolId, HostRegistrationOutcome>;
+  /** The tools whose host took plugins through its own server, which no registration records. */
+  served: readonly ToolId[];
   binaryMissing: readonly { toolId: ToolId; binary: string }[];
   warnings: readonly (string | HintedMessage)[];
   errors: readonly { scope: string; error: unknown }[];
@@ -24,6 +26,7 @@ export interface ActivationRun {
 /** The run while it is being collected: the same four answers, still open to writing. */
 interface ActivationAccumulator {
   outcomes: Map<ToolId, HostRegistrationOutcome>;
+  served: ToolId[];
   binaryMissing: { toolId: ToolId; binary: string }[];
   warnings: (string | HintedMessage)[];
   errors: { scope: string; error: unknown }[];
@@ -62,6 +65,7 @@ export class ActivateNativeTools {
   async execute(request: ActivateNativeToolsRequest): Promise<ActivationRun> {
     const run: ActivationAccumulator = {
       outcomes: new Map(),
+      served: [],
       binaryMissing: [],
       warnings: [],
       errors: [],
@@ -117,10 +121,7 @@ export class ActivateNativeTools {
     if (result.status === "activated") {
       run.outcomes.set(toolId, result.outcome);
     } else if (result.status === "binary-missing") {
-      this.deps.logger.warn({
-        text: `${result.binary} CLI not found on PATH — skipping native plugin activation.`,
-        hint: enablePlugins.length > 0 ? "rerun-setup-global" : undefined,
-      });
+      warnBinaryMissing(this.deps.logger, result.binary, enablePlugins.length > 0);
       run.binaryMissing.push({ toolId, binary: result.binary });
     }
   }
@@ -129,4 +130,13 @@ export class ActivateNativeTools {
   private builtFor(toolId: ToolId, projectRoot: string): BuiltCatalogs<SyncedMarketplaces[number]> {
     return (marketplace) => this.deps.buildMarketplace.execute(toolId, marketplace, projectRoot);
   }
+}
+
+/** Says a host's CLI is not on the PATH, so its plugins were not activated: with where to rerun
+ * once it is, when the run asked for plugins. */
+export function warnBinaryMissing(logger: Logger, binary: string, pluginsAsked: boolean): void {
+  logger.warn({
+    text: `${binary} CLI not found on PATH — skipping native plugin activation.`,
+    hint: pluginsAsked ? "rerun-setup-global" : undefined,
+  });
 }

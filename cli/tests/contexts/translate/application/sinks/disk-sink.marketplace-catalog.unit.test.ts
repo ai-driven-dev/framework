@@ -147,6 +147,7 @@ describe("what a marketplace layout does with a plugin's presence flags", () => 
         skillsList: ["hello"],
         hasHooksJson: true,
         hasMcpJson: false,
+        mcpServers: {},
       },
     ]);
   });

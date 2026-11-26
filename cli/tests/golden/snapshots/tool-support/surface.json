@@ -191,6 +191,14 @@
     "nativeCli": null,
     "pluginTree": null,
     "builds": {
+      "marketplace": {
+        "skills": "yes",
+        "agents": "yes",
+        "mcp": "yes",
+        "hooks": "no",
+        "rules": "no",
+        "commands": "no"
+      },
       "flat": {
         "skills": "yes",
         "agents": "yes",

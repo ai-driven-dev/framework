@@ -25,8 +25,9 @@ describe("aidd setup - the help surface", () => {
     expect(globalSetupHelp(wireTools()).split("\n")).toEqual([
       "",
       "Global:",
-      "  Pass --ide claude,codex,copilot,cursor,kilo,opencode (one or more, no editor) and --plugins all, recommended, none or names.",
+      "  Pass --ide claude,codex,copilot,cursor,kilo,kimi,opencode (one or more, no editor) and --plugins all, recommended, none or names.",
       "  claude, codex, copilot enable the plugins through their own CLI, which must be on PATH.",
+      "  kimi install the plugins through their own server, which their CLI starts and which must be on PATH.",
       "  codex gets their files in ~/.codex, cursor gets their files in ~/.cursor/plugins/local, kilo gets their files in ~/.config/kilo, opencode gets their files in ~/.config/opencode.",
       "  `aidd sync --global` refreshes them from the framework source.",
     ]);

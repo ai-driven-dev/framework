@@ -55,7 +55,8 @@ const IDENTITY: readonly (readonly [string, (value: unknown) => boolean])[] = [
   ["keywords", Array.isArray],
 ];
 
-function identityFields(source: Record<string, unknown>): Record<string, unknown> {
+/** The source manifest's identity fields a tool keeps, in the order the output keeps them. */
+export function identityFields(source: Record<string, unknown>): Record<string, unknown> {
   const fields: Record<string, unknown> = {};
   for (const [key, accepts] of IDENTITY) if (accepts(source[key])) fields[key] = source[key];
   return fields;

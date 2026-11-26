@@ -251,4 +251,6 @@ export interface PluginPresence {
   readonly skillsList: readonly string[];
   readonly hasHooksJson: boolean;
   readonly hasMcpJson: boolean;
+  /** The servers `.mcp.json` declares, by name, for a tool whose manifest carries them inline. */
+  readonly mcpServers: Readonly<Record<string, unknown>>;
 }

@@ -18,6 +18,7 @@ const EMPTY_PRESENCE: PluginPresence = {
   skillsList: [],
   hasHooksJson: false,
   hasMcpJson: false,
+  mcpServers: {},
 };
 
 const FULL_PRESENCE: PluginPresence = {
@@ -26,6 +27,7 @@ const FULL_PRESENCE: PluginPresence = {
   skillsList: ["commit", "plan"],
   hasHooksJson: true,
   hasMcpJson: true,
+  mcpServers: {},
 };
 
 const BASE_SOURCE = {

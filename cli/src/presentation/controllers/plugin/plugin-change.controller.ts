@@ -48,18 +48,28 @@ async function changeOf(
   const { verbose, output, projectRoot } = parseGlobalOptions(program);
   const scope = parseScope(options.scope) ?? "project";
   const container = await containerOf(projectRoot, { verbose }, output);
+  const toolIds = aiToolSelectionOf(options.tool, catalog);
   return {
     output,
     projectRoot,
     scope,
     container,
-    toolIds: aiToolSelectionOf(options.tool, catalog),
+    toolIds,
     /** A project-scope change re-drives native activation; a user-scope one has none. */
     async reactivate() {
       if (scope === "project") {
         reportNativeActivation(
           output,
           await container.marketplace.syncNativeActivation.execute({ projectRoot })
+        );
+      }
+    },
+    /** A user-scope update refreshes the plugins a host's own server holds. */
+    async refreshServed() {
+      if (scope === "user") {
+        reportNativeActivation(
+          output,
+          await container.marketplace.syncNativeActivation.execute({ projectRoot, served: toolIds })
         );
       }
     },
@@ -89,10 +99,8 @@ export async function updatePluginsFrom(
   name: string | undefined,
   options: ChangeOptions
 ): Promise<void> {
-  const { output, projectRoot, toolIds, scope, container, reactivate } = await changeOf(
-    environment,
-    options
-  );
+  const { output, projectRoot, toolIds, scope, container, reactivate, refreshServed } =
+    await changeOf(environment, options);
   const pluginNames = name !== undefined ? [name] : undefined;
   const request = { pluginNames, toolIds, projectRoot, scope };
   const outcome =
@@ -100,5 +108,6 @@ export async function updatePluginsFrom(
       ? { updated: await container.plugin.updateUserPlugin.execute(request) }
       : await container.plugin.updatePlugin.execute(request);
   await reactivate();
+  await refreshServed();
   printPluginsUpdated(output, outcome);
 }

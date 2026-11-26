@@ -23,6 +23,7 @@ const NO_CONTENT = {
   skillsList: [],
   hasHooksJson: false,
   hasMcpJson: false,
+  mcpServers: {},
 };
 
 function _configArtifactOf(): ConfigArtifact {
@@ -61,6 +62,7 @@ describe("building Codex's marketplace contract", () => {
         skillsList: ["01-plan"],
         hasHooksJson: true,
         hasMcpJson: true,
+        mcpServers: {},
       }
     );
 
@@ -85,6 +87,7 @@ describe("building Codex's marketplace contract", () => {
         skillsList: [],
         hasHooksJson: false,
         hasMcpJson: false,
+        mcpServers: {},
       }
     );
 
