@@ -43,8 +43,9 @@ jobs:
           for TOOL in $(node -p "require('./scripts/marketplace-tools.cjs').publishableTools().map((tool) => tool.id).join(' ')"); do
             OUT="$RUNNER_TEMP/marketplaces/$TOOL"
             node cli/dist/cli.js translate . --to "$TOOL" --out "$OUT" --as marketplace
-            node scripts/publish-marketplace.cjs "$TOOL" v0.0.1 "$OUT" "$REMOTE"
+            node scripts/publish-marketplace.cjs tag "$TOOL" v0.0.1 "$OUT" "$REMOTE"
             CLIENT=$(TOOL="$TOOL" node -p "require('./scripts/marketplace-tools.cjs').toolOf(process.env.TOOL).clientPackage")
             npm install --prefix "$RUNNER_TEMP/marketplace-client-$TOOL" "$CLIENT"
             PATH="$RUNNER_TEMP/marketplace-client-$TOOL/node_modules/.bin:$PATH" node scripts/verify-marketplace.cjs "$TOOL" v0.0.1 "$OUT"
+            node scripts/publish-marketplace.cjs advance "$TOOL" v0.0.1 "$REMOTE"
           done

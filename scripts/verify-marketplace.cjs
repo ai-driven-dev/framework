@@ -21,13 +21,7 @@ function verify(toolId, version, source, repository = published) {
 
   const release = `${toolId}-${version}`;
   const tagRef = `refs/tags/${release}`;
-  const branchRef = `refs/heads/${toolId}`;
-  const refs = Object.fromEntries(
-    execFileSync("git", ["ls-remote", "--exit-code", repository, tagRef, branchRef], { encoding: "utf8" })
-      .trim().split("\n").map((line) => line.split("\t").reverse()),
-  );
-  if (!refs[tagRef] || !refs[branchRef]) throw new Error(`Expected ${tagRef} and ${branchRef} in ${repository}`);
-  const ref = refs[tagRef] === refs[branchRef] ? toolId : release;
+  if (!execFileSync("git", ["ls-remote", repository, tagRef], { encoding: "utf8" }).trim()) throw new Error(`Expected ${tagRef} in ${repository}`);
 
   const plugin = "aidd-context";
   const manifest = JSON.parse(readFileSync(join(source, "plugins", plugin, tool.manifest), "utf8"));
@@ -42,14 +36,14 @@ function verify(toolId, version, source, repository = published) {
   const { add, install } = CLIENTS[tool.client] ?? DEFAULT_CLIENT;
 
   try {
-    client(...add(repository, ref));
+    client(...add(repository, release));
     client("plugin", install, `${plugin}@${catalogName}`);
     const installed = installedPlugins(tool.client, client("plugin", "list", "--json"))
       .find((entry) => entry.name === plugin && entry.marketplace === catalogName);
     if (installed?.version !== manifest.version) {
-      throw new Error(`${toolId} installed ${installed?.version ?? "no version"}, expected ${plugin} ${manifest.version} from ${ref}`);
+      throw new Error(`${toolId} installed ${installed?.version ?? "no version"}, expected ${plugin} ${manifest.version} from ${release}`);
     }
-    console.log(`${toolId} installed ${plugin}@${catalogName} ${installed.version} from ${ref}`);
+    console.log(`${toolId} installed ${plugin}@${catalogName} ${installed.version} from ${release}`);
   } finally {
     rmSync(profile, { recursive: true, force: true });
   }

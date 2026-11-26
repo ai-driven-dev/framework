@@ -33,7 +33,7 @@ function git(...args) {
   return execFileSync("git", ["--git-dir", remote, ...args], { encoding: "utf8", env: cleanEnv() }).trim();
 }
 
-/** The remote holds `tool`'s branch and, unless `tagged` is false, its release tag, at one commit. */
+/** The remote holds `tool`'s stable branch and, unless `tagged` is false, its release tag, at one commit. */
 function publishedRemote(tool, { tagged = true } = {}) {
   const commit = git("commit-tree", EMPTY_TREE, "-m", "x");
   git("update-ref", `refs/heads/${tool}`, commit);
@@ -69,26 +69,26 @@ function verify(tool, version, root) {
 
 const calls = () => readFileSync(log, "utf8").trim().split("\n");
 
-test("Claude Code adds the stable branch and installs the plugin from the distribution catalog", posixOnly, () => {
+test("Claude Code adds the release tag and installs the plugin from the distribution catalog", posixOnly, () => {
   publishedRemote("claude");
   stubClient("claude", "2.11.0");
   const result = verify("claude", "v1.0.0", source("claude"));
   assert.equal(result.status, 0, result.stderr);
-  assert.deepEqual(calls(), [`plugin marketplace add ${remote}#claude`, "plugin install aidd-context@aidd-marketplace", "plugin list --json"]);
-  assert.match(result.stdout, /installed aidd-context@aidd-marketplace 2.11.0 from claude/);
+  assert.deepEqual(calls(), [`plugin marketplace add ${remote}#claude-v1.0.0`, "plugin install aidd-context@aidd-marketplace", "plugin list --json"]);
+  assert.match(result.stdout, /installed aidd-context@aidd-marketplace 2.11.0 from claude-v1.0.0/);
 });
 
-test("Codex adds the stable branch with --ref and installs with `plugin add`", posixOnly, () => {
+test("Codex adds the release tag with --ref and installs with `plugin add`", posixOnly, () => {
   publishedRemote("codex");
   stubClient("codex", "2.11.0");
   const result = verify("codex", "v1.0.0", source("codex"));
   assert.equal(result.status, 0, result.stderr);
-  assert.deepEqual(calls().slice(0, 2), [`plugin marketplace add ${remote} --ref codex`, "plugin add aidd-context@aidd-marketplace"]);
+  assert.deepEqual(calls().slice(0, 2), [`plugin marketplace add ${remote} --ref codex-v1.0.0`, "plugin add aidd-context@aidd-marketplace"]);
 });
 
-test("a branch that moved past the release is installed from the release tag", posixOnly, () => {
+test("a release is verified from its tag before the stable branch exists", posixOnly, () => {
   publishedRemote("claude");
-  git("update-ref", "refs/heads/claude", git("commit-tree", git("rev-parse", "refs/heads/claude^{tree}"), "-p", git("rev-parse", "refs/heads/claude"), "-m", "newer"));
+  git("update-ref", "-d", "refs/heads/claude");
   stubClient("claude", "2.11.0");
   const result = verify("claude", "v1.0.0", source("claude"));
   assert.equal(result.status, 0, result.stderr);
@@ -100,7 +100,7 @@ test("an installed version other than the release's is refused", posixOnly, () =
   stubClient("claude", "2.10.0");
   const result = verify("claude", "v1.0.0", source("claude"));
   assert.equal(result.status, 1);
-  assert.match(result.stderr, /claude installed 2\.10\.0, expected aidd-context 2\.11\.0 from claude/);
+  assert.match(result.stderr, /claude installed 2\.10\.0, expected aidd-context 2\.11\.0 from claude-v1.0.0/);
 });
 
 test("a release whose tag is not on the remote is refused before any client runs", posixOnly, () => {

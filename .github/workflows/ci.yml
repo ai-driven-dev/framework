@@ -449,25 +449,33 @@ jobs:
           owner: ${{ steps.destination.outputs.owner }}
           repositories: ${{ steps.destination.outputs.repo }}
           permission-contents: write
-      - name: Publish the catalog
+      - name: Tag the release
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           TOOL: ${{ matrix.tool }}
           TAG: ${{ needs.release-please.outputs.tag_name }}
         run: |
           gh auth setup-git --hostname github.com
-          node scripts/publish-marketplace.cjs "$TOOL" "$TAG" "$MARKETPLACE_SOURCE"
+          node scripts/publish-marketplace.cjs tag "$TOOL" "$TAG" "$MARKETPLACE_SOURCE"
       - name: Install the marketplace client
         env:
           CLIENT: ${{ matrix.clientPackage }}
         run: |
           npm install --prefix "$RUNNER_TEMP/marketplace-client" "$CLIENT"
           echo "$RUNNER_TEMP/marketplace-client/node_modules/.bin" >> "$GITHUB_PATH"
-      - name: Verify the public release ref
+      - name: Verify the release tag
         env:
           TOOL: ${{ matrix.tool }}
           TAG: ${{ needs.release-please.outputs.tag_name }}
         run: node scripts/verify-marketplace.cjs "$TOOL" "$TAG" "$MARKETPLACE_SOURCE"
+      - name: Advance the stable branch
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TOOL: ${{ matrix.tool }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+        run: |
+          gh auth setup-git --hostname github.com
+          node scripts/publish-marketplace.cjs advance "$TOOL" "$TAG"
 
   # A recap of what ran and what broke, whatever the outcome, printed in the log.
   # The Slack message is n8n's.
