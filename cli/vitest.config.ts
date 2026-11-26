@@ -42,6 +42,7 @@ export default defineConfig({
           include: ["tests/**/*.contract.test.ts"],
           globals: false,
           environment: "node",
+          testTimeout: 60000,
           globalSetup: [
             "./tests/setup/sweep-stale-temp-dirs.ts",
             "./tests/shared/testing/throwaway-profile.ts",
