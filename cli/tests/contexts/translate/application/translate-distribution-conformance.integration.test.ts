@@ -1,4 +1,4 @@
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import type { AiToolProfile } from "../../../../src/contexts/tools/contract/tool-profile.js";
 import { parseFrontmatter } from "../../../../src/shared/domain/markdown.js";
@@ -8,7 +8,7 @@ import { nativeOf } from "../../../shared/testing/native-plugin-answers.builder.
 import { registeredTools } from "../../../shared/testing/registered-tools.builder.js";
 import { seedFromDirectory } from "../../../shared/testing/seed-from-directory.builder.js";
 import { buildTree } from "../testing/build-tree.builder.js";
-import { translator } from "../testing/engine-kit.builder.js";
+import { CLAUDE_ROOT_TOKEN, translator } from "../testing/engine-kit.builder.js";
 import {
   distributionOf,
   FRAMEWORK_SOURCE,
@@ -220,5 +220,37 @@ describe("path B (install) writes what path A (disk) writes, but for what DIVERG
 
   it("every divergence is still needed by some tool", () => {
     expect([...used].sort()).toEqual(DIVERGENCES.map((d) => d.id).sort());
+  });
+});
+
+describe("path B writes the commands of a plugin as path A does, for a tool whose build carries them", () => {
+  const COMMAND = join(SOURCE, "plugins", "aidd-dev", "commands", "04_code", "implement.md");
+  const carriers = registeredTools()
+    .idsInCanonicalOrder("ai")
+    .filter(
+      (id) => registeredTools().aiProfile(id).buildContract("flat")?.artifacts.commands?.supported
+    );
+  let tree: InMemoryFileAdapter;
+  beforeAll(async () => {
+    tree = new InMemoryFileAdapter();
+    await seedFromDirectory(tree, SOURCE, { useAbsolutePaths: true });
+    tree.setFile(
+      COMMAND,
+      `---\nname: aidd:04:implement\ndescription: Implement.\n---\nRead @${CLAUDE_ROOT_TOKEN}/skills/plan/SKILL.md\n`
+    );
+  });
+
+  it("names a tool that carries commands", () => {
+    expect(carriers).not.toEqual([]);
+  });
+
+  it.each(carriers)("%s", async (id) => {
+    const tool = registeredTools().aiProfile(id);
+    const written = await writtenByA(tree, tool, false);
+
+    const result = await compareTool(tree, tool, false);
+
+    expect([...written.keys()].some((path) => path.includes("/commands/aidd-dev/"))).toBe(true);
+    expect(result.unexplained).toEqual([]);
   });
 });

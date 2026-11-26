@@ -14,6 +14,11 @@ export function segmentsUnder(base: string, path: string, platform: string): str
   return remainder.split("/");
 }
 
+/** The last segment of a `/`-separated path. */
+export function basename(path: string): string {
+  return path.slice(path.lastIndexOf("/") + 1);
+}
+
 export function stripTrailingSeparator(p: string): string {
   return p.endsWith("/") ? p.slice(0, -1) : p;
 }

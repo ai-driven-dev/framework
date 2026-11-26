@@ -22,6 +22,10 @@ export const agentsIn = (layout: Extract<ArtifactPlacement, { kind: "layout" }>[
 export const rulesIn = (layout: Extract<ArtifactPlacement, { kind: "layout" }>["layout"]) =>
   ({ kind: "layout", layout, of: "rule" }) as const;
 
+/** A flat commands artifact's placement. */
+export const commandsIn = (layout: Extract<ArtifactPlacement, { kind: "layout" }>["layout"]) =>
+  ({ kind: "layout", layout, of: "command" }) as const;
+
 /** Where a plugin file lands in an artifact, from the placement it declares. */
 export function artifactPath(artifact: SupportedArtifact, plugin: string, relPath: string): string {
   const { placement } = artifact;
@@ -60,6 +64,9 @@ function layoutPath(
   if (of === "agent") return flatAgentFilePath(layout, plugin, relPath);
   if (of === "rule") {
     return flatSectionPath(layout, "rules", { plugin, name: belowSection("rules", relPath) });
+  }
+  if (of === "command") {
+    return flatSectionPath(layout, "commands", { plugin, name: relPath });
   }
   return flatSkillPath(layout, plugin, relPath);
 }

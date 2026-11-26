@@ -4,6 +4,7 @@ import type {
   SupportedArtifact,
   ToolBuildContract,
 } from "../../../../shared/domain/materialization/build-contract.js";
+import { basename } from "../../../../shared/domain/paths.model.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import { PLUGIN_HOOKS_RELATIVE, PLUGIN_MCP_RELATIVE } from "../canon-format.js";
 import { agentLinks } from "../rules/agent-markdown.js";
@@ -16,7 +17,7 @@ import { relativeLinks } from "../rules/links.js";
 import type { FrameworkBuildMode } from "../translate-profile.js";
 import { buildFlatPlans } from "./build-flat.js";
 import { flatRules } from "./build-flat-rules.js";
-import { agentFiles, baseOf, isEntry } from "./build-shared.js";
+import { agentFiles, isEntry } from "./build-shared.js";
 
 /** Where a build puts one plugin for a tool and which rules each file goes through. The files
  * are named from the output directory; a flat layout leaves its MCP servers and hooks file to the
@@ -67,7 +68,7 @@ export function marketplaceAgentPlan(
   artifact: SupportedArtifact,
   { relativePath, content }: { relativePath: string; content: string }
 ): ComponentPlan {
-  const base = baseOf(relativePath);
+  const base = basename(relativePath);
   const place = { plugin, outName: base, from: `agents/${base}`, unshaped: "carry" } as const;
   return {
     source: relativePath,
@@ -105,7 +106,7 @@ function marketplaceHooks(
       content: converted?.content ?? content,
       shape:
         converted === undefined && artifact.transform && relativePath.endsWith(".json")
-          ? (text: string) => artifact.transform?.(text, plugin, baseOf(relativePath)) ?? text
+          ? (text: string) => artifact.transform?.(text, plugin, basename(relativePath)) ?? text
           : undefined,
       rootToken,
       script: (text: string) => artifact.script?.(relativePath, text) ?? text,
