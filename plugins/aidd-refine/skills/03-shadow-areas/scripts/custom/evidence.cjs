@@ -9,9 +9,12 @@ module.exports = (ctx) => {
   if (!name) return [];
   const line = ctx.fm.fieldLine.source;
   if (/[\\/]/u.test(name)) return [{ line, offending: `source: ${name}`, fix: "write the source's file name only, the report sits next to it" }];
-  const file = path.join(ctx.root, name);
-  if (!fs.statSync(file, { throwIfNoEntry: false })?.isFile()) return [{ line, offending: `source: ${name}`, fix: `${name} is not next to the report: name the file the report scans` }];
-  const source = flat(fs.readFileSync(file, "utf8"));
+  let source;
+  try {
+    source = flat(fs.readFileSync(path.join(ctx.root, name), "utf8"));
+  } catch {
+    return [{ line, offending: `source: ${name}`, fix: `${name} is not next to the report: name the file the report scans` }];
+  }
   return open(ctx).flatMap((gap) => {
     const needed = gap.category === "contradiction" ? 2 : 1;
     const found = gap.quotes.length < needed ? [{ line: gap.line, offending: gap.text, fix: needed === 2 ? "quote both statements that conflict" : "quote the source passage the gap comes from" }] : [];
