@@ -21,7 +21,7 @@ const WRITES = new Set(["fs_write", "str_replace"]);
 /** The shell tool a capture shows: its input is `{ command, description, cwd, ... }`. */
 const SHELLS = new Set(["execute_bash"]);
 
-/** The event `readEvent` last returned: an answer is printed only for one. */
+/** The event `readEvent` last returned: an answer is printed in its terms. */
 let current;
 
 function readPayload() {
@@ -68,12 +68,16 @@ function readEvent() {
   return current;
 }
 
+function print(output) {
+  process.stdout.write(`${JSON.stringify(output)}\n`);
+}
+
 /** Asks the model to go on before the turn ends, with `text` as what it must do: a block decision
  * at Stop, documented for the Agent Stop trigger (https://kiro.dev/docs/hooks/types/, CLI tab) and
  * seen answered on kiro-cli V3 (other Kiro surfaces unprobed). */
 function continueTurn(text) {
   if (current?.event !== "Stop" || typeof text !== "string" || text === "") return;
-  process.stdout.write(`${JSON.stringify({ decision: "block", reason: text })}\n`);
+  print({ decision: "block", reason: text });
 }
 
 /** A SessionStart hook's standard output is added to the agent's context as printed
@@ -85,10 +89,10 @@ function answer({ text } = {}) {
   if (current.event === "SessionStart") process.stdout.write(`${text}\n`);
 }
 
+// kiro-cli V3 was seen to stop the tool on it and hand the reason to the model.
 /** Refuses the tool call about to run, with `reason` as what the model is told: exit code 2 with
- * the reason on standard error, seen on kiro-cli V3 to stop the tool and hand the reason to the
- * model. Does nothing at any other event: a hook that refuses is written once and is harmless
- * where nothing can be refused. */
+ * the reason on standard error. Does nothing at any other event: a hook that refuses is written
+ * once and is harmless where nothing can be refused. */
 function refuse(reason) {
   if (current?.event !== "PreToolUse" || typeof reason !== "string" || reason === "") return;
   process.stderr.write(reason);
