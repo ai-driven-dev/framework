@@ -6,6 +6,7 @@ import type { AiToolProfile } from "../../src/contexts/tools/contract/tool-profi
 import { foldsFlatMcp } from "../../src/contexts/translate/domain/rules/flat-mcp.js";
 import type {
   ArtifactContract,
+  PluginPresence,
   ToolBuildContract,
 } from "../../src/shared/domain/materialization/build-contract.js";
 import { pluginModeOf } from "../contexts/tools/testing/plugin-mode.builder.js";
@@ -36,11 +37,25 @@ interface ToolSupport {
   builds: Record<string, Record<Surface, Support>>;
 }
 
+const ONE_SERVER: PluginPresence = {
+  hasAgents: false,
+  agentsList: [],
+  skillsList: [],
+  hasHooksJson: false,
+  hasMcpJson: true,
+  mcpServers: { probe: {} },
+};
+
+/** Whether the plugin manifest the build synthesizes carries a plugin's servers itself. */
+function carriesMcpInManifest(build: ToolBuildContract): boolean {
+  return "mcpServers" in (build.synthesizeManifest?.({}, ONE_SERVER) ?? {});
+}
+
 /** What a user gets through `aidd` for one layout: a build file, the config artifact the build folds MCP
- * into, or the rules section the install profile ships (rules are not part of what `translate` emits). */
+ * into, the manifest that carries it, or the rules section the install profile ships (rules are not part of what `translate` emits). */
 function supportOf(surface: Surface, build: ToolBuildContract, installsRules: boolean): Support {
   if (surface === "rules" && installsRules) return "yes";
-  if (surface === "mcp" && foldsFlatMcp(build)) return "yes";
+  if (surface === "mcp" && (foldsFlatMcp(build) || carriesMcpInManifest(build))) return "yes";
   const declared: Partial<Record<string, ArtifactContract>> = build.artifacts;
   const contract = declared[surface];
   if (!contract?.supported) return "no";

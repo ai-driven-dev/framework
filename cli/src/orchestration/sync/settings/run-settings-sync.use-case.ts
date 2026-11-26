@@ -1,7 +1,7 @@
 import type { LoadSyncContext } from "../../../contexts/installation/application/sync/load-sync-context.use-case.js";
 import type { Scope } from "../../../shared/domain/scope.js";
-import type { ActivateNativeTools } from "./activate-native-tools.use-case.js";
 import { type ClaimsSource, claimsViewOf } from "./claims-view-of.js";
+import type { ActivateHostTools } from "./host/activate-host-tools.use-case.js";
 import type {
   LoadedSyncContext,
   RecordSyncActivation,
@@ -19,16 +19,16 @@ const EMPTY_RESULT: SyncSettingsResult = {
 };
 
 export interface RunSettingsSyncDeps {
-  readonly loadContext: LoadSyncContext;
-  readonly settingsFiles: SyncToolSettingsFiles;
-  readonly activateNativeTools: ActivateNativeTools;
-  readonly recordActivation: RecordSyncActivation;
+  readonly loadContext: Pick<LoadSyncContext, "execute">;
+  readonly settingsFiles: Pick<SyncToolSettingsFiles, "execute">;
+  readonly activateNativeTools: Pick<ActivateHostTools, "execute">;
+  readonly recordActivation: Pick<RecordSyncActivation, "execute">;
   readonly claims: ClaimsSource;
 }
 
 function resultOf(activation: RecordSyncActivationRequest["activation"]): SyncSettingsResult {
   return {
-    activated: [...activation.outcomes.keys()],
+    activated: [...activation.outcomes.keys(), ...activation.served],
     binaryMissing: activation.binaryMissing,
     warnings: activation.warnings,
     errors: activation.errors,

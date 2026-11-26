@@ -10,7 +10,7 @@ import { codex, codexNativeRegistration } from "./codex.js";
 import { copilot, copilotNativeRegistration } from "./copilot.js";
 import { cursor } from "./cursor.js";
 import { kilo } from "./kilo.js";
-import { kimi } from "./kimi.js";
+import { kimi, kimiNativeRegistration } from "./kimi.js";
 import { kiro } from "./kiro.js";
 import { opencode } from "./opencode.js";
 import { vscode } from "./vscode.js";
@@ -33,6 +33,6 @@ export const REGISTERED_PROFILES = [
   withNativeRegistration(codex, codexNativeRegistration),
   withNativeRegistration(antigravity, {}),
   withNativeRegistration(kiro, {}),
-  withNativeRegistration(kimi, {}),
+  withNativeRegistration(kimi, kimiNativeRegistration),
   vscode,
 ] as const;

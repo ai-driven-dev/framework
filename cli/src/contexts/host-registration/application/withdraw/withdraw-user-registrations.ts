@@ -1,4 +1,5 @@
 import { RegistrationRefusedError } from "../../contract/host-registration.error.js";
+import { binaryAbsentNotice } from "../../domain/binary-absent.js";
 import type { HostRefusal } from "../../domain/native-refusal.js";
 import {
   type RegistrationRecord,
@@ -84,7 +85,7 @@ function describeBinaryAbsent(
   const { cacheRoot, claimedRefs } = withdrawal;
   const { binary } = registrations;
   const base =
-    `${binary}: registration left in place, the ${binary} CLI is not on the PATH. ` +
+    `${binaryAbsentNotice(binary, "registration")} ` +
     `It would have unregistered ${registrations.marketplaces.length} marketplace(s) ` +
     `and ${claimedRefs.length} plugin ref(s).`;
   return base + survivingCachePaths(cacheRoot, registrations);

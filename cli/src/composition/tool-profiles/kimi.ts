@@ -1,4 +1,8 @@
-import { buildKimiFlatContract } from "../../contexts/tools/domain/behaviours/kimi/kimi-build.model.js";
+import type { NativeRegistrationSection } from "../../contexts/host-registration/contract/native-registration-spec.js";
+import {
+  buildKimiFlatContract,
+  buildKimiPluginContract,
+} from "../../contexts/tools/domain/behaviours/kimi/kimi-build.model.js";
 import { descriptionOnlyRule } from "../../contexts/tools/domain/formats/rule-frontmatter.js";
 import { contract } from "../../contexts/tools/domain/profile/contract-builders.js";
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
@@ -52,23 +56,27 @@ const AGENT_TOOLS: ReadonlyMap<string, string> = new Map([
   ["TaskStop", "TaskStop"],
 ]);
 
-/** Kimi documents hooks only as `[[hooks]]` in the user-level `~/.kimi-code/config.toml`, with no
- * project-level hook file: https://www.kimi.com/code/docs/en/kimi-code-cli/customization/hooks.html */
-const USER_LEVEL_ONLY =
-  "Kimi reads hooks only from the user-level config.toml, never from a project";
+/** Kimi reads hooks from the user config.toml or a local plugin, never a project: https://www.kimi.com/code/docs/en/kimi-code-cli/customization/hooks.html */
+const USER_CONFIG_REASON =
+  "Kimi reads hooks from the user config.toml or a local plugin, never from a project, and a plugin's hooks are not delivered until a payload is captured";
 
 export const kimi = defineAiTool({
   toolId: "kimi",
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
   displayName: "Kimi Code CLI",
+  distributionProbes: { manifest: [".kimi-plugin/plugin.json"] },
   signalDir: null,
   buildContracts: {
+    marketplace: contract(buildKimiPluginContract, {
+      agentTools: AGENT_TOOLS,
+      hooksReason: USER_CONFIG_REASON,
+    }),
     flat: contract(buildKimiFlatContract, {
       layout: KIMI_FLAT_LAYOUT,
       mcpPath: MCP_PATH,
       agentTools: AGENT_TOOLS,
-      hooksReason: USER_LEVEL_ONLY,
+      hooksReason: USER_CONFIG_REASON,
     }),
   },
 
@@ -79,9 +87,20 @@ export const kimi = defineAiTool({
       convertFrontmatter: descriptionOnlyRule,
       listedInAgentsFile: KIMI_FLAT_LAYOUT,
     },
-    hooks: { delivery: { kind: "none", reason: USER_LEVEL_ONLY } },
+    hooks: { delivery: { kind: "none", reason: USER_CONFIG_REASON } },
     layout: flatPlacement({ namespacePrefix: "aidd-", artifacts: KIMI_FLAT_LAYOUT }),
   },
 
   linkSyntax: [],
 });
+
+/** Kimi has no plugin verbs: its `kimi web` server installs a local plugin directory, behind the token its banner prints: https://www.kimi.com/code/docs/en/kimi-code-cli/guides/web.html */
+export const kimiNativeRegistration: NativeRegistrationSection = {
+  pluginServer: {
+    binary: "kimi",
+    args: ["web", "--no-open", "--port", "0"],
+    bannerPattern: "Local:\\s+(\\S+?)/?#token=(\\S+)",
+    pluginsPath: "/api/v1/plugins",
+    notInstalledCode: 40419,
+  },
+};

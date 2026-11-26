@@ -42,7 +42,7 @@ describe("telling what a plugin ships", () => {
       [`${PLUGIN_SRC}/agents/reviewer.md`]: "# Reviewer",
       [`${PLUGIN_SRC}/skills/hello/SKILL.md`]: "# Hello",
       [`${PLUGIN_SRC}/hooks/hooks.json`]: "{}",
-      [`${PLUGIN_SRC}/.mcp.json`]: "{}",
+      [`${PLUGIN_SRC}/.mcp.json`]: '{"mcpServers":{"docs":{"url":"https://example.com/mcp"}}}',
     });
     expect(presenceOf(canon)).toEqual({
       hasAgents: true,
@@ -50,6 +50,7 @@ describe("telling what a plugin ships", () => {
       skillsList: ["hello"],
       hasHooksJson: true,
       hasMcpJson: true,
+      mcpServers: { docs: { url: "https://example.com/mcp" } },
     });
   });
 
@@ -61,6 +62,15 @@ describe("telling what a plugin ships", () => {
       skillsList: [],
       hasHooksJson: false,
       hasMcpJson: false,
+      mcpServers: {},
     });
+  });
+
+  it("names the plugin whose mcp declaration cannot be parsed", async () => {
+    const canon = await canonOf({ [`${PLUGIN_SRC}/.mcp.json`]: "{ not json" });
+
+    expect(() => presenceOf(canon)).toThrow(
+      expect.objectContaining({ detail: expect.stringContaining("plugin 'aidd-test' MCP config") })
+    );
   });
 });

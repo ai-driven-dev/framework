@@ -19,6 +19,6 @@ describe("setup --help", () => {
     const result = await runInProcess(["setup", "--help"], { cwd, home });
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("--ide claude,codex,copilot,cursor,kilo,opencode");
+    expect(result.stdout).toContain("--ide claude,codex,copilot,cursor,kilo,kimi,opencode");
   });
 });
