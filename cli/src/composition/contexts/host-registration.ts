@@ -104,7 +104,6 @@ export interface HostRegistrationDeps {
   pluginRegistries: ReadonlyMap<AiToolId, HostPluginRegistry>;
   marketplaceRegistries: ReadonlyMap<AiToolId, HostMarketplaceRegistry>;
   marketplaceSources: ReadonlyMap<AiToolId, HostMarketplaceSources>;
-  /** The server each tool takes its plugins through, for a tool that declares one. */
   pluginServers: ReadonlyMap<ToolId, ServerHost>;
 }
 
@@ -187,7 +186,6 @@ export function registrationRecordFile(
   );
 }
 
-/** The plugin server of each tool that declares one. */
 export function pluginServerHostsOver(servers: ReadonlyMap<ToolId, ServerHost>): PluginServerHosts {
   return { of: (toolId) => servers.get(toolId) };
 }

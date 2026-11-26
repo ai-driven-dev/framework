@@ -9,6 +9,9 @@ Done means every gate below is green. CLI gates: [`internal/cli/testing.md`](int
 - Prove each guard: break what it names and watch that test, alone, go red.
 - After a scripted edit, read the file back before running anything.
 - Write no code for an input never seen in real data; state it as a limit.
+- State a host limit only after trying to refute it: host source, every documented channel, three runs, two models.
+- Duplicated logic or user-facing text is a blocking review finding.
+- Comment only a non-obvious why, a stated limit, or a one-line host fact with its source.
 - Between two fixes, take the one that deletes.
 - No dates or ticket or run IDs in code, comments, tests, CI or docs.
 - Report or commit only what output just showed.

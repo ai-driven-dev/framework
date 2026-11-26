@@ -36,7 +36,6 @@ function globRegex(glob) {
 
 const asList = (value) => (Array.isArray(value) ? value : value === undefined ? [] : [value]);
 
-/** Every front matter key and heading name a template holds, at any level. */
 function templateNames(file) {
   const model = parseTemplate(file);
   const names = new Set(Object.keys(model.fm));

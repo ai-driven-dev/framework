@@ -76,6 +76,7 @@ Sources: [Claude Code](https://code.claude.com/docs/en/hooks), [Codex](https://l
 | --- | --- |
 | A subagent's child session runs neither `SessionStart` nor `Stop` | Hooks fire once per task, not per subagent |
 | One `Stop` hook per plugin can continue a turn | After one blocks, the next stay silent |
+| A `Stop` script runs inside the host's event hook | The whole host process waits for it, up to 5 s on every idle |
 | A `SessionStart` script that exits 2 has its stderr added to the model's system prompt | Claude Code shows it to the person only; do not exit 2 for a message |
 
 ### Codex
@@ -83,6 +84,7 @@ Sources: [Claude Code](https://code.claude.com/docs/en/hooks), [Codex](https://l
 | Limit | What it means for you |
 | --- | --- |
 | A hook is skipped silently until a person trusts it | Approve it once in an interactive session, or pass `--dangerously-bypass-hook-trust` to `codex exec` |
+| A plugin installed from a marketplace registers no agent | Agents load from `~/.codex/agents` (`aidd setup --global`) or the project's `.codex/agents` (flat build) |
 
 ### Kiro
 

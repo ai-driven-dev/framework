@@ -52,7 +52,6 @@ function bridgedCall(command: string | undefined): BridgeHookCall | null {
 const FILE_WRITE_TOOLS = new Set(["edit", "write"]);
 const PATCH_TOOL = "apply_patch";
 
-/** The lowercased tool names a plugin matcher lists. */
 export function matcherNames(matcher: string): readonly string[] {
   return matcher.split("|").map((name) => name.toLowerCase());
 }

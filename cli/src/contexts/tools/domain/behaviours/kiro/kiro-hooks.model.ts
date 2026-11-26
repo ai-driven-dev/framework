@@ -2,14 +2,7 @@
  * command action (https://kiro.dev/docs/hooks/). No `HooksFileFormat` describes that list, so its
  * merge is Kiro's own.
  *
- * Only a command of the form `node ${CLAUDE_PLUGIN_ROOT}/hooks/...` is delivered; any other is
- * dropped, and no plugin ships one. Only `SessionStart`, `UserPromptSubmit`, `PreToolUse`,
- * `PostToolUse`, `Stop` and `SubagentStop` are delivered. A PostToolUse matcher names Claude
- * Code's tools; Kiro selects by a tool's tag (https://kiro.dev/docs/hooks/types/), and a matcher
- * with `|` is a regex there, never a selector, so each tag gets its own hook. PreToolUse takes
- * none: it runs for every tool, and its script tells a write by the files it reads. Stop and
- * UserPromptSubmit take no matcher, SubagentStop's names an agent, never a tool, and SessionStart
- * none a plugin ships. */
+ * Limit: only `node ${CLAUDE_PLUGIN_ROOT}/hooks/...` commands are delivered; a `|` matcher is a regex in Kiro, so each tag gets its own hook. */
 
 import type { ShippedHooks } from "../../../../../shared/domain/materialization/build-contract.js";
 import { genericFlatHooksScriptPath } from "../../../../../shared/domain/materialization/flat-paths.js";
@@ -31,7 +24,6 @@ import {
 export type KiroHooks = HooksRouting & {
   readonly flat: FlatHooksRoute;
   readonly eventMap: Readonly<Record<string, string>>;
-  /** The tag Kiro selects a tool by, for each Claude tool a plugin's matcher can name. */
   readonly toolNames: ReadonlyMap<string, string>;
 };
 
@@ -107,9 +99,8 @@ interface Where {
   readonly toolNames: ReadonlyMap<string, string>;
 }
 
-/** One hook per tag of the call's matcher, or one selecting every tool when it has none. Kiro keys
- * a hook by its place in the file (`<file>#hook-<index>`, seen on kiro-cli 3.6.0), so a name only has to read well: each trigger and tag of a
- * script gets its own. Ownership is matched by command, not name. */
+/** One hook per tag of the call's matcher, or one for every tool when it has none. Kiro keys a hook
+ * by its index in the file, so ownership is matched by command, not name. */
 function hooksOfCall(
   { scriptsDir, plugin, trigger, toolNames }: Where,
   call: BridgeHookCall,

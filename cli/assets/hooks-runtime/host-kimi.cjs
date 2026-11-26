@@ -40,7 +40,7 @@ function readEvent() {
   current = {
     host: HOST,
     event,
-    files: filesOf(event, writtenFiles(tool, input, cwd)),
+    files: filesOf(event, writtenFiles(tool, input, cwd, raw.tool_response)),
     ...(SHELLS.has(tool) && typeof input?.command === "string" ? { command: input.command } : {}),
     stopActive: raw.stop_hook_active === true,
     sessionId: typeof raw.session_id === "string" ? raw.session_id : null,

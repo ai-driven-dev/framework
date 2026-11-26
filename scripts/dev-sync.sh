@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-# Reloads this checkout into every detected host, the way `make reload` documents it:
-# see "Reload flow" in CONTRIBUTING.md, the one description of the steps, the flags and the
-# report. Needs a built CLI to take --agents-only.
+# Reloads this checkout into every detected host (`make reload`). Needs a built CLI for --agents-only.
 #
 # Global rules: sync only the Agents section in the managed block, preserving personal
 # rules. First OpenCode sync keeps its Claude personal-rule fallback unless disabled. Kilo

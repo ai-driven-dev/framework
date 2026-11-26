@@ -56,14 +56,20 @@ export function recordingScript(tail: string): string {
 
 // A script that exits without ever reading its stdin.
 export const DEAF = "process.exit(0);";
-// A script that never exits, and says who it is so the test can see it killed.
-export const HANG = `require("node:fs").writeFileSync(require("node:path").resolve(__dirname, "../../hang.pid"), String(process.pid)); setInterval(() => {}, 1000);`;
+// A script that outlasts the bridge's 5 s timeout, and says who it is so the test can see it killed.
+// It ends by itself after 8 s: a bridge that stopped bounding a synchronous run would block its
+// process for that long, instead of for good.
+export const HANG = `require("node:fs").writeFileSync(require("node:path").resolve(__dirname, "../../hang.pid"), String(process.pid)); setTimeout(() => process.exit(0), 8000);`;
 
 export interface Server {
   event: (input: { event: unknown }) => Promise<void>;
   "tool.execute.after": (call: unknown, output: { output: string }) => Promise<void>;
   "tool.execute.before": (call: unknown, output: unknown) => Promise<void>;
   "chat.message"?: (input: unknown, output: { parts: unknown[] }) => Promise<void>;
+  "experimental.chat.system.transform"?: (
+    input: { sessionID: string },
+    output: { system: string[] }
+  ) => Promise<void>;
   dispose: () => Promise<void>;
 }
 export interface Descriptor {
@@ -94,8 +100,22 @@ export function sessionStarted(host: BridgedHost, id: string, directory: string)
   };
 }
 
-/** Clears what a test spied on and removes the folders it made. */
+/** A session's SessionStart scripts are not awaited by the event that starts them, so one still
+ * running when a test ends would fail in a removed folder and report into the next test's spy. */
+const unsettled: Array<() => Promise<unknown>> = [];
+
+function sessionOf(event: unknown): string | undefined {
+  if (typeof event !== "object" || event === null || !("properties" in event)) return undefined;
+  const { properties } = event;
+  if (typeof properties !== "object" || properties === null || !("sessionID" in properties))
+    return undefined;
+  return typeof properties.sessionID === "string" ? properties.sessionID : undefined;
+}
+
+/** Waits for every SessionStart a test started, then clears what it spied on and removes the
+ * folders it made. */
 export async function cleanBridges(): Promise<void> {
+  await Promise.all(unsettled.splice(0).map((settle) => settle()));
   vi.restoreAllMocks();
   await removeMadeFolders();
 }
@@ -135,7 +155,17 @@ export async function open(
     client: { session },
   });
   const emit = async (...events: unknown[]) => {
-    for (const event of events) if (event !== undefined) await server.event({ event });
+    for (const event of events) {
+      if (event === undefined) continue;
+      await server.event({ event });
+      const sessionID = sessionOf(event);
+      if (sessionID !== undefined)
+        unsettled.push(
+          () =>
+            server["experimental.chat.system.transform"]?.({ sessionID }, { system: [] }) ??
+            Promise.resolve()
+        );
+    }
   };
   const calls = () => jsonLines<Call>(join(directory, "calls.jsonl"));
   const of = async (script: string) => (await calls()).filter((c) => c.script === script);

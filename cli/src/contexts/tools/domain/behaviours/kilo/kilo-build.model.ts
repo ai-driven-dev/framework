@@ -3,7 +3,7 @@
 
 import {
   agentsIn,
-  rulesIn,
+  rulesArtifact,
   skillsIn,
 } from "../../../../../shared/domain/materialization/artifact-path.js";
 import type {
@@ -75,11 +75,7 @@ export function buildKiloFlatContract(
         placement: agentsIn(layout),
         agentMarkdown,
       },
-      rules: {
-        supported: true,
-        source: { kind: "fullTree", srcDir: "rules" },
-        placement: rulesIn(layout),
-      },
+      rules: rulesArtifact(layout),
       mcp: { supported: false, reason: "carried by the config artifact, not a file of its own" },
       hooks: flatHooksArtifact(hooks, { tool: "kilo", bridge: generateKiloHooksBridge }),
     },

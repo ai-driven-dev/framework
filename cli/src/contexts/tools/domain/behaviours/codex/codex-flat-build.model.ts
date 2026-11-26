@@ -5,7 +5,7 @@
 
 import {
   agentsIn,
-  rulesIn,
+  rulesArtifact,
   skillsIn,
 } from "../../../../../shared/domain/materialization/artifact-path.js";
 import type { ToolBuildContract } from "../../../../../shared/domain/materialization/build-contract.js";
@@ -61,11 +61,7 @@ function codexFlatArtifacts(
       placement: agentsIn(layout),
       transform: tomlAgentMarkdownToToml(toml),
     },
-    rules: {
-      supported: true,
-      source: { kind: "fullTree", srcDir: "rules" },
-      placement: rulesIn(layout),
-    },
+    rules: rulesArtifact(layout),
     mcp: {
       supported: false,
       reason: "carried by the config artifact (config.toml mcp_servers)",

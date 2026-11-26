@@ -54,10 +54,7 @@ function callTableDeclarations(table: BridgeHookTable): string {
   }).join("\n");
 }
 
-/** Every function the hosts' modules share, written once so both tell the model and the log the
- * same things: running a script and reading its answer or its Stop reason, sending a prompt of
- * the bridge's own, the hooks around a tool call, the user's message, the once-per-session
- * SessionStart trigger, the turn end, and the hooks object a host hands its loader. */
+/** The runtime every bridged host's module shares. */
 function sharedRuntimeSource(label: string, plugin: string): string {
   return [
     reportHookFailureSource(label),
@@ -73,18 +70,13 @@ function sharedRuntimeSource(label: string, plugin: string): string {
   ].join("\n\n");
 }
 
-/** What a host's module template composes its generated module from: the pieces every bridge
- * writes the same way. What the host writes itself is its own imports, its factory, which hands
- * `bridgeHooks` its folder, its follow-up call and its person channel, and its export descriptor. */
+/** The pieces every bridge module shares; a host adds its imports, factory and export. */
 export interface BridgeParts {
   readonly identifier: string;
   /** The line that opens every generated module, before a host's own words on it. */
   readonly header: string;
   /** The descriptor's `id`, already a JSON string literal. */
   readonly descriptorId: string;
-  /** The module's shared body, after the host's own imports: the `spawn` and `fileURLToPath`
-   * imports, the scripts folder, the call tables, and every function the hosts share,
-   * `bridgeHooks` (`BRIDGE_HOOKS_SOURCE`) the one a host's factory calls. */
   readonly body: string;
 }
 

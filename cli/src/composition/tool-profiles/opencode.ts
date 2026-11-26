@@ -85,7 +85,7 @@ const FLAT_PLACEMENT = flatPlacement({
 // `hooks/`, namespaced per plugin, and nothing there is ever imported.
 const hooks = declareBridgeHooks(
   { toolId: "opencode", directory: DIRECTORY, adapter },
-  // SessionStart runs on the first event naming a session; `session.created` is the label of a new one (see the bridge module doc).
+  // SessionStart runs on the first event naming a session; `session.created` marks a new one.
   ["session.created", "tool.execute.after", "session.idle", "tool.execute.before", "chat.message"],
   {
     // The loader scans `{plugin,plugins}/*.{ts,js}`, one level: only a plugin's own module, or

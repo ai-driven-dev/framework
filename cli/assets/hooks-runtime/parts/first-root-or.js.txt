@@ -1,0 +1,5 @@
+/** The first non-empty string of `roots`, else the process's own folder. */
+function firstRootOr(roots) {
+  const [root] = Array.isArray(roots) ? roots : [];
+  return typeof root === "string" && root !== "" ? root : process.cwd();
+}

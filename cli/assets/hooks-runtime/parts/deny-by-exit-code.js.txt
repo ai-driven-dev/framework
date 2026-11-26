@@ -1,0 +1,5 @@
+/** Exit code 2 with the reason on standard error. */
+function denyToolCall(reason) {
+  process.stderr.write(reason);
+  process.exitCode = 2;
+}

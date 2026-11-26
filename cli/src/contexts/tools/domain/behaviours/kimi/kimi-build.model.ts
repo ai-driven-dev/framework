@@ -5,7 +5,8 @@
 
 import {
   agentsIn,
-  rulesIn,
+  flatMcpFileArtifact,
+  rulesArtifact,
   skillsIn,
 } from "../../../../../shared/domain/materialization/artifact-path.js";
 import type {
@@ -83,17 +84,8 @@ function kimiFlatArtifacts({
       placement: agentsIn(layout),
       agentMarkdown: kimiAgentMarkdown(agentTools),
     },
-    rules: {
-      supported: true,
-      source: { kind: "fullTree", srcDir: "rules" },
-      placement: rulesIn(layout),
-    },
-    mcp: {
-      supported: true,
-      source: { kind: "configFile", srcPath: ".mcp.json" },
-      placement: { kind: "file", at: mcpPath },
-      mcpServersKey: "mcpServers",
-    },
+    rules: rulesArtifact(layout),
+    mcp: flatMcpFileArtifact(mcpPath),
     hooks: { supported: false, reason: hooksReason },
   };
 }
