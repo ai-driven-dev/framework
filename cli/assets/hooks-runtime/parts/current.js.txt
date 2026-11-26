@@ -1,0 +1,2 @@
+/** The event `readEvent` last returned: an answer is printed in its terms. */
+let current;

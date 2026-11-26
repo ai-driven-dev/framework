@@ -18,7 +18,7 @@ A profile registered in one line, its goldens and fixtures current.
 4. **Register.** Add one line to `REGISTERED_PROFILES` in `src/composition/tool-profiles/index.ts`.
 5. **Change a format.** Edit the profile or its behaviour folder only. A caller that needs a new answer gets a method on `contract/tool-profile.ts`, never a branch on the tool id.
 6. **Hooks.** Declare them with `declareHooks`, or `declareBridgeHooks` for a bridge tool (`domain/bridges/event-bridge.ts`).
-   - A host-hook tool adds `assets/hooks-runtime/host-<tool>.cjs` and one payload fixture per relayed event under `tests/fixtures/hooks-routes/<tool>/`.
+   - A host-hook tool adds its template `assets/hooks-runtime/parts/host-<tool>.js.txt`, whose `// @part <name>` lines take the shared helpers, runs `node scripts/check/run.cjs --fix` from the repository root to generate `host-<tool>.cjs`, and adds one payload fixture per relayed event under `tests/fixtures/hooks-routes/<tool>/`.
 7. **Conform.** Declared data gets no test of its own: `profile-conformance.unit.test.ts` walks `REGISTERED_PROFILES`.
    - A new rule over profiles is a conformance check in `tests/contexts/tools/testing/`, proven against a profile built to break it.
 8. **Goldens.** Run `pnpm test:golden`; for output changed because the tool is new or its host changed, run `pnpm golden:update <name>` and read the diff before committing.
