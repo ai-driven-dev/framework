@@ -18,6 +18,9 @@ Resolve shared `.agents/` paths from declared tools or the AIDD manifest; otherw
 | GitHub Copilot | `.github/agents/*.agent.md` | `.github/prompts/*.prompt.md`                 | `.github/instructions/*.instructions.md` | `.github/skills/`                     | `.github/copilot-instructions.md` |
 | Codex CLI      | `.codex/agents/{name}.toml` | **Not supported**                             | `aidd_docs/rules/` (canonical sources); shared `aidd_rules` contribution in root `AGENTS.md`, not execution policies | `.agents/skills/aidd-{name}/SKILL.md` | `AGENTS.md`                       |
 | Antigravity CLI | `.agents/agents/{name}/agent.md` | Not mapped                          | `.agents/rules/<slug>.md`, flat         | `.agents/skills/aidd-{name}/SKILL.md` | `AGENTS.md`                       |
+| Kilo Code | `.kilo/agents/{name}.md` | `.kilo/commands/` | `.kilo/rules/{name}.md` | `.kilo/skills/` | `AGENTS.md` |
+| Kiro | `.kiro/agents/{name}.md` | Not mapped | Not mapped | `.kiro/skills/aidd-{name}/SKILL.md` | `AGENTS.md` |
+| Kimi Code CLI | `.kimi-code/agents/{name}.md` | Not mapped | Not mapped | `.agents/skills/aidd-{name}/SKILL.md` | `AGENTS.md` |
 
 ## AI quick map - hooks, plugins
 
@@ -29,6 +32,9 @@ Resolve shared `.agents/` paths from declared tools or the AIDD manifest; otherw
 | GitHub Copilot | `.github/hooks/*.json` (workspace), `~/.copilot/hooks` (user), `<plugin>/hooks.json` or `<plugin>/hooks/hooks.json` (plugin) | `plugin.json` at plugin root |
 | Codex CLI      | `.codex/hooks.json` (project / user) OR `[hooks]` table in `.codex/config.toml`               | `.codex-plugin/plugin.json`  |
 | Antigravity CLI | `.agents/hooks.json` (project), keyed by hook name                                            | Not mapped |
+| Kilo Code      | JS module under `.kilo/plugin/` (parse as JS, not JSON)                                        | Not mapped                   |
+| Kiro           | `.kiro/hooks/*.json` (project)                                                                 | Not mapped                   |
+| Kimi Code CLI  | `[[hooks]]` in `~/.kimi-code/config.toml` (user only)                                          | Not mapped                   |
 
 ## MCP config per tool
 
@@ -39,6 +45,8 @@ Resolve shared `.agents/` paths from declared tools or the AIDD manifest; otherw
 | OpenCode       | `opencode.json` or `opencode.jsonc`                                  | `mcp`         |
 | GitHub Copilot | `.vscode/mcp.json` (VS Code); `~/.copilot/mcp-config.json` (CLI) | `servers` (VS Code); `mcpServers` (CLI) |
 | Codex CLI      | `.codex/config.toml`                             | `[mcp_servers.*]` |
+| Kilo Code      | `kilo.json`, `kilo.jsonc`, `.kilo/kilo.json` or `.kilo/kilo.jsonc`                      | `mcp`         |
+| Kimi Code CLI  | `.kimi-code/mcp.json`                            | `mcpServers`  |
 
 ## Path layout per tool
 
