@@ -122,14 +122,6 @@ jobs:
           mkdir -p "${STAGE}"
           cp -R .claude-plugin "${STAGE}/"
           cp -R plugins "${STAGE}/"
-          # The Git catalog follows the legacy branch. The ZIP keeps its plugin sources local.
-          node - "${STAGE}/.claude-plugin/marketplace.json" <<'NODE'
-            const fs = require("node:fs");
-            const file = process.argv[2];
-            const catalog = JSON.parse(fs.readFileSync(file, "utf8"));
-            for (const plugin of catalog.plugins) plugin.source = `./plugins/${plugin.name}`;
-            fs.writeFileSync(file, `${JSON.stringify(catalog, null, 2)}\n`);
-          NODE
           ( cd "${STAGE_PARENT}" && zip -q -r "/tmp/aidd-framework-marketplace-${VERSION}.zip" "aidd-framework-marketplace-${VERSION}" )
 
       - name: Attach marketplace bundle to release

@@ -9,13 +9,7 @@
   "plugins": [
     {
       "name": "aidd-context",
-      "source": {
-        "source": "git-subdir",
-        "kind": "local",
-        "url": "https://github.com/ai-driven-dev/marketplaces.git",
-        "ref": "claude-legacy",
-        "path": "plugins/aidd-context"
-      },
+      "source": "./plugins/aidd-context",
       "description": "Knowledge production: project bootstrap, project init, generation of context artifacts (skills, agents, rules, commands, hooks), mermaid diagrams, learn, discovery",
       "strict": true,
       "metadata": {
@@ -24,13 +18,7 @@
     },
     {
       "name": "aidd-dev",
-      "source": {
-        "source": "git-subdir",
-        "kind": "local",
-        "url": "https://github.com/ai-driven-dev/marketplaces.git",
-        "ref": "claude-legacy",
-        "path": "plugins/aidd-dev"
-      },
+      "source": "./plugins/aidd-dev",
       "description": "Code transformation: plan, implement, assert, audit, review, test, refactor, debug, for-sure.",
       "strict": true,
       "metadata": {
@@ -39,13 +27,7 @@
     },
     {
       "name": "aidd-vcs",
-      "source": {
-        "source": "git-subdir",
-        "kind": "local",
-        "url": "https://github.com/ai-driven-dev/marketplaces.git",
-        "ref": "claude-legacy",
-        "path": "plugins/aidd-vcs"
-      },
+      "source": "./plugins/aidd-vcs",
       "description": "External artifacts: commit, pull-request, release-tag, issue-create, answer-comments",
       "strict": true,
       "metadata": {
@@ -54,13 +36,7 @@
     },
     {
       "name": "aidd-pm",
-      "source": {
-        "source": "git-subdir",
-        "kind": "local",
-        "url": "https://github.com/ai-driven-dev/marketplaces.git",
-        "ref": "claude-legacy",
-        "path": "plugins/aidd-pm"
-      },
+      "source": "./plugins/aidd-pm",
       "description": "Product backlog artifacts, refinement, Product Briefs, Epics, User Stories, Tasks, Spikes, Defects, requirements, and specs.",
       "strict": true,
       "metadata": {
@@ -69,13 +45,7 @@
     },
     {
       "name": "aidd-orchestrator",
-      "source": {
-        "source": "git-subdir",
-        "kind": "local",
-        "url": "https://github.com/ai-driven-dev/marketplaces.git",
-        "ref": "claude-legacy",
-        "path": "plugins/aidd-orchestrator"
-      },
+      "source": "./plugins/aidd-orchestrator",
       "description": "Orchestration: synchronous SDLC pipeline, async issue-to-PR automation, and product backlog. Hosts the generic agents.",
       "strict": true,
       "metadata": {
@@ -84,13 +54,7 @@
     },
     {
       "name": "aidd-refine",
-      "source": {
-        "source": "git-subdir",
-        "kind": "local",
-        "url": "https://github.com/ai-driven-dev/marketplaces.git",
-        "ref": "claude-legacy",
-        "path": "plugins/aidd-refine"
-      },
+      "source": "./plugins/aidd-refine",
       "description": "Meta-cognition: refine input through brainstorming, refine output through challenge, blind-spot scanning, and fact-checking.",
       "strict": true,
       "metadata": {
@@ -99,13 +63,7 @@
     },
     {
       "name": "aidd-ui",
-      "source": {
-        "source": "git-subdir",
-        "kind": "local",
-        "url": "https://github.com/ai-driven-dev/marketplaces.git",
-        "ref": "claude-legacy",
-        "path": "plugins/aidd-ui"
-      },
+      "source": "./plugins/aidd-ui",
       "description": "Beta. UI and UX concern: design, review, and improve frontend interfaces.",
       "strict": true,
       "metadata": {
@@ -114,13 +72,7 @@
     },
     {
       "name": "aidd-telemetry",
-      "source": {
-        "source": "git-subdir",
-        "kind": "local",
-        "url": "https://github.com/ai-driven-dev/marketplaces.git",
-        "ref": "claude-legacy",
-        "path": "plugins/aidd-telemetry"
-      },
+      "source": "./plugins/aidd-telemetry",
       "description": "Measurement: counts the tokens of Claude Code and Codex sessions per task, ticket, model, tool and day, locally. The hooks ask for a task on plain node; its two skills reach the `aidd` CLI to turn it on and answer.",
       "strict": true,
       "metadata": {
@@ -129,13 +81,7 @@
     },
     {
       "name": "aidd-qa",
-      "source": {
-        "source": "git-subdir",
-        "kind": "local",
-        "url": "https://github.com/ai-driven-dev/marketplaces.git",
-        "ref": "claude-legacy",
-        "path": "plugins/aidd-qa"
-      },
+      "source": "./plugins/aidd-qa",
       "description": "Acceptance QA: validates observable behavior against acceptance criteria and records reviewer evidence. Browser is the only supported interface today.",
       "strict": true,
       "metadata": {

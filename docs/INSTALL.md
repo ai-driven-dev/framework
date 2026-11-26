@@ -78,7 +78,7 @@ For a pinned install, replace `claude` with `claude-v<version>`.
 <details>
 <summary>Migrate an existing Claude Code installation</summary>
 
-If you already use `ai-driven-dev/framework`, that catalog follows the first two releases successfully published to the new Claude Code branch during the transition, then serves the second of those releases indefinitely. Replays of older releases cannot roll back the catalog. Before switching, use `claude plugin list --json` to record plugin names and scopes. In your user, project, and project-local settings, check for old IDs in `enabledPlugins` and `pluginConfigs` and for an old marketplace declaration in `extraKnownMarketplaces`.
+If you already use `ai-driven-dev/framework`, that catalog keeps serving the repository. Before switching, use `claude plugin list --json` to record plugin names and scopes. In your user, project, and project-local settings, check for old IDs in `enabledPlugins` and `pluginConfigs` and for an old marketplace declaration in `extraKnownMarketplaces`.
 
 1. Add the new catalog and install each plugin using `claude plugin install <plugin>@aidd-marketplace --scope <scope>` for each scope where it was installed.
 2. Restore enablement and settings under the new plugin IDs. Re-enter secrets in Claude Code. Update any project or user settings that declare the old marketplace. Avoid enabling both copies of a plugin during normal use.

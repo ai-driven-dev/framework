@@ -42,8 +42,8 @@ Branch model: `vcs.md`. Cadence and safety rules: [`RELEASE.md`](../../RELEASE.m
 - `scripts/credit-release-authors.cjs` appends each author as `(@login)`, until release-please credits authors itself.
 - The umbrella stays a draft until every asset is attached; n8n listens for its publication.
 - After publication, each marketplace job reads its own release ZIP and publishes its own tool branch and immutable version tag in the distribution repository. A failed job leaves the release and the other marketplace jobs independent.
-- Enable `AIDD_PUBLISH_MARKETPLACES=true` on `framework` after the organization owner adds `marketplaces` to the existing `aidd-bot` GitHub App installation with Contents write access. Before the legacy catalog switches to its new source, `claude-legacy` must already contain the previous public Claude Code release. It advances for the first two published Claude releases after activation.
-- The root Claude Code catalog uses `source: "git-subdir"` for the historical native marketplace and `kind: "local"` for AIDD CLI consumers. The release ZIP keeps local paths. Preserve the legacy roster when changing the build roster after the transition.
+- Enable `AIDD_PUBLISH_MARKETPLACES=true` on `framework` after the organization owner adds `marketplaces` to the existing `aidd-bot` GitHub App installation with Contents write access. The `claude-legacy` branch takes the first two Claude Code releases published after activation, then stays frozen.
+- The root Claude Code catalog keeps local plugin sources, so one entry has one meaning for Claude Code and the CLI.
 - A failed video build keeps the release a draft: nothing is announced without its video.
 - A failed YouTube upload still lets Discord and Skool post, without the video link.
 - Their text is the video's programme, one section per theme.
