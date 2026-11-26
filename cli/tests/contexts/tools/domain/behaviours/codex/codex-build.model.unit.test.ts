@@ -22,6 +22,7 @@ const NO_CONTENT = {
   agentsList: [],
   skillsList: [],
   hasHooksJson: false,
+  hooks: {},
   hasMcpJson: false,
   mcpServers: {},
 };
@@ -61,6 +62,7 @@ describe("building Codex's marketplace contract", () => {
         agentsList: ["planner.md"],
         skillsList: ["01-plan"],
         hasHooksJson: true,
+        hooks: {},
         hasMcpJson: true,
         mcpServers: {},
       }
@@ -86,6 +88,7 @@ describe("building Codex's marketplace contract", () => {
         agentsList: [],
         skillsList: [],
         hasHooksJson: false,
+        hooks: {},
         hasMcpJson: false,
         mcpServers: {},
       }

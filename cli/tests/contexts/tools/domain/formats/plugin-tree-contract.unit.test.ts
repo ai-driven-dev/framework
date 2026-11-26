@@ -16,6 +16,7 @@ const PRESENCE = {
   skillsList: [],
   agentsList: [],
   hasHooksJson: false,
+  hooks: {},
   hasMcpJson: false,
   mcpServers: {},
 };

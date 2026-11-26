@@ -1,0 +1,32 @@
+{
+  "host": "kimi",
+  "event": "TurnStarted",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "hook_event_name": "TurnStarted",
+        "session_id": "session_00000000-0000-4000-8000-000000000000",
+        "cwd": "/Users/user/project",
+        "client_type": "kimi_code_cli",
+        "turn_id": 0,
+        "origin_kind": "user",
+        "prompt": "Write a file named hello.txt containing the word hi, then run the shell command: echo probe-ok. Then stop."
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "log",
+      "payload": {
+        "hook_event_name": "TurnStarted",
+        "session_id": "session_00000000-0000-4000-8000-000000000000",
+        "cwd": "/Users/user/project",
+        "client_type": "kimi_code_cli",
+        "turn_id": 0,
+        "origin_kind": "user",
+        "prompt": "Reply with ok"
+      },
+      "hookAnswer": null
+    }
+  ]
+}

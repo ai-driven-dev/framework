@@ -97,7 +97,10 @@ function marketplaceHooks(
 ): PlannedComponents {
   const plugin = canon.manifest.name;
   const warnings: string[] = [];
-  const plans = canon.components.hooks.map(({ relativePath, content }) => {
+  const shipped = canon.components.hooks.filter(
+    ({ relativePath }) => !(artifact.skipHooksJson && relativePath === PLUGIN_HOOKS_RELATIVE)
+  );
+  const plans = shipped.map(({ relativePath, content }) => {
     const converted =
       relativePath === PLUGIN_HOOKS_RELATIVE ? artifact.convertHooks?.(content, plugin) : undefined;
     warnings.push(...(converted?.warnings ?? []));

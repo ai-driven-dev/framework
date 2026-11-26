@@ -1,8 +1,8 @@
 /** What the builders read of a descriptor to deliver a tool's hooks: where each route writes them. */
 
 import type {
-  ArtifactContract,
   ConvertHooks,
+  SupportedArtifact,
 } from "../../../../../shared/domain/materialization/build-contract.js";
 import { CapabilityConfigError } from "../../../contract/errors/tools.error.js";
 import type { HookScript } from "../../../contract/tool-vocabulary.js";
@@ -44,7 +44,7 @@ export function withHookScript(descriptor: HooksRouting): { readonly hookScript?
 export function pluginTreeHooksArtifact(
   descriptor: HooksRouting,
   convertHooks?: ConvertHooks
-): ArtifactContract {
+): SupportedArtifact {
   return {
     supported: true,
     source: PLUGIN_HOOKS_SOURCE,
@@ -53,6 +53,7 @@ export function pluginTreeHooksArtifact(
         ? { kind: "relative" }
         : { kind: "file", at: descriptor.pluginFile },
     script: hookScript(descriptor),
+    ...(descriptor.manifestListsHooks === true ? { skipHooksJson: true } : {}),
     ...(convertHooks === undefined
       ? {}
       : { convertHooks, transform: (json, plugin) => convertHooks(json, plugin).content }),

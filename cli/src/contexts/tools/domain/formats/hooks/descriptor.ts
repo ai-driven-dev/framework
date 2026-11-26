@@ -72,6 +72,9 @@ export interface HooksDescriptor {
   readonly pluginFile?: string;
   /** Whether the synthesized plugin manifest names the hooks file. */
   readonly manifestNamesHooks?: boolean;
+  /** Whether the synthesized plugin manifest lists the hooks itself, so the plugin's hooks file is
+   * not shipped. */
+  readonly manifestListsHooks?: boolean;
   /** What a person must still do before a delivered hook runs. */
   readonly trustNotice?: string;
   /** Canonical event to the tool's native event and how each reaches the hook. */
