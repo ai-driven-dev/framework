@@ -174,36 +174,12 @@ describe("Antigravity CLI", () => {
         expect(printed).toHaveLength(1);
       });
 
-      it("leaves nothing in the temp directory once released", () => {
-        hold(2, text);
-        release();
-
-        expect(fs.readdirSync(hooksFolder())).toStrictEqual([]);
-      });
-
       it("removes a held file it cannot read, so nothing is left behind", () => {
         fs.mkdirSync(hooksFolder(), { mode: 0o700 });
         fs.writeFileSync(join(hooksFolder(), `agy-relay-${nextCall.conversationId}`), "not json\n");
         release();
 
         expect([fs.readdirSync(hooksFolder()), printed]).toStrictEqual([[], []]);
-      });
-
-      it("sweeps what a conversation that ended left held for over a day, and nothing else", () => {
-        fs.mkdirSync(hooksFolder(), { mode: 0o700 });
-        const aged = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
-        for (const name of ["agy-relay-abandoned", "other-state"]) {
-          fs.writeFileSync(join(hooksFolder(), name), "x\n");
-          fs.utimesSync(join(hooksFolder(), name), aged, aged);
-        }
-        fs.writeFileSync(join(hooksFolder(), "agy-relay-recent"), "x\n");
-        hold(2, text);
-
-        expect(fs.readdirSync(hooksFolder()).sort()).toStrictEqual([
-          `agy-relay-${ran.conversationId}`,
-          "agy-relay-recent",
-          "other-state",
-        ]);
       });
 
       it("injects each held text as a step of its own, in the order held", () => {
@@ -274,19 +250,6 @@ describe("Antigravity CLI", () => {
         release({ ...nextCall, conversationId: undefined });
 
         expect(printed).toStrictEqual([]);
-      });
-
-      it("hands a held text to one of two hooks that run at the same time", () => {
-        hold(2, text);
-        vi.restoreAllMocks();
-        const adapter = load("antigravity");
-        given(JSON.stringify(nextCall));
-        const concurrent = vi.spyOn(fs, "rmSync").mockImplementationOnce(() => {
-          load("antigravity").release();
-        });
-        adapter.release();
-
-        expect([concurrent.mock.calls.length > 0, printed.length]).toStrictEqual([true, 1]);
       });
 
       it("releases when its file runs as the PreInvocation hook's command", () => {

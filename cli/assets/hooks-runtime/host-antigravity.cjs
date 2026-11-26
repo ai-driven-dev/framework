@@ -12,7 +12,7 @@
  * generates for PreInvocation. The project's `.agents/` is committed and `artifactDirectoryPath` is
  * the host's own folder, so neither holds a disposable hand-off. A PreInvocation always follows a
  * tool, so a held text is released within one step. A conversation killed between the two leaves
- * its file, which the next hold sweeps once it is a day old.
+ * its file in the temp directory.
  */
 const fs = require("node:fs");
 const os = require("node:os");
@@ -107,7 +107,6 @@ function injected(texts) {
 const SAFE_ID = /^[A-Za-z0-9_-]{1,128}$/u;
 const OTHERS_BITS = 0o077;
 const HELD_PREFIX = "agy-relay-";
-const HELD_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 /** The folder the user's hooks keep their hand-offs in, `<tmpdir>/aidd-hooks-<uid>`: made when
  * `create`, and null unless it is this user's alone. */
@@ -130,25 +129,11 @@ function heldFile(conversationId, create) {
   return folder === null ? null : path.join(folder, `${HELD_PREFIX}${conversationId}`);
 }
 
-/** Removes what a conversation that ended left held for over a day, each by its own entry: a link
- * is removed, never followed. */
-function sweepHeld(folder) {
-  for (const name of fs.readdirSync(folder)) {
-    if (!name.startsWith(HELD_PREFIX)) continue;
-    const entry = path.join(folder, name);
-    try {
-      const stat = fs.lstatSync(entry);
-      if (!stat.isDirectory() && Date.now() - stat.mtimeMs > HELD_MAX_AGE_MS) fs.unlinkSync(entry);
-    } catch {}
-  }
-}
-
 /** Holds `text` for the conversation's next model call, one JSON line per text. */
 function hold(text) {
   try {
     const file = heldFile(current.sessionId, true);
     if (file === null) return;
-    sweepHeld(path.dirname(file));
     fs.appendFileSync(file, `${JSON.stringify(text)}\n`, { mode: 0o600 });
   } catch {}
 }

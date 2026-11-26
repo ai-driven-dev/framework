@@ -1,3 +1,4 @@
+import type { ShippedHooks } from "../../../../shared/domain/materialization/build-contract.js";
 import type { PluginMcp } from "../../domain/rules/flat-mcp.js";
 import type { DiskSinkDeps } from "../../ports/disk-sink-deps.js";
 import type { DiskTarget } from "../../ports/plugin-tree-sink.js";
@@ -8,8 +9,7 @@ type RuntimeDeps = Pick<DiskSinkDeps, "flat" | "logger">;
 interface FoldedHooks {
   readonly name: string;
   readonly hooks: string | null;
-  /** Whether the plugin ships the host adapter its hooks speak through. */
-  readonly hostAdapter?: boolean;
+  readonly hostAdapter?: ShippedHooks["hostAdapter"];
 }
 
 interface FoldedMcp {

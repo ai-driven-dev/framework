@@ -1,4 +1,5 @@
 import type {
+  ShippedHooks,
   SupportedArtifact,
   ToolBuildContract,
 } from "../../../shared/domain/materialization/build-contract.js";
@@ -24,8 +25,7 @@ export interface FlatArtifactStep {
 export interface FlatHooksStep extends FlatArtifactStep {
   /** The plugin's hooks manifest, as the engine handed it over. */
   readonly hooksJson: string;
-  /** Whether the plugin ships the host adapter its hooks speak through. */
-  readonly hostAdapter?: boolean;
+  readonly hostAdapter?: ShippedHooks["hostAdapter"];
 }
 
 export interface FlatMcpStep {
