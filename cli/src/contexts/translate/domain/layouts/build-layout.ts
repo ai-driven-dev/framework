@@ -5,8 +5,9 @@ import type {
   ToolBuildContract,
 } from "../../../../shared/domain/materialization/build-contract.js";
 import { basename } from "../../../../shared/domain/paths.model.js";
+import { PLUGIN_MCP_RELATIVE } from "../../../../shared/domain/plugin/canon-paths.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
-import { PLUGIN_HOOKS_RELATIVE, PLUGIN_MCP_RELATIVE } from "../canon-format.js";
+import { PLUGIN_HOOKS_RELATIVE } from "../canon-format.js";
 import { agentLinks } from "../rules/agent-markdown.js";
 import {
   agentShape,

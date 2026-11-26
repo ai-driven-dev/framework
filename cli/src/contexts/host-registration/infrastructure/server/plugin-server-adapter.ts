@@ -74,7 +74,6 @@ function endpointOf(child: ChildProcess, spec: PluginServerSpec): Promise<Server
   });
 }
 
-/** Ends the process and waits for it to be gone. */
 async function stop(child: ChildProcess, exited: Promise<void>): Promise<void> {
   if (child.exitCode !== null || child.signalCode !== null) return;
   child.kill("SIGTERM");

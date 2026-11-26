@@ -1,0 +1,21 @@
+{
+  "host": "copilot",
+  "event": "preToolUse",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "sessionId": "00000000-0000-4000-8000-000000000000",
+        "timestamp": 0,
+        "cwd": "/Users/user/project",
+        "toolCallId": "call_3yLDY1UD9HPSwrsrpqrt08xv",
+        "toolName": "bash",
+        "toolArgs": {
+          "command": "echo hi",
+          "description": "Prints hi"
+        }
+      },
+      "hookAnswer": null
+    }
+  ]
+}

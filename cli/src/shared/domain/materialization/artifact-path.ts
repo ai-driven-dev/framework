@@ -1,4 +1,10 @@
-import type { ArtifactPlacement, FlatHooksBridge, SupportedArtifact } from "./build-contract.js";
+import { PLUGIN_MCP_RELATIVE } from "../plugin/canon-paths.js";
+import type {
+  ArtifactPlacement,
+  FlatHooksBridge,
+  RuleMarkdown,
+  SupportedArtifact,
+} from "./build-contract.js";
 import {
   belowSection,
   flatAgentFilePath,
@@ -18,13 +24,34 @@ export const skillsIn = (layout: Extract<ArtifactPlacement, { kind: "layout" }>[
 export const agentsIn = (layout: Extract<ArtifactPlacement, { kind: "layout" }>["layout"]) =>
   ({ kind: "layout", layout, of: "agent" }) as const;
 
-/** A flat rules artifact's placement. */
 export const rulesIn = (layout: Extract<ArtifactPlacement, { kind: "layout" }>["layout"]) =>
   ({ kind: "layout", layout, of: "rule" }) as const;
 
-/** A flat commands artifact's placement. */
 export const commandsIn = (layout: Extract<ArtifactPlacement, { kind: "layout" }>["layout"]) =>
   ({ kind: "layout", layout, of: "command" }) as const;
+
+/** The artifact that places a plugin's rules tree through `layout`, their frontmatter kept as
+ * shipped unless `ruleMarkdown` converts it. */
+export const rulesArtifact = (
+  layout: Extract<ArtifactPlacement, { kind: "layout" }>["layout"],
+  ruleMarkdown?: RuleMarkdown
+) =>
+  ({
+    supported: true,
+    source: { kind: "fullTree", srcDir: "rules" },
+    placement: rulesIn(layout),
+    ...(ruleMarkdown === undefined ? {} : { ruleMarkdown }),
+  }) as const;
+
+/** The artifact that merges every plugin's `.mcp.json` servers into the one file at `mcpPath`,
+ * under the `serversKey` property. */
+export const flatMcpFileArtifact = (mcpPath: string, serversKey = "mcpServers") =>
+  ({
+    supported: true,
+    source: { kind: "configFile", srcPath: PLUGIN_MCP_RELATIVE },
+    placement: { kind: "file", at: mcpPath },
+    mcpServersKey: serversKey,
+  }) as const;
 
 /** Where a plugin file lands in an artifact, from the placement it declares. */
 export function artifactPath(artifact: SupportedArtifact, plugin: string, relPath: string): string {

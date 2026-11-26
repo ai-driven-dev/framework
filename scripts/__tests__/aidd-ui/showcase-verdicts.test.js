@@ -5,8 +5,6 @@ const { scriptOf, literally, UI, LIB, makeTmp, removeTmp, writeProject, put, rec
 const { load } = require(path.join(LIB, "project.cjs"));
 const { showcaseOf, decisionsOf, copiedOf, entriesOf, nextToReviewOf, nextOpenOf, LABELS } = require(path.join(LIB, "showcase.cjs"));
 
-// The verdict of a state is given beside the tabs of the record, and the drawer only recaps it: the page script
-// is run here on a stand-in for the page, as the sets' tests do.
 let tmp;
 beforeEach(() => {
   tmp = makeTmp("aidd-ui-verdicts-");

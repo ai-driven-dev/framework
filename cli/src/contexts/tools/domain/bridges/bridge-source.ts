@@ -80,12 +80,7 @@ function runCaptureSync(script, args, payload, directory) {
   }
 }`;
 
-/** The generated modules' reading of a finished script: exit 2 puts the answer on stderr, exit 0
- * puts it in `additionalContext` on stdout, the person's message in `systemMessage`, and whether
- * the model must deal with it before going on in `required`. Any other
- * way a script ends is reported and answers nothing. Written once here, so both hosts' bridges
- * tell the model, and the person, the same thing; and `settled`, the one step every reader of a
- * run (an answer, a Stop reason, a refusal) takes, so each reports a failed script the same way. */
+/** Exit 2 => stderr is the answer; exit 0 => stdout JSON (additionalContext, systemMessage, required); anything else is reported and answers nothing. */
 export const ANSWER_OF_SOURCE = `/** A script's run, or null once a script that failed to run, or exited other than 0 or 2, is
  * reported. */
 function settled(script, run) {

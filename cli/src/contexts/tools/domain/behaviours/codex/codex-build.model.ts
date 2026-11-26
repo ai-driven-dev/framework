@@ -1,6 +1,6 @@
 /** Codex's marketplace build contract: a native plugin tree. */
 
-import { rulesIn } from "../../../../../shared/domain/materialization/artifact-path.js";
+import { rulesArtifact } from "../../../../../shared/domain/materialization/artifact-path.js";
 import type { ToolBuildContract } from "../../../../../shared/domain/materialization/build-contract.js";
 import type { FlatArtifactLayout } from "../../../../../shared/domain/materialization/flat-paths.js";
 import { tomlAgentMarkdownToToml } from "../../formats/agents/toml-agent.js";
@@ -37,11 +37,7 @@ function codexPluginArtifacts(
       placement: { kind: "agentFiles", dir: OUTPUT_CODEX_AGENTS_DIR, ext: ".toml", staged: true },
       transform: tomlAgentMarkdownToToml(toml),
     },
-    rules: {
-      supported: true,
-      source: { kind: "fullTree", srcDir: "rules" },
-      placement: rulesIn(rulesLayout),
-    },
+    rules: rulesArtifact(rulesLayout),
     mcp: {
       supported: true,
       source: { kind: "configFile", srcPath: ".mcp.json" },

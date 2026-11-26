@@ -5,10 +5,6 @@ const { UI, LIB, makeTmp, removeTmp, writeProject, put, record } = require("../f
 const { load } = require(path.join(LIB, "project.cjs"));
 const { showcaseOf, LABELS } = require(path.join(LIB, "showcase.cjs"));
 
-// The overview is a map by step: journeys as a filmstrip of their screens, identity and charter as one card,
-// elements as small cards by category, screens as a grid of thumbnails. One card per record, each card one
-// link, the numbers those of the drawer, the thumbnails static and lazy.
-
 let tmp;
 
 beforeEach(() => {

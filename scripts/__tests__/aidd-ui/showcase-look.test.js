@@ -5,9 +5,6 @@ const { LIB, makeTmp, removeTmp, writeProject } = require("../fixtures/aidd-ui/p
 const { load } = require(path.join(LIB, "project.cjs"));
 const { showcaseOf, THEME, LABELS } = require(path.join(LIB, "showcase.cjs"));
 
-// The look of the showcase chrome: one set of role tokens in a light and a dark scheme, no colour written
-// outside them, a visible focus ring, motion that gives way to the reader's preference.
-
 let tmp;
 
 beforeEach(() => {

@@ -1,3 +1,4 @@
+import { rulePatterns } from "../../../../../shared/domain/markdown.js";
 import {
   type LinkSyntax,
   REFERENCE_CHARS,
@@ -5,7 +6,6 @@ import {
 import { escapeRegExp } from "../../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import { basename } from "../../../../../shared/domain/paths.model.js";
 import { GITKEEP_FILE } from "../../../../../shared/domain/redundant-gitkeeps.js";
-import { rulePatterns } from "../../formats/rule-frontmatter.js";
 
 export const DIRECTORY = ".github/";
 export const TOOL_SUFFIX = ".copilot.md";
