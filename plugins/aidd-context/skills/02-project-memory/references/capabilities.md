@@ -10,6 +10,8 @@
 | `core` | `vcs.md` | branches, commits, hosting | always | yes | - |
 | `ecosystem` | `ecosystem.md` | outside services and their access | always | yes | `integration.md` |
 | `backlog` | `backlog.md` | where work items live and move | backlog artifacts, issue templates, a ticketing tool, or backlog conventions | no | - |
+| `sources` | `sources.md` | where product evidence can be read, and how | analytics, a support desk, survey or interview tooling, or a competitor watchlist the team reads | no | - |
+| `po-practices` | `po-practices.md` | how the team runs product work | a written research protocol, prioritization method, or impact rule the team follows | no | - |
 | `deployment` | `deployment.md` | where it runs and ships | CI config, a `Dockerfile`, or infrastructure-as-code | no | `infra.md` |
 | `api` | `api.md` | server surface, conventions | a server framework, or a `routes/`, `controllers/` or `api/` dir | no | - |
 | `cli` | `cli.md` | the command line, its distribution | a `bin` field or a command-line parser | no | - |

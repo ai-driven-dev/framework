@@ -16,7 +16,7 @@ const TEMPLATES = path.join(__dirname, "..", "assets", "templates");
 
 // The capability table of `references/capabilities.md`; a test holds them equal.
 const ALWAYS_WRITTEN = Object.freeze(["project-brief.md", "architecture.md", "codebase-map.md", "coding-assertions.md", "testing.md", "vcs.md", "ecosystem.md"]);
-const CONDITIONAL_FILES = Object.freeze(["backlog.md", "deployment.md", "api.md", "cli.md", "package.md", "auth.md", "database.md", "data.md", "messaging.md", "realtime.md", "ui.md", "mobile.md", "desktop.md"]);
+const CONDITIONAL_FILES = Object.freeze(["backlog.md", "sources.md", "po-practices.md", "deployment.md", "api.md", "cli.md", "package.md", "auth.md", "database.md", "data.md", "messaging.md", "realtime.md", "ui.md", "mobile.md", "desktop.md"]);
 const ROW_FILES = Object.freeze([...ALWAYS_WRITTEN, ...CONDITIONAL_FILES]);
 const ACCEPTED_NAMES = Object.freeze({
   "ecosystem.md": ["integration.md"],
