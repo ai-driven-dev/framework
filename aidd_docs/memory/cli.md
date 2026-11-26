@@ -17,4 +17,4 @@ The `aidd` binary, built from `cli/` and published to npm as `@ai-driven-dev/cli
 
 ## Distribution
 
-- npm with OIDC publishing: `internal/deployment.md`, `internal/cli/deployment.md`.
+- npm with OIDC publishing: `deployment.md`, `internal/cli/deployment.md`.
