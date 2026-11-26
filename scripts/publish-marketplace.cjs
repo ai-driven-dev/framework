@@ -3,10 +3,9 @@ const { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } = require("no
 const { tmpdir } = require("node:os");
 const { join, resolve } = require("node:path");
 const distribution = require("./marketplace-distribution.json");
+const { toolOf } = require("./marketplace-tools.cjs");
 
 const releaseTag = /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
-const legacyBranch = "claude-legacy";
-const legacyReleaseCount = 2;
 
 function compareVersions(left, right) {
   const a = left.match(releaseTag).slice(1).map(BigInt);
@@ -16,7 +15,7 @@ function compareVersions(left, right) {
 }
 
 function publish(tool, version, source, repository) {
-  const target = Object.hasOwn(distribution.tools, tool) && distribution.tools[tool];
+  const target = toolOf(tool);
   if (!target || !releaseTag.test(version) || !source) {
     throw new Error("Usage: publish-marketplace.cjs <tool> <vMAJOR.MINOR.PATCH> <catalog-directory> [git-repository]");
   }
@@ -27,8 +26,8 @@ function publish(tool, version, source, repository) {
     const catalogPath = join(worktree, target.catalog);
     const catalog = JSON.parse(readFileSync(catalogPath, "utf8"));
     if (!catalog.name || !catalog.plugins?.length) throw new Error(`Invalid catalog at ${target.catalog}`);
-    if (target.name && catalog.name !== target.name) {
-      catalog.name = target.name;
+    if (catalog.name !== distribution.catalogName) {
+      catalog.name = distribution.catalogName;
       writeFileSync(catalogPath, `${JSON.stringify(catalog, null, 2)}\n`);
     }
 
@@ -44,10 +43,10 @@ function publish(tool, version, source, repository) {
       return;
     }
 
-    const stable = `refs/remotes/origin/${target.ref}`;
+    const stable = `refs/remotes/origin/${tool}`;
     const previous = git("for-each-ref", "--format=%(objectname)", stable);
-    const previousVersion = previous && git("log", "-1", "--format=%s", stable).replace(`Publish ${tool} `, "");
-    if (previous && !releaseTag.test(previousVersion)) throw new Error(`Unexpected history on ${target.ref}`);
+    const previousVersion = previous && git("tag", "--points-at", stable, "--list", `${tool}-v*`).replace(`${tool}-`, "");
+    if (previous && !releaseTag.test(previousVersion)) throw new Error(`Unexpected history on ${tool}`);
     const advance = !previous || compareVersions(version, previousVersion) > 0;
     const commitTree = (parent, message) => git(
       "-c", "user.name=AIDD Release", "-c", "user.email=release@ai-driven-dev.fr",
@@ -55,18 +54,17 @@ function publish(tool, version, source, repository) {
     );
     const commit = commitTree(advance && previous, `Publish ${tool} ${version}`);
     const refs = [`${commit}:${versionRef}`];
-    if (advance) refs.push(`${commit}:refs/heads/${target.ref}`);
-    if (tool === "claude" && advance) {
-      const legacy = `refs/remotes/origin/${legacyBranch}`;
+    if (advance) refs.push(`${commit}:refs/heads/${tool}`);
+    if (target.legacy && advance) {
+      const legacy = `refs/remotes/origin/${target.legacy.branch}`;
       const legacyHead = git("for-each-ref", "--format=%(objectname)", legacy);
-      const count = legacyHead ? Number(git("rev-list", "--count", "--grep=^Publish legacy Claude v", legacy)) : 0;
-      if (count < legacyReleaseCount) {
-        const legacyCommit = commitTree(legacyHead, `Publish legacy Claude ${version}`);
-        refs.push(`${legacyCommit}:refs/heads/${legacyBranch}`);
+      const published = legacyHead ? Number(git("rev-list", "--count", `--grep=^Publish legacy ${tool} v`, legacy)) : 0;
+      if (published < target.legacy.releases) {
+        refs.push(`${commitTree(legacyHead, `Publish legacy ${tool} ${version}`)}:refs/heads/${target.legacy.branch}`);
       }
     }
     git("push", "--atomic", "origin", ...refs);
-    console.log(`${tool} ${version} published${advance ? ` to ${target.ref}` : " as a version tag only"}`);
+    console.log(`${tool} ${version} published${advance ? ` to ${tool}` : " as a version tag only"}`);
   } finally {
     rmSync(worktree, { recursive: true, force: true });
   }
