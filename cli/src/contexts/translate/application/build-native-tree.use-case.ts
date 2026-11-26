@@ -144,8 +144,8 @@ export class BuildNativeTree {
   }
 
   /** Whether the tool's build writes the section's files, so leaving it out is no skip. */
-  private carries(section: string): boolean {
+  private carries(section: (typeof OUT_OF_SCOPE_PLUGIN_SECTIONS)[number]): boolean {
     const { contract, mode } = this.deps.layout;
-    return section === "rules" && mode === "flat" && contract.artifacts.rules?.supported === true;
+    return mode === "flat" && contract.artifacts[section]?.supported === true;
   }
 }

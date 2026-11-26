@@ -33,7 +33,7 @@ interface ToolSupport {
   /** The directory of the project where the tool loads each plugin's tree that `aidd` writes there
    * itself, a native plugin install and no marketplace the tool could register; or null. */
   pluginTree: string | null;
-  /** What a user gets per output layout the tool supports: build output, plus rules from the install profile. */
+  /** What a user gets per output layout the tool supports: build output, plus the rules and commands the install profile ships. */
   builds: Record<string, Record<Surface, Support>>;
 }
 
@@ -52,9 +52,13 @@ function carriesMcpInManifest(build: ToolBuildContract): boolean {
 }
 
 /** What a user gets through `aidd` for one layout: a build file, the config artifact the build folds MCP
- * into, the manifest that carries it, or the rules section the install profile ships (rules are not part of what `translate` emits). */
-function supportOf(surface: Surface, build: ToolBuildContract, installsRules: boolean): Support {
-  if (surface === "rules" && installsRules) return "yes";
+ * into, the manifest that carries it, or the rules or commands section the install profile ships. */
+function supportOf(
+  surface: Surface,
+  build: ToolBuildContract,
+  installs: ReadonlySet<Surface>
+): Support {
+  if (installs.has(surface)) return "yes";
   if (surface === "mcp" && (foldsFlatMcp(build) || carriesMcpInManifest(build))) return "yes";
   const declared: Partial<Record<string, ArtifactContract>> = build.artifacts;
   const contract = declared[surface];
@@ -63,6 +67,13 @@ function supportOf(surface: Surface, build: ToolBuildContract, installsRules: bo
     return "bridge";
   }
   return "yes";
+}
+
+function installedSurfaces(tool: AiToolProfile): ReadonlySet<Surface> {
+  return new Set<Surface>([
+    ...(tool.installedRulesLocation() === null ? [] : (["rules"] as const)),
+    ...(tool.markdownSection("commands") === null ? [] : (["commands"] as const)),
+  ]);
 }
 
 function pluginTreeOf(plugins: ReturnType<AiToolProfile["plugins"]>): string | null {
@@ -86,7 +97,7 @@ function capture(): ToolSupport[] {
         builds[mode] = Object.fromEntries(
           SURFACES.map((surface) => [
             surface,
-            supportOf(surface, contract, tool.installedRulesLocation() !== null),
+            supportOf(surface, contract, installedSurfaces(tool)),
           ])
         ) as Record<Surface, Support>;
       }

@@ -22,7 +22,8 @@ const OPENCODE_BASE = {
 
 async function buildFlat(
   target: typeof TOOL.kilo | typeof TOOL.opencode | typeof TOOL.kimi = TOOL.kilo,
-  existing: Record<string, string> = {}
+  existing: Record<string, string> = {},
+  force = false
 ) {
   const fs = new InMemoryFileAdapter();
   await seedFromDirectory(fs, FIXTURE_DIR, { useAbsolutePaths: true });
@@ -42,7 +43,8 @@ async function buildFlat(
     assets,
     logger,
     buildContractOf(registeredTools(), target, "flat"),
-    "flat"
+    "flat",
+    force
   );
   await build.execute({ sourceDir: FIXTURE_DIR, outDir: OUT, target });
   return { fs, logger };
@@ -68,6 +70,28 @@ describe("a flat build of the rules of a plugin for OpenCode", () => {
     const config = asPlainObject(JSON.parse(fs.getFile(`${OUT}/opencode.jsonc`) ?? "null"));
 
     expect(config?.instructions).toEqual(["mine.md", ".opencode/rules/**/*.md"]);
+  });
+});
+
+describe("a flat build of the commands of a plugin for OpenCode", () => {
+  const COMMAND = `${OUT}/.opencode/commands/aidd-test/implement.md`;
+
+  it("writes the command in its plugin's folder, and does not warn it skipped it", async () => {
+    const { fs, logger } = await buildFlat(TOOL.opencode);
+
+    expect(fs.getFile(COMMAND)).toContain("name: 'aidd-aidd-test:implement'");
+    expect(logger.warnMessages.filter((line) => line.includes("commands/"))).toEqual([]);
+  });
+
+  it("writes the same bytes when built again over its own output", async () => {
+    const first = await buildFlat(TOOL.opencode);
+    const again = await buildFlat(
+      TOOL.opencode,
+      { [COMMAND]: first.fs.getFile(COMMAND) ?? "" },
+      true
+    );
+
+    expect(again.fs.getFile(COMMAND)).toBe(first.fs.getFile(COMMAND));
   });
 });
 
