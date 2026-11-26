@@ -164,6 +164,20 @@ describe("the bridge body every host shares, in Kilo's module", () => {
     }
   });
 
+  // `kilo run` drains the session as soon as its holds are zero: a follow-up requested after the
+  // event hook first yielded lands too late.
+  it("requests a Stop follow-up before the idle event's hook first yields", async () => {
+    const { directory, emit, server, prompts } = await open(host);
+    await emit(sessionStarted(host, "s1", directory));
+
+    const idling = server.event({
+      event: { type: "session.idle", properties: { sessionID: "s1" } },
+    });
+
+    expect(prompts).toHaveLength(1);
+    await idling;
+  });
+
   // Observed on Kilo 7.7.5 and 7.8.32: the host idles between the two follow-up turns, and each
   // plugin's Stop script blocked again at the second, forever.
   it("continues a turn once when two plugins each send a follow-up, never again at the second one's turn", async () => {

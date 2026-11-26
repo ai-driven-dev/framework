@@ -30,16 +30,6 @@ describe("the bridge generated with OpenCode's parameters", () => {
     expect(delivered).toHaveLength(1);
   });
 
-  it("waits for a Stop script still running when the host shuts the plugin down", async () => {
-    const { server, delivered } = await open(bridgedHost("opencode"));
-
-    // Not awaited: dispose arrives while the Stop script still runs.
-    void server.event({ event: { type: "session.idle", properties: { sessionID: "s1" } } });
-    await server.dispose();
-
-    expect(delivered).toHaveLength(1);
-  });
-
   it("ignores an idle session once the host has shut it down", async () => {
     const { server, emit, of } = await open(bridgedHost("opencode"));
 
