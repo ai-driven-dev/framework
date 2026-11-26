@@ -60,7 +60,7 @@ aidd sync --global   # after a framework update
 
 ## 🧠 Models
 
-The Claude Code, Cursor, and Copilot per-tool release bundles set AIDD's recommended Anthropic models and effort for the agents. The Codex flat bundle sets the recommended OpenAI models and effort. To select a provider during setup or return to the IDE's model, use `--provider`:
+The Claude Code release bundle sets AIDD's recommended Anthropic models and effort for the agents. The Codex flat bundle uses OpenAI. Copilot and Cursor agents inherit the host's session settings by default. To select a provider during setup or return to the host's model, use `--provider`:
 
 ```bash
 aidd setup --ide opencode --provider mistral   # main session and agents on Mistral models
@@ -93,7 +93,7 @@ aidd setup --ide copilot --provider openai --agents-only
 aidd setup --ide copilot --provider none --agents-only
 ```
 
-For a native Copilot CLI installation, use `/subagents` to change the model of an installed agent. Copilot CLI falls back to the session settings if it cannot use the recommended model or effort. [Copilot CLI model selection](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference#custom-agent-frontmatter-fields)
+For a native Copilot CLI installation, use `/subagents` to change the model of an installed agent. Copilot CLI falls back to the session settings if it cannot use the selected model or effort. [Copilot CLI model selection](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference#custom-agent-frontmatter-fields)
 
 Claude Code applies its allowlist and falls back to an allowed model. Cursor applies its team and plan restrictions and can fall back to a compatible model. [Claude Code allowlists](https://code.claude.com/docs/en/sub-agents#when-an-allowlist-blocks-a-subagent-model) · [Cursor model configuration](https://cursor.com/docs/subagents#when-the-configured-model-wont-be-used)
 
