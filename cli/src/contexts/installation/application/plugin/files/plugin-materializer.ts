@@ -17,6 +17,7 @@ import type {
   UserPluginUpdateRequest,
   UserScopeFileGuard,
 } from "../../../ports/plugin/user-plugin-materialization.js";
+import { syncUserRules } from "../../materialize/listed-rules/list-user-rules.js";
 import { scopeBaseOf } from "../plugin-target-resolution.js";
 import { assertUserPluginWritable } from "./assert-user-plugin-writable.js";
 import { deleteOldFiles } from "./delete-plugin-files.js";
@@ -124,6 +125,7 @@ export class PluginMaterializer implements UserPluginMaterialization {
       isWithinUserScope: request.isWithinUserScope,
     });
     await writePluginFiles([...files], baseDir, this.deps.fs);
+    await syncUserRules(this.deps.fs, { tool, baseDir, home, plugin: plugin.name, files });
     const newPaths = new Set(files.map((file) => file.relativePath));
     await deleteOldFiles(
       new Map([...plan.oldSafe].filter(([path]) => !newPaths.has(path))),
