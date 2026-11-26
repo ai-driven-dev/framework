@@ -1,0 +1,195 @@
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { RemovePlugin } from "../../../../../src/contexts/installation/application/removal/remove-plugin.use-case.js";
+import {
+  PluginNotFoundError,
+  UnresolvableUserScopeError,
+} from "../../../../../src/contexts/installation/contract/installation.error.js";
+import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import type { Scope } from "../../../../../src/shared/domain/scope.js";
+import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
+import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { InMemoryManifestRepository } from "../../../../shared/testing/in-memory-manifest-repository.fake.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { pickIntegration } from "../../../../shared/testing/remove-project-plugin.builder.js";
+import { FakePluginRemovalSteps } from "../../testing/fake-plugin-removal-steps.fake.js";
+import { aManifest } from "../../testing/manifest.builder.js";
+
+const homedir = (): string => "/home/dev";
+
+const ROOT = "/project";
+const NAME = "aidd-dev";
+const REF = "aidd-dev@framework";
+
+function plugin(scope: Scope = "project") {
+  return RecordedPlugin.fromJSON({
+    name: NAME,
+    source: { kind: "local", path: "/fixture" },
+    version: "1.0.0",
+    strict: false,
+    files: { "skills/a.md": "h1" },
+    scope,
+    marketplace: "framework",
+  });
+}
+
+function fixture(
+  options: {
+    scope?: Scope;
+    toolId?: AiToolId;
+    answers?: ConstructorParameters<typeof FakePluginRemovalSteps>[1];
+  } = {}
+) {
+  const toolId = options.toolId ?? TOOL.claude;
+  const manifest = aManifest()
+    .withTool(toolId, [])
+    .withPlugin(toolId, plugin(options.scope))
+    .build();
+  const records = new Map([
+    [
+      toolId,
+      {
+        binary: "claude",
+        marketplaces: [{ alias: "framework", hostName: "framework" }],
+        pluginRefs: [REF],
+      },
+    ],
+  ]);
+  const repo = new InMemoryManifestRepository(manifest, ROOT, records);
+  const fs = new InMemoryFileAdapter({
+    [join(ROOT, "skills/a.md")]: "a",
+    [join(ROOT, "keep.md")]: "k",
+  });
+  const withdrawal = new FakePluginRemovalSteps(repo, options.answers);
+  const remove = new RemovePlugin(
+    {
+      fs,
+      projectRepo: repo,
+      integration: pickIntegration(fs),
+    },
+    registeredTools()
+  );
+  const run = (pluginName = NAME) =>
+    remove.execute({
+      pluginName,
+      toolIds: [toolId],
+      projectRoot: ROOT,
+      home: homedir(),
+      withdrawal,
+    });
+  return { repo, fs, withdrawal, run };
+}
+
+describe("removing a plugin from a project", () => {
+  it("deletes the tracked files, drops the plugin from the manifest and saves it", async () => {
+    const { repo, fs, run } = fixture();
+
+    await run();
+
+    expect(fs.has(join(ROOT, "skills/a.md"))).toBe(false);
+    expect(fs.has(join(ROOT, "keep.md"))).toBe(true);
+    expect(repo.getCurrent()?.getPlugins(TOOL.claude)).toEqual([]);
+    expect(repo.saveCount).toBe(1);
+  });
+
+  it("names a plugin no selected tool has, saving nothing", async () => {
+    const { repo, run } = fixture();
+
+    await expect(run("other")).rejects.toBeInstanceOf(PluginNotFoundError);
+    expect(repo.saveCount).toBe(0);
+  });
+
+  it("deletes nothing when the host refuses to let the plugin go", async () => {
+    const refusal = new Error("host keeps it");
+    const { repo, fs, run } = fixture({ answers: { refuseSource: refusal } });
+
+    await expect(run()).rejects.toBe(refusal);
+    expect(fs.has(join(ROOT, "skills/a.md"))).toBe(true);
+    expect(repo.saveCount).toBe(0);
+  });
+
+  it("asks the host to withdraw the plugin before it deletes any file", async () => {
+    const { withdrawal, run } = fixture();
+
+    await run();
+
+    expect(withdrawal.calls).toEqual([`assertSource:${TOOL.claude}`, `withdraw:${NAME}`]);
+  });
+
+  it("lets go of the native ref the manifest recorded for the plugin", async () => {
+    const { withdrawal, run } = fixture();
+
+    await run();
+
+    expect(withdrawal.detachedRefs).toEqual([new Map([[TOOL.claude, [REF]]])]);
+  });
+
+  it("drops the ref from the registration record when the host lets it go", async () => {
+    const { repo, run } = fixture();
+
+    await run();
+
+    expect(repo.records.get(TOOL.claude)?.pluginRefs).toEqual([]);
+  });
+
+  it("keeps the ref in the registration record when the host does not let it go", async () => {
+    const { repo, run } = fixture({ answers: { confirmed: false, machineOwned: true } });
+
+    await run();
+
+    expect(repo.records.get(TOOL.claude)?.pluginRefs).toEqual([REF]);
+  });
+
+  it("drops an unconfirmed ref of a machine-wide tool when a machine claim owns it", async () => {
+    const { repo, run } = fixture({
+      toolId: TOOL.cursor,
+      answers: { confirmed: false, machineOwned: true },
+    });
+
+    await run();
+
+    expect(repo.records.get(TOOL.cursor)?.pluginRefs).toEqual([]);
+  });
+
+  it("keeps an unconfirmed ref of a machine-wide tool no machine claim owns", async () => {
+    const { repo, run } = fixture({
+      toolId: TOOL.cursor,
+      answers: { confirmed: false, machineOwned: false },
+    });
+
+    await run();
+
+    expect(repo.records.get(TOOL.cursor)?.pluginRefs).toEqual([REF]);
+  });
+
+  it("detaches a user-scope plugin from the machine without deleting its files", async () => {
+    const { fs, withdrawal, run } = fixture({ scope: "user", toolId: TOOL.cursor });
+    const userBase = registeredTools()
+      .aiProfile(TOOL.cursor)
+      .plugins()
+      ?.userPluginsBaseDir(homedir());
+    const userFile = join(userBase ?? "", "skills/a.md");
+    fs.setFile(userFile, "a");
+
+    await run();
+
+    expect(fs.has(userFile)).toBe(true);
+    expect(withdrawal.detachedUserPlugins).toEqual([[TOOL.cursor, NAME]]);
+  });
+
+  it("refuses a user-scope plugin of a tool with no user directory, changing nothing", async () => {
+    const { repo, fs, withdrawal, run } = fixture({ scope: "user", toolId: TOOL.claude });
+
+    await expect(run()).rejects.toBeInstanceOf(UnresolvableUserScopeError);
+    expect([repo.saveCount, withdrawal.detachedUserPlugins]).toEqual([0, []]);
+    expect(fs.has(join(ROOT, "skills/a.md"))).toBe(true);
+  });
+
+  it("detaches no user plugin for a project-scope one", async () => {
+    const { withdrawal, run } = fixture();
+
+    await run();
+
+    expect(withdrawal.detachedUserPlugins).toEqual([]);
+  });
+});

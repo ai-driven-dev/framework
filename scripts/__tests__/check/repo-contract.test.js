@@ -4,16 +4,15 @@ const os = require("node:os");
 const path = require("node:path");
 const { describe, it, before, after, afterEach } = require("node:test");
 const engine = require("../../check/engine/engine.cjs");
-const { findings } = require("./helpers.js");
 
 const ROOT = path.resolve(__dirname, "../../..");
 const CONTRACT = path.join(ROOT, "scripts/check/contracts/repo.json");
 const PIECES = ["plugins", "docs", "README.md", ".claude-plugin", "release-please-config.json", ".github/workflows/ci.yml"];
 
-/** The anchor-file rules only: REPO-04 to REPO-08 and REPO-10 read git's tracked files, which a copy has none of. */
+/** The anchor-file rules only: REPO-04 to REPO-08, REPO-10 and REPO-11 read git's tracked files, which a copy has none of. */
 function anchorFindings(target) {
   const contract = engine.loadContract(CONTRACT);
-  for (const id of Object.keys(contract.rules)) if (/^REPO-(0[45678]|10)$/u.test(id)) delete contract.rules[id];
+  for (const id of Object.keys(contract.rules)) if (/^REPO-(0[45678]|1[01])$/u.test(id)) delete contract.rules[id];
   return engine.check(contract, target);
 }
 

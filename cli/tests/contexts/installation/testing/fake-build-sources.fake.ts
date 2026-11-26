@@ -1,0 +1,43 @@
+import type { FlatPlacementDeps } from "../../../../src/contexts/installation/application/materialize/place-flat-plugin.js";
+import type { BuiltMaterializationDeps } from "../../../../src/contexts/installation/application/plugin/files/built-materialization-deps.js";
+import { TranslateDistribution } from "../../../../src/contexts/translate/application/translate-distribution.use-case.js";
+import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
+import { fakeEnsureBuiltMarketplace } from "../../../shared/testing/fake-ensure-built-marketplace.fake.js";
+import { InMemoryMarketplaceRegistry } from "../../../shared/testing/in-memory-marketplace-registry.fake.js";
+import { manifestProbesOf } from "../../../shared/testing/manifest-probes-of.builder.js";
+import { projectIntegrationOver } from "../../../shared/testing/project-integration.builder.js";
+import { registeredTools } from "../../../shared/testing/registered-tools.builder.js";
+
+/** The real translation: pure, so a test needs no fake of it. */
+export const translateDistribution = new TranslateDistribution(manifestProbesOf(registeredTools()));
+
+/** The build and translation sources an AddPlugin reads, both faked or real-and-pure. */
+export function fakeBuildSources() {
+  return {
+    ensureBuilt: fakeEnsureBuiltMarketplace(),
+    translate: translateDistribution,
+  };
+}
+
+/** What a placement reaches for, faked where it touches a host; `parts` fixes what a test cares about. */
+export function fakeBuiltDeps(
+  parts: Partial<BuiltMaterializationDeps> = {}
+): BuiltMaterializationDeps {
+  return {
+    ...fakeBuildSources(),
+    marketplaceRegistry: new InMemoryMarketplaceRegistry(),
+    platform: process.platform,
+    homedir: () => "/stub-home",
+    ...parts,
+  };
+}
+
+/** What a flat placement reaches for, over a test's own filesystem. */
+export function fakeFlatDeps(
+  fs: FileReader & FileWriter,
+  homedir: () => string = () => "/stub-home"
+): FlatPlacementDeps {
+  const { translate } = fakeBuiltDeps();
+  return { fs, homedir, translate, projectHooks: projectIntegrationOver(fs).materializer };
+}

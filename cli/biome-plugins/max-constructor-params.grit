@@ -1,0 +1,7 @@
+language js
+
+// A constructor injecting more than five dependencies does too much: split the class.
+JsConstructorParameters(parameters=$items) as $params where {
+  $items <: [$a, $b, $c, $d, $e, $f, ...],
+  register_diagnostic(span=$params, message="A constructor takes at most 5 parameters: split the class (.claude/skills/working-on-cli/references/architecture.md)", severity="error")
+}

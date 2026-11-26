@@ -10,15 +10,16 @@ The conversation so far.
 
 1. Fill the [discovery brief](../assets/discovery-brief.md).
 2. Show it and ask to approve, correct, or explore more.
-3. On a correction, revise it and show it again.
-4. To explore more, go to explore.
-5. On approval, offer where to keep it, per [persistence](../references/persistence.md).
+   - Correction: revise it and repeat from step 2.
+   - Explore more: go back to explore.
+3. On approval, offer where to keep it, per [persistence](../references/persistence.md).
+4. Keep the brief where the user chose.
+   - File: write it, run [validate-brainstorm.cjs](../scripts/validate-brainstorm.cjs) on it, fix, repeat until it passes.
 
 ## Output
 
-The approved brief.
+The approved brief, kept where the user chose.
 
 ## Rules
 
 - Write the brief's bullets as facts about the idea, not as a list of categories.
-- Write nothing unless the user chooses it.

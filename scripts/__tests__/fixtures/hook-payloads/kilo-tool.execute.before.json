@@ -1,0 +1,38 @@
+{
+  "host": "kilo",
+  "event": "tool.execute.before",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "call": {
+          "tool": "write",
+          "sessionID": "00000000-0000-4000-8000-000000000000",
+          "callID": "call-eb00f85c-87de-489c-b9f6-fa78db81fb62"
+        },
+        "output": {
+          "args": {
+            "filePath": "/Users/user/project/notes.md",
+            "content": "hello"
+          }
+        }
+      }
+    },
+    {
+      "run": "log",
+      "payload": {
+        "call": {
+          "tool": "bash",
+          "sessionID": "00000000-0000-4000-8000-000000000000",
+          "callID": "call-cd08796f-0fa1-40f1-b599-52600e4bedc4"
+        },
+        "output": {
+          "args": {
+            "command": "echo hi",
+            "description": "Run echo hi shell command"
+          }
+        }
+      }
+    }
+  ]
+}

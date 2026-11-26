@@ -1,0 +1,183 @@
+import { describe, expect, it } from "vitest";
+import {
+  DuplicatePluginError,
+  PluginNotFoundError,
+} from "../../../../src/contexts/installation/contract/installation.error.js";
+import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
+import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
+import { FileHash } from "../../../../src/shared/domain/file-hash.js";
+import { InstallationFile } from "../../../../src/shared/domain/installation-file.js";
+import { ToolNotInManifestError } from "../../../../src/shared/domain/shared.error.js";
+import { TOOL } from "../../../shared/testing/registered-tools.builder.js";
+
+const CLAUDE = TOOL.claude;
+const CURSOR = TOOL.cursor;
+
+const makeFile = (relativePath: string, hashHex: string): InstallationFile =>
+  new InstallationFile({ relativePath, content: "content", hash: new FileHash(hashHex) });
+
+const makeManifest = (): Manifest => {
+  const manifest = Manifest.create();
+  manifest.addTool(CLAUDE, "3.0.0", [makeFile(".claude/CLAUDE.md", "a".repeat(32))]);
+  manifest.addTool(CURSOR, "1.0.0", [makeFile(".cursor/rules/naming.md", "b".repeat(32))]);
+  return manifest;
+};
+
+const makePlugin = (name = "my-plugin", version = "1.0.0") =>
+  RecordedPlugin.fromJSON({
+    name,
+    source: { kind: "github", repo: "owner/my-plugin" },
+    version,
+    strict: false,
+    files: { [`.claude/plugins/${name}/README.md`]: "c".repeat(32) },
+    scope: "project",
+  });
+
+describe("adding a plugin to a tool", () => {
+  it("adds a plugin to the specified tool", () => {
+    const manifest = makeManifest();
+    manifest.addPlugin(CLAUDE, makePlugin());
+    expect(manifest.getPlugins(CLAUDE)).toHaveLength(1);
+  });
+
+  it("throws DuplicatePluginError when adding a plugin with the same name", () => {
+    const manifest = makeManifest();
+    manifest.addPlugin(CLAUDE, makePlugin("dup"));
+    expect(() => manifest.addPlugin(CLAUDE, makePlugin("dup"))).toThrow(DuplicatePluginError);
+  });
+
+  it("does not affect other tools", () => {
+    const manifest = makeManifest();
+    manifest.addPlugin(CLAUDE, makePlugin());
+    expect(manifest.getPlugins(CURSOR)).toHaveLength(0);
+  });
+});
+
+describe("removing a plugin from a tool", () => {
+  it("removes a plugin by name", () => {
+    const manifest = makeManifest();
+    manifest.addPlugin(CLAUDE, makePlugin("to-remove"));
+    manifest.removePlugin(CLAUDE, "to-remove");
+    expect(manifest.getPlugins(CLAUDE)).toHaveLength(0);
+  });
+
+  it("throws PluginNotFoundError when plugin does not exist", () => {
+    const manifest = makeManifest();
+    expect(() => manifest.removePlugin(CLAUDE, "ghost")).toThrow(PluginNotFoundError);
+  });
+
+  it("does not remove a plugin from the wrong tool", () => {
+    const manifest = makeManifest();
+    manifest.addPlugin(CLAUDE, makePlugin("shared-name"));
+    expect(() => manifest.removePlugin(CURSOR, "shared-name")).toThrow(PluginNotFoundError);
+  });
+});
+
+describe("isFileTracked() with plugins", () => {
+  it("returns true for a file tracked inside a plugin", () => {
+    const manifest = makeManifest();
+    manifest.addPlugin(CLAUDE, makePlugin("my-plugin"));
+    expect(manifest.isFileTracked(".claude/plugins/my-plugin/README.md")).toBe(true);
+  });
+
+  it("returns false for an untracked file not in any plugin", () => {
+    const manifest = makeManifest();
+    expect(manifest.isFileTracked(".claude/plugins/unknown/README.md")).toBe(false);
+  });
+});
+
+describe("updating a recorded plugin", () => {
+  it("replaces only the plugin of that name", () => {
+    const manifest = makeManifest();
+    manifest.addPlugin(CLAUDE, makePlugin("other"));
+    manifest.addPlugin(CLAUDE, makePlugin("target"));
+
+    manifest.updatePlugin(CLAUDE, makePlugin("target", "2.0.0"));
+
+    expect(manifest.getPlugins(CLAUDE).map((p) => [p.name, p.version])).toStrictEqual([
+      ["other", "1.0.0"],
+      ["target", "2.0.0"],
+    ]);
+  });
+
+  it("throws PluginNotFoundError when plugin does not exist", () => {
+    const manifest = makeManifest();
+    expect(() => manifest.updatePlugin(CLAUDE, makePlugin("ghost"))).toThrow(PluginNotFoundError);
+  });
+});
+
+describe("recording a plugin on a copy of the manifest", () => {
+  it("adds the plugin when its name is not recorded", () => {
+    const manifest = makeManifest();
+    manifest.withPlugin(CLAUDE, makePlugin("fresh"));
+    expect(manifest.getPlugins(CLAUDE).map((p) => p.name)).toStrictEqual(["fresh"]);
+  });
+
+  it("replaces the plugin of that name in place when it is recorded", () => {
+    const manifest = makeManifest();
+    manifest.addPlugin(CLAUDE, makePlugin("first"));
+    manifest.addPlugin(CLAUDE, makePlugin("target"));
+    manifest.addPlugin(CLAUDE, makePlugin("last"));
+
+    manifest.withPlugin(CLAUDE, makePlugin("target", "2.0.0"));
+
+    expect(manifest.getPlugins(CLAUDE).map((p) => [p.name, p.version])).toStrictEqual([
+      ["first", "1.0.0"],
+      ["target", "2.0.0"],
+      ["last", "1.0.0"],
+    ]);
+  });
+
+  it("refuses a tool that is not installed, naming it", () => {
+    expect(() => makeManifest().withPlugin(TOOL.codex, makePlugin())).toThrow(
+      ToolNotInManifestError
+    );
+  });
+});
+
+describe("dropping a plugin from a copy of the manifest", () => {
+  it("drops the plugin of that name and keeps the others", () => {
+    const manifest = makeManifest();
+    manifest.addPlugin(CLAUDE, makePlugin("keep"));
+    manifest.addPlugin(CLAUDE, makePlugin("drop"));
+
+    manifest.withoutPlugin(CLAUDE, "drop");
+
+    expect(manifest.getPlugins(CLAUDE).map((p) => p.name)).toStrictEqual(["keep"]);
+  });
+
+  it("leaves the manifest alone when the plugin is not recorded", () => {
+    const manifest = makeManifest();
+    manifest.addPlugin(CLAUDE, makePlugin("keep"));
+
+    manifest.withoutPlugin(CLAUDE, "ghost");
+
+    expect(manifest.getPlugins(CLAUDE).map((p) => p.name)).toStrictEqual(["keep"]);
+  });
+
+  it("leaves the manifest alone when the tool is not installed", () => {
+    const manifest = makeManifest();
+    expect(() => manifest.withoutPlugin(TOOL.codex, "my-plugin")).not.toThrow();
+    expect(manifest.hasTool(TOOL.codex)).toBe(false);
+  });
+});
+
+describe("a tool that is not installed", () => {
+  const ABSENT = TOOL.codex;
+
+  it("has no plugins", () => {
+    expect(makeManifest().getPlugins(ABSENT)).toStrictEqual([]);
+  });
+
+  it("refuses a plugin, naming the tool", () => {
+    expect(() => makeManifest().addPlugin(ABSENT, makePlugin())).toThrow(ToolNotInManifestError);
+  });
+
+  it("refuses a plugin removal, naming the tool", () => {
+    expect(() => makeManifest().removePlugin(ABSENT, "my-plugin")).toThrow(ToolNotInManifestError);
+  });
+
+  it("refuses a plugin update, naming the tool", () => {
+    expect(() => makeManifest().updatePlugin(ABSENT, makePlugin())).toThrow(ToolNotInManifestError);
+  });
+});

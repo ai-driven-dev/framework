@@ -1,5 +1,15 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { foreignClockProblem } from "../../scripts/foreign-clock.mjs";
+import {
+  foreignClockProblem,
+  TELEMETRY_TESTS,
+  unmatchedTestFilters,
+} from "../../scripts/foreign-clock.mjs";
+
+const CLI_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 /** The environment `pnpm test:foreign-clock` runs the telemetry tests in, with one part swapped. */
 const guarded = (zone: string, locale: string): NodeJS.ProcessEnv => ({
@@ -32,5 +42,24 @@ describe("the foreign clock guard's own check", () => {
 
   it("refuses a zone the platform does not know, which runs in UTC", () => {
     expect(foreignClockProblem(guarded("Not/AZone", "ar_SA.UTF-8"))).toMatch(/UTC/);
+  });
+});
+
+describe("the telemetry test filters the foreign clock guard runs", () => {
+  it("each names at least one test file that exists", () => {
+    expect(unmatchedTestFilters(CLI_ROOT, TELEMETRY_TESTS)).toEqual([]);
+  });
+
+  it("reports a filter that matches no test file, which vitest would silently ignore", () => {
+    const root = mkdtempSync(join(tmpdir(), "foreign-clock-"));
+    try {
+      mkdirSync(join(root, "tests", "e2e"), { recursive: true });
+      writeFileSync(join(root, "tests", "e2e", "telemetry-run.e2e.test.ts"), "");
+      expect(unmatchedTestFilters(root, ["tests/e2e/telemetry-", "tests/e2e/telemetry/"])).toEqual([
+        "tests/e2e/telemetry/",
+      ]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });

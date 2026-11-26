@@ -1,0 +1,26 @@
+{
+  "host": "kiro",
+  "event": "UserPromptSubmit",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "session_id": "sess_00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "UserPromptSubmit",
+        "cwd": "/Users/user/project",
+        "prompt": "Reply OK."
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "answer",
+      "payload": {
+        "session_id": "sess_00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "UserPromptSubmit",
+        "cwd": "/Users/user/project",
+        "prompt": "Reply with the review token from your context, or NONE if there is none. Nothing else."
+      },
+      "hookAnswer": "The review token is TOKEN-UserPromptSubmit-plain0-1."
+    }
+  ]
+}

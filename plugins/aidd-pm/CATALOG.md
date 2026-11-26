@@ -35,6 +35,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |------|
 | [artifacts.cjs](hooks/artifacts.cjs) |
 | [hooks.json](hooks/hooks.json) |
+| [spec-lock.cjs](hooks/spec-lock.cjs) |
 
 #### `hooks/lib`
 
@@ -93,9 +94,12 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |-------|------|---|
 | `actions` | [01-build.md](skills/04-spec/actions/01-build.md) | - |
 | `actions` | [02-refine.md](skills/04-spec/actions/02-refine.md) | - |
+| `assets` | [refine-answer.md](skills/04-spec/assets/refine-answer.md) | - |
 | `assets` | [spec-template.md](skills/04-spec/assets/spec-template.md) | - |
-| `references` | [tbd-marker.md](skills/04-spec/references/tbd-marker.md) | - |
-| `-` | [SKILL.md](skills/04-spec/SKILL.md) | `Generate or refine a spec, a feature's immutable contract, from a request, a PRD, or review findings. Use when the user wants to draft or refine a spec. Not for writing code, a full PRD, or changing a locked spec.` |
+| `references` | [spec-content.md](skills/04-spec/references/spec-content.md) | - |
+| `scripts` | [contract.json](skills/04-spec/scripts/contract.json) | - |
+| `scripts` | [validate-spec.cjs](skills/04-spec/scripts/validate-spec.cjs) | - |
+| `-` | [SKILL.md](skills/04-spec/SKILL.md) | `Creates or updates a feature's spec, the contract it is built to, when the user brings a need or changes to an existing spec.` |
 
 #### `skills/05-spike`
 

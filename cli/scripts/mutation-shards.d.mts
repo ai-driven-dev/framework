@@ -4,7 +4,9 @@ type Mutate = string | readonly string[];
 type WeightOf = (path: string) => number;
 
 export function sourceFiles(): string[];
-export function linesOf(path: string): number;
+export function mutantCountOf(content: string, name?: string): Promise<number>;
+export function scopeWeights(mutate: Mutate, files: readonly string[]): Promise<WeightOf>;
+export function cutScope(mutate: Mutate, files: readonly string[], of: number): Promise<string[][]>;
 export function matchesGlob(glob: string, path: string): boolean;
 export function inScope(mutate: Mutate, path: string): boolean;
 export function scopeFiles(mutate: Mutate, files: readonly string[]): string[];
@@ -12,14 +14,14 @@ export function partition(
   mutate: Mutate,
   files: readonly string[],
   of: number,
-  weightOf?: WeightOf
+  weightOf: WeightOf
 ): string[][];
 export function shardFiles(
   mutate: Mutate,
   files: readonly string[],
   shard: number,
   of: number,
-  weightOf?: WeightOf
+  weightOf: WeightOf
 ): string[];
 export function mergeReports(reports: readonly MutationReport[]): Required<MutationReport>;
 export function aggregateVerdict(input: {
@@ -34,5 +36,5 @@ export function aggregateVerdict(input: {
     };
     readonly report: MutationReport;
   }[];
-  readonly weightOf?: WeightOf;
+  readonly weightOf: WeightOf;
 }): string | null;

@@ -1,23 +1,25 @@
 # 01 - Frame
 
-Confirm the operation, the hook's name, its hosts, its intent and its event on each host.
+Confirm the operation, the name, the hosts, and what each host does for the need.
 
 ## Input
 
-The request, or the revision asked in plan.
+The need, or the revision plan sends back.
 
 ## Process
 
 1. Confirm the operation: add, update or remove.
 2. Confirm the hook's kebab-case name.
-   - Update or remove: name the existing hook, found by its script under a host's `hooks/` folder.
-3. Confirm the hosts per [hosts.md](../references/hosts.md): offer the detected ones, and add or drop any the user names, skipped on remove.
-   - Update: start from the hosts that already carry the hook.
-4. Confirm the intent per [hook-authoring.md](../references/hook-authoring.md), skipped on remove.
-5. Map the intent to each host's event and matcher per [hosts.md](../references/hosts.md), dropping a host that cannot carry it with its reason, skipped on remove.
+   - Update or remove: name the existing hook, found by its file in a host's folder.
+   - Remove: read [plan](02-plan.md).
+3. Confirm the hosts per [hosts.md](../references/hosts.md): offer the detected ones, and add or drop any the user names.
+4. Restate the need as one moment and one effect per [hook-authoring.md](../references/hook-authoring.md).
+5. Run the writer's describe mode on the hosts per [writer.md](../references/writer.md).
+6. Pair each host with the event and answer its description gives for the moment and effect.
+   - A host with none: drop it with its reason.
    - No host left: stop, unsupported.
-6. Read [plan](02-plan.md).
+7. Read [plan](02-plan.md).
 
 ## Output
 
-The confirmed operation, name, hosts, intent, and the event and matcher per host.
+The operation, the name, and per host its event and answer.

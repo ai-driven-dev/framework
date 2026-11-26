@@ -1,0 +1,323 @@
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { builtPlacementOf } from "../../../../../src/composition/orchestration/built-placement.js";
+import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
+import type { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.use-case.js";
+import type { BuiltMaterializationDeps } from "../../../../../src/contexts/installation/application/plugin/files/built-materialization-deps.js";
+import type { PluginSource } from "../../../../../src/shared/domain/plugin/source.js";
+import { FixturePluginFetcher } from "../../../../shared/testing/fixture-plugin-fetcher.fake.js";
+import {
+  buildInstallationDeps,
+  initAndInstall,
+} from "../../../../shared/testing/installation-deps.builder.js";
+import { loadDistributionOf } from "../../../../shared/testing/load-distribution.builder.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { saying } from "../../../../shared/testing/saying.builder.js";
+import { seedFromDirectory } from "../../../../shared/testing/seed-from-directory.builder.js";
+import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
+import { buildProjectPluginUpdate } from "../../testing/build-update-plugin.builder.js";
+import { fakeBuildSources, fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
+
+const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
+const EXTRA_PLUGIN_FIXTURE = join(
+  process.cwd(),
+  "tests/fixtures/plugins/claude-format/extra-plugin"
+);
+const PROJECT_ROOT = "/test-project";
+const GREET_PATH = join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md");
+
+type Deps = Awaited<ReturnType<typeof buildInstallationDeps>>;
+
+class RecordingFetcher extends FixturePluginFetcher {
+  readonly fetchOptions: Array<{ forceRefresh?: boolean } | undefined> = [];
+
+  override fetch(
+    source: PluginSource,
+    cacheDir: string,
+    options?: { forceRefresh?: boolean }
+  ): Promise<string> {
+    this.fetchOptions.push(options);
+    return super.fetch(source, cacheDir, options);
+  }
+}
+
+async function setup(
+  deps: Deps,
+  options: { fetcher?: FixturePluginFetcher; builtDeps?: BuiltMaterializationDeps } = {}
+) {
+  await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
+  const reader = deps.pluginDistributionReader;
+  const addUseCase = buildAddPlugin(
+    { fs: deps.fs, logger: deps.logger },
+    { project: deps.manifestRepo, user: deps.userManifestRepo },
+    {
+      loadDistribution: loadDistributionOf(deps.pluginFetcher, reader),
+      marketplaceRegistry: deps.marketplaceRegistry,
+      ...fakeBuildSources(),
+    },
+    registeredTools()
+  );
+  const updateUseCase = buildProjectPluginUpdate(
+    {
+      manifestRepo: deps.manifestRepo,
+      loadDistribution: loadDistributionOf(options.fetcher ?? deps.pluginFetcher, reader),
+      replacePluginFiles: new ReplacePluginFiles(
+        { fs: deps.fs, ...builtPlacementOf(deps.fs, options.builtDeps ?? fakeBuiltDeps()) },
+        registeredTools()
+      ),
+    },
+    registeredTools()
+  );
+  return { addUseCase, updateUseCase };
+}
+
+async function addLocal(addUseCase: AddPlugin, path = PLUGIN_FIXTURE): Promise<void> {
+  await addUseCase.execute({
+    githubMarketplace: false,
+    source: { kind: "local", path },
+    toolIds: [TOOL.claude],
+    projectRoot: PROJECT_ROOT,
+    interactive: false,
+  });
+}
+
+async function recordVersion(deps: Deps, name: string, version: string): Promise<void> {
+  const manifest = await deps.manifestRepo.load();
+  if (manifest === null) throw new Error("manifest not found");
+  const plugin = manifest.getRecordedPlugins(TOOL.claude).find((p) => p.plugin.name === name);
+  if (plugin === undefined) throw new Error("plugin not found");
+  manifest.updatePlugin(TOOL.claude, plugin.withPlugin(plugin.plugin.withVersion(version)));
+  await deps.manifestRepo.save(manifest);
+}
+
+function installed(deps: Deps, name: string) {
+  return deps.manifestRepo
+    .getCurrent()
+    ?.getPlugins(TOOL.claude)
+    .find((p) => p.name === name);
+}
+
+describe("updating a plugin on disk", () => {
+  it("skips machine-owned Cursor plugins in an unnamed project sweep", async () => {
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.cursor);
+    const { addUseCase, updateUseCase } = await setup(deps);
+    await addUseCase.execute({
+      githubMarketplace: false,
+      source: { kind: "local", path: PLUGIN_FIXTURE },
+      toolIds: [TOOL.cursor],
+      projectRoot: PROJECT_ROOT,
+      interactive: false,
+    });
+    const machineBefore = deps.userManifestRepo.getCurrent()?.toJSON();
+    expect(
+      await updateUseCase.execute({
+        toolIds: [TOOL.cursor],
+        projectRoot: PROJECT_ROOT,
+      })
+    ).toEqual({ updated: [], skippedUserScope: [TOOL.cursor] });
+    expect(deps.userManifestRepo.getCurrent()?.toJSON()).toEqual(machineBefore);
+  });
+
+  it("names no skipped user scope when the sweep names a plugin", async () => {
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.cursor);
+    const { addUseCase, updateUseCase } = await setup(deps);
+    await addUseCase.execute({
+      githubMarketplace: false,
+      source: { kind: "local", path: PLUGIN_FIXTURE },
+      toolIds: [TOOL.cursor],
+      projectRoot: PROJECT_ROOT,
+      interactive: false,
+    });
+    expect(
+      await updateUseCase.execute({
+        pluginNames: ["another-plugin"],
+        toolIds: [TOOL.cursor],
+        projectRoot: PROJECT_ROOT,
+      })
+    ).toEqual({ updated: [], skippedUserScope: [] });
+  });
+
+  it("refuses an explicitly named Cursor plugin at project scope", async () => {
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.cursor);
+    const { addUseCase, updateUseCase } = await setup(deps);
+    await addUseCase.execute({
+      githubMarketplace: false,
+      source: { kind: "local", path: PLUGIN_FIXTURE },
+      toolIds: [TOOL.cursor],
+      projectRoot: PROJECT_ROOT,
+      interactive: false,
+    });
+    await expect(
+      updateUseCase.execute({
+        pluginNames: ["sample-plugin"],
+        toolIds: [TOOL.cursor],
+        projectRoot: PROJECT_ROOT,
+      })
+    ).rejects.toThrow(saying(/does not support scope 'project'/));
+  });
+
+  describe("same version", () => {
+    it("does not re-write files when version is equal", async () => {
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+      const { addUseCase, updateUseCase } = await setup(deps);
+
+      await addUseCase.execute({
+        githubMarketplace: false,
+        source: { kind: "local", path: PLUGIN_FIXTURE },
+        toolIds: [TOOL.claude],
+        projectRoot: PROJECT_ROOT,
+        interactive: false,
+      });
+
+      const pluginFile = join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md");
+      const contentBefore = deps.fs.getFile(pluginFile);
+
+      await updateUseCase.execute({
+        toolIds: [TOOL.claude],
+        projectRoot: PROJECT_ROOT,
+      });
+
+      const contentAfter = deps.fs.getFile(pluginFile);
+      expect(contentAfter).toBe(contentBefore);
+    });
+  });
+
+  describe("newer version available", () => {
+    it("re-writes files and updates manifest version", async () => {
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+      const { addUseCase, updateUseCase } = await setup(deps);
+
+      await addUseCase.execute({
+        githubMarketplace: false,
+        source: { kind: "local", path: PLUGIN_FIXTURE },
+        toolIds: [TOOL.claude],
+        projectRoot: PROJECT_ROOT,
+        interactive: false,
+      });
+
+      // Lower the recorded version so the fixture appears newer
+      const manifest = await deps.manifestRepo.load();
+      if (manifest === null) throw new Error("manifest not found");
+      const plugin = manifest
+        .getRecordedPlugins(TOOL.claude)
+        .find((p) => p.plugin.name === "sample-plugin");
+      if (plugin === undefined) throw new Error("plugin not found");
+      manifest.updatePlugin(TOOL.claude, plugin.withPlugin(plugin.plugin.withVersion("0.0.1")));
+      await deps.manifestRepo.save(manifest);
+
+      await updateUseCase.execute({
+        toolIds: [TOOL.claude],
+        projectRoot: PROJECT_ROOT,
+      });
+
+      const updated = await deps.manifestRepo.load();
+      const updatedPlugin = updated
+        ?.getPlugins(TOOL.claude)
+        .find((p) => p.name === "sample-plugin");
+      expect(updatedPlugin?.version).toBe("1.0.0");
+    });
+  });
+
+  describe("what it reports", () => {
+    it("reports nothing when the installed version is current", async () => {
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+      const { addUseCase, updateUseCase } = await setup(deps);
+      await addLocal(addUseCase);
+
+      const { updated } = await updateUseCase.execute({
+        toolIds: [TOOL.claude],
+        projectRoot: PROJECT_ROOT,
+      });
+
+      expect(updated).toStrictEqual([]);
+    });
+
+    it("reports exactly the plugin it updated", async () => {
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+      const { addUseCase, updateUseCase } = await setup(deps);
+      await addLocal(addUseCase);
+      await recordVersion(deps, "sample-plugin", "0.0.1");
+
+      const { updated } = await updateUseCase.execute({
+        toolIds: [TOOL.claude],
+        projectRoot: PROJECT_ROOT,
+      });
+
+      expect(updated).toStrictEqual(["sample-plugin"]);
+    });
+
+    it("updates only the plugins named", async () => {
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+      const { addUseCase, updateUseCase } = await setup(deps);
+      await seedFromDirectory(deps.fs, EXTRA_PLUGIN_FIXTURE, { useAbsolutePaths: true });
+      await addLocal(addUseCase);
+      await addLocal(addUseCase, EXTRA_PLUGIN_FIXTURE);
+      await recordVersion(deps, "sample-plugin", "0.0.1");
+      await recordVersion(deps, "extra-plugin", "0.0.1");
+
+      const { updated } = await updateUseCase.execute({
+        pluginNames: ["extra-plugin"],
+        toolIds: [TOOL.claude],
+        projectRoot: PROJECT_ROOT,
+      });
+
+      expect(updated).toStrictEqual(["extra-plugin"]);
+      expect([
+        installed(deps, "sample-plugin")?.version,
+        installed(deps, "extra-plugin")?.version,
+      ]).toStrictEqual(["0.0.1", "1.0.0"]);
+    });
+  });
+
+  describe("how it fetches", () => {
+    it("fetches the plugin source with a forced refresh", async () => {
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+      const fetcher = new RecordingFetcher();
+      const { addUseCase, updateUseCase } = await setup(deps, { fetcher });
+      await addLocal(addUseCase);
+
+      await updateUseCase.execute({
+        toolIds: [TOOL.claude],
+        projectRoot: PROJECT_ROOT,
+      });
+
+      expect(fetcher.fetchOptions).toStrictEqual([{ forceRefresh: true }]);
+    });
+  });
+
+  describe("a plugin installed from a local path", () => {
+    it("re-writes its files on disk even when built-tree deps are wired", async () => {
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+      const { addUseCase, updateUseCase } = await setup(deps, {
+        builtDeps: fakeBuiltDeps({
+          marketplaceRegistry: deps.marketplaceRegistry,
+          homedir: () => "/home/u",
+        }),
+      });
+      await addLocal(addUseCase);
+      await recordVersion(deps, "sample-plugin", "0.0.1");
+
+      await updateUseCase.execute({
+        toolIds: [TOOL.claude],
+        projectRoot: PROJECT_ROOT,
+      });
+
+      const plugin = installed(deps, "sample-plugin");
+      expect([
+        plugin?.version,
+        plugin?.files.has(".claude/plugins/sample-plugin/commands/greet.md"),
+        deps.fs.has(GREET_PATH),
+      ]).toStrictEqual(["1.0.0", true, true]);
+    });
+  });
+});

@@ -52,6 +52,16 @@ describe("agent contract", () => {
     assert.deepEqual(validate("name.md", filled.replace(/^name: .*$/mu, "name: name")), { code: 0, out: "" });
   });
 
+  it("reads the name from each host's file: x.agent.md, x/agent.md; OpenCode and Kilo keep none", () => {
+    assert.deepEqual(validate(".github/agents/reviewer.agent.md", FILLED), { code: 0, out: "" });
+    assert.deepEqual(validate(".agents/agents/reviewer/agent.md", FILLED), { code: 0, out: "" });
+    assert.match(validate(".agents/agents/other/agent.md", FILLED).out, / AGENT-02 .*other/u);
+    const unnamed = FILLED.replace("name: reviewer\n", "");
+    assert.deepEqual(validate(".opencode/agents/reviewer.md", unnamed), { code: 0, out: "" });
+    assert.deepEqual(validate(".kilo/agents/reviewer.md", unnamed), { code: 0, out: "" });
+    assert.match(validate(".claude/agents/reviewer.md", unnamed).out, / AGENT-02 /u);
+  });
+
   it("flags a missing description, a name apart from its file, a description without its trigger, wrong sections", () => {
     assert.match(validate("reviewer.md", FILLED.replace(/description: .*\n/u, "")).out, / AGENT-03 /u);
     assert.match(validate("other.md", FILLED).out, / AGENT-02 .*reviewer/u);

@@ -1,0 +1,24 @@
+# aidd-ui limits
+
+> For: maintainers and hook authors. What the aidd-ui engine and its hook do not cover. How to use the plugin: [plugin README](../../plugins/aidd-ui/README.md).
+
+- The showcase's frames are not sandboxed, but a journey's thumbnails: a render runs as written, with its page's access to the review and the verdicts it stores.
+- `showcase` does not run `validate`. A record whose id is not its file name, or is another record's, gets a wrong or shared page, and an id written as a list stops it with a stack trace. An id naming a folder makes it refuse. `validate` names all three (R4).
+- `bump` migrates no history table from before its Fingerprint column: such a table gets rows one cell longer than its header.
+- A set page is a file to open, with no server. Its feedback is copied and pasted in the chat, in any browser.
+- The browser keeps the verdicts not yet copied under the showcase folder's path: a moved or renamed project starts its review empty.
+- The hook command names `${CLAUDE_PLUGIN_ROOT}` unquoted, and the OpenCode and Kilo bridges replay only that form: a plugin path with spaces breaks it.
+- Cursor: the stop is proven on a payload, not in `-p`.
+- A journey step may name an existing screen without a wireframe, and a screen without a `wireframe` key only warns. A wireframe or screen stays `proposed` until its review. A coded screen also needs a capture of the real app per state.
+- The hook never holds the turn on an error the turn did not produce. After a write it reports the lines the write added or changed, then the errors new in other files, once per turn, to inform. Stop asks once for the errors on the lines the turn changed, never one with no line (a missing section, a token): `validate` holds those.
+- New means absent from the errors the project held at the session's start or the last turn's end. An error made by hand between two turns counts as new for the next one, to inform only. A code file joins the baseline at the end of the first turn that writes it: until then the hook never reads its text, so an error made by hand in it is not reported, and a whole-file write to it that does not say what it replaced holds nothing. Without that baseline (a session started before the plugin), nothing of another file is reported, and a whole-file write proves its lines only when the host says what it replaced, as Claude Code does.
+- Every problem prints as `<file>[:<line>] <rule> ["<excerpt>"] => <fix>` under a line counting errors and warnings; the hook never cuts the errors, and caps the warnings at ten.
+- In a git repository the code is the files git does not ignore under a code root, untracked ones included; outside one, every file under it is read, its dependencies and builds too. A dot file or folder under a code root (`.env.example`, `.storybook/`) is never read. The hook lists the code but reads the text only of the code files the session wrote, so its cost follows what the session wrote, not the size of the code; `validate` reads all of it. A shell write names no file, so the code files it changed are read only once another write names them.
+- A shell write the hook does not know is not seen; it knows redirections, `tee`, `sed -i`, `mv`, `cp`, `rm`, `touch`, `mkdir`, `patch`, `git apply`, `checkout`, `restore` and the engine.
+- A key several exports of a script share takes its export's name, so adding such an export renames tokens.
+- Overlapping breakpoint queries cascade in the stylesheet: at a width two match, the later keeps a token the earlier alone redefines.
+- A palette constant in code (`Colors.blue`, `UIColor.systemBlue`) is a name, as a token is: no colour check finds it. A storyboard's `<color red=…>` is not read either.
+- A render shows a variant or state when its text holds the attribute; native behaviour (focus, validity) no render shows.
+- The colour debt only grows: the engine never lowers a count, so a literal fixed leaves room for a new one until the file is edited by hand. A moved or renamed code file loses its debt, a code root added later has none, and a deleted `code-debt.json` is never written again.
+- A validated element's fingerprint covers its record, render, asset file and the resolved value of each token it uses: adding or removing a theme, platform or breakpoint changes it for every element using a token, and so does a checkout that changes an asset's line ends.
+- A token change stops at `aidd_docs/ui/`: the skill never writes the code. C10 names each value of the code's token files (`code-tokens`) that is no longer the design system's, until the code follows. A token or context the code's files do not hold, and an `@media` block matching no breakpoint, are not compared.

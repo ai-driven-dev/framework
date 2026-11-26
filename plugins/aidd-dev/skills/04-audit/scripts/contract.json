@@ -1,5 +1,4 @@
 {
-  "version": 1,
   "kind": "audit",
   "unit": "file",
   "scope": ["aidd_docs/**/*_audit/*.md"],

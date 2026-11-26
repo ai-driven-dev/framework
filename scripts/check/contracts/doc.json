@@ -1,9 +1,8 @@
 {
-  "version": 1,
   "kind": "doc",
   "unit": "file",
   "targets": "README.md",
-  "watch": ["**/*.md", "**/*.mdx"],
+  "watch": ["**/*.md", "**/*.mdx", "cli/src/**", "cli/tests/**", "cli/*.ts", "cli/*.json"],
   "rules": {
     "DOC-01": {
       "op": "custom",

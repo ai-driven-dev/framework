@@ -52,6 +52,14 @@ describe("aidd-ui code link", () => {
       assert.deepEqual(problems(), [`${SEARCH}: code file "src/ui/Missing.tsx" does not exist`]);
     });
 
+    it("reads a route path that holds parentheses, brackets and a dollar sign", () => {
+      const file = "src/ui/(app)/agon/[duelId]/$terms.tsx";
+      assert.deepEqual(code.parseLink(`${file}#Terms@1`), { platform: null, target: file, name: "Terms", version: "1", library: null });
+      put(tmp, file, "export const SearchField = 1;\n");
+      linkSearch(`${file}#SearchField@1`);
+      assert.deepEqual(problems(), []);
+    });
+
     it("reads code-roots and ignore written with a leading ./", () => {
       edit(tmp, SYSTEM, "code-roots: [src/ui]", "code-roots: [./src/ui]");
       edit(tmp, SYSTEM, "ignore: [src/ui/vendor]", "ignore: [./src/ui/vendor]");
@@ -154,6 +162,13 @@ describe("aidd-ui code link", () => {
     it("names a file under a code root no record links and no ignore covers", () => {
       put(tmp, "src/ui/Orphan.tsx", "export function Orphan() {}\n");
       assert.deepEqual(problems(), ["src/ui/Orphan.tsx: no record links it and no ignore covers it"]);
+    });
+
+    it("skips a file whose name ends as an ignore entry written *.suffix", () => {
+      edit(tmp, SYSTEM, "ignore: [src/ui/vendor]", "ignore: [src/ui/vendor, *.server.ts]");
+      put(tmp, "src/ui/mail.server.ts", "export const send = () => null;\n");
+      put(tmp, "src/ui/server.ts", "export const serve = () => null;\n");
+      assert.deepEqual(problems(), ["src/ui/server.ts: no record links it and no ignore covers it"]);
     });
 
     it("covers a folder named after the linked file: its styles, hooks and tests", () => {

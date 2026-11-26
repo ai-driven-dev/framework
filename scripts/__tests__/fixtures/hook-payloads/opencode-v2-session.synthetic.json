@@ -1,0 +1,22 @@
+{
+  "host": "opencode-v2",
+  "event": "session.synthetic",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "id": "msg_2148d76520019x8a20KOZ7Tycy",
+        "sessionID": "00000000-0000-4000-8000-000000000000",
+        "time": {
+          "created": 0
+        },
+        "type": "synthetic",
+        "payload": {
+          "text": "Now reply with exactly the word FOLLOWED."
+        },
+        "delivery": "steer"
+      },
+      "hookAnswer": null
+    }
+  ]
+}

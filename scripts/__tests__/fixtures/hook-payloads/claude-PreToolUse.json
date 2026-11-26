@@ -1,0 +1,98 @@
+{
+  "host": "claude",
+  "event": "PreToolUse",
+  "samples": [
+    {
+      "run": "deny",
+      "payload": {
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "transcript_path": "/Users/user/.claude/projects/-Users-user-project/00000000-0000-4000-8000-000000000000.jsonl",
+        "cwd": "/Users/user/project",
+        "prompt_id": "9ce98de2-cbb4-4b4f-ac97-5676981a6b19",
+        "permission_mode": "acceptEdits",
+        "effort": {
+          "level": "medium"
+        },
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Write",
+        "tool_input": {
+          "file_path": "/Users/user/project/aidd_docs/tasks/2026_01/2026_01_02_export/spec.md",
+          "content": "new"
+        },
+        "tool_use_id": "toolu_01AMgKzBvMk6zMB4e6ytP2ep"
+      },
+      "hookAnswer": {
+        "hookSpecificOutput": {
+          "hookEventName": "PreToolUse",
+          "permissionDecision": "deny",
+          "permissionDecisionReason": "aidd_docs/tasks/2026_01/2026_01_02_export/spec.md is locked: only the person who approves it sets its status back to draft. Write nothing to it."
+        }
+      }
+    },
+    {
+      "run": "log",
+      "payload": {
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "transcript_path": "/Users/user/.claude/projects/-Users-user-project/00000000-0000-4000-8000-000000000000.jsonl",
+        "cwd": "/Users/user/project",
+        "prompt_id": "9ce98de2-cbb4-4b4f-ac97-5676981a6b19",
+        "permission_mode": "acceptEdits",
+        "effort": {
+          "level": "medium"
+        },
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Write",
+        "tool_input": {
+          "file_path": "/Users/user/project/notes.md",
+          "content": "hello"
+        },
+        "tool_use_id": "toolu_012s6kzb4xihJMM5geiZZ6DT"
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "log",
+      "payload": {
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "transcript_path": "/Users/user/.claude/projects/-Users-user-project/00000000-0000-4000-8000-000000000000.jsonl",
+        "cwd": "/Users/user/project",
+        "prompt_id": "9ce98de2-cbb4-4b4f-ac97-5676981a6b19",
+        "permission_mode": "acceptEdits",
+        "effort": {
+          "level": "medium"
+        },
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Edit",
+        "tool_input": {
+          "file_path": "/Users/user/project/notes.md",
+          "old_string": "hello",
+          "new_string": "hi",
+          "replace_all": false
+        },
+        "tool_use_id": "toolu_01DnLyvDdPEZJddVzSCni8Yw"
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "log",
+      "payload": {
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "transcript_path": "/Users/user/.claude/projects/-Users-user-project/00000000-0000-4000-8000-000000000000.jsonl",
+        "cwd": "/Users/user/project",
+        "prompt_id": "9ce98de2-cbb4-4b4f-ac97-5676981a6b19",
+        "permission_mode": "acceptEdits",
+        "effort": {
+          "level": "medium"
+        },
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "echo done",
+          "description": "Print done"
+        },
+        "tool_use_id": "toolu_01R4a6Vjao7zXiDtbs1b9fmr"
+      },
+      "hookAnswer": null
+    }
+  ]
+}

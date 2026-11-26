@@ -1,0 +1,129 @@
+{
+  "host": "codex",
+  "version": "0.171.0",
+  "steps": [
+    {
+      "id": "add-first-source",
+      "args": [
+        "plugin",
+        "marketplace",
+        "add",
+        "<markets>/a"
+      ],
+      "status": 0,
+      "stdout": "Added marketplace `cx-one` from <markets>/a.\nInstalled marketplace root: <markets>/a\n",
+      "stderr": "",
+      "files": {
+        ".codex/config.toml": "[marketplaces.cx-one]\nsource_type = \"local\"\nsource = \"<markets>/a\"\n"
+      },
+      "tree": []
+    },
+    {
+      "id": "add-second-source",
+      "args": [
+        "plugin",
+        "marketplace",
+        "add",
+        "<markets>/b"
+      ],
+      "status": 1,
+      "stdout": "",
+      "stderr": "Error: marketplace 'cx-one' is already added from a different source; remove it before adding this source\n",
+      "files": {
+        ".codex/config.toml": "[marketplaces.cx-one]\nsource_type = \"local\"\nsource = \"<markets>/a\"\n"
+      },
+      "tree": []
+    },
+    {
+      "id": "marketplace-list",
+      "args": [
+        "plugin",
+        "marketplace",
+        "list",
+        "--json"
+      ],
+      "status": 0,
+      "stdout": "{\n  \"marketplaces\": [\n    {\n      \"name\": \"cx-one\",\n      \"root\": \"<markets>/a\",\n      \"marketplaceSource\": {\n        \"sourceType\": \"local\",\n        \"source\": \"<markets>/a\"\n      }\n    }\n  ]\n}\n",
+      "stderr": "",
+      "files": {
+        ".codex/config.toml": "[marketplaces.cx-one]\nsource_type = \"local\"\nsource = \"<markets>/a\"\n"
+      },
+      "tree": []
+    },
+    {
+      "id": "upgrade-local-marketplace",
+      "args": [
+        "plugin",
+        "marketplace",
+        "upgrade",
+        "cx-one"
+      ],
+      "status": 1,
+      "stdout": "",
+      "stderr": "Error: marketplace `cx-one` is not configured as a Git marketplace\n",
+      "files": {
+        ".codex/config.toml": "[marketplaces.cx-one]\nsource_type = \"local\"\nsource = \"<markets>/a\"\n"
+      },
+      "tree": []
+    },
+    {
+      "id": "install",
+      "args": [
+        "plugin",
+        "add",
+        "p@cx-one"
+      ],
+      "status": 0,
+      "stdout": "Added plugin `p` from marketplace `cx-one`.\nInstalled plugin root: <home>/.codex/plugins/cache/cx-one/p/1.0.0\n",
+      "stderr": "",
+      "files": {
+        ".codex/config.toml": "[marketplaces.cx-one]\nsource_type = \"local\"\nsource = \"<markets>/a\"\n\n[plugins.\"p@cx-one\"]\nenabled = true\n"
+      },
+      "tree": [
+        "cx-one",
+        "cx-one/p",
+        "cx-one/p/1.0.0",
+        "cx-one/p/1.0.0/.codex-plugin",
+        "cx-one/p/1.0.0/.codex-plugin/plugin.json",
+        "cx-one/p/1.0.0/skills",
+        "cx-one/p/1.0.0/skills/s",
+        "cx-one/p/1.0.0/skills/s/SKILL.md"
+      ]
+    },
+    {
+      "id": "remove",
+      "args": [
+        "plugin",
+        "remove",
+        "p@cx-one"
+      ],
+      "status": 0,
+      "stdout": "Removed plugin `p` from marketplace `cx-one`.\n",
+      "stderr": "",
+      "files": {
+        ".codex/config.toml": "[marketplaces.cx-one]\nsource_type = \"local\"\nsource = \"<markets>/a\"\n"
+      },
+      "tree": [
+        "cx-one"
+      ]
+    },
+    {
+      "id": "remove-marketplace",
+      "args": [
+        "plugin",
+        "marketplace",
+        "remove",
+        "cx-one"
+      ],
+      "status": 0,
+      "stdout": "Removed marketplace `cx-one`.\n",
+      "stderr": "",
+      "files": {
+        ".codex/config.toml": ""
+      },
+      "tree": [
+        "cx-one"
+      ]
+    }
+  ]
+}

@@ -62,7 +62,7 @@ jobs:
       version: ${{ steps.release.outputs.version }}
       paths_released: ${{ steps.release.outputs.paths_released }}
     steps:
-      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+      - uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
         id: app-token
         with:
           app-id: ${{ secrets.AIDD_BOT_APP_ID }}
@@ -178,14 +178,16 @@ jobs:
       contents: write
     strategy:
       fail-fast: false
-      # Four marketplace plus seven flat — opencode, kilo and antigravity are flat-only. Mirrors the CLI golden
-      # snapshot matrix.
+      # Six marketplace plus nine flat: opencode, kilo and kiro are flat-only, and the antigravity
+      # "marketplace" asset is a bundle of plugin directories. Mirrors the CLI golden snapshot matrix.
       matrix:
         include:
           - { tool: claude, mode: marketplace }
           - { tool: cursor, mode: marketplace }
           - { tool: copilot, mode: marketplace }
           - { tool: codex, mode: marketplace }
+          - { tool: kimi, mode: marketplace }
+          - { tool: antigravity, mode: marketplace }
           - { tool: claude, mode: flat }
           - { tool: cursor, mode: flat }
           - { tool: copilot, mode: flat }
@@ -193,6 +195,8 @@ jobs:
           - { tool: opencode, mode: flat }
           - { tool: kilo, mode: flat }
           - { tool: antigravity, mode: flat }
+          - { tool: kiro, mode: flat }
+          - { tool: kimi, mode: flat }
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -370,7 +374,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+      - uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
         id: app-token
         with:
           app-id: ${{ secrets.AIDD_BOT_APP_ID }}

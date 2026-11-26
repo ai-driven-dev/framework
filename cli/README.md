@@ -4,7 +4,7 @@
 
 | | |
 | --- | --- |
-| AI tools | Claude Code, Cursor, GitHub Copilot, Codex, OpenCode, Kilo Code, Antigravity CLI |
+| AI tools | Claude Code, Cursor, GitHub Copilot, Codex, OpenCode, Kilo Code, Antigravity CLI, Kiro, Kimi Code CLI |
 | IDE | VS Code |
 | Requires | Node.js 22.12 or later |
 | Requires for marketplace plugins | `git` |
@@ -35,7 +35,7 @@ Check: `aidd --version`.
 `--global` installs for the machine instead, and writes nothing under the project.
 `--provider` runs the main session and the framework's agents on that provider's models, reports which model each runs on, and `--provider none` undoes it.
 
-The model ids are pinned in [`agent-models.json`](src/contexts/tools/domain/formats/models/agent-models.json), checked against each provider's model page on 2026-11-04. When a provider ships or retires a model, update that file, the table in [the agent guide](../docs/SUBAGENTS.md#-models), and the tests that name the ids.
+The model ids are pinned in [`agent-models.ts`](src/contexts/tools/domain/models/agent-models.ts), checked against each provider's model page. When a provider ships or retires a model, update that file, the table in [the agent guide](../docs/SUBAGENTS.md#-models), and the tests that name the ids.
 
 | Command | Lands in |
 | --- | --- |
@@ -129,6 +129,7 @@ Counts the tokens of Claude Code and Codex sessions, locally. Details: [FAQ](../
 | `codex` | The same, plus the plugins' agents in `~/.codex/agents/` |
 | `opencode`, `kilo` | Copies the plugins' skills and agents into `~/.config/opencode/` or `~/.config/kilo/` |
 | `cursor` | Copies the plugins into `~/.cursor/plugins/local/`; Cursor must allow local plugin imports |
+| `kimi` | Installs the plugins through the server its CLI starts (`kimi web`) |
 
 Files without recorded AIDD ownership are refused even when their content matches. This includes
 copies from an older `make reload`, or files left by an interrupted install before ownership was
@@ -175,6 +176,7 @@ The token resolves from the first hit:
 
 - It records nothing in the manifest, unlike `aidd sync`.
 - It is the author-side command: it produces what consumers install.
+- `--provider <provider>` runs the agents on that provider's models, `none` leaves each on the IDE's.
 
 | `--as` | Output |
 | --- | --- |
@@ -189,7 +191,9 @@ The token resolves from the first hit:
 | `codex` | yes | yes | `.codex/` |
 | `opencode` | no | yes | `.opencode/` |
 | `kilo` | no | yes | `.kilo/` |
-| `antigravity` | no | yes | `.agents/` |
+| `antigravity` | yes | yes | `.agents/` |
+| `kiro` | no | yes | `.kiro/` |
+| `kimi` | yes | yes | `.kimi-code/` |
 
 ## Environment variables
 
@@ -199,6 +203,7 @@ The token resolves from the first hit:
 | `AIDD_USER_CONFIG_DIR` | Relocates the user config directory, credentials included |
 | `XDG_CONFIG_HOME` | Names the config root when `AIDD_USER_CONFIG_DIR` is unset |
 | `AIDD_SKIP_UPDATE_CHECK` | `1` skips the self-update check before a command |
+| `AIDD_VERBOSE` | `true` turns on verbose output, as `--verbose` does |
 
 ## Where things live
 

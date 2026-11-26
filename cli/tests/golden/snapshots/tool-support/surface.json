@@ -5,22 +5,23 @@
     "directory": ".claude/",
     "pluginMode": "native",
     "nativeCli": "claude",
+    "pluginTree": null,
     "builds": {
       "marketplace": {
         "skills": "yes",
         "agents": "yes",
         "mcp": "yes",
         "hooks": "yes",
-        "rules": "no",
-        "commands": "no"
+        "rules": "yes",
+        "commands": "yes"
       },
       "flat": {
         "skills": "yes",
         "agents": "yes",
         "mcp": "yes",
         "hooks": "yes",
-        "rules": "no",
-        "commands": "no"
+        "rules": "yes",
+        "commands": "yes"
       }
     }
   },
@@ -30,22 +31,23 @@
     "directory": ".cursor/",
     "pluginMode": "native",
     "nativeCli": null,
+    "pluginTree": null,
     "builds": {
       "marketplace": {
         "skills": "yes",
         "agents": "yes",
         "mcp": "yes",
         "hooks": "yes",
-        "rules": "no",
-        "commands": "no"
+        "rules": "yes",
+        "commands": "yes"
       },
       "flat": {
         "skills": "yes",
         "agents": "yes",
         "mcp": "yes",
         "hooks": "yes",
-        "rules": "no",
-        "commands": "no"
+        "rules": "yes",
+        "commands": "yes"
       }
     }
   },
@@ -55,22 +57,23 @@
     "directory": ".github/",
     "pluginMode": "native",
     "nativeCli": "copilot",
+    "pluginTree": null,
     "builds": {
       "marketplace": {
         "skills": "yes",
         "agents": "yes",
         "mcp": "yes",
         "hooks": "yes",
-        "rules": "no",
-        "commands": "no"
+        "rules": "yes",
+        "commands": "yes"
       },
       "flat": {
         "skills": "yes",
         "agents": "yes",
         "mcp": "yes",
         "hooks": "yes",
-        "rules": "no",
-        "commands": "no"
+        "rules": "yes",
+        "commands": "yes"
       }
     }
   },
@@ -80,14 +83,15 @@
     "directory": ".opencode/",
     "pluginMode": "flat",
     "nativeCli": null,
+    "pluginTree": null,
     "builds": {
       "flat": {
         "skills": "yes",
         "agents": "yes",
-        "mcp": "no",
+        "mcp": "yes",
         "hooks": "bridge",
-        "rules": "no",
-        "commands": "no"
+        "rules": "yes",
+        "commands": "yes"
       }
     }
   },
@@ -97,14 +101,15 @@
     "directory": ".kilo/",
     "pluginMode": "flat",
     "nativeCli": null,
+    "pluginTree": null,
     "builds": {
       "flat": {
         "skills": "yes",
         "agents": "yes",
-        "mcp": "no",
+        "mcp": "yes",
         "hooks": "bridge",
-        "rules": "no",
-        "commands": "no"
+        "rules": "yes",
+        "commands": "yes"
       }
     }
   },
@@ -114,21 +119,22 @@
     "directory": ".codex/",
     "pluginMode": "native",
     "nativeCli": "codex",
+    "pluginTree": null,
     "builds": {
       "marketplace": {
         "skills": "yes",
         "agents": "yes",
         "mcp": "yes",
         "hooks": "yes",
-        "rules": "no",
+        "rules": "yes",
         "commands": "no"
       },
       "flat": {
         "skills": "yes",
         "agents": "yes",
-        "mcp": "no",
+        "mcp": "yes",
         "hooks": "yes",
-        "rules": "no",
+        "rules": "yes",
         "commands": "no"
       }
     }
@@ -137,15 +143,68 @@
     "id": "antigravity",
     "name": "Antigravity CLI",
     "directory": ".agents/",
+    "pluginMode": "native",
+    "nativeCli": null,
+    "pluginTree": ".agents/plugins/",
+    "builds": {
+      "marketplace": {
+        "skills": "yes",
+        "agents": "yes",
+        "mcp": "yes",
+        "hooks": "yes",
+        "rules": "yes",
+        "commands": "no"
+      },
+      "flat": {
+        "skills": "yes",
+        "agents": "yes",
+        "mcp": "yes",
+        "hooks": "yes",
+        "rules": "yes",
+        "commands": "no"
+      }
+    }
+  },
+  {
+    "id": "kiro",
+    "name": "Kiro",
+    "directory": ".kiro/",
     "pluginMode": "flat",
     "nativeCli": null,
+    "pluginTree": null,
     "builds": {
       "flat": {
         "skills": "yes",
         "agents": "yes",
-        "mcp": "no",
+        "mcp": "yes",
         "hooks": "yes",
-        "rules": "no",
+        "rules": "yes",
+        "commands": "no"
+      }
+    }
+  },
+  {
+    "id": "kimi",
+    "name": "Kimi Code CLI",
+    "directory": ".kimi-code/",
+    "pluginMode": "flat",
+    "nativeCli": null,
+    "pluginTree": null,
+    "builds": {
+      "marketplace": {
+        "skills": "yes",
+        "agents": "yes",
+        "mcp": "yes",
+        "hooks": "yes",
+        "rules": "yes",
+        "commands": "no"
+      },
+      "flat": {
+        "skills": "yes",
+        "agents": "yes",
+        "mcp": "yes",
+        "hooks": "no",
+        "rules": "yes",
         "commands": "no"
       }
     }

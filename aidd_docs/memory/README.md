@@ -1,26 +1,20 @@
 # memory/ - Project Memory
 
-Structured context the AI assistant reads at the start of a session, so it does not rediscover the project each time.
+What an AI assistant reads at session start, so it does not rediscover the project.
 
-## How it loads
+## Loading
 
-```mermaid
-flowchart LR
-    bank["memory/*.md"] -->|every session| ai(["AI context"])
-    notes["internal/ · external/"] -.->|on demand| ai
-```
+| Location | Holds | Loads |
+| --- | --- | --- |
+| root `*.md` | this repository's facts: the framework, the map, the why | every session, through the memory block in `CLAUDE.md` and `AGENTS.md` |
+| `internal/` | detail; everything CLI-specific under `internal/cli/` | on demand, when the task needs it |
+| `external/` | outside references | on demand, when asked |
 
-The root files load every session through the project memory block in each AI context file. `internal/` and `external/` load only when relevant.
+## Maintaining
 
-## Maintaining it
-
-The AI writes and refreshes these files. When you edit one by hand:
-
-- One file per concern (architecture, database, vcs, ...).
-- Capture the macro and the non-derivable. Point to the code, never copy it.
-- Current state only, kept small. No personal notes, no future TODOs.
-
-## Subdirectories
-
-- `internal/`: AIDD workflow traces (the capability profile, audit notes, learn captures).
-- `external/`: external references the project pulls in (specs, design docs).
+- Format and reader rules: the `02-project-memory` skill's `references/memory-rules.md`.
+- One file per concern; each fact in one file.
+- Point to the code, never copy it.
+- Current state only: no plan, no personal note.
+- A safeguard stays whole in its file, never a bare link.
+- Change a file in the same pull request as the code it describes.

@@ -1,0 +1,51 @@
+language js
+
+// A catch whose own statements hand back or assign a neutral value (null, undefined, a boolean, an
+// empty list, object or string) while nothing in its block rethrows turns a failure into an absence:
+// a config that failed to parse read as an empty one. A promise `.catch` whose callback only returns
+// such a value swallows the same way. Checking the error's identity and throwing the rest, or keeping
+// the error in the result, passes. A deliberate best effort carries
+// `// biome-ignore lint/plugin: <reason>` on the line above its `try` or its `.catch`.
+// Limit: a default that is no literal (`return path`) is not seen, nor one inside a nested block.
+or {
+  JsTryStatement(catch_clause=JsCatchClause(body=JsBlockStatement(statements=$stmts))) as $swallow where {
+    $stmts <: some or {
+      `return;`,
+      JsReturnStatement(argument=or {
+        `null`,
+        `undefined`,
+        `false`,
+        `true`,
+        `[]`,
+        `{}`,
+        `""`
+      }),
+      JsExpressionStatement(expression=JsAssignmentExpression(right=or {
+        `null`,
+        `undefined`,
+        `false`,
+        `true`,
+        `[]`,
+        `{}`,
+        `""`
+      }))
+    },
+    $stmts <: not contains or {
+      `throw $_`,
+      JsCallExpression(callee=r".*[Tt]hrow.*")
+    }
+  },
+  `$_.catch(() => $neutral)` as $swallow where {
+    $neutral <: or {
+      `null`,
+      `undefined`,
+      `false`,
+      `true`,
+      `[]`,
+      `{}`,
+      `""`
+    }
+  }
+} where {
+  register_diagnostic(span=$swallow, message="a catch hands back a neutral value and swallows the error: let it travel, keep it in the result, or check its identity and rethrow the rest; a deliberate best effort needs `biome-ignore lint/plugin: <reason>` above the try", severity="error")
+}

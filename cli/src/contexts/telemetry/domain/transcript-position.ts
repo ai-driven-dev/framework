@@ -1,6 +1,13 @@
-import { tryParseJson } from "../../../kernel/reading/json-file.js";
-import { asPlainObject } from "../../../kernel/reading/plain-object.js";
+import { tryParseJson } from "../../../shared/domain/reading/json-file.js";
+import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import { compareText } from "./text-order.js";
+
+/** What a transcript line that is no usage line names of where and when it was written, so it
+ * can be tied to a clone's consent. */
+export interface LineNames {
+  readonly cwd: string | null;
+  readonly at: string | null;
+}
 
 /** Where a previous read of one transcript stopped, and the file it stopped in. */
 export interface TranscriptPosition {
@@ -32,13 +39,16 @@ export function resumeOffset(
 
 function isPosition(value: unknown): value is TranscriptPosition {
   const object = asPlainObject(value);
+  if (object === null) return false;
+  const { offset, size, identity } = object;
   return (
-    object !== null &&
-    Number.isInteger(object.offset) &&
-    (object.offset as number) >= 0 &&
-    Number.isInteger(object.size) &&
-    (object.size as number) >= 0 &&
-    typeof object.identity === "string"
+    typeof offset === "number" &&
+    Number.isInteger(offset) &&
+    offset >= 0 &&
+    typeof size === "number" &&
+    Number.isInteger(size) &&
+    size >= 0 &&
+    typeof identity === "string"
   );
 }
 

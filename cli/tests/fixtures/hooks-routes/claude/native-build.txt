@@ -53,11 +53,10 @@ script, identical to the plugin source
 
 ## out-marketplace/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/contract.json
 {
-  "version": 1,
   "kind": "skill",
   "unit": "folder",
   "targets": "plugins/*/skills/*",
-  "scope": [".claude/skills/*", ".cursor/skills/*", ".opencode/skills/*", ".kilo/skills/*", ".github/skills/*", ".agents/skills/*"],
+  "scope": [".claude/skills/*", ".cursor/skills/*", ".opencode/skills/*", ".kilo/skills/*", ".github/skills/*", ".agents/skills/*", ".kiro/skills/*"],
   "shell": false,
   "marker": "SKILL.md",
   "rules": {
@@ -142,7 +141,6 @@ targets: [{{host tools}}]
 
 ## out-marketplace/plugins/aidd-context/hooks/lib/contracts/05-rule-generate/scripts/contract.json
 {
-  "version": 1,
   "kind": "rule",
   "unit": "file",
   "scope": ["aidd_docs/rules/*/*.md"],
@@ -161,23 +159,26 @@ targets: [{{host tools}}]
 
 ## out-marketplace/plugins/aidd-context/hooks/lib/contracts/06-agent-generate/scripts/contract.json
 {
-  "version": 1,
   "kind": "agent",
   "unit": "file",
   "targets": "plugins/*/agents/*.md",
   "scope": [
     ".claude/agents/*.md",
-    ".cursor/agents/*.md"
+    ".cursor/agents/*.md",
+    ".github/agents/*.agent.md",
+    ".agents/agents/*/agent.md",
+    ".opencode/agents/*.md",
+    ".kilo/agents/*.md",
+    ".kiro/agents/*.md",
+    ".kimi-code/agents/*.md"
   ],
   "shell": false,
   "rules": {
     "AGENT-02": {
-      "op": "equals",
+      "op": "custom",
       "in": "*.md",
-      "field": "name",
-      "to": "basename",
-      "why": "hosts resolve the agent by file name",
-      "fix": "set name to {expected}"
+      "check": "name",
+      "why": "hosts resolve the agent by file name"
     },
     "AGENT-03": {
       "op": "pattern",
@@ -216,6 +217,9 @@ targets: [{{host tools}}]
 }
 
 
+## out-marketplace/plugins/aidd-context/hooks/lib/contracts/06-agent-generate/scripts/custom/name.cjs
+script, identical to the plugin source
+
 ## out-marketplace/plugins/aidd-context/hooks/lib/contracts/07-command-generate/assets/command-template.md
 ---
 description: "{{what the command does, one line}}"
@@ -238,7 +242,6 @@ disable-model-invocation:
 
 ## out-marketplace/plugins/aidd-context/hooks/lib/contracts/07-command-generate/scripts/contract.json
 {
-  "version": 1,
   "kind": "command",
   "unit": "file",
   "scope": [
@@ -285,9 +288,6 @@ script, identical to the plugin source
 ## out-marketplace/plugins/aidd-context/hooks/memory.cjs
 script, identical to the plugin source
 
-## out-marketplace/plugins/aidd-telemetry/hooks/catch-up.cjs
-script, identical to the plugin source
-
 ## out-marketplace/plugins/aidd-telemetry/hooks/hooks.json
 {
   "hooks": {
@@ -296,9 +296,9 @@ script, identical to the plugin source
         "hooks": [
           {
             "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/session-start.cjs",
-            "statusMessage": "AIDD Telemetry: carry Claude session task",
-            "timeout": 10
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/task.cjs remind",
+            "statusMessage": "AIDD Telemetry: remind the task",
+            "timeout": 5
           }
         ]
       },
@@ -306,22 +306,9 @@ script, identical to the plugin source
         "hooks": [
           {
             "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/catch-up.cjs",
-            "statusMessage": "AIDD Telemetry: update measurement ledger",
-            "async": true,
-            "timeout": 120
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/prompt-gate.cjs",
-            "statusMessage": "AIDD Telemetry: check task declaration",
-            "timeout": 30
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/ledger.cjs ingest",
+            "statusMessage": "AIDD Telemetry: update the measurement ledger",
+            "timeout": 5
           }
         ]
       }
@@ -330,10 +317,10 @@ script, identical to the plugin source
 }
 
 
-## out-marketplace/plugins/aidd-telemetry/hooks/lib/aidd.cjs
+## out-marketplace/plugins/aidd-telemetry/hooks/ledger.cjs
 script, identical to the plugin source
 
-## out-marketplace/plugins/aidd-telemetry/hooks/lib/binding.cjs
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/aidd.cjs
 script, identical to the plugin source
 
 ## out-marketplace/plugins/aidd-telemetry/hooks/lib/claude-only.cjs
@@ -348,22 +335,13 @@ script, identical to the plugin source
 ## out-marketplace/plugins/aidd-telemetry/hooks/lib/context.cjs
 script, identical to the plugin source
 
-## out-marketplace/plugins/aidd-telemetry/hooks/lib/declaration.cjs
-script, identical to the plugin source
-
 ## out-marketplace/plugins/aidd-telemetry/hooks/lib/git.cjs
 script, identical to the plugin source
 
-## out-marketplace/plugins/aidd-telemetry/hooks/lib/hook-io.cjs
-script, identical to the plugin source
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/host.cjs
+script, identical to the host adapter host-claude.cjs
 
 ## out-marketplace/plugins/aidd-telemetry/hooks/lib/jsonl.cjs
-script, identical to the plugin source
-
-## out-marketplace/plugins/aidd-telemetry/hooks/lib/lookup.cjs
-script, identical to the plugin source
-
-## out-marketplace/plugins/aidd-telemetry/hooks/lib/presence.cjs
 script, identical to the plugin source
 
 ## out-marketplace/plugins/aidd-telemetry/hooks/lib/telemetry-dir.cjs
@@ -372,8 +350,5 @@ script, identical to the plugin source
 ## out-marketplace/plugins/aidd-telemetry/hooks/lib/tool.cjs
 script, identical to the plugin source
 
-## out-marketplace/plugins/aidd-telemetry/hooks/prompt-gate.cjs
-script, identical to the plugin source
-
-## out-marketplace/plugins/aidd-telemetry/hooks/session-start.cjs
+## out-marketplace/plugins/aidd-telemetry/hooks/task.cjs
 script, identical to the plugin source

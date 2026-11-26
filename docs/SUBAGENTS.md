@@ -66,6 +66,7 @@ The main session and the agents run on the IDE's model unless you pick a provide
 aidd setup --ide opencode --provider mistral   # main session and agents on Mistral models
 aidd setup --ide opencode --provider none      # back to the IDE's model
 aidd setup --global --ide codex,opencode --plugins all --provider openai   # every project
+aidd setup --global --ide codex,opencode --plugins all --agents-only   # every project, agents refreshed on each tool's saved provider, main session untouched
 ```
 
 | Tier | Runs | openai | anthropic | mistral |
@@ -74,8 +75,9 @@ aidd setup --global --ide codex,opencode --plugins all --provider openai   # eve
 | standard | Main session | `gpt-6.1-terra` | `claude-sonnet-5-5` | `mistral-large-4` |
 | light | Explorer, executor, validator | `gpt-6-luna` | `claude-haiku-5-5` | `mistral-small-latest` |
 
-Claude Code takes anthropic, Codex openai, Copilot openai or anthropic, Cursor anthropic, OpenCode and Kilo all three. A run takes one provider, so every `--ide` it names must take it: `--ide claude,codex` is refused. The mapping lives in [`agent-models.json`](../cli/src/contexts/tools/domain/formats/models/agent-models.json).
+Claude Code takes anthropic, Codex openai, Copilot openai or anthropic, Cursor anthropic, OpenCode and Kilo all three. A run takes one provider, so every `--ide` it names must take it: `--ide claude,codex` is refused.
 
+- `--agents-only` leaves main-session settings and their saved restore state untouched, including with `--provider none`. With no `--provider`, each `--ide` tool keeps the provider saved for it, else the first its profile lists. A tool set to `none` stays on the IDE's model. A tool whose `none` was saved before none was remembered is saved on its first provider by its first agents-only run, and stays there until `--provider none` is run again.
 - The provider holds for the whole machine: other projects get it at their next install; to update the agents they already have, run `aidd setup --ide … --provider …` there, `none` included.
 - Nothing changes until the install has succeeded.
 - The main session's model is written in the IDE's own user settings, so it changes every project on the machine: Claude Code's `settings.json` (under `CLAUDE_CONFIG_DIR` when set) and OpenCode's `~/.config/opencode/opencode.jsonc`, or `opencode.json` when only that one is there. `--provider none` restores what it replaced and the file's comments stay. A `model` in a project's own settings still wins. Codex, Copilot, Cursor and Kilo keep the model picked in the IDE.
@@ -86,7 +88,7 @@ Claude Code takes anthropic, Codex openai, Copilot openai or anthropic, Cursor a
 
 - **Tools:** every agent inherits the calling session's tools and permissions; what it writes is an instruction, not a restriction.
 - **Codex:** a Codex plugin cannot carry agents, so only the flat distribution installs them, in `.codex/agents/`, and Codex loads them only in a trusted project; `aidd setup --global` puts them in `~/.codex/agents/` instead.
-- **Models:** OpenCode V1 reads the same file but not the `#<effort>` variant. Only an install through `aidd setup` pins them, not `/plugin install`. `aidd clean` cleans one project and keeps the machine-wide provider; `aidd clean --global --force` forgets it and restores the main session's model.
+- **Models:** OpenCode V1 reads the same file but not the `#<effort>` variant. Only `aidd setup` or `aidd translate --provider` pins them, not `/plugin install`. `aidd clean` cleans one project and keeps the machine-wide provider; `aidd clean --global --force` forgets it and restores the main session's model.
 - **Updates:** reinstalling replaces the agents still shipped; one removed from the plugin stays where a copy put it until you delete it.
 
 Sources: [Claude Code sub-agents](https://code.claude.com/docs/en/sub-agents), [Copilot custom agents](https://docs.github.com/en/copilot/reference/custom-agents-configuration), [OpenCode agents](https://opencode.ai/v2/docs/agents), [Codex subagents](https://developers.openai.com/codex/subagents), [Cursor subagents](https://cursor.com/docs/subagents).

@@ -6,16 +6,17 @@
  * ships Claude Code's. Node built-ins only; anything unreadable is no event, and prints nothing.
  */
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 
 const HOST = "copilot";
 const EVENTS = new Map([
   ["SessionStart", "SessionStart"],
+  ["PreToolUse", "PreToolUse"],
   ["PostToolUse", "PostToolUse"],
   ["Stop", "Stop"],
 ]);
 const SHELLS = new Set(["Bash"]);
-const PATCH_FILE = /^\*\*\* (Add File|Update File|Delete File|Move to): (.+)$/;
 
 /** The event `readEvent` last returned: an answer is printed in its terms. */
 let current;
@@ -27,6 +28,8 @@ function readPayload() {
     return undefined;
   }
 }
+
+const PATCH_FILE = /^\*\*\* (Add File|Update File|Delete File|Move to): (.+)$/;
 
 /** Every file a patch names, once each, in the order it names them, with the lines the patch
  * added to it and those it removed as what it replaced, empty when none: an added or updated file,
@@ -65,18 +68,24 @@ function writtenFiles(_tool, input, cwd) {
   return typeof input === "string" ? patchedFiles(input, cwd) : [];
 }
 
+/** Before a tool runs nothing is written yet: only where it is about to write is known, so a file
+ * carries its path and no text. */
+function filesOf(event, files) {
+  return event === "PreToolUse" ? files.map(({ path }) => ({ path })) : files;
+}
+
 function readEvent() {
   current = undefined;
   const raw = readPayload();
   const event = raw === undefined ? undefined : EVENTS.get(raw.hook_event_name);
   if (event === undefined) return undefined;
   const cwd = typeof raw.cwd === "string" && raw.cwd !== "" ? raw.cwd : process.cwd();
-  const tool = event === "PostToolUse" ? raw.tool_name : undefined;
+  const tool = event === "PostToolUse" || event === "PreToolUse" ? raw.tool_name : undefined;
   const input = raw.tool_input;
   current = {
     host: HOST,
     event,
-    files: writtenFiles(tool, input, cwd),
+    files: filesOf(event, writtenFiles(tool, input, cwd, raw.tool_response)),
     ...(SHELLS.has(tool) && typeof input?.command === "string" ? { command: input.command } : {}),
     stopActive: raw.stop_hook_active === true,
     sessionId: typeof raw.session_id === "string" ? raw.session_id : null,
@@ -93,14 +102,28 @@ function print(output) {
 /** Asks the model to go on before the turn ends, with `text` as what it must do. Asks once: a
  * turn end that is already a continuation is never continued again. */
 function continueTurn(text) {
-  if (typeof text !== "string" || text === "" || current?.stopActive === true) return;
+  if (current?.event !== "Stop" || typeof text !== "string" || text === "") return;
+  if (current.stopActive === true) return;
   print({ decision: "block", reason: text });
 }
 
+function hasPerson(person) {
+  return typeof person === "string" && person !== "";
+}
+
+/** A progress line is shown to the person on its own line and is stripped before the answer is
+ * parsed, so it never reaches the model; the host documents it for any command hook. */
+function showPerson(person) {
+  if (hasPerson(person)) print({ type: "progress", message: person });
+}
+
 /** Level 1 informs the model, level 2 requires a fix after a write. At Stop, any answer
- * continues the turn: there is no other way to reach the model there. */
-function answer({ level, text } = {}) {
-  if (current === undefined || typeof text !== "string" || text === "") return;
+ * continues the turn: there is no other way to reach the model there. `person` is shown at any
+ * event, beside a `text` or alone. */
+function answer({ level, text, person } = {}) {
+  if (current === undefined) return;
+  showPerson(person);
+  if (typeof text !== "string" || text === "") return;
   if (current.event === "Stop") return continueTurn(text);
   if (level === 2 && current.event === "PostToolUse") {
     return print({ decision: "block", reason: text });
@@ -108,4 +131,46 @@ function answer({ level, text } = {}) {
   print({ additionalContext: text });
 }
 
-module.exports = { readEvent, answer, continueTurn };
+/** Refuses the tool call about to run, with `reason` as what the model is told. Does nothing at any
+ * other event: a hook that refuses is written once and is harmless where nothing can be refused. */
+function refuse(reason) {
+  if (current?.event !== "PreToolUse" || typeof reason !== "string" || reason === "") return;
+  denyToolCall(reason);
+}
+
+function denyToolCall(reason) {
+  print({ permissionDecision: "deny", permissionDecisionReason: reason });
+}
+
+/** Whether `folder` is a folder of this user's alone, created when `create` and missing; its parent must exist. */
+function ownFolder(folder, create) {
+  if (create) {
+    try {
+      fs.mkdirSync(folder, { mode: 0o700 });
+    } catch (error) {
+      if (error.code !== "EEXIST") return false;
+    }
+  }
+  try {
+    const stat = fs.lstatSync(folder);
+    if (!stat.isDirectory()) return false;
+    return (
+      typeof process.getuid !== "function" ||
+      (stat.uid === process.getuid() && (stat.mode & 0o077) === 0)
+    );
+  } catch {
+    return false;
+  }
+}
+
+/** `<tmpdir>/aidd-hooks-<uid>/<name>` when it and the hooks folder above it are this user's alone, else null. */
+function hooksFolder(name, create) {
+  const hooks = path.join(
+    os.tmpdir(),
+    typeof process.getuid === "function" ? `aidd-hooks-${process.getuid()}` : "aidd-hooks"
+  );
+  const own = path.join(hooks, name);
+  return ownFolder(hooks, create) && ownFolder(own, create) ? own : null;
+}
+
+module.exports = { readEvent, answer, continueTurn, refuse, ownFolder, hooksFolder };
