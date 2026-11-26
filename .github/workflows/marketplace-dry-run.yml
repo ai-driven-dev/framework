@@ -38,16 +38,21 @@ jobs:
         with:
           app-id: ${{ secrets.AIDD_BOT_APP_ID }}
           private-key: ${{ secrets.AIDD_BOT_PRIVATE_KEY }}
-      - name: Check the token reaches every published branch
+      - name: List the published tools
+        id: tools
+        run: node scripts/marketplace-tools.cjs >> "$GITHUB_OUTPUT"
+      - name: Check the token can write to the distribution repository
         if: github.event_name == 'workflow_dispatch'
         env:
-          TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          OWNER: ${{ steps.app-token.outputs.owner }}
+          REPO: ${{ steps.app-token.outputs.repo }}
         run: |
-          HEADS=$(git ls-remote --heads "https://x-access-token:${TOKEN}@github.com/$(node -p "new URL(require('./scripts/marketplace-distribution.json').repository).pathname.slice(1)")")
-          for TOOL in $(node -p "require('./scripts/marketplace-tools.cjs').publishableTools().map((tool) => tool.id).join(' ')"); do
-            grep -q "refs/heads/$TOOL\$" <<<"$HEADS" || { echo "no $TOOL branch on the distribution repository"; exit 1; }
-          done
+          gh auth setup-git --hostname github.com
+          git push --dry-run "https://github.com/$OWNER/$REPO.git" HEAD:refs/heads/dry-run-write-check
       - name: Publish and install from an isolated Git remote
+        env:
+          MATRIX: ${{ steps.tools.outputs.matrix }}
         run: |
           REMOTE="$RUNNER_TEMP/marketplace.git"
           git init --bare "$REMOTE"
@@ -55,12 +60,11 @@ jobs:
           export GIT_CONFIG_KEY_0="url.file://$REMOTE.insteadOf"
           GIT_CONFIG_VALUE_0=$(node -p "require('./scripts/marketplace-distribution.json').repository")
           export GIT_CONFIG_VALUE_0
-          for TOOL in $(node -p "require('./scripts/marketplace-tools.cjs').publishableTools().map((tool) => tool.id).join(' ')"); do
+          while read -r TOOL CLIENT; do
             OUT="$RUNNER_TEMP/marketplaces/$TOOL"
             node cli/dist/cli.js translate . --to "$TOOL" --out "$OUT" --as marketplace
             node scripts/publish-marketplace.cjs tag "$TOOL" v0.0.1 "$OUT" "$REMOTE"
-            CLIENT=$(TOOL="$TOOL" node -p "require('./scripts/marketplace-tools.cjs').toolOf(process.env.TOOL).clientPackage")
             npm install --prefix "$RUNNER_TEMP/marketplace-client-$TOOL" "$CLIENT"
             PATH="$RUNNER_TEMP/marketplace-client-$TOOL/node_modules/.bin:$PATH" node scripts/verify-marketplace.cjs "$TOOL" v0.0.1 "$OUT"
             node scripts/publish-marketplace.cjs advance "$TOOL" v0.0.1 "$REMOTE"
-          done
+          done < <(jq -r '.include[] | "\(.tool) \(.clientPackage)"' <<<"$MATRIX")

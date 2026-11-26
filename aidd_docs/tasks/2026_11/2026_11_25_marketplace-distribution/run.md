@@ -22,8 +22,18 @@
 
 ## Run 3
 
-- Left: Verify Cursor installation in the team client, the live App-token run and a green run of the dry-run workflow. The `claude-legacy` branch and the compatibility catalog are not part of the shipped design: Cursor is not published, and the hosted catalogs carry only the distribution name.
+- Left: Verify a release-time publication with the App token. The `claude-legacy` branch and the compatibility catalog are not part of the shipped design: Cursor is not published, and the hosted catalogs carry only the distribution name.
 
 | Task | Validation | Result |
 | --- | --- | --- |
-| 1.1 | Run the marketplace tools, publication, verification and generated-docs tests under `node --test`. | All 27 passed. `notHosted` is a record of reasons, not a filter: the coverage tests fail when it names a published tool or omits an unpublished one. |
+| 1.1 | Run the marketplace tools, publication, verification and generated-docs tests under `node --test`. | All 27 passed. `notHosted` is a list of ids, not a filter: the coverage tests fail when it names a published tool or omits an unpublished one. |
+
+## Run 4
+
+- Left: A release-time publication, which renames the Copilot and Codex catalogs to the distribution name.
+
+| Task | Validation | Result |
+| --- | --- | --- |
+| 1.1 | Run the dry-run workflow on the pull request. | Run 45887022291 succeeded. |
+| 1.1 | Dispatch the App reach check against the distribution repository. | Run 45888997513 succeeded: the token reached the repository. |
+| 1.1 | List the distribution repository refs. | The `cursor` branch and tag are deleted: Cursor is not published. Claude Code serves `aidd-marketplace`; Copilot and Codex still serve `aidd-framework`. |

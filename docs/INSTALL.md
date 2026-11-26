@@ -53,7 +53,7 @@ It lists what is installed and what needs fixing.
 
 Choose your tool. [Claude Code](#claude-code) · [GitHub Copilot](#github-copilot) · [Codex](#codex) · [Cursor](#cursor) · [Antigravity CLI](#antigravity-cli)
 
-The commands below follow the latest version available for each tool in the [AIDD distribution repository](https://github.com/ai-driven-dev/marketplaces). Each tool also has [release ZIPs](https://github.com/ai-driven-dev/framework/releases). The `aidd-marketplace` catalog name applies from the first release published after this change; earlier published versions carry `aidd-framework`.
+The commands below follow the latest version available for each tool in the [AIDD distribution repository](https://github.com/ai-driven-dev/marketplaces). Each tool also has [release ZIPs](https://github.com/ai-driven-dev/framework/releases). The catalog name differs per tool: `aidd-marketplace` for Claude Code, `aidd-framework` for Copilot and Codex.
 
 ### Claude Code
 
@@ -95,7 +95,7 @@ With GitHub Copilot CLI:
 
 ```sh
 copilot plugin marketplace add https://github.com/ai-driven-dev/marketplaces.git#copilot
-copilot plugin install aidd-context@aidd-marketplace
+copilot plugin install aidd-context@aidd-framework
 ```
 
 To pin a version, use `#copilot-v<version>`. For a local catalog, extract `aidd-framework-copilot-marketplace-<version>.zip` and pass its directory to `copilot plugin marketplace add`. Its plugin IDs use `@aidd-framework`.
@@ -114,14 +114,14 @@ Codex loads subagents from its user or project agent directory. Installing from 
 
 ```sh
 codex plugin marketplace add https://github.com/ai-driven-dev/marketplaces.git --ref codex
-codex plugin add aidd-context@aidd-marketplace
+codex plugin add aidd-context@aidd-framework
 ```
 
 To pin a version, use `--ref codex-v<version>`. For a local catalog, extract `aidd-framework-codex-marketplace-<version>.zip` and pass its directory to `codex plugin marketplace add`. Its plugin IDs use `@aidd-framework`.
 
 ### Cursor
 
-AIDD hosts no Cursor catalog yet: `cursor-agent plugin marketplace add` takes only a GitHub-style https URL and Cursor installs plugins from its UI, so no install from a Git ref has been verified. [Cursor plugins](https://cursor.com/docs/plugins)
+AIDD hosts no Cursor catalog: `cursor-agent` requires a sign-in (a clean profile answers `Authentication required`), and it has no command to install a plugin, which Cursor installs from its UI. [Cursor plugins](https://cursor.com/docs/plugins)
 
 For a local installation where local plugins are enabled:
 
@@ -137,7 +137,7 @@ cp -r aidd-framework-cursor-marketplace-<version>/plugins/aidd-* ~/.cursor/plugi
 
 ### Antigravity CLI
 
-1. Download `aidd-framework-antigravity-marketplace-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest). Antigravity registers no marketplace: copy its plugin directories.
+1. Download `aidd-framework-antigravity-marketplace-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest). Antigravity hosts no catalog: `agy` registers no third-party marketplace, only `antigravity-plugins-official` and `antigravity-plugins-partners`, and `agy plugin install <github repo url>` installs one plugin whose `plugin.json` sits at the repository root, with no ref or tag pinning, so the multi-plugin branch layout is not installable. [Antigravity marketplace](https://antigravity.google/docs/marketplace/) Copy its plugin directories.
 2. Unzip it.
 3. From your project's root, copy the plugins:
 

@@ -35,14 +35,24 @@ test("the release job and the dry run mint the distribution token from the one s
   assert.equal(minted(workflow("marketplace-dry-run.yml").jobs.simulate.steps).length, 1);
 });
 
-test("the dry run proves the token reaches every published branch, on a manual run only", () => {
+test("the dry run proves the token can write to the distribution repository, on a manual run only", () => {
   const steps = workflow("marketplace-dry-run.yml").jobs.simulate.steps;
-  const probe = steps.find((step) => String(step.run ?? "").includes("ls-remote"));
-  assert.ok(probe, "a step lists the remote");
+  const probe = steps.find((step) => String(step.run ?? "").includes("push --dry-run"));
+  assert.ok(probe, "a step dry-runs a push");
   assert.equal(probe.if, "github.event_name == 'workflow_dispatch'");
-  assert.match(probe.run, /publishableTools\(\)/);
+  assert.match(probe.run, /gh auth setup-git/);
+  assert.ok(!probe.run.includes("x-access-token"), "the token is not embedded in a URL");
+  assert.equal(probe.env.OWNER, "${{ steps.app-token.outputs.owner }}");
+  assert.equal(probe.env.REPO, "${{ steps.app-token.outputs.repo }}");
+  assert.ok(!/marketplace-distribution\.json/.test(probe.run), "the repository path is not derived again");
   const mint = steps.find((step) => step.uses === "./.github/actions/marketplace-token");
   assert.equal(mint.if, "github.event_name == 'workflow_dispatch'");
   assert.ok(steps.indexOf(mint) < steps.indexOf(probe));
-  assert.ok(!/echo[^\n]*\$\{?TOKEN/.test(probe.run), "the token is never echoed");
+  assert.ok(!/echo[^\n]*\$\{?(TOKEN|GH_TOKEN)/.test(probe.run), "the token is never echoed");
+});
+
+test("the dry run lists the published tools once, from the registry script's own output", () => {
+  const steps = workflow("marketplace-dry-run.yml").jobs.simulate.steps;
+  assert.equal(steps.filter((step) => String(step.run ?? "").includes("marketplace-tools.cjs")).length, 1);
+  assert.ok(!steps.some((step) => String(step.run ?? "").includes("publishableTools")));
 });

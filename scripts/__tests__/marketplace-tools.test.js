@@ -53,12 +53,12 @@ const published = new Set(publishableTools(record).map((tool) => tool.id));
 test("every tool with a marketplace layout is published or has a stated reason it is not", () => {
   const unaccounted = withMarketplace
     .map((tool) => tool.id)
-    .filter((id) => !published.has(id) && !distribution.notHosted[id]);
+    .filter((id) => !published.has(id) && !distribution.notHosted.includes(id));
   assert.deepEqual(unaccounted, []);
 });
 
 test("a stated reason names a tool that really is not published", () => {
-  const stale = Object.keys(distribution.notHosted).filter(
+  const stale = distribution.notHosted.filter(
     (id) => published.has(id) || !withMarketplace.some((tool) => tool.id === id)
   );
   assert.deepEqual(stale, []);
