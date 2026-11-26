@@ -39,6 +39,8 @@ interface Adapter {
   answer(answer: { level: 1 | 2; text?: string; person?: string }): void;
   continueTurn(text: string): void;
   refuse(reason: string): void;
+  /** Antigravity's alone: what its PreInvocation hook runs. */
+  release(): void;
 }
 
 export function samples(file: string): readonly CapturedSample[] {

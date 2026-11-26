@@ -23,7 +23,7 @@ import { type HooksRouting, PLUGIN_HOOKS_SOURCE, type ProjectHooksRoute } from "
 
 /** Where a plugin keeps the adapter between its hooks and the host: Claude Code's, as shipped,
  * which a build for another tool replaces with that tool's. */
-const HOST_ADAPTER_PATH = "hooks/lib/host.cjs";
+export const HOST_ADAPTER_PATH = "hooks/lib/host.cjs";
 
 export function hookScript(descriptor: HooksRouting): HookScript | undefined {
   const adapter = descriptor.runtime?.adapter;

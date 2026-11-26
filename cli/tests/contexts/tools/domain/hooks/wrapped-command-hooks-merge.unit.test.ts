@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  type WrappedCommandHooksTarget,
+  wrappedCommandHooksScriptPath,
+} from "../../../../../src/contexts/tools/domain/hooks/wrapped-command-hooks-convert.js";
+import {
   isWrappedCommandHooksFileEmpty,
   mergeWrappedCommandHooks,
   unmergeWrappedCommandHooks,
-  type WrappedCommandHooksTarget,
   wrappedCommandHookEntries,
   wrappedCommandHooksScriptDir,
-  wrappedCommandHooksScriptPath,
 } from "../../../../../src/contexts/tools/domain/hooks/wrapped-command-hooks-merge.js";
 
 const target: WrappedCommandHooksTarget = {
@@ -196,6 +198,37 @@ describe("wrapped command hooks", () => {
       const { content } = merged(null, grouped("PostToolUse", "Delete"));
 
       expect(JSON.parse(content)).toEqual({});
+    });
+  });
+
+  describe("a host that takes a PostToolUse answer only at a later event", () => {
+    const relaying: WrappedCommandHooksTarget = {
+      ...target,
+      descriptor: { ...target.descriptor, releasesPostToolAnswersAt: "Later" },
+    };
+    const post = (matcher?: string) =>
+      JSON.stringify({
+        hooks: {
+          PostToolUse: [
+            {
+              ...(matcher === undefined ? {} : { matcher }),
+              hooks: [{ type: "command", command: "x" }],
+            },
+          ],
+        },
+      });
+
+    it("lists the handler among the plugin's entries, and unmerge removes it with the plugin", () => {
+      const content = mergeWrappedCommandHooks(relaying, null, {
+        json: post(),
+        plugin: "p",
+      }).content;
+
+      expect(wrappedCommandHookEntries(relaying, content, "p").map(({ event }) => event)).toEqual([
+        "PostToolUse",
+        "Later",
+      ]);
+      expect(JSON.parse(unmergeWrappedCommandHooks(content, "p"))).toEqual({});
     });
   });
 });

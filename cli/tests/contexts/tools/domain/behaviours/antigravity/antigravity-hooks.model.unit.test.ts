@@ -123,9 +123,25 @@ describe("antigravity's project hooks format", () => {
             hooks: [expect.objectContaining({ type: "command", timeout: 7 })],
           },
         ],
+        PreInvocation: [expect.objectContaining({ type: "command" })],
         Stop: [expect.objectContaining({ type: "command" })],
       });
       expect(warnings).toEqual([]);
+    });
+
+    it("releases what a PostToolUse hook requires at PreInvocation, through the plugin's own host adapter", () => {
+      const post = JSON.stringify({
+        hooks: { PostToolUse: [{ hooks: [{ type: "command", command: "node x.cjs" }] }] },
+      });
+
+      const { content } = format.merge(null, post, "aidd-dev");
+      const released = format
+        .contributedEntries(content, "aidd-dev")
+        .find(({ event }) => event === "PreInvocation");
+
+      expect(
+        Buffer.from(released?.entry.command.split(" ").at(-1) ?? "", "base64").toString()
+      ).toBe("node ./.agents/hooks/aidd-dev/lib/host.cjs");
     });
 
     it("renames the tools of the matcher the plugins ship, and drops the other hosts' shells", () => {
@@ -148,7 +164,7 @@ describe("antigravity's project hooks format", () => {
       expect(warnings).toEqual([]);
     });
 
-    it("lists the handlers of a grouped event, not the group", () => {
+    it("lists the handlers of a grouped event, not the group, and the one that releases its answers", () => {
       const post = JSON.stringify({
         hooks: { PostToolUse: [{ hooks: [{ type: "command", command: "node x.cjs" }] }] },
       });
@@ -156,6 +172,7 @@ describe("antigravity's project hooks format", () => {
 
       expect(format.contributedEntries(content, "aidd-dev")).toEqual([
         { event: "PostToolUse", entry: expect.objectContaining({ type: "command" }) },
+        { event: "PreInvocation", entry: expect.objectContaining({ type: "command" }) },
       ]);
     });
 

@@ -4,8 +4,18 @@
  * the host's stdin into a neutral event, `answer()` and `continueTurn()` print the host's own
  * answer. The build puts one such adapter per tool at `hooks/lib/host.cjs`; the plugin tree
  * ships Claude Code's. Node built-ins only; anything unreadable is no event, and prints nothing.
+ *
+ * `agy` takes no context from a PostToolUse answer, only from SessionStart, PreInvocation and
+ * PostInvocation. A level 2 answer is therefore held, one file per conversation in the user's own
+ * `aidd-hooks-<uid>` folder under the OS temp directory (where the other hooks keep their state),
+ * and released at the conversation's next model call by this file run as the hook the CLI
+ * generates for PreInvocation. The project's `.agents/` is committed and `artifactDirectoryPath` is
+ * the host's own folder, so neither holds a disposable hand-off. A PreInvocation always follows a
+ * tool, so a held text is released within one step. Limit: a conversation killed between the two
+ * leaves its file to the OS's temp cleanup.
  */
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 
 const HOST = "antigravity";
@@ -89,13 +99,67 @@ function continueTurn(text) {
   print({ decision: "continue", reason: text });
 }
 
+/** What `agy` hands the model as a system message, one step per text. */
+function injected(texts) {
+  return { injectSteps: texts.map((text) => ({ systemMessage: { systemMessage: text } })) };
+}
+
+const SAFE_ID = /^[A-Za-z0-9_-]{1,128}$/u;
+const OTHERS_BITS = 0o077;
+
+/** The folder the user's hooks keep their hand-offs in, `<tmpdir>/aidd-hooks-<uid>`: made when
+ * `create`, and null unless it is this user's alone. */
+function ownFolder(create) {
+  const uid = typeof process.getuid === "function" ? process.getuid() : undefined;
+  const folder = path.join(os.tmpdir(), uid === undefined ? "aidd-hooks" : `aidd-hooks-${uid}`);
+  try {
+    if (create) fs.mkdirSync(folder, { mode: 0o700, recursive: true });
+    const stat = fs.lstatSync(folder);
+    const own = uid === undefined || (stat.uid === uid && (stat.mode & OTHERS_BITS) === 0);
+    return own ? folder : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Where the texts held for a conversation wait, or null when there is no safe place. */
+function heldFile(conversationId, create) {
+  const folder = SAFE_ID.test(conversationId) ? ownFolder(create) : null;
+  return folder === null ? null : path.join(folder, `agy-relay-${conversationId}`);
+}
+
+/** Holds `text` for the conversation's next model call, one JSON line per text. */
+function hold(text) {
+  try {
+    const file = heldFile(current.sessionId, true);
+    if (file !== null) fs.appendFileSync(file, `${JSON.stringify(text)}\n`, { mode: 0o600 });
+  } catch {}
+}
+
+/** Prints what was held for the conversation of the PreInvocation on stdin, and holds it no more.
+ * The file is renamed before it is read, so of several PreInvocation hooks running together
+ * exactly one finds it. Prints nothing when nothing is held. */
+function release() {
+  const raw = readPayload();
+  const file = typeof raw?.conversationId === "string" ? heldFile(raw.conversationId, false) : null;
+  if (file === null) return;
+  const claimed = `${file}.${process.pid}`;
+  try {
+    fs.renameSync(file, claimed);
+    const texts = fs.readFileSync(claimed, "utf8").split("\n").filter(Boolean).map(JSON.parse);
+    fs.rmSync(claimed, { force: true });
+    if (texts.length > 0) print(injected(texts));
+  } catch {}
+}
+
 /** A Stop answer continues the turn. A SessionStart answer is an injected system message, which
- * `agy` hands the model before its first call. A PostToolUse answer is never carried: `agy` takes
- * no context from it. */
-function answer({ text } = {}) {
+ * `agy` hands the model before its first call. A PostToolUse answer is held when it requires
+ * something (level 2), for `release`; one that only informs is dropped. */
+function answer({ level, text } = {}) {
+  if (typeof text !== "string" || text === "") return;
   if (current?.event === "Stop") return continueTurn(text);
-  if (current?.event !== "SessionStart" || typeof text !== "string" || text === "") return;
-  print({ injectSteps: [{ systemMessage: { systemMessage: text } }] });
+  if (current?.event === "PostToolUse" && level === 2) return hold(text);
+  if (current?.event === "SessionStart") print(injected([text]));
 }
 
 /** Refuses the tool call about to run, with `reason` as what the model is told. Does nothing at any
@@ -107,4 +171,7 @@ function refuse(reason) {
   print({ decision: "deny", reason });
 }
 
-module.exports = { readEvent, answer, continueTurn, refuse };
+module.exports = { readEvent, answer, continueTurn, refuse, release };
+
+// Run as the PreInvocation hook's command, never when a framework script requires it.
+if (require.main === module) release();

@@ -2,13 +2,15 @@ import type { ShippedHooks } from "../../../../../shared/domain/materialization/
 import type { ProjectHooksFormat } from "../../../contract/tool-vocabulary.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import {
+  type WrappedCommandHooksTarget,
+  wrappedCommandHooksScriptPath,
+} from "../../hooks/wrapped-command-hooks-convert.js";
+import {
   isWrappedCommandHooksFileEmpty,
   mergeWrappedCommandHooks,
   unmergeWrappedCommandHooks,
-  type WrappedCommandHooksTarget,
   wrappedCommandHookEntries,
   wrappedCommandHooksScriptDir,
-  wrappedCommandHooksScriptPath,
 } from "../../hooks/wrapped-command-hooks-merge.js";
 
 export type AntigravityHooks = HooksRouting & {
@@ -18,7 +20,11 @@ export type AntigravityHooks = HooksRouting & {
 };
 
 function targetOf(hooks: AntigravityHooks): WrappedCommandHooksTarget {
-  return { label: "Antigravity", descriptor: hooks };
+  // `agy` takes context from a PreInvocation hook, not from a PostToolUse one.
+  return {
+    label: "Antigravity",
+    descriptor: { ...hooks, releasesPostToolAnswersAt: "PreInvocation" },
+  };
 }
 
 export function mergeAntigravityHooks(
