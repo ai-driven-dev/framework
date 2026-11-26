@@ -17,7 +17,6 @@ const filesUnder = (dir) =>
     ? fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name)).flatMap((entry) => (entry.isDirectory() ? filesUnder(path.join(dir, entry.name)) : [path.join(dir, entry.name)]))
     : [];
 
-/** The engine files, relative to the hooks folder. */
 /** The file's bytes, or undefined when there is none. */
 function bytesOf(file) {
   try {

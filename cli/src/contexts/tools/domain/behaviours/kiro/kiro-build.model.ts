@@ -2,7 +2,8 @@
 
 import {
   agentsIn,
-  rulesIn,
+  flatMcpFileArtifact,
+  rulesArtifact,
   skillsIn,
 } from "../../../../../shared/domain/materialization/artifact-path.js";
 import type {
@@ -41,18 +42,8 @@ export function buildKiroFlatContract(
         placement: agentsIn(layout),
         agentMarkdown,
       },
-      rules: {
-        supported: true,
-        source: { kind: "fullTree", srcDir: "rules" },
-        placement: rulesIn(layout),
-        ruleMarkdown: { frontmatter: inclusionModesRule, quote: "double" },
-      },
-      mcp: {
-        supported: true,
-        source: { kind: "configFile", srcPath: ".mcp.json" },
-        placement: { kind: "file", at: mcpPath },
-        mcpServersKey: "mcpServers",
-      },
+      rules: rulesArtifact(layout, { frontmatter: inclusionModesRule, quote: "double" }),
+      mcp: flatMcpFileArtifact(mcpPath),
       hooks: flatHooksArtifact(hooks, { tool: "kiro" }, (existing, shipped) =>
         mergeKiroHooks(hooks, existing, shipped)
       ),

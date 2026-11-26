@@ -5,10 +5,6 @@ const { UI, LIB, makeTmp, removeTmp, writeProject, put, record } = require("../f
 const { load } = require(path.join(LIB, "project.cjs"));
 const { showcaseOf, decisionsOf, entriesOf } = require(path.join(LIB, "showcase.cjs"));
 
-// The reader trusts what the page counts: one number per step wherever it is shown, one row per screen,
-// a set named and counted like a record, a variant named like a person would, a way in to the first step
-// with work, and a sidebar that marks one thing at a time.
-
 let tmp;
 
 beforeEach(() => {

@@ -220,3 +220,16 @@ describe.each(HOSTS)("%s's adapter on what is no event", (host) => {
     expect([run.status, run.stdout, run.stderr]).toStrictEqual([0, "", ""]);
   });
 });
+
+describe("the bridge's adapter outside a Stop", () => {
+  it("continues nothing", () => {
+    const { adapter } = read("bridge", {
+      hook_event_name: "PostToolUse",
+      session_id: SESSION,
+      cwd: CWD,
+    });
+    adapter.continueTurn("go on");
+
+    expect(printed).toStrictEqual([]);
+  });
+});

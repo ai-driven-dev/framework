@@ -170,8 +170,7 @@ function matchesTool(tools, tool) {
   return !tools || tools.includes(tool.toLowerCase());
 }
 
-/** Pure: a tool call -> every hook of one event whose matcher allows its tool. The host names the
- * written file `filePath`; the scripts read Claude Code's `file_path`. */
+/** Pure: a tool call -> every hook of one event whose matcher allows its tool. */
 function toolUseCallsFor(event, hooks, call, args, directory) {
   const tool = call.tool;
   const toolInput = typeof args.filePath === "string" ? { ...args, file_path: args.filePath } : args;

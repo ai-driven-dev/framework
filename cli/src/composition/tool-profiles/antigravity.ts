@@ -51,13 +51,9 @@ const AGENT_TOOLS: ReadonlyMap<string, string> = new Map([
   ["Bash", "run_command"],
 ]);
 
-/** The tool each Claude tool a plugin's hook matcher names is, as `agy` calls it in a hook's
- * `toolCall`: captured from real runs of write_file, edit_file and run_command. `agy` matches a
- * whole name as a regular expression: measured live, `write_file|edit_file|run_command` fired for all
- * three, `write_.*` for write_file only, and `write_f` for none. A name with no entry, such as another host's `Shell`
- * or `PowerShell`, is dropped from the matcher. This differs from AGENT_TOOLS on purpose: that
- * one is the name a subagent's `tools` field takes, as its docs spell it (replace_file_content for
- * an edit), while a hook sees the name a run called, and a real edit arrived as edit_file. */
+/** Hook matcher names as `agy` reports them in `toolCall` (captured payloads); `agy` matches a whole
+ * name as a regex, and an unmapped name is dropped. Differs from AGENT_TOOLS: a subagent's `tools`
+ * takes the documented name (replace_file_content). */
 const MATCHER_TOOLS: ReadonlyMap<string, string> = new Map([
   ["Write", "write_file"],
   ["Edit", "edit_file"],

@@ -62,10 +62,8 @@ export interface NativeActivationSpec {
    * Permits reclaiming a name, so declare it only alongside `sourceCheckVerb`. */
   forceRemoveArgs?: readonly string[];
   /** Verb after `plugin marketplace` whose exit code separates a registration whose source
-   * is gone from one that resolves. Measured: copilot's `update` discriminates and Claude's
-   * reports success on a path that does not exist. Codex's `upgrade` was reported to refuse a
-   * local marketplace on 0.169.1, which its source does not show (it skips non-git ones and
-   * exits 0): unverified, so nothing relies on it. */
+   * is gone from one that resolves.
+   * Limit: proven on copilot only; Claude reports success on a missing path. */
   sourceCheckVerb?: string;
   /** Verb this CLI uses to re-index its marketplaces, after `plugin marketplace`. Omit when
    * plugins are not enabled through the CLI. */
@@ -130,7 +128,6 @@ export interface MarketplaceSettings {
 /** A host that takes plugins through a server it starts on demand, not through plugin verbs: how
  * to start it, how to read where it listens, and the route and refusal its plugin calls use. */
 export interface PluginServerSpec {
-  /** The host's executable. */
   readonly binary: string;
   /** What starts the server on a free port and opens nothing. */
   readonly args: readonly string[];

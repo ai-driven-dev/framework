@@ -15,6 +15,10 @@ describe("the scope a rule declares", () => {
       ruleScope("# T\n"),
     ]).toStrictEqual([["**/*.ts", "**/*.tsx"], [], [], []]);
   });
+
+  it("reads the globs of a rule scoped by `globs`", () => {
+    expect(ruleScope('---\nglobs:\n  - "**/*.ts"\n---\n# T\n')).toStrictEqual(["**/*.ts"]);
+  });
 });
 
 describe("stating a rule's scope in its body", () => {

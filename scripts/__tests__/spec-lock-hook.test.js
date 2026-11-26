@@ -148,7 +148,7 @@ for (const [host, file] of HOSTS) {
   });
 }
 
-// No Cursor payload was captured before a tool (the account had no quota left), so its adapter does not report it.
+// Limit: no Cursor payload was captured before a tool, so its adapter does not report it.
 test("does nothing under an adapter that does not report the moment before a tool", () => {
   const root = project({ [SPEC]: spec("locked") });
   const [post] = captured("cursor-postToolUse.json");
