@@ -164,6 +164,18 @@ describe("the bridge body every host shares, in Kilo's module", () => {
     }
   });
 
+  it("requests a Stop follow-up before the idle event's hook first yields", async () => {
+    const { directory, emit, server, prompts } = await open(host);
+    await emit(sessionStarted(host, "s1", directory));
+
+    const idling = server.event({
+      event: { type: "session.idle", properties: { sessionID: "s1" } },
+    });
+
+    expect(prompts).toHaveLength(1);
+    await idling;
+  });
+
   // Observed on Kilo 7.7.5 and 7.8.32: the host idles between the two follow-up turns, and each
   // plugin's Stop script blocked again at the second, forever.
   it("continues a turn once when two plugins each send a follow-up, never again at the second one's turn", async () => {
@@ -263,13 +275,17 @@ describe("the bridge body every host shares, in Kilo's module", () => {
     await expect(server["tool.execute.before"](call, output)).resolves.toBeUndefined();
   });
 
-  it("sends no follow-up when a Stop script fails", async () => {
-    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+  it.each([
+    { kind: "nonzero exit", error: "exited with code 7", input: (dir: string) => dir },
+    { kind: "spawn failure", error: "ENOENT", input: (dir: string) => join(dir, "absent") },
+  ])("reports a Stop script's $kind and sends no follow-up", async ({ error, input }) => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const hooksJson = JSON.stringify({ hooks: { Stop: [command("exit7.cjs")] } });
-    const { emit, prompts } = await open(host, hooksJson);
+    const { emit, prompts } = await open(host, hooksJson, input);
 
     await emit({ type: "session.idle", properties: { sessionID: "s1" } });
 
+    expect(warn).toHaveBeenCalledWith(failedScript(error));
     expect(prompts).toStrictEqual([]);
   });
 
@@ -393,6 +409,17 @@ describe("the bridge body every host shares, in Kilo's module", () => {
     expect(warn).toHaveBeenCalledTimes(1);
   });
 
+  it("leaves no SessionStart script running past the test that started it", async () => {
+    const { directory, emit } = await open(host);
+    await emit(sessionStarted(host, "left-running", directory));
+    await cleanBridges();
+
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    await delay(500);
+
+    expect(warn).not.toHaveBeenCalled();
+  });
+
   it("runs no Stop script for an event that is not an idle session", async () => {
     const { emit, of } = await open(host);
     await emit(
@@ -423,6 +450,35 @@ describe("the bridge body every host shares, in Kilo's module", () => {
     });
 
     expect(answered).not.toBe("still waiting");
+    await vi.waitFor(() => expect(() => process.kill(pid, 0)).toThrow(), { timeout: 2000 });
+  }, 15_000);
+
+  it.each(["Stop", "PostToolUse"])(
+    "reports a %s script whose argument spawn refuses, never throwing into the host",
+    async (event) => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+      const hooksJson = JSON.stringify({ hooks: { [event]: [command("exit7.cjs\u0000")] } });
+      const { emit, tool } = await open(host, hooksJson);
+
+      await emit({ type: "session.idle", properties: { sessionID: "s1" } });
+      await tool("grind");
+
+      expect(warn).toHaveBeenCalledWith(expect.stringMatching(/failed: .*ERR_INVALID_ARG_VALUE/));
+    }
+  );
+
+  it("stops a Stop script that never exits, reports it and sends no follow-up", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const hooksJson = JSON.stringify({ hooks: { Stop: [command("hang.cjs")] } });
+    const { directory, emit, prompts } = await open(host, hooksJson);
+    const started = Date.now();
+
+    await emit({ type: "session.idle", properties: { sessionID: "s1" } });
+
+    const pid = Number(await readFile(join(directory, "hang.pid"), "utf8"));
+    expect(Date.now() - started).toBeLessThan(7000);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("ETIMEDOUT"));
+    expect(prompts).toStrictEqual([]);
     await vi.waitFor(() => expect(() => process.kill(pid, 0)).toThrow(), { timeout: 2000 });
   }, 15_000);
 });

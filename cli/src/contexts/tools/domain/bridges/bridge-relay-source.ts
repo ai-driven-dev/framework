@@ -191,13 +191,13 @@ function isFollowUp(parts) {
   return parts.some((part) => part.metadata?.aidd === FOLLOW_UP.aidd);
 }
 
-/** Resolves once the scripts ran, with the follow-ups still in flight: the prompt is the session's
- * next turn, and the turn end must not hold it. */
-async function runStop(sessionId, directory, { client, method, show }) {
+/** Returns the follow-ups still in flight: the prompt is the session's next turn, and the turn end
+ * must not hold it. */
+function runStop(sessionId, directory, { client, method, show }) {
   const sends = [];
   for (const call of stopCallsFor(sessionId, directory)) {
     const payload = { ...call.payload, stop_hook_active: continuedTurns.has(sessionId) };
-    const { reason, person } = await stopReasonOf(call.script, call.args, payload, directory);
+    const { reason, person } = stopReasonOf(call.script, call.args, payload, directory);
     show?.(person);
     if (!reason) continue;
     continuedTurns.add(sessionId);
@@ -217,9 +217,8 @@ export const BRIDGE_HOOKS_SOURCE = `function bridgeHooks({ directory, client, fo
       runSessionStart(event, directory);
       const sessionId = event.properties.sessionID;
       if (typeof sessionId !== "string" || event.type !== "session.idle" || childSessions.has(sessionId)) return;
-      const stopping = runStop(sessionId, folderOf(sessionId), { client, method: followUp, show });
-      track?.(stopping.then((sends) => Promise.all(sends)));
-      await stopping;
+      const sends = runStop(sessionId, folderOf(sessionId), { client, method: followUp, show });
+      track?.(Promise.all(sends));
     },
     "experimental.chat.system.transform": (input, output) => addSessionContext(input, output, show),
     "chat.message": async (input, output) => {
