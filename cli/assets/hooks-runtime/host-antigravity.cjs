@@ -102,14 +102,15 @@ function injected(texts) {
   return { injectSteps: texts.map((text) => ({ systemMessage: { systemMessage: text } })) };
 }
 
-const SAFE_ID = /^[A-Za-z0-9_-]{1,128}$/u;
 const HELD_FOLDER = "held-answers";
 
-/** Where the texts held for a conversation wait, or null when there is no safe place. */
+/** Where the texts held for a conversation wait, or null when there is no safe place. The file is
+ * named by a digest of the id, which the host does not promise is a plain name. */
 function heldFile(conversationId, create) {
-  if (!SAFE_ID.test(conversationId)) return null;
+  if (typeof conversationId !== "string") return null;
   const folder = hooksFolder(HELD_FOLDER, create);
-  return folder === null ? null : path.join(folder, conversationId);
+  const name = require("node:crypto").createHash("sha256").update(conversationId).digest("hex");
+  return folder === null ? null : path.join(folder, name);
 }
 
 /** Holds `text` for the session's next model call, one JSON line per text. A session ended before

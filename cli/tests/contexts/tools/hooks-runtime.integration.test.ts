@@ -9,6 +9,7 @@
  * `hooks-runtime-<host>.integration.test.ts`.
  */
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -139,6 +140,7 @@ describe("Antigravity CLI", () => {
           typeof process.getuid === "function" ? `aidd-hooks-${process.getuid()}` : "aidd-hooks"
         );
       const heldFolder = () => join(hooksFolder(), "held-answers");
+      const heldName = (id: string) => createHash("sha256").update(id).digest("hex");
       const hold = (level: 1 | 2, held: string, payload: unknown = ran) => {
         vi.restoreAllMocks();
         read("antigravity", payload).adapter.answer({ level, text: held });
@@ -177,7 +179,10 @@ describe("Antigravity CLI", () => {
 
       it("removes a held file it cannot read, so nothing is left behind", () => {
         fs.mkdirSync(heldFolder(), { recursive: true, mode: 0o700 });
-        fs.writeFileSync(join(heldFolder(), `${nextCall.conversationId}`), "not json\n");
+        fs.writeFileSync(
+          join(heldFolder(), heldName(String(nextCall.conversationId))),
+          "not json\n"
+        );
         release();
 
         expect([fs.readdirSync(heldFolder()), printed]).toStrictEqual([[], []]);
@@ -231,12 +236,13 @@ describe("Antigravity CLI", () => {
         }
       );
 
-      it("holds nothing for a conversation whose id is not a plain name", () => {
-        hold(2, text, { ...ran, conversationId: "../escaped" });
+      it("keeps a conversation id that is not a plain name inside the held folder", () => {
+        const id = "../escaped";
+        hold(2, text, { ...ran, conversationId: id });
 
-        expect([fs.existsSync(join(temp, "escaped")), fs.existsSync(hooksFolder())]).toStrictEqual([
+        expect([fs.existsSync(join(temp, "escaped")), fs.readdirSync(heldFolder())]).toStrictEqual([
           false,
-          false,
+          [heldName(id)],
         ]);
       });
 
