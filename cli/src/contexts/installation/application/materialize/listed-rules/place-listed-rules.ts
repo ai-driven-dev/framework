@@ -14,9 +14,8 @@ import type { AddPluginRequest } from "../add-plugin-request.js";
 import { registerMarketplacePlugin } from "../register-marketplace-plugin.js";
 import { listRulesIn, unlistRulesIn } from "./list-placed-rules.js";
 
-/** The rules a tool lists in its guidance file, placed in the project beside the registration its
- * plugin gets: written, listed and answered as the digests to record, the file refused first when a person broke its block.
- * Whatever the plugin no longer ships goes, and its listing with it. */
+/** Places the rules a tool lists in its guidance file beside the registration, refusing first a
+ * file whose block a person broke. A rule the plugin no longer ships goes, with its listing. */
 async function placeListedRules(
   placing: {
     readonly command: {

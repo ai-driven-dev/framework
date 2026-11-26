@@ -43,3 +43,19 @@ export async function listPlacedRules(
   if (index === null || rulesGlob === null) return;
   await listRulesIn(fs, join(projectRoot, index.relativePath), { index, glob: rulesGlob });
 }
+
+/** Lists the rules among `files` the plugin places natively, refusing a broken block before any
+ * file is written. A plugin that no longer ships a rule keeps its listing: it matches nothing. */
+export async function listRulesOfFiles(
+  fs: FileReader & FileWriter,
+  at: { readonly index: RulesIndexAnswers | null; readonly projectRoot: string },
+  placed: { readonly plugin: string; readonly files: readonly { readonly relativePath: string }[] }
+): Promise<void> {
+  const { index, projectRoot } = at;
+  const glob = index?.globIn(
+    placed.plugin,
+    placed.files.map((file) => file.relativePath)
+  );
+  if (index === null || index === undefined || glob === null || glob === undefined) return;
+  await listRulesIn(fs, join(projectRoot, index.relativePath), { index, glob });
+}

@@ -7,9 +7,9 @@ import type { AddPluginRequest } from "./add-plugin-request.js";
 /**
  * A marketplace registration, for a tool with native marketplace support.
  *
- * The plugin's own files are NOT materialized on disk: a plugin reference is added to the manifest,
- * recording only the files `kept` that the caller placed itself in the project, and `SyncSettings` does the rest: driving the tool's own CLI where
- * `nativeActivation` is declared, writing the enabled-plugins key directly where it is not.
+ * The plugin's own files are NOT materialized: the manifest gets a plugin reference, with only the
+ * `kept` files the caller placed itself in the project. `SyncSettings` does the rest, driving the
+ * tool's own CLI where `nativeActivation` is declared and writing the enabled-plugins key where not.
  */
 export function registerMarketplacePlugin(
   request: Omit<AddPluginRequest, "tool"> & {

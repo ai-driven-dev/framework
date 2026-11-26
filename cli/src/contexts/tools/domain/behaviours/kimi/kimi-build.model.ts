@@ -1,5 +1,6 @@
-/** Flat only. Rules sit in Kimi's own `instructions/` folder and AGENTS.md lists them. Skills sit in the shared `.agents/skills/`; agents sit in Kimi's own folder, because
- * `.agents/agents/` belongs to Antigravity, whose tool names Kimi does not read. */
+/** Flat only. Rules sit in Kimi's own `instructions/` folder and AGENTS.md lists them. Skills sit
+ * in the shared `.agents/skills/`; agents sit in Kimi's own folder, because `.agents/agents/`
+ * belongs to Antigravity, whose tool names Kimi does not read. */
 
 import {
   agentsIn,

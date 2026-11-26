@@ -14,6 +14,7 @@ import type { ProjectHooksProvenance } from "../../../domain/plugins/plugin-entr
 import { RecordedPlugin } from "../../../domain/plugins/recorded-plugin.js";
 import type { EnsurePluginRuntimeFiles } from "../../install/config/ensure-plugin-runtime-files.use-case.js";
 import type { BuiltPlacement } from "../../materialize/add-plugin-request.js";
+import { listRulesOfFiles } from "../../materialize/listed-rules/list-placed-rules.js";
 import { registerWithListedRules } from "../../materialize/listed-rules/place-listed-rules.js";
 import { placementModeOf } from "../../materialize/plugin-placement.js";
 import { hashOutputFiles } from "../../shared/hash-output-files.js";
@@ -134,9 +135,7 @@ async function placeForTool(placement: ToolPlacement, deps: ToolPlacementDeps): 
   );
 }
 
-// `notices` survives every branch below, including the marketplace one that discards its
-// own `translated.skipped` in favor of the registration's: a delivered hook's trust notice is
-// a fact about the tool, not about which materialization route happened to run.
+// `notices` survives every branch: a hook's trust notice is a fact about the tool, not the route.
 async function materializeNativePlugin(
   placement: ToolPlacement,
   translated: {
@@ -156,18 +155,11 @@ async function materializeNativePlugin(
     return { ...(await registerWithListedRules(placement, files, fs)), notices };
   }
   const scope = resolveScopeForInstall(tool);
+  const index = tool.rulesIndex();
+  await listRulesOfFiles(fs, { index, projectRoot }, { plugin: dist.manifest.name, files });
   const previous = command.previousFiles.get(tool.toolId);
   await replacePluginFiles({ files, base: { dir: projectRoot, scope }, previous }, fs);
-  manifest.addPlugin(
-    tool.toolId,
-    RecordedPlugin.fromDistribution({
-      dist,
-      source,
-      files,
-      scope,
-      componentPaths,
-      marketplace,
-    })
-  );
+  const entry = { dist, source, files, scope, componentPaths, marketplace };
+  manifest.addPlugin(tool.toolId, RecordedPlugin.fromDistribution(entry));
   return { skipped, notices };
 }

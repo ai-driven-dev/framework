@@ -3,6 +3,7 @@ import { toolPlacementOf } from "../../../../../../src/contexts/installation/app
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { parsePluginName } from "../../../../../../src/shared/domain/plugin/plugin-name.js";
+import type { PluginSource } from "../../../../../../src/shared/domain/plugin/source.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 import { fakeBuiltDeps } from "../../../testing/fake-build-sources.fake.js";
@@ -10,6 +11,7 @@ import { fakeBuiltDeps } from "../../../testing/fake-build-sources.fake.js";
 const ROOT = "/test-project";
 const AGENTS = `${ROOT}/AGENTS.md`;
 const RULE = `${ROOT}/.codex/instructions/aidd-craft-01-standards-1-naming.md`;
+const LOCAL: PluginSource = { kind: "local", path: "/fixture" };
 const RULE_FILE = { relativePath: "rules/01-standards/1-naming.md", content: "# Naming\n" };
 
 function craft() {
@@ -21,7 +23,7 @@ function craft() {
   });
 }
 
-async function placeOnCodex(fs: InMemoryFileAdapter) {
+async function placeOnCodex(fs: InMemoryFileAdapter, source: PluginSource = LOCAL) {
   const manifest = Manifest.create();
   manifest.addTool(TOOL.codex, "1.0.0", []);
   const placeForTool = toolPlacementOf({
@@ -33,7 +35,7 @@ async function placeOnCodex(fs: InMemoryFileAdapter) {
     command: {
       dist: craft(),
       toolIds: [TOOL.codex],
-      source: { kind: "local", path: "/fixture" },
+      source,
       projectRoot: ROOT,
       manifest,
       machine: Manifest.create(),
@@ -69,5 +71,27 @@ describe("placing a plugin's rules for a tool whose native install carries none"
     await expect(placeOnCodex(fs)).rejects.toThrow(/repair/);
 
     expect([fs.has(RULE), fs.getFile(AGENTS)]).toEqual([false, broken]);
+  });
+
+  it("lists them as well when the plugin comes from a source that is not a local path", async () => {
+    const fs = new InMemoryFileAdapter({ [AGENTS]: "# Team\n" }, [ROOT]);
+
+    await placeOnCodex(fs, { kind: "github", repo: "ai-driven-dev/framework" });
+
+    expect([fs.has(RULE), fs.getFile(AGENTS)]).toEqual([
+      true,
+      expect.stringContaining("- `.codex/instructions/aidd-craft-*.md`"),
+    ]);
+  });
+
+  it("refuses a broken block before it writes a rule from a source that is not a local path", async () => {
+    const broken = "<!-- aidd_plugin_rules:start -->\nhand edit\n";
+    const fs = new InMemoryFileAdapter({ [AGENTS]: broken }, [ROOT]);
+
+    await expect(
+      placeOnCodex(fs, { kind: "github", repo: "ai-driven-dev/framework" })
+    ).rejects.toThrow(/repair/);
+
+    expect(fs.has(RULE)).toBe(false);
   });
 });
