@@ -32,10 +32,3 @@ export function wrappedCommandHookEntries(
 export function isWrappedCommandHooksFileEmpty(content: string): boolean {
   return Object.keys(readNamedHooks(content)).length === 0;
 }
-
-export function wrappedCommandHooksScriptDir(
-  target: WrappedCommandHooksTarget,
-  pluginName: string
-): string {
-  return `${target.descriptor.flat.scriptsDir}${pluginName}/`;
-}

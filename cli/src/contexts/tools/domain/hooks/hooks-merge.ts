@@ -10,6 +10,7 @@ import {
   escapeRegExp,
   rewritePluginRootInJson,
 } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
+import { PLUGIN_HOOKS_SOURCE } from "../formats/hooks/descriptor.js";
 import { type Entry, type HooksFileFormat, shapeEntries } from "./hooks-entry-shape.js";
 import { unmappedEventWarning } from "./hooks-warnings.js";
 import type { PluginHooksShape } from "./plugin-hooks-shape.js";
@@ -25,7 +26,8 @@ export interface HooksMergeTarget {
   readonly rootToken?: string | undefined;
 }
 
-const SCRIPTS = "hooks/";
+/** The folder a plugin ships its hook scripts under, as a path prefix. */
+export const SCRIPTS = `${PLUGIN_HOOKS_SOURCE.scriptDir}/`;
 
 type HooksFile = Record<string, unknown> & { hooks?: Record<string, Entry[]> };
 

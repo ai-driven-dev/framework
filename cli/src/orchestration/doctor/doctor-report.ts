@@ -6,7 +6,6 @@ import type {
   ToolHealth,
 } from "../../contexts/installation/contract/doctor-issue.js";
 
-/** An issue of any doctor check. */
 export type ReportedIssue = DoctorIssue | RegistrationIssue | AuthenticationIssue;
 
 /** What one doctor run found for one tool category. */

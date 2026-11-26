@@ -86,8 +86,7 @@ const OWNED = {
   "05-screens": ["screens/"],
   "06-review": ["reviews/"],
 };
-// What the engine writes for each skill's step; a folder ends with `/`. The history is the engine's, and a model could write it by hand: the snapshot cannot tell the two apart.
-// Every step ends by writing the showcase. The review's publication rewrites the status of the records it publishes: the brand, the system, journeys, wireframes and elements. The brand step's first history row is the engine's too, and keeping a variant records the others in choices.md.
+// What the engine writes per step (a folder ends with `/`); the snapshot cannot tell an engine-written history from a hand-written one.
 const ENGINE_FILES = {
   "01-journeys": ["history.md", "showcase/"],
   "02-brand": ["history.md", "choices.md", "drafts/.gitignore", "showcase/"],
@@ -234,7 +233,7 @@ function reportLine(pilot, { errors, warnings, missing, unscreened, changed, bro
 const NON_INTERACTIVE = (part) =>
   `You run non-interactively: whenever the skill would ask the user, take the answer given, or the most reasonable one, state each choice in your final reply, and go on; write no file the skill does not name; the user agrees with what you propose. Never install anything, never run the project's own scripts or package manager; read its files only, and run only node with the aidd-ui engine. Task folder: aidd_docs/tasks/${part}.`;
 
-// The person's paste, stated outright: the pilot cannot answer. A screen coded at its version is refused by the publication for want of a capture, which is expected: no capture is asked.
+// The pilot cannot answer the person's paste; a coded screen without a capture is refused, as expected.
 const REVIEW = "Review the proposed records. My verdicts, pasted from the home page: All OK for every record listed, no comment, no capture. Language: the one in memory, else en.";
 
 const REQUESTS = {

@@ -8,7 +8,7 @@ The `aidd` binary, built from `cli/` and published to npm as `@ai-driven-dev/cli
 ## Commands
 
 - `aidd --help` is the only list that stays true; summary in `internal/cli/commands.md`.
-- `setup --provider` picks the provider of the main session and each tool's agents, machine-wide: [agent guide](../../docs/SUBAGENTS.md#-models).
+- `setup --provider` picks the provider of the main session and each tool's agents, machine-wide: [agent guide](../../docs/SUBAGENTS.md#-models). `translate --provider` writes the agents' models into the built tree only.
 - `telemetry` counts Claude Code and Codex tokens locally: [usage contract](../product/usage-contract.md).
 
 ## Interface

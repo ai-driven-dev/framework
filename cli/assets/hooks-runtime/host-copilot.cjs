@@ -85,7 +85,7 @@ function readEvent() {
   current = {
     host: HOST,
     event,
-    files: filesOf(event, writtenFiles(tool, input, cwd)),
+    files: filesOf(event, writtenFiles(tool, input, cwd, raw.tool_response)),
     ...(SHELLS.has(tool) && typeof input?.command === "string" ? { command: input.command } : {}),
     stopActive: raw.stop_hook_active === true,
     sessionId: typeof raw.session_id === "string" ? raw.session_id : null,
@@ -102,7 +102,8 @@ function print(output) {
 /** Asks the model to go on before the turn ends, with `text` as what it must do. Asks once: a
  * turn end that is already a continuation is never continued again. */
 function continueTurn(text) {
-  if (typeof text !== "string" || text === "" || current?.stopActive === true) return;
+  if (current?.event !== "Stop" || typeof text !== "string" || text === "") return;
+  if (current.stopActive === true) return;
   print({ decision: "block", reason: text });
 }
 
@@ -121,6 +122,10 @@ function answer({ level, text } = {}) {
  * other event: a hook that refuses is written once and is harmless where nothing can be refused. */
 function refuse(reason) {
   if (current?.event !== "PreToolUse" || typeof reason !== "string" || reason === "") return;
+  denyToolCall(reason);
+}
+
+function denyToolCall(reason) {
   print({ permissionDecision: "deny", permissionDecisionReason: reason });
 }
 

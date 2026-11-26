@@ -96,7 +96,7 @@ function readEvent() {
   current = {
     host: HOST,
     event,
-    files: filesOf(event, writtenFiles(tool, input, cwd)),
+    files: filesOf(event, writtenFiles(tool, input, cwd, raw.tool_response)),
     ...(SHELLS.has(tool) && typeof input?.command === "string" ? { command: input.command } : {}),
     stopActive: raw.stop_hook_active === true,
     sessionId: typeof raw.session_id === "string" ? raw.session_id : null,
@@ -110,7 +110,6 @@ function print(output) {
   process.stdout.write(`${JSON.stringify(output)}\n`);
 }
 
-/** Whether there is a message to show the person. */
 function hasPerson(person) {
   return typeof person === "string" && person !== "";
 }
@@ -124,7 +123,8 @@ function showPerson(person) {
  * person `person` where the host allows it. Asks once: a turn end that is already a continuation
  * is never continued again. */
 function continueTurn(text, person) {
-  if (typeof text !== "string" || text === "" || current?.stopActive === true) return;
+  if (current?.event !== "Stop" || typeof text !== "string" || text === "") return;
+  if (current.stopActive === true) return;
   print({
     decision: "block",
     reason: text,
@@ -147,12 +147,15 @@ function answer({ level, text, person } = {}) {
   });
 }
 
-// The bridge throws the reason out of the host's hook before the tool.
-/** Refuses the tool call about to run, with `reason` as what the model is told: exit code 2 with
- * the reason on standard error. Does nothing at any other event: a hook that refuses is written
- * once and is harmless where nothing can be refused. */
+/** Refuses the tool call about to run, with `reason` as what the model is told. Does nothing at any
+ * other event: a hook that refuses is written once and is harmless where nothing can be refused. */
 function refuse(reason) {
   if (current?.event !== "PreToolUse" || typeof reason !== "string" || reason === "") return;
+  denyToolCall(reason);
+}
+
+/** Exit code 2 with the reason on standard error. */
+function denyToolCall(reason) {
   process.stderr.write(reason);
   process.exitCode = 2;
 }

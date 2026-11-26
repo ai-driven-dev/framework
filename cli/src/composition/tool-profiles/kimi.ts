@@ -56,7 +56,7 @@ const AGENT_TOOLS: ReadonlyMap<string, string> = new Map([
   ["TaskStop", "TaskStop"],
 ]);
 
-/** Kimi reads hooks from the user config.toml or a local plugin, never a project: https://www.kimi.com/code/docs/en/kimi-code-cli/customization/hooks.html */
+// https://www.kimi.com/code/docs/en/kimi-code-cli/customization/hooks.html
 const USER_CONFIG_REASON =
   "Kimi reads hooks from the user config.toml or a local plugin, never from a project, and a plugin's hooks are not delivered until a payload is captured";
 

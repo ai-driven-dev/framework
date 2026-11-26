@@ -21,7 +21,7 @@
 | `antigravity`, `kiro`, `kimi` | none, the identity |
 | `claude` | its numbered command directories |
 | `opencode`, `kilo`, `cursor` | command directories, and for `cursor` `.md` rule references to `.mdc` |
-| `codex` | `.codex/skills/` to `.agents/skills/aidd-`, and its numbered command directories |
+| `codex` | `.codex/skills/` to `.agents/skills/aidd-` |
 | `copilot` | `COPILOT_LINK_SYNTAX` turns `@{{TOOLS}}/` and `@{{DOCS}}/` into markdown links, because Copilot resolves no `@`-include |
 
 - `{{TOOLS}}/` without `@` replaces a directory prefix only, for frontmatter and prose.
