@@ -6,15 +6,13 @@ import type { ProjectHooksFormat } from "../../../contract/tool-vocabulary.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { pluginScriptDir, pluginScriptPath } from "../../hooks/hooks-merge.js";
 import { toolWarning } from "../../hooks/hooks-warnings.js";
+import type { WrappedCommandHooksTarget } from "../../hooks/wrapped-command-hooks-convert.js";
 import {
   isWrappedCommandHooksFileEmpty,
   unmergeWrappedCommandHooks,
   wrappedCommandHookEntries,
 } from "../../hooks/wrapped-command-hooks-file.js";
-import {
-  mergeWrappedCommandHooks,
-  type WrappedCommandHooksTarget,
-} from "../../hooks/wrapped-command-hooks-merge.js";
+import { mergeWrappedCommandHooks } from "../../hooks/wrapped-command-hooks-merge.js";
 import type { HooksSection, PluginFileDelivery } from "../../sections/hooks-section.js";
 
 export type AntigravityHooks = HooksRouting & {
@@ -24,7 +22,7 @@ export type AntigravityHooks = HooksRouting & {
 };
 
 function targetOf(hooks: AntigravityHooks): WrappedCommandHooksTarget {
-  return { label: "Antigravity", descriptor: hooks };
+  return { label: "Antigravity", releasesPostToolAnswersAt: "PreInvocation", descriptor: hooks };
 }
 
 export function mergeAntigravityHooks(
@@ -46,8 +44,12 @@ export function antigravityPluginHooks(hooks: AntigravityHooks, pluginsDir: stri
       pluginDir: (plugin) => `${pluginsDir}${plugin}/`,
     },
   };
-  return (json, plugin) => {
-    const { content, warnings } = mergeWrappedCommandHooks(target, null, { json, plugin });
+  return (json, plugin, carriesRelease) => {
+    const { content, warnings } = mergeWrappedCommandHooks(target, null, {
+      json,
+      plugin,
+      carriesRelease,
+    });
     return { content, warnings: warnings.map((warning) => toolWarning("antigravity", warning)) };
   };
 }

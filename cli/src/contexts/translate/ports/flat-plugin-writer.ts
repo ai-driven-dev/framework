@@ -24,6 +24,7 @@ export interface FlatArtifactStep {
 export interface FlatHooksStep extends FlatArtifactStep {
   /** The plugin's hooks manifest, as the engine handed it over. */
   readonly hooksJson: string;
+  readonly carriesRelease: boolean;
 }
 
 export interface FlatMcpStep {

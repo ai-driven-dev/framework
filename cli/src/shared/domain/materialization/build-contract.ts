@@ -86,7 +86,8 @@ export type ArtifactPlacement =
 /** A plugin's hooks.json in a tool's own form, and what the conversion left out. */
 export type ConvertHooks = (
   json: string,
-  plugin: string
+  plugin: string,
+  carriesRelease: boolean
 ) => { content: string; warnings: readonly string[] };
 
 export type ArtifactContract =
@@ -214,6 +215,8 @@ export interface ShippedHooks {
   readonly json: string;
   readonly plugin: string;
   readonly locate?: (pluginPath: string) => string;
+  /** Whether this plugin runs the one release of held PostToolUse answers for every plugin. */
+  readonly carriesRelease?: boolean;
 }
 
 /** A config file a tool builds from every plugin at once. The build reads what it names and

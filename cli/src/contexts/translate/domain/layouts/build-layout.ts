@@ -5,7 +5,10 @@ import type {
   ToolBuildContract,
 } from "../../../../shared/domain/materialization/build-contract.js";
 import { basename } from "../../../../shared/domain/paths.model.js";
-import { PLUGIN_MCP_RELATIVE } from "../../../../shared/domain/plugin/canon-paths.js";
+import {
+  carriesRelease,
+  PLUGIN_MCP_RELATIVE,
+} from "../../../../shared/domain/plugin/canon-paths.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import { PLUGIN_HOOKS_RELATIVE } from "../canon-format.js";
 import { agentLinks } from "../rules/agent-markdown.js";
@@ -18,7 +21,7 @@ import { relativeLinks } from "../rules/links.js";
 import type { FrameworkBuildMode } from "../translate-profile.js";
 import { buildFlatPlans } from "./build-flat.js";
 import { flatRules } from "./build-flat-rules.js";
-import { agentFiles, isEntry } from "./build-shared.js";
+import { agentFiles, hooksPath, isEntry } from "./build-shared.js";
 
 /** Where a build puts one plugin for a tool and which rules each file goes through. The files
  * are named from the output directory; a flat layout leaves its MCP servers and hooks file to the
@@ -102,7 +105,9 @@ function marketplaceHooks(
   );
   const plans = shipped.map(({ relativePath, content }) => {
     const converted =
-      relativePath === PLUGIN_HOOKS_RELATIVE ? artifact.convertHooks?.(content, plugin) : undefined;
+      relativePath === PLUGIN_HOOKS_RELATIVE
+        ? artifact.convertHooks?.(content, plugin, carriesRelease(plugin, canon.components.hooks))
+        : undefined;
     warnings.push(...(converted?.warnings ?? []));
     return {
       source: relativePath,
@@ -117,13 +122,6 @@ function marketplaceHooks(
     };
   });
   return { plans, warnings };
-}
-
-// Only the hooks manifest has a place of its own; a script stays where the plugin ships it.
-function hooksPath(artifact: SupportedArtifact, plugin: string, relativePath: string): string {
-  return relativePath === PLUGIN_HOOKS_RELATIVE
-    ? artifactPath(artifact, plugin, relativePath)
-    : relativePath;
 }
 
 function marketplaceMcp(

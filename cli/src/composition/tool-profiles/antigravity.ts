@@ -71,8 +71,8 @@ const hooks = declareHooks(
       Stop: "Stop",
     },
     // Tool event handlers stay grouped under the plugin's matcher, its tools renamed to the ones
-    // `agy` calls. A PostToolUse answer injects nothing: only PostInvocation can, and it is not
-    // relayed. A PreToolUse deny reaches the model, and a silent handler answers `allow`.
+    // `agy` calls. A level 2 PostToolUse answer reaches the model at PreInvocation. A PreToolUse deny
+    // reaches the model, and a silent handler answers `allow`.
     toolNames: MATCHER_TOOLS,
     // `agy` reads a plugin's hooks from the `hooks.json` at its root.
     pluginFile: "hooks.json",
