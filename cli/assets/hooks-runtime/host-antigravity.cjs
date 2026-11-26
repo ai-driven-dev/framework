@@ -5,7 +5,8 @@
  * answer. The build puts one such adapter per tool at `hooks/lib/host.cjs`; the plugin tree
  * ships Claude Code's. Node built-ins only; anything unreadable is no event, and prints nothing.
  * A level 2 PostToolUse answer is held, and released at the next model call by this file run as the
- * PreInvocation hook's command: agy injects context only there (https://antigravity.google/docs/hooks).
+ * PreInvocation hook's command: agy takes no context from a PostToolUse answer, and that call's
+ * PreInvocation is where it can still inject (https://antigravity.google/docs/hooks).
  */
 const fs = require("node:fs");
 const os = require("node:os");

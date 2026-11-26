@@ -5,7 +5,8 @@
  * the test name says it is derived from a captured payload.
  * OpenCode and Kilo receive what their bridge sends, so they are read through the bridge in
  * `hooks-runtime-bridges.integration.test.ts`; garbage reaches all six adapters here, beside the
- * Antigravity adapter, which answers SessionStart and Stop, and holds a PostToolUse requirement for the next model call. The other hosts have their own file:
+ * Antigravity adapter, which answers SessionStart and Stop, and holds a PostToolUse requirement
+ * for the next model call. The other hosts have their own file:
  * `hooks-runtime-<host>.integration.test.ts`.
  */
 import { spawnSync } from "node:child_process";
@@ -262,6 +263,22 @@ describe("Antigravity CLI", () => {
 
         expect(JSON.parse(spawned.stdout)).toStrictEqual(injection);
       });
+
+      it.each([
+        ["garbage", "{oops"],
+        ["a payload with no conversation id", JSON.stringify({ hookEventName: "PreInvocation" })],
+      ])(
+        "prints nothing and exits 0 when its file runs as the hook command on %s",
+        (_name, input) => {
+          const spawned = spawnSync(process.execPath, [join(RUNTIME, "host-antigravity.cjs")], {
+            input,
+            encoding: "utf8",
+            env: { ...process.env, TMPDIR: temp, TEMP: temp, TMP: temp },
+          });
+
+          expect([spawned.status, spawned.stdout, spawned.stderr]).toStrictEqual([0, "", ""]);
+        }
+      );
     });
 
     it("continues the turn at the first Stop with the text as the reason", () => {
