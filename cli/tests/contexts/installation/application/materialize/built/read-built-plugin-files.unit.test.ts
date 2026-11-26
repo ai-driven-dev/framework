@@ -97,4 +97,23 @@ describe("reading a built flat plugin's files", () => {
     expect(paths).toContain("hooks/extra.js");
     expect(paths).not.toContain("unrelated.txt");
   });
+
+  it("keeps the commands of the plugin and none of another's", async () => {
+    const opencode = registeredTools().aiProfile(TOOL.opencode);
+    const fs = new InMemoryFileAdapter(
+      {
+        "/built/.opencode/commands/aidd-dev/implement.md": "c",
+        "/built/.opencode/commands/other/implement.md": "o",
+      },
+      [BUILT]
+    );
+
+    const files = await readBuiltFlatFiles(
+      fs,
+      { builtDir: BUILT, platform: process.platform },
+      { name: "aidd-dev", tool: opencode, extraPaths: new Set() }
+    );
+
+    expect(files.map((f) => f.relativePath)).toEqual([".opencode/commands/aidd-dev/implement.md"]);
+  });
 });

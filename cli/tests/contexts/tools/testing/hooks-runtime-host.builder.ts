@@ -39,6 +39,8 @@ interface Adapter {
   answer(answer: { level: 1 | 2; text?: string; person?: string }): void;
   continueTurn(text: string): void;
   refuse(reason: string): void;
+  ownFolder(folder: string, create: boolean): boolean;
+  hooksFolder(name: string, create: boolean): string | null;
 }
 
 export function samples(file: string): readonly CapturedSample[] {

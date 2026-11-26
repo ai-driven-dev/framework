@@ -88,20 +88,20 @@ function stopPayload(host, root, { active = false } = {}) {
 }
 
 /** One hook run in its own system temp folder: nothing a run leaves there may reach another. */
-function run(plugin, host, goal, payload, { tmp, cwd = os.tmpdir(), dir = hookFor(plugin, host) }) {
+function run(plugin, host, goal, payload, { tmp, cwd = os.tmpdir(), dir = hookFor(plugin, host), env = {} }) {
   // aidd-context has one Stop entry: memory.cjs answers the turn end and carries the artifacts' findings.
   const args = plugin === "aidd-context" && goal === "check" ? ["memory.cjs", "sync"] : ["artifacts.cjs", goal];
   const result = spawnSync(process.execPath, [path.join(dir, args[0]), args[1]], {
     input: typeof payload === "string" ? payload : JSON.stringify(payload),
     encoding: "utf8",
     cwd,
-    env: { ...ENV, TMPDIR: tmp, TEMP: tmp, TMP: tmp },
+    env: { ...ENV, TMPDIR: tmp, TEMP: tmp, TMP: tmp, ...env },
   });
   return { status: result.status, stdout: result.stdout, stderr: result.stderr };
 }
 
 /** A session in a fresh project: `files` (project-relative) written over it; each step is one hook run. */
-function session(plugin, host, files = {}) {
+function session(plugin, host, files = {}, env = {}) {
   const root = tempDir("artifact-project-");
   const tmp = tempDir("artifact-state-");
   const put = (rel, text) => {
@@ -110,7 +110,7 @@ function session(plugin, host, files = {}) {
   };
   for (const [rel, text] of Object.entries(files)) put(rel, text);
   const step = (goal, payload) => {
-    const result = run(plugin, host, goal, payload, { tmp });
+    const result = run(plugin, host, goal, payload, { tmp, env });
     assert.equal(result.status, 0, result.stderr);
     return result.stdout;
   };
@@ -423,8 +423,7 @@ test("a copied contract made invalid is one line naming it, exit 0", () => {
   }
 });
 
-test("a state folder that is not private is neither written nor read", () => {
-  if (typeof process.getuid !== "function") return;
+test("a state folder that is not private is neither written nor read", { skip: process.platform === "win32" }, () => {
   const s = session("aidd-pm", "claude", { [STORY]: BROKEN_STORY });
   const own = path.join(s.tmp, `aidd-hooks-${process.getuid()}`);
   fs.mkdirSync(own, { mode: 0o755 });
@@ -433,6 +432,25 @@ test("a state folder that is not private is neither written nor read", () => {
   s.wrote(STORY);
   assert.equal(s.stop(), "");
   assert.deepEqual(fs.readdirSync(own), []);
+});
+
+test("a state folder that is not a folder is neither written nor replaced", { skip: process.platform === "win32" }, () => {
+  const s = session("aidd-pm", "claude", { [STORY]: BROKEN_STORY });
+  const own = path.join(s.tmp, `aidd-hooks-${process.getuid()}`);
+  fs.writeFileSync(own, "keep", { mode: 0o700 });
+  s.start();
+  s.wrote(STORY);
+  assert.equal(s.stop(), "");
+  assert.equal(fs.readFileSync(own, "utf8"), "keep");
+});
+
+test("a state folder this user does not own is neither written nor read", { skip: process.platform === "win32" }, () => {
+  const preload = path.join(tempDir("artifact-preload-"), "other-user.cjs");
+  fs.writeFileSync(preload, "const real = process.getuid;\nprocess.getuid = () => real.call(process) + 1;\n");
+  const s = session("aidd-pm", "claude", { [STORY]: BROKEN_STORY }, { NODE_OPTIONS: `--require ${preload}` });
+  s.start();
+  s.wrote(STORY);
+  assert.equal(s.stop(), "");
 });
 
 test("a turn end with no write creates no state folder", () => {
