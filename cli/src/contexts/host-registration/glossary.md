@@ -27,3 +27,5 @@ The language of the `host-registration` context. A name in the code means what t
 | Dead, live | Whether the source a registration points at still exists. `unknown` means leave it alone | `HostActions.registrationState` |
 | Unanswerable | A registry that gave no reading: none to read, none established, or unreadable. Never read as empty | `answeredRegistry` |
 | Strict, best-effort | Strict: a host refusal throws before the work goes on. Best-effort: a refused step becomes a warning and a `Confirmation`, and the rest runs | `throwRefusal`, `bestEffortNativeCall` |
+| Plugin server | A host with no plugin verbs, which takes plugins through a server its own CLI starts. It is started for one piece of work and stopped after | `PluginServerSpec`, `HostPluginServer`, `PluginServerSession` |
+| Server ledger | Which plugins aidd installed in each host's server. The server keys plugins by id and holds anyone's, so only the ledger says a plugin is aidd's to refresh or remove | `ServerPluginLedger` |

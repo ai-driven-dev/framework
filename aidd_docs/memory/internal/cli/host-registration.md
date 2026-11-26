@@ -10,6 +10,7 @@ What a host (Claude Code, Codex, Copilot) says it registered, and the calls that
 | `HostMarketplaceRegistry` | which marketplaces the host knows, by name and source | `cli/src/contexts/host-registration/infrastructure/marketplace/marketplace-registry-reader.ts` |
 | `HostMarketplaceSources` | what the host's CLI says each marketplace points at | source readers in `cli/src/contexts/host-registration/infrastructure/marketplace/` |
 | `HostActions` | register, enable, update and remove through the host's CLI | `cli/src/contexts/host-registration/infrastructure/host-cli-adapter.ts` |
+| `HostPluginServer` | install, list and remove plugins through a server the host's CLI starts for one piece of work | `cli/src/contexts/host-registration/infrastructure/server/plugin-server-adapter.ts` |
 
 - Only the composition root imports `infrastructure/`; it is also the one reader of `tools`' declarations.
 
@@ -27,9 +28,15 @@ What a host (Claude Code, Codex, Copilot) says it registered, and the calls that
 - On Windows, `.cmd` and `.bat` launchers run through a shell, quoted by `windowsCommandLine`.
 - `scopeArgs` turns a scope into host flags; an uninstall uses the scope the plugin was enabled with.
 
+## Plugin server
+
+- A host with no plugin verbs declares a `pluginServer` in its native-registration section; selection is by that declaration, never by tool id.
+- The token is read from the server's startup banner and never stored or logged. `ServerPluginLedger` records which plugins aidd installed, beside the machine manifest.
+- A user-scope run installs from the framework's built tree; `clean --scope user` removes what the ledger holds and refuses when the host's binary is gone.
+
 ## Tests
 
-- Each port has one contract suite in `cli/tests/contexts/host-registration/testing/`, run on its fake and its real adapter.
+- Each port has one contract suite in `cli/tests/contexts/host-registration/testing/`, run on its fake and its real adapter. The server's real arm replays `tests/fixtures/hosts/kimi-0.42.0/server-exchanges.json`.
 - The real `HostActions` and `HostMarketplaceSources` arms run a `#!/bin/sh` script on a narrowed `PATH`: Windows skips them.
 - The disabled case is skipped where the host records none (`recordsDisabled: false`).
 - Mutation: one `host-registration` scope; `ports/` is excluded.

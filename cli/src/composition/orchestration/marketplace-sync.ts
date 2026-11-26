@@ -18,6 +18,7 @@ import { SharedFrameworkSource } from "../../contexts/machine-claims/application
 import { ActivateNativeTools } from "../../orchestration/sync/settings/activate-native-tools.use-case.js";
 import { BuildMarketplaceForTool } from "../../orchestration/sync/settings/build-marketplace-for-tool.use-case.js";
 import type { ClaimsSource } from "../../orchestration/sync/settings/claims-view-of.js";
+import { ActivateHostTools } from "../../orchestration/sync/settings/host/activate-host-tools.use-case.js";
 import { RecordSyncActivation } from "../../orchestration/sync/settings/record-sync-activation.use-case.js";
 import { RunSettingsSync } from "../../orchestration/sync/settings/run-settings-sync.use-case.js";
 import { SyncNativeActivation } from "../../orchestration/sync/settings/sync-native-activation.use-case.js";
@@ -34,10 +35,10 @@ function nativeActivationOf(
   base: Base,
   inst: Installation,
   build: BuildMarketplaceForTool
-): ActivateNativeTools {
+): ActivateHostTools {
   const { tools, fs, logger } = base;
   const { claimedRefs } = inst.registrationRecordRules;
-  return new ActivateNativeTools({
+  const native = new ActivateNativeTools({
     registerPluginWithHost: new RegisterPluginWithHost({
       fs,
       catalogs: catalogReaders(fs),
@@ -56,6 +57,13 @@ function nativeActivationOf(
     logger,
     marketplace: { userCacheRoot: userConfigDir },
     planRefs: new PlanRefsToEnable({ frameworkName: FRAMEWORK_MARKETPLACE_NAME, claimedRefs }),
+  });
+  return new ActivateHostTools({
+    native,
+    serverPlugins: base.syncServerPlugins,
+    buildMarketplace: build,
+    logger,
+    frameworkName: FRAMEWORK_MARKETPLACE_NAME,
   });
 }
 

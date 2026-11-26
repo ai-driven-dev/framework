@@ -1,3 +1,4 @@
+import type { NativeRegistrationSection } from "../../contexts/host-registration/contract/native-registration-spec.js";
 import {
   buildKimiFlatContract,
   buildKimiPluginContract,
@@ -84,3 +85,18 @@ export const kimi = defineAiTool({
 
   linkSyntax: [],
 });
+
+/** Kimi has no plugin verbs: its own `kimi web` server installs a plugin from a local directory,
+ * lists and removes them, behind the token its startup banner prints
+ * (https://www.kimi.com/code/docs/en/kimi-code-cli/guides/web.html, a bearer per
+ * https://www.kimi.com/code/docs/en/kimi-code-cli/reference/server-api.html). The plugin routes
+ * and the refusal code are observed on 0.42.0: `tests/fixtures/hosts/kimi-0.42.0`. */
+export const kimiNativeRegistration: NativeRegistrationSection = {
+  pluginServer: {
+    binary: "kimi",
+    args: ["web", "--no-open", "--port", "0"],
+    bannerPattern: "Local:\\s+(\\S+?)/?#token=(\\S+)",
+    pluginsPath: "/api/v1/plugins",
+    notInstalledCode: 40419,
+  },
+};

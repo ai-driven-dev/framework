@@ -33,12 +33,14 @@ export function withNativeRegistration<P extends ContentProfile>(
   return {
     ...profile,
     nativeActivation: () => activation,
+    pluginServer: () => section.pluginServer,
     marketplaceRegistration: () => marketplace,
     hostRefInUse: (enabled: boolean) => activation?.takesRefForInUse(enabled) ?? true,
     pluginEnablementIsMachineGlobal: () => activation?.scopesEnablement() !== true,
     supportsUserScopeActivation: () =>
       profile.supportsUserScopeActivation() ||
-      (activation !== undefined && profile.plugins() !== null),
+      ((activation !== undefined || section.pluginServer !== undefined) &&
+        profile.plugins() !== null),
     machineLocalFiles: () => marketplace?.machineLocalFiles() ?? [],
   };
 }

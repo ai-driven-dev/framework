@@ -6,14 +6,12 @@ import { isRefOnHost } from "../domain/record/host-ref.js";
 import type { HostActions } from "../ports/host-actions.js";
 import type { HostCliShape } from "../ports/host-cli-shape.js";
 import {
+  HOST_COMMAND_TIMEOUT_MS,
   hostExecutableLookup,
   resolveExecutableOnPath,
   runsThroughShell,
   windowsCommandLine,
 } from "./executable-on-path.js";
-
-// `plugin add/install` may fetch and cache a marketplace snapshot from a git remote.
-const COMMAND_TIMEOUT_MS = 120000;
 
 /** Whether a plugin list names a plugin of the marketplace installed beyond the user's scope. A
  * list that does not parse counts as yes, like one that could not be read. */
@@ -56,7 +54,7 @@ export class HostCliAdapter implements HostActions {
     cwd?: string
   ): SpawnSyncReturns<string> {
     const options = {
-      timeout: COMMAND_TIMEOUT_MS,
+      timeout: HOST_COMMAND_TIMEOUT_MS,
       stdio,
       encoding: "utf-8" as const,
       ...(cwd === undefined ? {} : { cwd }),

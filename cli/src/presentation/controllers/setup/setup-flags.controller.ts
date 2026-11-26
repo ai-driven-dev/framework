@@ -81,8 +81,10 @@ export function parseToolIds(
   return selectTools(aiIds, ids, tools);
 }
 
-/** A catalog whose AI profiles say whether their own CLI activates plugins. */
-export type SetupCatalog = ToolCatalog<AiToolProfile & { nativeActivation(): object | undefined }>;
+/** A catalog whose AI profiles say whether their own CLI, or their own server, takes plugins. */
+export type SetupCatalog = ToolCatalog<
+  AiToolProfile & { nativeActivation(): object | undefined; pluginServer(): object | undefined }
+>;
 
 export function activatesAtUserScope<A extends AiToolProfile>(
   profile: A | IdeToolProfile
@@ -98,6 +100,7 @@ export function globalSetupHelp(catalog: SetupCatalog): string {
     .filter(activatesAtUserScope);
   const tools = global.map((profile) => profile.toolId);
   const native = global.filter((profile) => profile.nativeActivation() !== undefined);
+  const served = global.filter((profile) => profile.pluginServer() !== undefined);
   const copying = global.filter((profile) => profile.plugins()?.copiesFilesGlobally());
   const where = (profile: AiToolProfile) =>
     profile.plugins()?.userPluginsBaseDir("~")?.replaceAll("\\", "/");
@@ -106,6 +109,11 @@ export function globalSetupHelp(catalog: SetupCatalog): string {
     "Global:",
     `  Pass --ide ${tools.join(",")} (one or more, no editor) and --plugins all, recommended, none or names.`,
     `  ${native.map((p) => p.toolId).join(", ")} enable the plugins through their own CLI, which must be on PATH.`,
+    ...(served.length === 0
+      ? []
+      : [
+          `  ${served.map((p) => p.toolId).join(", ")} install the plugins through their own server, which their CLI starts and which must be on PATH.`,
+        ]),
     `  ${copying.map((p) => `${p.toolId} gets their files in ${where(p)}`).join(", ")}.`,
     "  `aidd sync --global` refreshes them from the framework source.",
   ].join("\n");
