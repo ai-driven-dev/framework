@@ -84,6 +84,19 @@ Claude Code takes anthropic, Codex openai, Copilot openai or anthropic, Cursor a
 - Effort: smart runs at `high`, the others at `medium`. Mistral Small takes no effort between `none` and `high`, so the light tier runs at `high`.
 - The command ends with a report: per IDE, the model of the main session and of each agent, and the plugins it updated.
 
+### Change the recommended models
+
+For an installation managed by AIDD, `--agents-only` applies the change to the subagents. For example, choose the OpenAI profile for Copilot or let its agents inherit the session model:
+
+```sh
+aidd setup --ide copilot --provider openai --agents-only
+aidd setup --ide copilot --provider none --agents-only
+```
+
+For a native Copilot CLI installation, use `/subagents` to change the model of an installed agent. Copilot CLI falls back to the session settings if it cannot use the recommended model or effort. [Copilot CLI model selection](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference#custom-agent-frontmatter-fields)
+
+Claude Code applies its allowlist and falls back to an allowed model. Cursor applies its team and plan restrictions and can fall back to a compatible model. [Claude Code allowlists](https://code.claude.com/docs/en/sub-agents#when-an-allowlist-blocks-a-subagent-model) · [Cursor model configuration](https://cursor.com/docs/subagents#when-the-configured-model-wont-be-used)
+
 ## 🚧 Limits
 
 - **Tools:** every agent inherits the calling session's tools and permissions; what it writes is an instruction, not a restriction.

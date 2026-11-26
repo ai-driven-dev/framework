@@ -55,7 +55,7 @@ Choose your tool. [Claude Code](#claude-code) · [GitHub Copilot](#github-copilo
 
 The commands below follow the latest version available for each tool in the [AIDD distribution repository](https://github.com/ai-driven-dev/marketplaces). Each tool also has [release ZIPs](https://github.com/ai-driven-dev/framework/releases).
 
-Claude Code, Cursor, and Copilot release builds use AIDD’s recommended Anthropic models and effort for the orchestration agents. The Codex flat distribution uses OpenAI. These recommendations apply to subagents. See [agent model settings](SUBAGENTS.md#-models) for other provider choices.
+Claude Code, Cursor, and Copilot release builds use AIDD’s recommended Anthropic models and effort for the orchestration agents. The Codex flat distribution uses OpenAI. These defaults apply to subagents. [Change an agent’s model or return to the session default](SUBAGENTS.md#change-the-recommended-models).
 
 ### Claude Code
 
