@@ -6,8 +6,8 @@ import type {
 } from "../../../../shared/domain/materialization/build-contract.js";
 import { basename } from "../../../../shared/domain/paths.model.js";
 import {
+  carriesRelease,
   PLUGIN_MCP_RELATIVE,
-  shipsHostAdapter,
 } from "../../../../shared/domain/plugin/canon-paths.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import { PLUGIN_HOOKS_RELATIVE } from "../canon-format.js";
@@ -106,7 +106,7 @@ function marketplaceHooks(
   const plans = shipped.map(({ relativePath, content }) => {
     const converted =
       relativePath === PLUGIN_HOOKS_RELATIVE
-        ? artifact.convertHooks?.(content, plugin, shipsHostAdapter(canon.components.hooks))
+        ? artifact.convertHooks?.(content, plugin, carriesRelease(plugin, canon.components.hooks))
         : undefined;
     warnings.push(...(converted?.warnings ?? []));
     return {

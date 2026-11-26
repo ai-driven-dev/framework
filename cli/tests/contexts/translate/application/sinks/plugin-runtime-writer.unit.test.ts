@@ -49,7 +49,7 @@ describe("one plugin's hooks and MCP servers", () => {
       writePluginHooks(deps, flatTarget(), {
         name: "plug",
         hooks: '{"hooks":{}}',
-        hostAdapter: false,
+        carriesRelease: false,
       })
     ).resolves.toBe(1);
     expect(hooks.map((step) => [step.pluginName, step.hooksJson])).toEqual([
@@ -62,7 +62,7 @@ describe("one plugin's hooks and MCP servers", () => {
     const logger = deps.logger;
 
     await expect(
-      writePluginHooks(deps, flatTarget(), { name: "plug", hooks: null, hostAdapter: false })
+      writePluginHooks(deps, flatTarget(), { name: "plug", hooks: null, carriesRelease: false })
     ).resolves.toBe(0);
     expect([hooks, logger.warnMessages]).toEqual([[], []]);
   });
@@ -82,7 +82,7 @@ describe("one plugin's hooks and MCP servers", () => {
     );
 
     await expect(
-      writePluginHooks(deps, target, { name: "plug", hooks: "{}", hostAdapter: false })
+      writePluginHooks(deps, target, { name: "plug", hooks: "{}", carriesRelease: false })
     ).resolves.toBe(0);
     expect(hooks).toEqual([]);
     expect(deps.logger.warnMessages).toEqual([

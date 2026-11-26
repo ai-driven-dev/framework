@@ -8,7 +8,7 @@ type RuntimeDeps = Pick<DiskSinkDeps, "flat" | "logger">;
 interface FoldedHooks {
   readonly name: string;
   readonly hooks: string | null;
-  readonly hostAdapter: boolean;
+  readonly carriesRelease: boolean;
 }
 
 interface FoldedMcp {
@@ -21,7 +21,7 @@ interface FoldedMcp {
 export async function writePluginHooks(
   deps: RuntimeDeps,
   t: DiskTarget,
-  { name, hooks, hostAdapter }: FoldedHooks
+  { name, hooks, carriesRelease }: FoldedHooks
 ): Promise<number> {
   if (hooks === null) return 0;
   const artifact = t.contract.artifacts.hooks;
@@ -34,7 +34,7 @@ export async function writePluginHooks(
     artifact,
     pluginName: name,
     hooksJson: hooks,
-    hostAdapter,
+    carriesRelease,
   });
 }
 

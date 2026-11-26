@@ -116,13 +116,13 @@ type FlatHooksFile = NonNullable<
 export function mergeFlatHooks(
   { file, contract }: { file: FlatHooksFile; contract: ToolBuildContract },
   existing: string | null,
-  shipped: Pick<ShippedHooks, "json" | "plugin"> & { readonly hostAdapter: boolean }
+  shipped: Pick<ShippedHooks, "json" | "plugin"> & { readonly carriesRelease: boolean }
 ): { content: string; warnings: readonly string[] } {
-  const { json, plugin, hostAdapter } = shipped;
+  const { json, plugin, carriesRelease } = shipped;
   return file.merge(existing, {
     json,
     plugin,
-    hostAdapter,
+    carriesRelease,
     locate: (pluginPath) => `./${flatCommandPath(contract, pluginPath, plugin)}`,
   });
 }

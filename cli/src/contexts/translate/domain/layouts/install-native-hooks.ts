@@ -27,7 +27,7 @@ export function nativeHooksPlan(
   at: HooksTarget & {
     readonly pluginRoot: string;
     readonly pluginName: string;
-    readonly hostAdapter: boolean;
+    readonly carriesRelease: boolean;
   }
 ): ComponentPlan | null {
   const { tool, plugins, pluginRoot } = at;
@@ -39,7 +39,7 @@ export function nativeHooksPlan(
       source,
       path,
       content,
-      shape: hooksManifestShape(tool, at.pluginName, at.hostAdapter),
+      shape: hooksManifestShape(tool, at.pluginName, at.carriesRelease),
       rootToken: plugins.rootToken(),
     };
   }
@@ -61,13 +61,13 @@ export function nativeHooksPlan(
 function hooksManifestShape(
   tool: TranslatedAiTool,
   pluginName: string,
-  hostAdapter: boolean
+  carriesRelease: boolean
 ): ComponentPlan["shape"] | undefined {
   const hooks = tool.buildContract("marketplace")?.artifacts.hooks;
   if (!hooks?.supported) return undefined;
   const { convertHooks, transform } = hooks;
   if (convertHooks !== undefined) {
-    return (text) => convertHooks(text, pluginName, hostAdapter).content;
+    return (text) => convertHooks(text, pluginName, carriesRelease).content;
   }
   return transform === undefined
     ? undefined

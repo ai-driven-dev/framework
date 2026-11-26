@@ -19,7 +19,7 @@ function stepFor(over: Parameters<typeof aSupportedArtifact>[0] = {}) {
     artifact,
     pluginName: "plug",
     hooksJson: "{}",
-    hostAdapter: false,
+    carriesRelease: false,
   };
 }
 

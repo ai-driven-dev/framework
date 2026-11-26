@@ -195,7 +195,7 @@ describe("wrapped command hooks", () => {
           },
         }),
         plugin: "p",
-        hostAdapter: true,
+        carriesRelease: true,
       });
 
       expect(wrappedCommandHookEntries(relaying, content, "p").map(({ event }) => event)).toEqual([

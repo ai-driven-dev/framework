@@ -87,7 +87,7 @@ export type ArtifactPlacement =
 export type ConvertHooks = (
   json: string,
   plugin: string,
-  hostAdapter: boolean
+  carriesRelease: boolean
 ) => { content: string; warnings: readonly string[] };
 
 export type ArtifactContract =
@@ -215,8 +215,8 @@ export interface ShippedHooks {
   readonly json: string;
   readonly plugin: string;
   readonly locate?: (pluginPath: string) => string;
-  /** Whether the plugin ships the host adapter its hooks speak through, at `hooks/lib/host.cjs`. */
-  readonly hostAdapter?: boolean;
+  /** Whether this plugin runs the one release of held PostToolUse answers for every plugin. */
+  readonly carriesRelease?: boolean;
 }
 
 /** A config file a tool builds from every plugin at once. The build reads what it names and

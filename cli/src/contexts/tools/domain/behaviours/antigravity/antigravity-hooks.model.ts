@@ -44,11 +44,11 @@ export function antigravityPluginHooks(hooks: AntigravityHooks, pluginsDir: stri
       pluginDir: (plugin) => `${pluginsDir}${plugin}/`,
     },
   };
-  return (json, plugin, hostAdapter) => {
+  return (json, plugin, carriesRelease) => {
     const { content, warnings } = mergeWrappedCommandHooks(target, null, {
       json,
       plugin,
-      hostAdapter,
+      carriesRelease,
     });
     return { content, warnings: warnings.map((warning) => toolWarning("antigravity", warning)) };
   };

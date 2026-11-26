@@ -87,7 +87,7 @@ describe("how agy takes what a PostToolUse handler requires", () => {
     const { content } = flatMerge?.(null, {
       json: post,
       plugin: "aidd-dev",
-      hostAdapter: true,
+      carriesRelease: true,
     }) ?? {
       content: "",
     };

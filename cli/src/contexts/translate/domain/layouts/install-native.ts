@@ -1,6 +1,6 @@
 import { reshapeFrontmatter, serializeFrontmatter } from "../../../../shared/domain/markdown.js";
 import type { ReadonlyNoticeList } from "../../../../shared/domain/materialization/plugin-install-notice.js";
-import { shipsHostAdapter } from "../../../../shared/domain/plugin/canon-paths.js";
+import { carriesRelease } from "../../../../shared/domain/plugin/canon-paths.js";
 import type {
   PluginComponentFile,
   PluginDistribution,
@@ -36,7 +36,7 @@ export function nativeInstallPlan(
     plugins,
     pluginRoot,
     pluginName: dist.manifest.name,
-    hostAdapter: shipsHostAdapter(dist.components.hooks),
+    carriesRelease: carriesRelease(dist.manifest.name, dist.components.hooks),
   };
   const plans = dist.files.flatMap((file) => nativeFilePlan(file, at) ?? []);
   const manifest = manifestPlan(dist, { tool, plugins, pluginRoot, manifestPaths });
@@ -50,7 +50,7 @@ export function nativeInstallPlan(
 interface NativeAt extends NativeTarget {
   readonly pluginRoot: string;
   readonly pluginName: string;
-  readonly hostAdapter: boolean;
+  readonly carriesRelease: boolean;
 }
 
 function nativeFilePlan(file: PluginComponentFile, at: NativeAt): ComponentPlan | null {

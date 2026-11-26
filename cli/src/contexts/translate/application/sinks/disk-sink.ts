@@ -1,8 +1,8 @@
 import { join } from "node:path";
 import { placedRulesGlobOf } from "../../../../shared/domain/materialization/artifact-path.js";
 import {
+  carriesRelease,
   SOURCE_PLUGIN_MANIFEST_RELATIVE,
-  shipsHostAdapter,
 } from "../../../../shared/domain/plugin/canon-paths.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { PluginName } from "../../../../shared/domain/plugin/plugin-name.js";
@@ -78,7 +78,7 @@ export class DiskSink implements PluginTreeSink {
       (await writePluginHooks(this.deps, t, {
         name: plugin.name,
         hooks,
-        hostAdapter: shipsHostAdapter(canon.components.hooks),
+        carriesRelease: carriesRelease(plugin.name, canon.components.hooks),
       })) + (await writePluginMcp(this.deps, t, { name: plugin.name, mcp }));
     return {
       files: manifest + files.length + folded,

@@ -33,8 +33,8 @@ export interface WrappedCommandHooksTarget {
     readonly pluginDir: (plugin: string) => string;
   };
   /** The host's event at which a PostToolUse answer can reach the model, when it takes none at
-   * PostToolUse itself: a plugin with a PostToolUse handler and the host adapter gets a handler
-   * there that releases it. */
+   * PostToolUse itself: the plugin that carries the release gets a handler there that releases
+   * every plugin's held answers. */
   readonly releasesPostToolAnswersAt?: string;
   readonly descriptor: {
     readonly flat: { readonly scriptsDir: string };
@@ -78,15 +78,15 @@ function scriptPathOf(
 /** Seconds the handler that releases a held answer may run: it only reads one small file. */
 const RELEASE_TIMEOUT = 5;
 
-/** A plugin that holds a PostToolUse answer through the host adapter gets the handler that releases
- * it at the host's own event: the plugin's copy of the adapter, run as that hook's command. */
+/** The plugin that carries the release gets the handler that releases held answers at the host's own
+ * event: its copy of the host adapter, run as that hook's command. */
 function addReleaseHandler(
   target: WrappedCommandHooksTarget,
-  { plugin: pluginName, locate = (pluginPath) => pluginPath, hostAdapter }: ShippedHooks,
+  { plugin: pluginName, locate = (pluginPath) => pluginPath, carriesRelease }: ShippedHooks,
   handlers: Record<string, (ProjectHookEntry | HandlerGroup)[]>
 ): void {
   const releaseEvent = target.releasesPostToolAnswersAt;
-  if (!hostAdapter || releaseEvent === undefined || handlers.PostToolUse === undefined) return;
+  if (!carriesRelease || releaseEvent === undefined) return;
   const adapter = scriptPathOf(target, { pluginName, suffix: HOST_ADAPTER_PATH, locate });
   const command = `node ./${adapter}`;
   handlers[releaseEvent] = [

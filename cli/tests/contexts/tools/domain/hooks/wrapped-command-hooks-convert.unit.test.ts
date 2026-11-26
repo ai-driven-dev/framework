@@ -23,8 +23,8 @@ const post = (matcher: string) =>
     hooks: { PostToolUse: [{ matcher, hooks: [{ type: "command", command: "run", timeout: 5 }] }] },
   });
 
-const handlersOf = (on: WrappedCommandHooksTarget, json: string, hostAdapter?: boolean) =>
-  convert(on, { json, plugin: "p", hostAdapter }).handlers;
+const handlersOf = (on: WrappedCommandHooksTarget, json: string, carriesRelease?: boolean) =>
+  convert(on, { json, plugin: "p", carriesRelease }).handlers;
 
 /** The handler at the later event: its wrapper's command, and what the wrapper runs. */
 function released(on: WrappedCommandHooksTarget, matcher: string) {
@@ -60,16 +60,16 @@ describe("a host that takes a PostToolUse answer only at a later event", () => {
     expect(handlersOf(relaying, post("Write"), shipped)).not.toHaveProperty("Later");
   });
 
-  it("adds nothing for a plugin with no PostToolUse handler", () => {
+  it("adds it for the plugin that carries the release even with no PostToolUse handler of its own", () => {
     const json = JSON.stringify({
       hooks: { SessionStart: [{ hooks: [{ type: "command", command: "run" }] }] },
     });
 
-    expect(handlersOf(relaying, json, true)).not.toHaveProperty("Later");
+    expect(handlersOf(relaying, json, true)).toHaveProperty("Later");
   });
 
-  it("adds nothing when every PostToolUse group is skipped", () => {
-    expect(handlersOf(relaying, post("Delete"), true)).toEqual({});
+  it("adds only the release when every PostToolUse group is skipped", () => {
+    expect(Object.keys(handlersOf(relaying, post("Delete"), true))).toEqual(["Later"]);
   });
 
   it("adds nothing for a host that names no such event", () => {
