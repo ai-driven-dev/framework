@@ -56,8 +56,10 @@ export function recordingScript(tail: string): string {
 
 // A script that exits without ever reading its stdin.
 export const DEAF = "process.exit(0);";
-// A script that never exits, and says who it is so the test can see it killed.
-export const HANG = `require("node:fs").writeFileSync(require("node:path").resolve(__dirname, "../../hang.pid"), String(process.pid)); setInterval(() => {}, 1000);`;
+// A script that outlasts the bridge's 5 s timeout, and says who it is so the test can see it killed.
+// It ends by itself after 8 s: a bridge that stopped bounding a synchronous run would block its
+// process for that long, instead of for good.
+export const HANG = `require("node:fs").writeFileSync(require("node:path").resolve(__dirname, "../../hang.pid"), String(process.pid)); setTimeout(() => process.exit(0), 8000);`;
 
 export interface Server {
   event: (input: { event: unknown }) => Promise<void>;

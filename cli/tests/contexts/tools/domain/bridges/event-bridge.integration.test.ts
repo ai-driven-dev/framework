@@ -164,8 +164,6 @@ describe("the bridge body every host shares, in Kilo's module", () => {
     }
   });
 
-  // `kilo run` drains the session as soon as its holds are zero: a follow-up requested after the
-  // event hook first yielded lands too late.
   it("requests a Stop follow-up before the idle event's hook first yields", async () => {
     const { directory, emit, server, prompts } = await open(host);
     await emit(sessionStarted(host, "s1", directory));
@@ -277,13 +275,17 @@ describe("the bridge body every host shares, in Kilo's module", () => {
     await expect(server["tool.execute.before"](call, output)).resolves.toBeUndefined();
   });
 
-  it("sends no follow-up when a Stop script fails", async () => {
-    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+  it.each([
+    { kind: "nonzero exit", error: "exited with code 7", input: (dir: string) => dir },
+    { kind: "spawn failure", error: "ENOENT", input: (dir: string) => join(dir, "absent") },
+  ])("reports a Stop script's $kind and sends no follow-up", async ({ error, input }) => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const hooksJson = JSON.stringify({ hooks: { Stop: [command("exit7.cjs")] } });
-    const { emit, prompts } = await open(host, hooksJson);
+    const { emit, prompts } = await open(host, hooksJson, input);
 
     await emit({ type: "session.idle", properties: { sessionID: "s1" } });
 
+    expect(warn).toHaveBeenCalledWith(failedScript(error));
     expect(prompts).toStrictEqual([]);
   });
 
@@ -437,6 +439,35 @@ describe("the bridge body every host shares, in Kilo's module", () => {
     });
 
     expect(answered).not.toBe("still waiting");
+    await vi.waitFor(() => expect(() => process.kill(pid, 0)).toThrow(), { timeout: 2000 });
+  }, 15_000);
+
+  it.each(["Stop", "PostToolUse"])(
+    "reports a %s script whose argument spawn refuses, never throwing into the host",
+    async (event) => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+      const hooksJson = JSON.stringify({ hooks: { [event]: [command("exit7.cjs\u0000")] } });
+      const { emit, tool } = await open(host, hooksJson);
+
+      await emit({ type: "session.idle", properties: { sessionID: "s1" } });
+      await tool("grind");
+
+      expect(warn).toHaveBeenCalledWith(expect.stringMatching(/failed: .*ERR_INVALID_ARG_VALUE/));
+    }
+  );
+
+  it("stops a Stop script that never exits, reports it and sends no follow-up", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const hooksJson = JSON.stringify({ hooks: { Stop: [command("hang.cjs")] } });
+    const { directory, emit, prompts } = await open(host, hooksJson);
+    const started = Date.now();
+
+    await emit({ type: "session.idle", properties: { sessionID: "s1" } });
+
+    const pid = Number(await readFile(join(directory, "hang.pid"), "utf8"));
+    expect(Date.now() - started).toBeLessThan(7000);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("ETIMEDOUT"));
+    expect(prompts).toStrictEqual([]);
     await vi.waitFor(() => expect(() => process.kill(pid, 0)).toThrow(), { timeout: 2000 });
   }, 15_000);
 });

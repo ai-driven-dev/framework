@@ -302,20 +302,29 @@ function exitDescription(code, signal) {
   return "exited with code " + String(code) + (signal === null ? "" : " (" + signal + ")");
 }
 
-/** Runs one hook script under node from the plugin's scripts folder, in the payload's directory,
- * with its payload on stdin, and collects what it wrote. Never process.execPath: a host's own path
- * need not be a Node runtime. */
+/** What both runners spawn: a hook script under node from the plugin's scripts folder, in the
+ * payload's directory, with its payload on stdin. Never process.execPath: a host's own path need
+ * not be a Node runtime. */
+function scriptRun(script, args, payload, directory) {
+  return {
+    argv: [HOOKS_DIR + script, ...args],
+    options: { cwd: directory, timeout: 5000 },
+    input: JSON.stringify(payload),
+  };
+}
+
+function failedRun(error) {
+  return { error, code: null, signal: null, stdout: "", stderr: "" };
+}
+
 function runCapture(script, args, payload, directory) {
   return new Promise((resolve) => {
-    const failed = (error) => resolve({ error, code: null, signal: null, stdout: "", stderr: "" });
+    const failed = (error) => resolve(failedRun(error));
     let stdout = "";
     let stderr = "";
     try {
-      const child = spawn("node", [HOOKS_DIR + script, ...args], {
-        cwd: directory,
-        stdio: ["pipe", "pipe", "pipe"],
-        timeout: 5000,
-      });
+      const { argv, options, input } = scriptRun(script, args, payload, directory);
+      const child = spawn("node", argv, { ...options, stdio: ["pipe", "pipe", "pipe"] });
       child.stdout.on("data", (chunk) => {
         stdout += chunk;
       });
@@ -327,7 +336,7 @@ function runCapture(script, args, payload, directory) {
       child.on("close", (code, signal) => resolve({ code, signal, stdout, stderr }));
       // A script that never reads its stdin must not throw.
       child.stdin.on("error", () => {});
-      child.stdin.end(JSON.stringify(payload));
+      child.stdin.end(input);
     } catch (error) {
       // An argument spawn refuses (a NUL byte) throws before any child exists.
       failed(error);
@@ -336,13 +345,13 @@ function runCapture(script, args, payload, directory) {
 }
 
 function runCaptureSync(script, args, payload, directory) {
-  const run = spawnSync("node", [HOOKS_DIR + script, ...args], {
-    cwd: directory,
-    input: JSON.stringify(payload),
-    encoding: "utf8",
-    timeout: 5000,
-  });
-  return { error: run.error, code: run.status, signal: run.signal, stdout: run.stdout ?? "", stderr: run.stderr ?? "" };
+  try {
+    const { argv, options, input } = scriptRun(script, args, payload, directory);
+    const run = spawnSync("node", argv, { ...options, input, encoding: "utf8" });
+    return { error: run.error, code: run.status, signal: run.signal, stdout: run.stdout ?? "", stderr: run.stderr ?? "" };
+  } catch (error) {
+    return failedRun(error);
+  }
 }
 
 /** A script's run, or null once a script that failed to run, or exited other than 0 or 2, is
@@ -583,9 +592,8 @@ function isFollowUp(parts) {
   return parts.some((part) => part.metadata?.aidd === FOLLOW_UP.aidd);
 }
 
-/** The scripts run in turn without yielding, so each follow-up is requested before the event hook
- * first yields. Returns the follow-ups still in flight: the prompt is the session's next turn, and
- * the turn end must not hold it. */
+/** Returns the follow-ups still in flight: the prompt is the session's next turn, and the turn end
+ * must not hold it. */
 function runStop(sessionId, directory, { client, method, show }) {
   const sends = [];
   for (const call of stopCallsFor(sessionId, directory)) {
@@ -647,20 +655,29 @@ function exitDescription(code, signal) {
   return "exited with code " + String(code) + (signal === null ? "" : " (" + signal + ")");
 }
 
-/** Runs one hook script under node from the plugin's scripts folder, in the payload's directory,
- * with its payload on stdin, and collects what it wrote. Never process.execPath: a host's own path
- * need not be a Node runtime. */
+/** What both runners spawn: a hook script under node from the plugin's scripts folder, in the
+ * payload's directory, with its payload on stdin. Never process.execPath: a host's own path need
+ * not be a Node runtime. */
+function scriptRun(script, args, payload, directory) {
+  return {
+    argv: [HOOKS_DIR + script, ...args],
+    options: { cwd: directory, timeout: 5000 },
+    input: JSON.stringify(payload),
+  };
+}
+
+function failedRun(error) {
+  return { error, code: null, signal: null, stdout: "", stderr: "" };
+}
+
 function runCapture(script, args, payload, directory) {
   return new Promise((resolve) => {
-    const failed = (error) => resolve({ error, code: null, signal: null, stdout: "", stderr: "" });
+    const failed = (error) => resolve(failedRun(error));
     let stdout = "";
     let stderr = "";
     try {
-      const child = spawn("node", [HOOKS_DIR + script, ...args], {
-        cwd: directory,
-        stdio: ["pipe", "pipe", "pipe"],
-        timeout: 5000,
-      });
+      const { argv, options, input } = scriptRun(script, args, payload, directory);
+      const child = spawn("node", argv, { ...options, stdio: ["pipe", "pipe", "pipe"] });
       child.stdout.on("data", (chunk) => {
         stdout += chunk;
       });
@@ -672,7 +689,7 @@ function runCapture(script, args, payload, directory) {
       child.on("close", (code, signal) => resolve({ code, signal, stdout, stderr }));
       // A script that never reads its stdin must not throw.
       child.stdin.on("error", () => {});
-      child.stdin.end(JSON.stringify(payload));
+      child.stdin.end(input);
     } catch (error) {
       // An argument spawn refuses (a NUL byte) throws before any child exists.
       failed(error);
@@ -681,13 +698,13 @@ function runCapture(script, args, payload, directory) {
 }
 
 function runCaptureSync(script, args, payload, directory) {
-  const run = spawnSync("node", [HOOKS_DIR + script, ...args], {
-    cwd: directory,
-    input: JSON.stringify(payload),
-    encoding: "utf8",
-    timeout: 5000,
-  });
-  return { error: run.error, code: run.status, signal: run.signal, stdout: run.stdout ?? "", stderr: run.stderr ?? "" };
+  try {
+    const { argv, options, input } = scriptRun(script, args, payload, directory);
+    const run = spawnSync("node", argv, { ...options, input, encoding: "utf8" });
+    return { error: run.error, code: run.status, signal: run.signal, stdout: run.stdout ?? "", stderr: run.stderr ?? "" };
+  } catch (error) {
+    return failedRun(error);
+  }
 }
 
 /** A script's run, or null once a script that failed to run, or exited other than 0 or 2, is
@@ -928,9 +945,8 @@ function isFollowUp(parts) {
   return parts.some((part) => part.metadata?.aidd === FOLLOW_UP.aidd);
 }
 
-/** The scripts run in turn without yielding, so each follow-up is requested before the event hook
- * first yields. Returns the follow-ups still in flight: the prompt is the session's next turn, and
- * the turn end must not hold it. */
+/** Returns the follow-ups still in flight: the prompt is the session's next turn, and the turn end
+ * must not hold it. */
 function runStop(sessionId, directory, { client, method, show }) {
   const sends = [];
   for (const call of stopCallsFor(sessionId, directory)) {

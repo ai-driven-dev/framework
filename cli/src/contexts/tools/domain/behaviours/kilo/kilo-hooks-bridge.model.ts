@@ -14,11 +14,9 @@
  *
  * The Stop follow-up goes through `promptAsync`, which returns once queued.
  *
- * Limit: the Stop script runs synchronously inside the event hook, blocking the whole Kilo process
- * for up to the script's 5 s on every idle. `kilo run` asks the server to drain the session once
- * its prompt returns and exits at `session.drained`; the drain waits only for prompts already
- * queued, and the event hook is not awaited, so a follow-up sent after any await comes too late.
- * Sending it from `dispose` fails: the drain closes before it.
+ * Limit: `kilo run` asks the server to drain the session once its prompt returns and exits at
+ * `session.drained`; the drain waits only for prompts already queued, so a follow-up sent from
+ * `dispose` fails: the drain closes before it.
  *
  * Limit: a script's message for the person is not shown. Kilo's TUI subscribes to
  * `tui.toast.show` (`packages/tui/src/app.tsx`, 7.7.5 and 7.8.32), but a plugin's toast rendering

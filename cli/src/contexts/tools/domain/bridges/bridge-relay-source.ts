@@ -212,9 +212,8 @@ function isFollowUp(parts) {
   return parts.some((part) => part.metadata?.aidd === FOLLOW_UP.aidd);
 }
 
-/** The scripts run in turn without yielding, so each follow-up is requested before the event hook
- * first yields. Returns the follow-ups still in flight: the prompt is the session's next turn, and
- * the turn end must not hold it. */
+/** Returns the follow-ups still in flight: the prompt is the session's next turn, and the turn end
+ * must not hold it. */
 function runStop(sessionId, directory, { client, method, show }) {
   const sends = [];
   for (const call of stopCallsFor(sessionId, directory)) {

@@ -28,20 +28,29 @@ function exitDescription(code, signal) {
 /** The `runCapture` every awaited script of a bridge goes through: its exit code and signal, its
  * stdout and stderr, and the error it failed to run with, never rejecting. `runCaptureSync` is the
  * same run without yielding, for the one caller that must not: the turn end. */
-export const RUN_CAPTURE_SOURCE = `/** Runs one hook script under node from the plugin's scripts folder, in the payload's directory,
- * with its payload on stdin, and collects what it wrote. Never process.execPath: a host's own path
- * need not be a Node runtime. */
+export const RUN_CAPTURE_SOURCE = `/** What both runners spawn: a hook script under node from the plugin's scripts folder, in the
+ * payload's directory, with its payload on stdin. Never process.execPath: a host's own path need
+ * not be a Node runtime. */
+function scriptRun(script, args, payload, directory) {
+  return {
+    argv: [HOOKS_DIR + script, ...args],
+    options: { cwd: directory, timeout: 5000 },
+    input: JSON.stringify(payload),
+  };
+}
+
+function failedRun(error) {
+  return { error, code: null, signal: null, stdout: "", stderr: "" };
+}
+
 function runCapture(script, args, payload, directory) {
   return new Promise((resolve) => {
-    const failed = (error) => resolve({ error, code: null, signal: null, stdout: "", stderr: "" });
+    const failed = (error) => resolve(failedRun(error));
     let stdout = "";
     let stderr = "";
     try {
-      const child = spawn("node", [HOOKS_DIR + script, ...args], {
-        cwd: directory,
-        stdio: ["pipe", "pipe", "pipe"],
-        timeout: 5000,
-      });
+      const { argv, options, input } = scriptRun(script, args, payload, directory);
+      const child = spawn("node", argv, { ...options, stdio: ["pipe", "pipe", "pipe"] });
       child.stdout.on("data", (chunk) => {
         stdout += chunk;
       });
@@ -53,7 +62,7 @@ function runCapture(script, args, payload, directory) {
       child.on("close", (code, signal) => resolve({ code, signal, stdout, stderr }));
       // A script that never reads its stdin must not throw.
       child.stdin.on("error", () => {});
-      child.stdin.end(JSON.stringify(payload));
+      child.stdin.end(input);
     } catch (error) {
       // An argument spawn refuses (a NUL byte) throws before any child exists.
       failed(error);
@@ -62,22 +71,21 @@ function runCapture(script, args, payload, directory) {
 }
 
 function runCaptureSync(script, args, payload, directory) {
-  const run = spawnSync("node", [HOOKS_DIR + script, ...args], {
-    cwd: directory,
-    input: JSON.stringify(payload),
-    encoding: "utf8",
-    timeout: 5000,
-  });
-  return { error: run.error, code: run.status, signal: run.signal, stdout: run.stdout ?? "", stderr: run.stderr ?? "" };
+  try {
+    const { argv, options, input } = scriptRun(script, args, payload, directory);
+    const run = spawnSync("node", argv, { ...options, input, encoding: "utf8" });
+    return { error: run.error, code: run.status, signal: run.signal, stdout: run.stdout ?? "", stderr: run.stderr ?? "" };
+  } catch (error) {
+    return failedRun(error);
+  }
 }`;
 
 /** The generated modules' reading of a finished script: exit 2 puts the answer on stderr, exit 0
  * puts it in `additionalContext` on stdout, the person's message in `systemMessage`, and whether
  * the model must deal with it before going on in `required`. Any other
  * way a script ends is reported and answers nothing. Written once here, so both hosts' bridges
- * tell the model, and the person, the same thing; and `settledRun`, the one step every reader of a
- * script (an answer, a Stop reason, a refusal) takes over `runCapture`, so each reports a failed
- * script the same way. */
+ * tell the model, and the person, the same thing; and `settled`, the one step every reader of a
+ * run (an answer, a Stop reason, a refusal) takes, so each reports a failed script the same way. */
 export const ANSWER_OF_SOURCE = `/** A script's run, or null once a script that failed to run, or exited other than 0 or 2, is
  * reported. */
 function settled(script, run) {
@@ -132,9 +140,9 @@ function answerOf(script, args, payload, directory) {
 }`;
 
 /** The `stopReasonOf` of a bridge: the reason a Stop script gave to keep working and its message
- * for the person. Synchronous: the host's \`run\` drains the session as soon as nothing holds it,
- * so the follow-up must be requested before the event hook first yields (observed on Kilo 7.7.5 and
- * 7.8.32). The host's process waits for the script, up to its 5 s timeout. */
+ * for the person. Synchronous, so the follow-up is requested before the event hook first yields: a
+ * host's `run` drains the session as soon as nothing holds it. Blocks the host's whole process for
+ * the script's run, up to its 5 s timeout, on every idle: a limit of OpenCode and Kilo alike. */
 export const STOP_REASON_OF_SOURCE = `/** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
 function stopReasonOf(script, args, payload, directory) {
   const run = settled(script, runCaptureSync(script, args, payload, directory));

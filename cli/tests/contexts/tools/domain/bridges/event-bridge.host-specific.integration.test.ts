@@ -1,6 +1,6 @@
 /**
  * What OpenCode's generated bridge does its own way, under a fake host that emits its events: its
- * loader, and the follow-ups and scripts its disposal waits for. Kilo's bridge has nothing of its
+ * loader, and the follow-ups its disposal waits for. Kilo's bridge has nothing of its
  * own.
  */
 
