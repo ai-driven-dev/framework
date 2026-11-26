@@ -18,6 +18,7 @@ import type { ProjectHooksFormat } from "../../../contract/tool-vocabulary.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { hostToolNamesMatching, matcherNamesNoToolWarning } from "../../formats/host-tool-names.js";
 import { pluginScriptDir, pluginScriptPath } from "../../hooks/hooks-merge.js";
+import { unmappedEventWarning } from "../../hooks/hooks-warnings.js";
 import {
   type BridgeHookCall,
   bridgeHookCalls,
@@ -164,7 +165,7 @@ export function mergeKiroHooks(
   for (const [event, groups] of shippedEvents(shipped.json)) {
     const trigger = Object.hasOwn(hooks.eventMap, event) ? hooks.eventMap[event] : undefined;
     if (trigger === undefined) {
-      warnings.push(`unmapped event '${event}' skipped`);
+      warnings.push(unmappedEventWarning(event));
       continue;
     }
     const built = hooksOfEvent(

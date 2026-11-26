@@ -154,10 +154,13 @@ describe("a flat target whose loader is triggered by a generated bridge", () => 
           placement: { kind: "hooks", scriptsDir: ".stub/hooks/" },
           skipHooksJson: true,
           hooksBridge: {
-            generate: (raw, plugin) =>
-              raw.includes("PreToolUse") ? `bridge(${plugin}):${raw}` : null,
+            generate: (raw, plugin) => ({
+              content: raw.includes("PreToolUse") ? `bridge(${plugin}):${raw}` : null,
+              warnings: [],
+            }),
             dir: ".stub/plugin/",
             skipIfSourceHas: "own-plugin.js",
+            warning: (reason: string) => reason,
           },
         },
       },
@@ -216,5 +219,40 @@ describe("a flat target whose loader is triggered by a generated bridge", () => 
     expect(treeOf(bridged, distOf([...hooks], { hooks }))).toEqual({
       ".stub/hooks/sample-plugin/lib/check.sh": hookScriptContent,
     });
+  });
+
+  it("tells of an event the bridge leaves out, as a hooks component it skipped for the tool", () => {
+    const leaving = contractToolProfile(opencode, {
+      plugins: flatPluginsStub({ namespacePrefix: "aidd-", hooks: { accepts: true } }),
+      flatContract: anEmptyContract({
+        artifacts: {
+          ...anEmptyContract().artifacts,
+          hooks: {
+            supported: true,
+            source: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
+            placement: { kind: "hooks", scriptsDir: ".stub/hooks/" },
+            skipHooksJson: true,
+            hooksBridge: {
+              generate: (raw, plugin) => ({
+                content: `bridge(${plugin}):${raw}`,
+                warnings: ["unmapped event 'SessionEnd' skipped"],
+              }),
+              warning: (reason) => `stub: ${reason}`,
+              dir: ".stub/plugin/",
+              skipIfSourceHas: "own-plugin.js",
+            },
+          },
+        },
+      }),
+    });
+
+    expect(translator.translateWithComponentPaths(hooksDist(), leaving).skipped).toEqual([
+      {
+        pluginName: "sample-plugin",
+        component: "hooks",
+        toolId: "opencode",
+        reason: "unmapped event 'SessionEnd' skipped",
+      },
+    ]);
   });
 });

@@ -199,17 +199,6 @@ describe("building OpenCode's flat contract", () => {
     });
   });
 
-  it("generates no bridge for a plugin whose hooks name no event OpenCode delivers", () => {
-    const hooks = supported(present(opencode.buildContracts.flat)().artifacts.hooks);
-
-    expect(
-      hooks.hooksBridge?.generate(
-        JSON.stringify({ hooks: { Notification: [{ hooks: [{ command: "x" }] }] } }),
-        "aidd-dev"
-      )
-    ).toBeNull();
-  });
-
   it("writes one opencode.json holding the bundled base, the user's own keys and every plugin's mcp servers", () => {
     const files = emit({
       builtPlugins: ["aidd-dev"],

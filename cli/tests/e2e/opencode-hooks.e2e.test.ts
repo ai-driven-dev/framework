@@ -13,6 +13,12 @@ import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
 import {
+  capturedRunOf,
+  capturedSample,
+  captureFile,
+  SESSION,
+} from "../contexts/tools/testing/hook-payload-captures.builder.js";
+import {
   createTestEnv,
   FRAMEWORK_PATH,
   failedRunOf,
@@ -71,6 +77,28 @@ async function waitForFile(path: string, timeoutMs: number): Promise<boolean> {
     await new Promise((r) => setTimeout(r, 50));
   }
   return existsSync(path);
+}
+
+// What PostToolUse's script reads per host: V1's driver hand-builds its call, V2's is captured.
+const POST_TOOL_USE = {
+  v1: { tool_name: "bash", tool_input: { command: "echo task" } },
+  v2: { tool_name: "bash", tool_input: { command: "echo hi" } },
+};
+
+/** What OpenCode was captured sending, as JSON for the driver: the session's creation, then its
+ * idle, and a finished shell call. The creation names the folder the hooks run in, so it names
+ * `directory`. */
+function capturedCalls(directory: string): { events: string; shell: string } {
+  const log = capturedRunOf("opencode", "log", directory);
+  const shell = capturedSample<{ tool: string }>(
+    captureFile("opencode-v2", "execute.after"),
+    (sample) => sample.payload.tool === "shell",
+    "shell call"
+  );
+  return {
+    events: JSON.stringify([log("session.created"), log("session.idle")]),
+    shell: JSON.stringify(shell.payload),
+  };
 }
 
 describe("opencode's generated event bridge, against the real build", () => {
@@ -133,61 +161,45 @@ describe("opencode's generated event bridge, against the real build", () => {
         `import assert from "node:assert/strict";
          const { default: plugin } = await import(${JSON.stringify(pathToFileURL(bridgePath).href)});
          assert.equal(plugin.id, "aidd-test-hooks");
-         const events = [null, { type: "server.connected" },
-           { type: "session.idle", properties: { sessionID: "s1" } }];
+         const events = JSON.parse(process.argv[4]);
          if (process.argv[3] === "v1") {
            const hooks = await plugin.server({ directory: process.argv[2] });
            for (const event of events) await hooks.event({ event });
            const output = { output: "done" };
            await hooks["tool.execute.after"](
-             { tool: "bash", sessionID: "s1", args: { command: "echo task" } }, output);
+             { tool: "bash", sessionID: ${JSON.stringify(SESSION)}, args: { command: "echo task" } }, output);
            assert.equal(output.output, "done\\n\\nfix the edit");
          } else {
-           const toolHooks = {};
-           const prompts = [];
-           const call = { sessionID: "s1", assistantMessageID: "msg1", id: "call1" };
-           const v2Events = [null, { type: "server.connected" },
-             { type: "session.created", data: { sessionID: "s1", location: { directory: process.argv[2] } } },
-             { type: "session.execution.succeeded", data: { sessionID: "s1" } }];
-           let signal;
-           let closed = false;
-           let done;
-           const processed = new Promise((resolve) => { done = resolve; });
+           const hooks = {};
+           const register = (domain) => async (name, callback) => { hooks[domain + "." + name] = callback; return { dispose: async () => {} }; };
            const cleanup = await plugin.setup({
              location: { directory: process.argv[2] },
-             tool: { hook: async (name, callback) => { toolHooks[name] = callback; return { dispose: async () => {} }; } },
-             session: { prompt: async (input) => { prompts.push(input); } },
-             event: {
-             subscribe(options) {
-               signal = options.signal;
-               return (async function* () {
-                 try {
-                   for (const event of v2Events) yield event;
-                   done();
-                   await new Promise((resolve) => signal.addEventListener("abort", resolve, { once: true }));
-                   throw new Error("subscription aborted");
-                 } finally { closed = true; }
-               })();
-             }
-           } });
-           assert.equal(typeof cleanup, "function");
-           await processed;
-           const result = { status: "completed", tool: "Bash", sessionID: "s1", input: { command: "echo task" }, result: { content: "done" } };
-           await toolHooks["execute.after"](result);
-           assert.equal(result.result.content, "done\\n\\nfix the edit");
-           await new Promise((resolve) => setImmediate(resolve));
-           await cleanup();
-           await new Promise((resolve) => setImmediate(resolve));
-           assert.equal(signal.aborted, true);
-           assert.equal(closed, true);
+             tool: { hook: register("tool") },
+             session: {
+               hook: register("session"),
+               get: async ({ sessionID }) => ({ id: sessionID }),
+               synthetic: async () => {},
+             },
+           });
+           assert.equal(cleanup, undefined);
+           await hooks["session.prompt"]({ sessionID: ${JSON.stringify(SESSION)}, messageID: "msg1", prompt: { text: "task" } });
+           const result = JSON.parse(process.argv[5]);
+           await hooks["tool.execute.after"](result);
+           assert.deepEqual(result.result.content.at(-1), { type: "text", text: "fix the edit" });
+           await hooks["session.experimental.idle"]({ sessionID: ${JSON.stringify(SESSION)}, background: [] });
          }
         `,
         "utf-8"
       );
-      for (const host of ["v1", "v2"]) {
+      for (const host of ["v1", "v2"] as const) {
         const directory = join(outDir, host);
         await mkdir(directory);
-        await execFileAsync(process.execPath, [driverPath, directory, host], { timeout: 5000 });
+        // Only what OpenCode was captured sending: the session's creation, then its idle. The
+        // creation names the folder the hooks run in, so it names this one.
+        const { events, shell } = capturedCalls(directory);
+        await execFileAsync(process.execPath, [driverPath, directory, host, events, shell], {
+          timeout: 5000,
+        });
         const marker = join(directory, "marker.jsonl");
         expect(await waitForFile(marker, 4000)).toBe(true);
         const calls = (await readFile(marker, "utf-8"))
@@ -201,9 +213,8 @@ describe("opencode's generated event bridge, against the real build", () => {
         ]);
         expect(calls.every((call) => call.cwd === directory)).toBe(true);
         expect(calls.find((call) => call.hook_event_name === "PostToolUse")).toMatchObject({
-          session_id: "s1",
-          tool_name: host === "v1" ? "bash" : "Bash",
-          tool_input: { command: "echo task" },
+          session_id: SESSION,
+          ...POST_TOOL_USE[host],
         });
       }
     } finally {

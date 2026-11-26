@@ -5,6 +5,7 @@ import type { ProjectHookEntry } from "../../contract/tool-vocabulary.js";
 import { toBase64 } from "../formats/base64.js";
 import { PLUGIN_HOOKS_SOURCE } from "../formats/hooks/descriptor.js";
 import { hostToolNamesMatching, matcherNamesNoToolWarning } from "../formats/host-tool-names.js";
+import { unmappedEventWarning } from "./hooks-warnings.js";
 import type { PluginHookItem, PluginHooksShape } from "./plugin-hooks-shape.js";
 
 // The host runs a handler from its own directory under the project and requires JSON stdout even
@@ -83,7 +84,7 @@ function convert(
   const warnings: string[] = [];
   for (const [event, groups] of Object.entries(rewritten.hooks ?? {})) {
     if (!Object.hasOwn(target.descriptor.eventMap, event)) {
-      warnings.push(`unmapped event '${event}' skipped`);
+      warnings.push(unmappedEventWarning(event));
       continue;
     }
     if (!TOOL_EVENTS.has(event)) {
