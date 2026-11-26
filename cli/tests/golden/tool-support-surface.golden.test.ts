@@ -9,6 +9,7 @@ import type {
   ToolBuildContract,
 } from "../../src/shared/domain/materialization/build-contract.js";
 import type { PluginPresence } from "../../src/shared/domain/materialization/plugin-presence.js";
+import type { SourceMarketplaceRef } from "../../src/shared/domain/plugin/source-refs.js";
 import { pluginModeOf } from "../contexts/tools/testing/plugin-mode.builder.js";
 import { catalogOf, registeredAiConfig } from "../shared/testing/catalog-of.builder.js";
 import { REPOSITORY_ROOT } from "../shared/testing/repository-root.builder.js";
@@ -33,6 +34,9 @@ interface ToolSupport {
   /** The directory of the project where the tool loads each plugin's tree that `aidd` writes there
    * itself, a native plugin install and no marketplace the tool could register; or null. */
   pluginTree: string | null;
+  /** Where the marketplace layout puts its catalog and each plugin's manifest, or null when that layout
+   * builds no catalog. The release publishes a catalog from this. */
+  marketplace: { catalog: string; manifest: string } | null;
   /** What a user gets per output layout the tool supports: build output, plus the rules and commands the install
    * profile ships. */
   builds: Record<string, Record<Surface, Support>>;
@@ -87,37 +91,50 @@ function pluginTreeOf(plugins: ReturnType<AiToolProfile["plugins"]>): string | n
     : null;
 }
 
-function capture(): ToolSupport[] {
-  return catalogOf()
-    .idsInCanonicalOrder("ai")
-    .map((id) => {
-      const tool = registeredAiConfig(id);
-      const plugins = tool.plugins();
-      const builds: ToolSupport["builds"] = {};
-      for (const mode of ["marketplace", "flat"] as const) {
-        const contract = tool.buildContract(mode);
-        if (contract === null) continue;
-        builds[mode] = Object.fromEntries(
-          SURFACES.map((surface) => [
-            surface,
-            supportOf(surface, contract, installedSurfaces(tool)),
-          ])
-        ) as Record<Surface, Support>;
-      }
-      return {
-        id,
-        name: tool.displayName,
-        directory: tool.directory,
-        pluginMode: plugins === null ? null : pluginModeOf(plugins),
-        nativeCli: tool.nativeActivation()?.hostBinary() ?? null,
-        pluginTree: pluginTreeOf(plugins),
-        builds,
-      };
+const PROBE_SOURCE: SourceMarketplaceRef = { name: "probe", plugins: [] };
+
+async function marketplaceOf(tool: AiToolProfile): Promise<ToolSupport["marketplace"]> {
+  const contract = tool.buildContract("marketplace");
+  if (!contract?.buildMarketplaceCatalog || contract.manifestFileRelative === null) return null;
+  const { destRelPath } = await contract.buildMarketplaceCatalog(PROBE_SOURCE, [], {
+    readFile: async () => "",
+  });
+  return { catalog: destRelPath, manifest: contract.manifestFileRelative };
+}
+
+function buildsOf(tool: AiToolProfile): ToolSupport["builds"] {
+  const builds: ToolSupport["builds"] = {};
+  for (const mode of ["marketplace", "flat"] as const) {
+    const contract = tool.buildContract(mode);
+    if (contract === null) continue;
+    builds[mode] = Object.fromEntries(
+      SURFACES.map((surface) => [surface, supportOf(surface, contract, installedSurfaces(tool))])
+    ) as Record<Surface, Support>;
+  }
+  return builds;
+}
+
+async function capture(): Promise<ToolSupport[]> {
+  const support: ToolSupport[] = [];
+  for (const id of catalogOf().idsInCanonicalOrder("ai")) {
+    const tool = registeredAiConfig(id);
+    const plugins = tool.plugins();
+    support.push({
+      id,
+      name: tool.displayName,
+      directory: tool.directory,
+      pluginMode: plugins === null ? null : pluginModeOf(plugins),
+      nativeCli: tool.nativeActivation()?.hostBinary() ?? null,
+      pluginTree: pluginTreeOf(plugins),
+      marketplace: await marketplaceOf(tool),
+      builds: buildsOf(tool),
     });
+  }
+  return support;
 }
 
 describe("tool support surface", () => {
   it("matches the stored record of what each tool is declared to support", async () => {
-    await expectGolden(SNAPSHOT_FILE, capture());
+    await expectGolden(SNAPSHOT_FILE, await capture());
   });
 });
