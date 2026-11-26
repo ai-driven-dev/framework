@@ -155,6 +155,7 @@ const HOSTS = {
     config: { path: ".claude/settings.json", shape: "grouped: each event lists groups of a matcher and handlers", source: CLAUDE_DOC },
     cwd: { value: "$CLAUDE_PROJECT_DIR", source: CLAUDE_DOC },
     trust: { value: "workspace trust", source: CLAUDE_DOC },
+    shell: { value: "Bash", source: capture("claude-PreToolUse.json") },
     moments: {
       "session-start": moment("SessionStart", true, CLAUDE_DOC),
       prompt: moment("UserPromptSubmit", false, CLAUDE_DOC),
@@ -175,6 +176,7 @@ const HOSTS = {
     config: { path: ".codex/hooks.json", shape: "grouped: each event lists groups of a matcher and handlers", source: CODEX_DOC },
     cwd: { value: "the session's folder; reach the project through git rev-parse --show-toplevel", source: CODEX_DOC },
     trust: { value: "review in /hooks after each change", source: CODEX_DOC },
+    shell: { value: "Bash", source: capture("codex-PreToolUse.json") },
     moments: {
       "session-start": moment("SessionStart", true, CODEX_DOC),
       prompt: moment("UserPromptSubmit", false, CODEX_DOC),
@@ -195,6 +197,7 @@ const HOSTS = {
     config: { path: ".cursor/hooks.json", shape: "flat: each event lists handlers, under version 1", source: CURSOR_DOC },
     cwd: { value: "the project root", source: CURSOR_DOC },
     trust: { value: "a trusted workspace", source: CURSOR_DOC },
+    shell: { value: "Shell", source: capture("cursor-postToolUse.json") },
     moments: {
       "session-start": moment("sessionStart", false, CURSOR_DOC),
       prompt: moment("beforeSubmitPrompt", false, CURSOR_DOC),
@@ -215,6 +218,7 @@ const HOSTS = {
     config: { path: `.github/hooks/${NAMES}.json`, shape: "the whole file: version 1, bash, cwd \".\", timeoutSec", source: COPILOT_DOC },
     cwd: { value: "the repository root", source: COPILOT_DOC },
     trust: { value: "folder trust", source: COPILOT_DOC },
+    shell: { value: null, source: COPILOT_DOC },
     moments: {
       "session-start": moment("sessionStart", false, COPILOT_DOC),
       prompt: moment("userPromptSubmitted", false, COPILOT_DOC),
@@ -235,6 +239,7 @@ const HOSTS = {
     config: { path: ".agents/hooks.json", shape: "one key per hook; a tool event wraps its handlers in a matcher group", source: ANTIGRAVITY_DOC },
     cwd: { value: ".agents/, the folder holding hooks.json", source: ANTIGRAVITY_DOC },
     trust: { value: NOT_DOCUMENTED, source: ANTIGRAVITY_DOC },
+    shell: { value: "run_command", source: capture("antigravity-PreToolUse.json") },
     moments: {
       "session-start": moment("SessionStart", false, ANTIGRAVITY_DOC),
       prompt: null,
@@ -255,6 +260,7 @@ const HOSTS = {
     config: { path: `.kiro/hooks/${NAMES}.json`, shape: 'the whole file: {version: "v1", hooks: [{name, trigger, matcher?, action: {type: "command", command}, timeout}]}', source: KIRO_DOC },
     cwd: { value: "the project root", source: KIRO_DOC },
     trust: { value: NO_TRUST, source: KIRO_DOC },
+    shell: { value: "execute_bash", source: capture("kiro-PreToolUse.json") },
     moments: {
       "session-start": moment("SessionStart", false, KIRO_DOC),
       prompt: moment("UserPromptSubmit", false, capture("kiro-UserPromptSubmit.json"), ["prompt"]),
@@ -275,6 +281,7 @@ const HOSTS = {
     plugin: { path: `.opencode/plugins/${NAMES}.js`, shape: "V1 server hooks and V2 setup hooks; filter on the tool in code", source: OPENCODE_DOC },
     cwd: { value: "the directory argument, ctx.location.directory in V2", source: OPENCODE_DOC },
     trust: { value: NO_TRUST, source: OPENCODE_DOC },
+    shell: { value: "bash", v2: "shell", source: capture("opencode-tool.execute.before.json") },
     moments: pluginMoments(OPENCODE_DOC, "opencode", true),
     effects: {
       inform: effect("experimental.chat.system.transform, context in V2", ["experimental.chat.system.transform"], OPENCODE_DOC),
@@ -288,6 +295,7 @@ const HOSTS = {
     plugin: { path: `.kilo/plugin/${NAMES}.js`, shape: "V1 server hooks only; filter on the tool in code", source: KILO_DOC },
     cwd: { value: "the directory argument", source: KILO_DOC },
     trust: { value: NO_TRUST, source: KILO_DOC },
+    shell: { value: "bash", source: capture("kilo-tool.execute.before.json") },
     moments: pluginMoments(KILO_DOC, "kilo", false),
     effects: {
       inform: effect("experimental.chat.system.transform", ["experimental.chat.system.transform"], KILO_DOC),

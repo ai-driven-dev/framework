@@ -21,6 +21,7 @@ node "$writer" --project "$project_root" --remove "$name"
 | `doc` | the host's own hooks page |
 | `moments` | per moment, the event, its matcher, the payload fields, or `null` |
 | `effects` | per effect, the answer and where it applies, or `null` |
+| `shell` | the name the host gives its shell tool, or `null` |
 | `cwd` | where the handler starts |
 | `trust` | what a teammate grants before a committed hook runs |
 

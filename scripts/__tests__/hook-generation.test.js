@@ -330,7 +330,7 @@ const EFFECTS = ["inform", "block", "ask", "continue"];
 const describe = (t, ...extra) => json(fixture(t).exec("--describe", ...extra)).hosts;
 
 function facts(host) {
-  const found = [host.config ?? host.plugin, host.cwd, host.trust];
+  const found = [host.config ?? host.plugin, host.cwd, host.trust, host.shell];
   for (const moment of Object.values(host.moments)) if (moment) found.push(moment, ...(moment.v2 ? [moment.v2] : []));
   for (const effect of Object.values(host.effects)) if (effect) found.push(effect);
   return found;
@@ -415,6 +415,17 @@ test("every effect that cites a capture is answered that way in the file", (t) =
     }
   }
   assert.ok(pinned >= 10, `only ${pinned} effects are pinned`);
+});
+
+test("every host names its shell tool, and a captured name is one the host really sent", (t) => {
+  for (const [id, host] of Object.entries(describe(t))) {
+    assert.ok(host.shell && "value" in host.shell, `${id}: names its shell tool, or null when undocumented`);
+    if (!host.shell.source.startsWith("capture:")) continue;
+    const file = capture(host.shell.source);
+    const field = host.moments["before-tool"].payload[0];
+    const sent = file.samples.map((sample) => dotted(sample.payload, field));
+    for (const name of [].concat(host.shell.value)) assert.ok(sent.includes(name), `${id}: ${name} in ${host.shell.source}`);
+  }
 });
 
 test("a Copilot fact never cites a capture: its captures used another route", (t) => {
