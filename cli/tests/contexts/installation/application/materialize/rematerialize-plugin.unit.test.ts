@@ -34,7 +34,7 @@ function rematerialize() {
   const fs = new InMemoryFileAdapter();
   const count = rematerializePlugin(
     { dist, tool, mode: "marketplace", plugin, projectRoot: "/root", manifest },
-    builtPlacementOf(fs, fakeBuiltDeps()).placeBuiltTree
+    { fs, ...builtPlacementOf(fs, fakeBuiltDeps()) }
   );
   return { count, manifest };
 }
@@ -68,7 +68,7 @@ async function rematerializeOnCursor(): Promise<number> {
   });
   return rematerializePlugin(
     { dist, tool, mode: "built-tree", plugin, projectRoot: "/root", manifest },
-    builtPlacementOf(fs, { ...fakeBuiltDeps(), marketplaceRegistry: registry }).placeBuiltTree
+    { fs, ...builtPlacementOf(fs, { ...fakeBuiltDeps(), marketplaceRegistry: registry }) }
   );
 }
 

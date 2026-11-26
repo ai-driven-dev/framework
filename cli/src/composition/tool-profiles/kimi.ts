@@ -3,8 +3,10 @@ import {
   buildKimiFlatContract,
   buildKimiPluginContract,
 } from "../../contexts/tools/domain/behaviours/kimi/kimi-build.model.js";
+import { descriptionOnlyRule } from "../../contexts/tools/domain/formats/rule-frontmatter.js";
 import { contract } from "../../contexts/tools/domain/profile/contract-builders.js";
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
+import { installUnder } from "../../contexts/tools/domain/profile/tool-suffix.js";
 import { flatPlacement } from "../../contexts/tools/domain/sections/layout-section.js";
 import {
   type FlatArtifactLayout,
@@ -15,6 +17,9 @@ const DIRECTORY = ".kimi-code/";
 const TOOL_SUFFIX = ".kimi.md";
 /** Kimi's project MCP file: https://www.kimi.com/code/docs/en/kimi-code-cli/customization/mcp.html */
 const MCP_PATH = `${DIRECTORY}mcp.json`;
+/** Kimi documents guidance only in AGENTS.md, which lists the rules placed here:
+ * https://www.kimi.com/code/docs/en/kimi-code-cli/customization/agents */
+const INSTRUCTIONS = "instructions/";
 
 /** Where a flat build puts Kimi's skills and agents. Skills are read from `.agents/skills/` (and
  * `.kimi-code/skills/`), agents from `.kimi-code/agents/` (and `.agents/agents/`), per
@@ -24,6 +29,8 @@ const MCP_PATH = `${DIRECTORY}mcp.json`;
 const KIMI_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(DIRECTORY, {
   skillsDir: ".agents/skills/",
   skills: "single-level",
+  rules: "top-level-no-frontmatter",
+  rulesDir: `${DIRECTORY}${INSTRUCTIONS}`,
   agent: { ext: ".md" },
 });
 
@@ -75,6 +82,11 @@ export const kimi = defineAiTool({
 
   capabilities: {
     skills: { agentsSkillsDirectory: true },
+    rules: {
+      buildInstallPath: installUnder(DIRECTORY, TOOL_SUFFIX, INSTRUCTIONS),
+      convertFrontmatter: descriptionOnlyRule,
+      listedInAgentsFile: KIMI_FLAT_LAYOUT,
+    },
     hooks: { delivery: { kind: "none", reason: USER_CONFIG_REASON } },
     layout: flatPlacement({ namespacePrefix: "aidd-", artifacts: KIMI_FLAT_LAYOUT }),
   },
