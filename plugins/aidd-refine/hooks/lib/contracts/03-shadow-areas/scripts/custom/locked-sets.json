@@ -1,0 +1,31 @@
+{
+  "categories": [
+    "unstated assumption",
+    "ambiguous term",
+    "missing edge case",
+    "missing actor",
+    "missing failure mode",
+    "missing acceptance criterion",
+    "missing dependency"
+  ],
+  "severities": ["blocker", "major", "minor"],
+  "probe": {
+    "must_end_with": "?",
+    "question_forms": [
+      "what",
+      "when",
+      "who",
+      "which",
+      "how",
+      "why",
+      "where",
+      "does",
+      "can",
+      "will",
+      "should",
+      "is",
+      "are",
+      "do"
+    ]
+  }
+}
