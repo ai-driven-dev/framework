@@ -17,7 +17,7 @@ second install threw DuplicatePluginError: Plugin 'aidd-context' is already inst
     ],
     "PostToolUse": [
       {
-        "matcher": "*",
+        "matcher": "write_file|edit_file|run_command",
         "hooks": [
           {
             "type": "command",
@@ -60,7 +60,7 @@ script, identical to the plugin source
   "kind": "skill",
   "unit": "folder",
   "targets": "plugins/*/skills/*",
-  "scope": [".claude/skills/*", ".cursor/skills/*", ".opencode/skills/*", ".kilo/skills/*", ".github/skills/*", ".agents/skills/*"],
+  "scope": [".claude/skills/*", ".cursor/skills/*", ".opencode/skills/*", ".kilo/skills/*", ".github/skills/*", ".agents/skills/*", ".kiro/skills/*"],
   "shell": false,
   "marker": "SKILL.md",
   "rules": {
@@ -172,7 +172,9 @@ targets: [{{host tools}}]
     ".github/agents/*.agent.md",
     ".agents/agents/*/agent.md",
     ".opencode/agents/*.md",
-    ".kilo/agents/*.md"
+    ".kilo/agents/*.md",
+    ".kiro/agents/*.md",
+    ".kimi-code/agents/*.md"
   ],
   "shell": false,
   "rules": {

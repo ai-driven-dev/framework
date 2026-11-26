@@ -60,7 +60,10 @@ describe("building Codex's flat contract", () => {
       skills: { kind: "fullTree", srcDir: "skills" },
       agents: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
       hooks: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
-      mcp: { supported: false, reason: "carried by the config artifact (config.toml mcp_servers)" },
+      mcp: {
+        supported: false,
+        reason: "carried by the config artifact (config.toml mcp_servers)",
+      },
     });
   });
 
@@ -103,6 +106,7 @@ describe("building Codex's flat contract", () => {
       pluginMcp: new Map([
         ["aidd-dev", JSON.stringify({ mcpServers: { "aidd-dev-context": { command: "node" } } })],
       ]),
+      rulesGlobs: [],
       existing: new Map(),
       present: new Set(),
       assets: new Map(),
@@ -121,6 +125,7 @@ describe("building Codex's flat contract", () => {
     const files = configArtifactOf().emit({
       builtPlugins: [],
       pluginMcp: new Map(),
+      rulesGlobs: [],
       existing: new Map([[".codex/config.toml", 'model = "o3"\n']]),
       present: new Set(),
       assets: new Map(),
@@ -133,6 +138,7 @@ describe("building Codex's flat contract", () => {
     const files = configArtifactOf().emit({
       builtPlugins: ["aidd-dev"],
       pluginMcp: new Map(),
+      rulesGlobs: [],
       existing: new Map(),
       present: new Set(),
       assets: new Map(),

@@ -1,0 +1,77 @@
+{
+  "host": "kilo",
+  "event": "chat.message",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "input": {
+          "sessionID": "00000000-0000-4000-8000-000000000000",
+          "model": {
+            "providerID": "kilo",
+            "modelID": "kilo-auto/free"
+          }
+        },
+        "output": {
+          "message": {
+            "id": "msg_212e4ffde001oINdidBkSw0lJG",
+            "role": "user",
+            "sessionID": "00000000-0000-4000-8000-000000000000",
+            "time": {
+              "created": 0
+            },
+            "agent": "code",
+            "model": {
+              "providerID": "kilo",
+              "modelID": "kilo-auto/free"
+            }
+          },
+          "parts": [
+            {
+              "type": "text",
+              "text": "\"Using tools, create notes.md containing hello with the write tool, then run the shell command echo hi with the bash tool, then say done.\"",
+              "messageID": "msg_212e4ffde001oINdidBkSw0lJG",
+              "sessionID": "00000000-0000-4000-8000-000000000000",
+              "id": "prt_212e4fff1001Qgz7m9ZiCyX86d"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "run": "follow-up",
+      "payload": {
+        "input": {
+          "sessionID": "00000000-0000-4000-8000-000000000000"
+        },
+        "output": {
+          "message": {
+            "id": "msg_212e6982b001JAE7cMgwtp7SJc",
+            "role": "user",
+            "sessionID": "00000000-0000-4000-8000-000000000000",
+            "time": {
+              "created": 0
+            },
+            "agent": "code",
+            "model": {
+              "providerID": "kilo",
+              "modelID": "kilo-auto/free"
+            }
+          },
+          "parts": [
+            {
+              "type": "text",
+              "text": "Now say the word ok.",
+              "metadata": {
+                "aidd": "stop-follow-up"
+              },
+              "messageID": "msg_212e6982b001JAE7cMgwtp7SJc",
+              "sessionID": "00000000-0000-4000-8000-000000000000",
+              "id": "prt_212e6982c001llWFLCimY2zMlx"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

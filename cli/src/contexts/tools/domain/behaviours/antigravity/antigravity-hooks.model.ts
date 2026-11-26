@@ -14,6 +14,7 @@ import {
 export type AntigravityHooks = HooksRouting & {
   readonly flat: FlatHooksRoute;
   readonly eventMap: WrappedCommandHooksTarget["descriptor"]["eventMap"];
+  readonly toolNames: WrappedCommandHooksTarget["descriptor"]["toolNames"];
 };
 
 function targetOf(hooks: AntigravityHooks): WrappedCommandHooksTarget {

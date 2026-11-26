@@ -1,0 +1,30 @@
+{
+  "host": "opencode-v2",
+  "event": "experimental.idle",
+  "samples": [
+    {
+      "run": "child",
+      "payload": {
+        "sessionID": "00000000-0000-4000-8000-000000000001",
+        "background": []
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "log",
+      "payload": {
+        "sessionID": "00000000-0000-4000-8000-000000000000",
+        "background": []
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "log",
+      "payload": {
+        "sessionID": "00000000-0000-4000-8000-000000000000",
+        "background": []
+      },
+      "hookAnswer": null
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { placedRulesGlobOf } from "../../../../shared/domain/materialization/artifact-path.js";
 import { SOURCE_PLUGIN_MANIFEST_RELATIVE } from "../../../../shared/domain/plugin/canon-paths.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { PluginName } from "../../../../shared/domain/plugin/plugin-name.js";
@@ -73,7 +74,15 @@ export class DiskSink implements PluginTreeSink {
     const folded =
       (await writePluginHooks(this.deps, t, { name: plugin.name, hooks })) +
       (await writePluginMcp(this.deps, t, { name: plugin.name, mcp }));
-    return { files: manifest + files.length + folded, declaredMcp: mcp?.declared ?? null };
+    return {
+      files: manifest + files.length + folded,
+      declaredMcp: mcp?.declared ?? null,
+      rulesGlob: placedRulesGlobOf(
+        t.contract.artifacts.rules,
+        plugin.name,
+        files.map((file) => file.relativePath)
+      ),
+    };
   }
 
   /** Once every plugin is built: the marketplace catalog, or the flat config artefact. Returns

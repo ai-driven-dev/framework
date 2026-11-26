@@ -473,6 +473,15 @@ test("aidd-context: answers an agent or command written for another host in scop
   for (const rel of outOfScope) assert.ok(!found.some((line) => line.startsWith(`${rel}:`)), rel);
 });
 
+test("aidd-context: answers a Kiro agent and skill, now that Kiro runs the turn-end check", () => {
+  const written = [".kiro/agents/a.md", ".kiro/skills/s/SKILL.md"];
+  const s = session("aidd-context", "claude", contextFiles(Object.fromEntries(written.map((rel) => [rel, "# nope\n"]))));
+  s.start();
+  for (const rel of written) s.wrote(rel);
+  const found = lines(s.stop());
+  for (const rel of written) assert.ok(found.some((line) => line.startsWith(`${rel}:`)), rel);
+});
+
 test("aidd-context: the shell turn answers the rule modified after the reference, not the older one", () => {
   const s = session("aidd-context", "claude", contextFiles({ "aidd_docs/rules/x/r.md": "# nope\n", "aidd_docs/rules/x/old.md": "# nope\n" }));
   past(path.join(s.root, "aidd_docs/rules/x/old.md"), 3600);

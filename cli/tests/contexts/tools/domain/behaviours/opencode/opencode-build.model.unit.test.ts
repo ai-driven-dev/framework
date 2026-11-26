@@ -41,10 +41,17 @@ function emit(input: {
   return configArtifactOf().emit({
     builtPlugins: input.builtPlugins ?? [],
     pluginMcp: input.pluginMcp ?? new Map(),
+    rulesGlobs: [],
     existing: new Map(Object.entries(input.existing ?? {})),
     present: new Set(input.present ?? []),
     assets: new Map([
-      ["opencode.json", input.base ?? { $schema: "https://opencode.ai/config.json" }],
+      [
+        "opencode.json",
+        input.base ?? {
+          $schema: "https://opencode.ai/config.json",
+          instructions: [".opencode/rules/**/*.md"],
+        },
+      ],
       ["opencode-events.js", input.events ?? "export async function setupOpencodeEvents() {}"],
     ]),
   });
@@ -89,6 +96,27 @@ describe("building OpenCode's flat contract", () => {
     expect(files.map((f) => f.path)).toStrictEqual(["opencode.json"]);
   });
 
+  it("places a plugin's rule at the top of the rules folder, named by its plugin", () => {
+    const { artifacts } = present(opencode.buildContracts.flat)();
+
+    expect(
+      artifactPath(supported(present(artifacts.rules)), "aidd-dev", "rules/01-standards/naming.md")
+    ).toBe(".opencode/rules/aidd-dev-01-standards-naming.md");
+  });
+
+  it("keeps the entries a person lists in instructions, after the bundled ones, once", () => {
+    const base = JSON.stringify({ instructions: [".opencode/rules/**/*.md"] });
+    const existing = { "opencode.json": JSON.stringify({ instructions: ["mine.md"] }) };
+    const [config] = emit({ base, existing });
+    const [again] = emit({ base, existing: { "opencode.json": config?.content ?? "" } });
+
+    expect(JSON.parse(config?.content ?? "").instructions).toEqual([
+      "mine.md",
+      ".opencode/rules/**/*.md",
+    ]);
+    expect(again?.content).toBe(config?.content);
+  });
+
   it("refuses an event adapter that is not source text", () => {
     expect(() =>
       emit({
@@ -129,7 +157,10 @@ describe("building OpenCode's flat contract", () => {
       skills: { kind: "fullTree", srcDir: "skills" },
       agents: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
       hooks: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
-      mcp: { supported: false, reason: "carried by the config artifact (opencode.json mcp)" },
+      mcp: {
+        supported: false,
+        reason: "carried by the config artifact (opencode.json mcp)",
+      },
     });
   });
 
@@ -168,17 +199,6 @@ describe("building OpenCode's flat contract", () => {
     });
   });
 
-  it("generates no bridge for a plugin whose hooks name no event OpenCode delivers", () => {
-    const hooks = supported(present(opencode.buildContracts.flat)().artifacts.hooks);
-
-    expect(
-      hooks.hooksBridge?.generate(
-        JSON.stringify({ hooks: { Notification: [{ hooks: [{ command: "x" }] }] } }),
-        "aidd-dev"
-      )
-    ).toBeNull();
-  });
-
   it("writes one opencode.json holding the bundled base, the user's own keys and every plugin's mcp servers", () => {
     const files = emit({
       builtPlugins: ["aidd-dev"],
@@ -191,6 +211,7 @@ describe("building OpenCode's flat contract", () => {
     expect(files.map((f) => f.path)).toStrictEqual(["opencode.json"]);
     expect(JSON.parse(files[0]?.content ?? "null")).toStrictEqual({
       $schema: "https://opencode.ai/config.json",
+      instructions: [".opencode/rules/**/*.md"],
       theme: "dark",
       mcp: {
         "aidd-dev-context": { type: "local", command: ["node"], enabled: true },
@@ -208,10 +229,13 @@ describe("building OpenCode's flat contract", () => {
   });
 
   it("takes a bundled base config that comes as text as written", () => {
-    const files = emit({ base: '{"$schema":"https://opencode.ai/config.json"}' });
+    const files = emit({
+      base: '{"$schema":"https://opencode.ai/config.json","instructions":["a.md"]}',
+    });
 
     expect(JSON.parse(files[0]?.content ?? "null")).toStrictEqual({
       $schema: "https://opencode.ai/config.json",
+      instructions: ["a.md"],
     });
   });
 });

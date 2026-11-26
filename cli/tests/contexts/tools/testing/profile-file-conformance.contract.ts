@@ -148,7 +148,7 @@ export const PROFILE_FILE_CHECKS: readonly ConformanceCheck<FileConformanceSubje
     const declared = declaredHooks(subject);
     if (bridge == null || declared === undefined) return;
     const generated = CANONICAL_HOOK_EVENTS.filter(
-      (event) => bridge.generate(hooksJsonOf(event), "p") !== null
+      (event) => bridge.generate(hooksJsonOf(event), "p").content !== null
     );
     const relayed = CANONICAL_HOOK_EVENTS.filter(
       (event) => declared.events.get(event)?.relay === "bridge"

@@ -3,7 +3,7 @@ import type { ReadonlyNoticeList } from "../../../shared/domain/materialization/
 import type { PluginDistribution } from "../../../shared/domain/plugin/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../shared/domain/plugin/plugin-translation-skip.js";
 import { PLUGIN_HOOKS_RELATIVE } from "./canon-format.js";
-import { flatOwnHooksFile } from "./layouts/build-flat.js";
+import { flatOwnHooksFile } from "./layouts/build-flat-hooks.js";
 import { buildPlans } from "./layouts/build-layout.js";
 import { installPlan } from "./layouts/install-layout.js";
 import type { OutputFile } from "./output-file.js";
@@ -117,7 +117,7 @@ function buildLayoutPlan(
   layout: Extract<TranslateLayout, { kind: "build" }>
 ): LayoutPlan {
   const { contract, mode } = layout;
-  const plans = buildPlans(dist, contract, mode);
+  const { plans, warnings: bridgeWarnings } = buildPlans(dist, contract, mode);
   if (mode !== "flat") return { ...UNTRANSLATED, ...NOTHING_FOLDED, plans };
   const own = flatOwnHooksFile(dist, contract);
   return {
@@ -128,7 +128,7 @@ function buildLayoutPlan(
     installedMcp: null,
     projectHooks: NO_PROJECT_HOOKS,
     mcp: flatMcpOf(dist, layout),
-    warnings: own?.warnings ?? [],
+    warnings: [...(own?.warnings ?? []), ...bridgeWarnings],
   };
 }
 

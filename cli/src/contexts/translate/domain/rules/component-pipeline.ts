@@ -28,6 +28,12 @@ export interface ComponentPlan {
   readonly script?: (content: string) => string;
 }
 
+/** The files a layout plans for a plugin, and what planning them warns of. */
+export interface PlannedComponents {
+  readonly plans: ComponentPlan[];
+  readonly warnings: readonly string[];
+}
+
 /** Runs a plan's rules in the one order every layout shares: guard, links, shape, name, root
  * token, script. */
 export function applyPlan(plan: ComponentPlan): OutputFile {

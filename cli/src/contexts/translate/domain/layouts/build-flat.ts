@@ -1,7 +1,4 @@
-import {
-  artifactPath,
-  hooksFilePath,
-} from "../../../../shared/domain/materialization/artifact-path.js";
+import { artifactPath } from "../../../../shared/domain/materialization/artifact-path.js";
 import type {
   SupportedArtifact,
   ToolBuildContract,
@@ -11,32 +8,29 @@ import type {
   PluginDistribution,
 } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import { PLUGIN_HOOKS_RELATIVE } from "../canon-format.js";
-import {
-  flatAgentPath,
-  flatCommandFolders,
-  flatLinkTarget,
-  mergeFlatHooks,
-} from "../flat-layout.js";
+import { flatAgentPath, flatCommandFolders, flatLinkTarget } from "../flat-layout.js";
 import { agentLinks } from "../rules/agent-markdown.js";
 import { agentShape, type ComponentPlan } from "../rules/component-pipeline.js";
 import { foldsFlatMcp } from "../rules/flat-mcp.js";
-import { flatHookPlans } from "../rules/hook-plans.js";
 import { relativeLinks } from "../rules/links.js";
+import { flatHooks } from "./build-flat-hooks.js";
+import { flatRules } from "./build-flat-rules.js";
 import { agentFiles, baseOf, namedByFolder } from "./build-shared.js";
 
-/** A flat build's plugin files, in the tool's own folders. Its MCP servers and hooks file are
- * merged across plugins by the sink. */
-export function buildFlatPlans(
-  canon: PluginDistribution,
-  contract: ToolBuildContract
-): ComponentPlan[] {
-  const { agents, hooks, skills } = contract.artifacts;
-  return [
-    ...flatCommandFiles(canon, contract),
-    ...(agents.supported ? flatAgents(canon, contract, agents) : []),
-    ...(hooks.supported ? flatHooks(canon, hooks) : []),
-    ...(skills.supported ? flatSkills(canon, contract, skills) : []),
-  ];
+/** A flat build's files and its bridge's warnings; the sink merges its MCP servers and hooks file. */
+export function buildFlatPlans(canon: PluginDistribution, contract: ToolBuildContract) {
+  const { agents, hooks, rules, skills } = contract.artifacts;
+  const hookPlans = hooks.supported ? flatHooks(canon, hooks) : { plans: [], warnings: [] };
+  return {
+    plans: [
+      ...flatCommandFiles(canon, contract),
+      ...(agents.supported ? flatAgents(canon, contract, agents) : []),
+      ...hookPlans.plans,
+      ...(skills.supported ? flatSkills(canon, contract, skills) : []),
+      ...(rules?.supported ? flatRules(canon, rules) : []),
+    ],
+    warnings: hookPlans.warnings,
+  };
 }
 
 /** The folders a plugin's hook and MCP commands name that the tool has no place for, copied whole
@@ -107,17 +101,6 @@ export function flatAgentPlan(
   };
 }
 
-function flatHooks(canon: PluginDistribution, artifact: SupportedArtifact): ComponentPlan[] {
-  const plugin = canon.manifest.name;
-  return flatHookPlans(canon, {
-    place: (relativePath) => artifactPath(artifact, plugin, relativePath),
-    script: (relativePath, content) => artifact.script?.(relativePath, content) ?? content,
-    bridge: artifact.skipHooksJson ? (artifact.hooksBridge ?? null) : null,
-    bridgeFirst: true,
-    needsManifest: true,
-  });
-}
-
 /** How a flat layout reads a skill's links: relative to where the skill lands. */
 export function flatSkillLinks(
   contract: ToolBuildContract,
@@ -145,22 +128,4 @@ function flatSkills(
       namedAfterFolder: namedByFolder(artifact, relativePath),
     };
   });
-}
-
-/** The hooks file a plugin owns whole, for a tool that gives each plugin one: its manifest, merged
- * into nothing. A tool whose hooks file every plugin shares has none, and the sink folds it. */
-export function flatOwnHooksFile(
-  canon: PluginDistribution,
-  contract: ToolBuildContract
-): { plan: ComponentPlan; warnings: readonly string[] } | null {
-  const { hooks } = contract.artifacts;
-  const file = hooks.supported && !hooks.skipHooksJson ? hooks.hooksFile : undefined;
-  const manifest = canon.components.hooks.find((f) => f.relativePath === PLUGIN_HOOKS_RELATIVE);
-  if (file === undefined || "shared" in file.at || manifest === undefined) return null;
-  const plugin = canon.manifest.name;
-  const { content, warnings } = mergeFlatHooks({ file, contract }, null, {
-    json: manifest.content,
-    plugin,
-  });
-  return { plan: { source: "", path: hooksFilePath(file, plugin), content }, warnings };
 }

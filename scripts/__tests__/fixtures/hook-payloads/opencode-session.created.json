@@ -45,8 +45,8 @@
               }
             },
             "time": {
-              "created": 1793850454439,
-              "updated": 1793850454439
+              "created": 0,
+              "updated": 0
             }
           }
         }
@@ -95,12 +95,70 @@
               }
             },
             "time": {
-              "created": 1793850461501,
-              "updated": 1793850461501
+              "created": 0,
+              "updated": 0
             }
           }
         }
       }
+    },
+    {
+      "run": "child",
+      "payload": {
+        "id": "evt_2148ded02002rOilQxKtFES5W4",
+        "type": "session.created",
+        "properties": {
+          "sessionID": "00000000-0000-4000-8000-000000000001",
+          "info": {
+            "id": "00000000-0000-4000-8000-000000000001",
+            "slug": "quick-falcon",
+            "version": "1.19.3",
+            "projectID": "global",
+            "directory": "/Users/user/project",
+            "path": "",
+            "parentID": "00000000-0000-4000-8000-000000000000",
+            "title": "Reply with OK (@general subagent)",
+            "agent": "general",
+            "permission": [
+              {
+                "permission": "question",
+                "pattern": "*",
+                "action": "deny"
+              },
+              {
+                "permission": "plan_enter",
+                "pattern": "*",
+                "action": "deny"
+              },
+              {
+                "permission": "plan_exit",
+                "pattern": "*",
+                "action": "deny"
+              },
+              {
+                "permission": "task",
+                "pattern": "*",
+                "action": "deny"
+              }
+            ],
+            "cost": 0,
+            "tokens": {
+              "input": 0,
+              "output": 0,
+              "reasoning": 0,
+              "cache": {
+                "read": 0,
+                "write": 0
+              }
+            },
+            "time": {
+              "created": 0,
+              "updated": 0
+            }
+          }
+        }
+      },
+      "hookAnswer": null
     }
   ]
 }

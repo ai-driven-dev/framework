@@ -67,7 +67,7 @@ const KILO_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(KILO_DIRECTORY, 
 
 const hooks = declareBridgeHooks(
   { toolId: "kilo", directory: KILO_DIRECTORY, adapter },
-  ["session.created", "tool.execute.after", "session.idle"],
+  ["session.created", "tool.execute.after", "session.idle", "tool.execute.before", "chat.message"],
   { loaderEntry: { dir: `${KILO_DIRECTORY}plugin/`, baseName: "kilo-plugin.js" } }
 );
 const hooksDelivery = flatHooksSupport(hooks);

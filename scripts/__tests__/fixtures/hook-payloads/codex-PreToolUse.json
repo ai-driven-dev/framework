@@ -1,0 +1,84 @@
+{
+  "host": "codex",
+  "event": "PreToolUse",
+  "samples": [
+    {
+      "run": "deny",
+      "payload": {
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "turn_id": "01a21421-cdbd-7651-a442-12f5eb05148f",
+        "transcript_path": "/Users/user/.codex/sessions/1970/01/01/rollout-1970-01-01T00-00-00-000000000000.jsonl",
+        "cwd": "/Users/user/project",
+        "hook_event_name": "PreToolUse",
+        "model": "gpt-6-luna",
+        "permission_mode": "bypassPermissions",
+        "tool_name": "apply_patch",
+        "tool_input": {
+          "command": "*** Begin Patch\n*** Update File: aidd_docs/tasks/2026_01/2026_01_02_export/spec.md\n@@\n+new\n*** End Patch"
+        },
+        "tool_use_id": "exec-398e17df-0801-476e-b2f4-163d202f27ae"
+      },
+      "hookAnswer": {
+        "hookSpecificOutput": {
+          "hookEventName": "PreToolUse",
+          "permissionDecision": "deny",
+          "permissionDecisionReason": "aidd_docs/tasks/2026_01/2026_01_02_export/spec.md is locked: only the person who approves it sets its status back to draft. Write nothing to it."
+        }
+      }
+    },
+    {
+      "run": "log",
+      "payload": {
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "turn_id": "01a21421-cdbd-7651-a442-12f5eb05148f",
+        "transcript_path": "/Users/user/.codex/sessions/1970/01/01/rollout-1970-01-01T00-00-00-000000000000.jsonl",
+        "cwd": "/Users/user/project",
+        "hook_event_name": "PreToolUse",
+        "model": "gpt-6-luna",
+        "permission_mode": "bypassPermissions",
+        "tool_name": "apply_patch",
+        "tool_input": {
+          "command": "*** Begin Patch\n*** Add File: notes.md\n+hello\n*** End Patch"
+        },
+        "tool_use_id": "exec-2342db5e-11ca-40f2-8e53-452c4fcefd63"
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "log",
+      "payload": {
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "turn_id": "01a21421-cdbd-7651-a442-12f5eb05148f",
+        "transcript_path": "/Users/user/.codex/sessions/1970/01/01/rollout-1970-01-01T00-00-00-000000000000.jsonl",
+        "cwd": "/Users/user/project",
+        "hook_event_name": "PreToolUse",
+        "model": "gpt-6-luna",
+        "permission_mode": "bypassPermissions",
+        "tool_name": "apply_patch",
+        "tool_input": {
+          "command": "*** Begin Patch\n*** Update File: notes.md\n@@\n-hello\n+hi\n*** End Patch"
+        },
+        "tool_use_id": "exec-92240d70-6239-4d34-bf20-bd0ade15f243"
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "log",
+      "payload": {
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "turn_id": "01a21421-cdbd-7651-a442-12f5eb05148f",
+        "transcript_path": "/Users/user/.codex/sessions/1970/01/01/rollout-1970-01-01T00-00-00-000000000000.jsonl",
+        "cwd": "/Users/user/project",
+        "hook_event_name": "PreToolUse",
+        "model": "gpt-6-luna",
+        "permission_mode": "bypassPermissions",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "echo done"
+        },
+        "tool_use_id": "exec-65be009b-95a9-4fbc-8db1-eaf8a53e7808"
+      },
+      "hookAnswer": null
+    }
+  ]
+}

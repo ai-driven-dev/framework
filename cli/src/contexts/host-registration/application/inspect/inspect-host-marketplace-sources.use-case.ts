@@ -4,7 +4,6 @@ import type {
   InspectedMarketplace,
   InspectHostRegistrationRequest,
 } from "../../contract/inspect-host-registration-request.js";
-import type { HostRegistrationFinding } from "../../contract/inspect-host-registration-result.js";
 import type { NativeHostCatalog } from "../../contract/native-registration-spec.js";
 import type { HostMarketplaceSourceCheck } from "../../domain/source/marketplace-source-drift.js";
 import type { CatalogIdentityReader } from "../../ports/catalog-identity-reader.js";
@@ -12,6 +11,7 @@ import type { HostMarketplaceRegistry } from "../../ports/host-marketplace-regis
 import type { CatalogProbeTool } from "../../ports/host-tool.js";
 import type { CheckMarketplaceSource } from "../check-marketplace-source.use-case.js";
 import { sourceFinding } from "./host-registration-findings.js";
+import type { HostRegistrationFinding } from "./inspect-host-registration-result.js";
 
 /**
  * Asks each host's marketplace registry whether a marketplace it already holds points somewhere
