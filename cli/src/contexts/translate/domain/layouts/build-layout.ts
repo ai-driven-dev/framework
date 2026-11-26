@@ -15,6 +15,7 @@ import {
 import { relativeLinks } from "../rules/links.js";
 import type { FrameworkBuildMode } from "../translate-profile.js";
 import { buildFlatPlans } from "./build-flat.js";
+import { flatRules } from "./build-flat-rules.js";
 import { agentFiles, baseOf, isEntry } from "./build-shared.js";
 
 /** Where a build puts one plugin for a tool and which rules each file goes through. The files
@@ -31,12 +32,13 @@ export function buildPlans(
 }
 
 function marketplacePlans(canon: PluginDistribution, contract: ToolBuildContract): ComponentPlan[] {
-  const { agents, hooks, mcp, skills } = contract.artifacts;
+  const { agents, hooks, mcp, rules, skills } = contract.artifacts;
   const { pluginRootToken } = contract;
   return [
     ...(agents.supported ? marketplaceAgents(canon, agents) : []),
     ...(hooks.supported ? marketplaceHooks(canon, hooks, pluginRootToken) : []),
     ...(mcp.supported ? marketplaceMcp(canon, mcp, pluginRootToken) : []),
+    ...(rules?.supported ? marketplaceRules(canon, rules) : []),
     ...(skills.supported ? marketplaceSkills(canon, skills) : []),
   ];
 }
@@ -68,6 +70,15 @@ export function marketplaceAgentPlan(
     links: agentLinks(artifact, place),
     shape: agentShape(artifact, place),
   };
+}
+
+/** The rules a tool lists in its own guidance file, placed inside the plugin's output where the
+ * flat build places them in a project: a machine-scope install copies them out of the built tree. */
+function marketplaceRules(canon: PluginDistribution, artifact: SupportedArtifact): ComponentPlan[] {
+  return flatRules(canon, artifact).map((plan) => ({
+    ...plan,
+    path: `plugins/${canon.manifest.name}/${plan.path}`,
+  }));
 }
 
 function marketplaceHooks(

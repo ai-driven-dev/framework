@@ -224,7 +224,22 @@ exports[`the data each registered profile declares > codex 1`] = `
       "name": "reviewer",
     },
     "commands": null,
-    "rules": null,
+    "rules": {
+      "a description alone": {},
+      "a description that opts out of always-apply": {
+        "description": "d",
+      },
+      "a paths list": {},
+      "an always-apply rule": {},
+      "an empty paths list": {},
+      "an opt-out with no description": {},
+      "globs that apply on request": {
+        "description": "d",
+      },
+      "paths beside a description": {
+        "description": "d",
+      },
+    },
   },
   "hooksRootToken": "\${PLUGIN_ROOT}",
   "installs": {
@@ -234,6 +249,15 @@ exports[`the data each registered profile declares > codex 1`] = `
       "reviewer.codex.md": ".codex/agents/reviewer.toml",
       "reviewer.md": ".codex/agents/reviewer.toml",
       "team/sub/reviewer.md": ".codex/agents/reviewer.toml",
+    },
+    "rules": {
+      "00-architecture/.gitkeep": ".codex/instructions/00-architecture/.gitkeep",
+      "01-standards/1-mermaid.md": ".codex/instructions/01-standards/1-mermaid.md",
+      "01-standards/10-mermaid.md": ".codex/instructions/01-standards/10-mermaid.md",
+      "01-standards/naming-2-rules.md": ".codex/instructions/01-standards/naming-2-rules.md",
+      "01-standards/naming.md": ".codex/instructions/01-standards/naming.md",
+      "04-tooling/ide-mapping.codex.md": ".codex/instructions/04-tooling/ide-mapping.md",
+      "standards.codex.md": ".codex/instructions/standards.md",
     },
   },
   "kind": "ai",
@@ -247,6 +271,7 @@ exports[`the data each registered profile declares > codex 1`] = `
   "sections": [
     "agents",
     "skills",
+    "rules",
     "mcp",
     "hooks",
     "layout",

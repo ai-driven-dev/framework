@@ -77,7 +77,7 @@ export const kimi = defineAiTool({
     rules: {
       buildInstallPath: installUnder(DIRECTORY, TOOL_SUFFIX, INSTRUCTIONS),
       convertFrontmatter: descriptionOnlyRule,
-      listedInAgentsFile: true,
+      listedInAgentsFile: KIMI_FLAT_LAYOUT,
     },
     hooks: { delivery: { kind: "none", reason: USER_LEVEL_ONLY } },
     layout: flatPlacement({ namespacePrefix: "aidd-", artifacts: KIMI_FLAT_LAYOUT }),

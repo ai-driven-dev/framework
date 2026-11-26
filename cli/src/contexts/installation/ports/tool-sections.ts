@@ -93,7 +93,7 @@ export interface FlatMcpSection {
   readonly toolId: AiToolId;
   flatPluginMcp(): McpConfigAnswers | null;
   flatRulesPlacement(pluginName: string): { readonly prefix: string; readonly glob: string } | null;
-  flatRulesIndex(): RulesIndexAnswers | null;
+  rulesIndex(): RulesIndexAnswers | null;
 }
 
 /** The shared settings file a tool enables its plugins in. */

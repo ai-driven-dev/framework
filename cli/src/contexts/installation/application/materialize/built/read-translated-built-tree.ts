@@ -14,7 +14,7 @@ import type {
 } from "../../../ports/plugin/plugin-translation.js";
 import type { AddPluginRequest } from "../add-plugin-request.js";
 import { materializeRequestedMcp, placedRulesGlob } from "../flat-mcp-materializer.js";
-import { listPlacedRules } from "../list-placed-rules.js";
+import { listPlacedRules } from "../listed-rules/list-placed-rules.js";
 import { deliversHooksToProject } from "../plugin-placement.js";
 import type { ProjectHooksMaterializer } from "../project-hooks-materializer.use-case.js";
 import {

@@ -120,7 +120,7 @@
         "agents": "yes",
         "mcp": "yes",
         "hooks": "yes",
-        "rules": "no",
+        "rules": "yes",
         "commands": "no"
       },
       "flat": {

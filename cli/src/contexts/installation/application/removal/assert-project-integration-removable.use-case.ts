@@ -24,7 +24,7 @@ export class AssertProjectIntegrationRemovable {
   async execute(removal: ProjectIntegrationRemoval): Promise<void> {
     await this.mcp.execute(removal);
     await this.hooks.execute(removal);
-    const index = removal.tool.flatRulesIndex();
+    const index = removal.tool.rulesIndex();
     if (index === null) return;
     await this.withinRoot.execute(
       removal.projectRoot,

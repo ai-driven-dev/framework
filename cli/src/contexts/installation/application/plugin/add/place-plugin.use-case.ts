@@ -14,8 +14,8 @@ import type { ProjectHooksProvenance } from "../../../domain/plugins/plugin-entr
 import { RecordedPlugin } from "../../../domain/plugins/recorded-plugin.js";
 import type { EnsurePluginRuntimeFiles } from "../../install/config/ensure-plugin-runtime-files.use-case.js";
 import type { BuiltPlacement } from "../../materialize/add-plugin-request.js";
+import { registerWithListedRules } from "../../materialize/listed-rules/place-listed-rules.js";
 import { placementModeOf } from "../../materialize/plugin-placement.js";
-import { registerMarketplacePlugin } from "../../materialize/register-marketplace-plugin.js";
 import { hashOutputFiles } from "../../shared/hash-output-files.js";
 import { type PluginFilesystem, replacePluginFiles } from "../files/write-plugin-files.js";
 import { resolveScopeForInstall } from "../plugin-target-resolution.js";
@@ -153,8 +153,7 @@ async function materializeNativePlugin(
   const { mode, files, componentPaths, skipped, notices } = translated;
   if (files.length === 0) return { skipped, notices };
   if (mode === "marketplace" && source.kind === "local" && marketplace !== undefined) {
-    const request = { dist, tool, source, projectRoot, manifest, marketplace };
-    return { ...registerMarketplacePlugin(request), notices };
+    return { ...(await registerWithListedRules(placement, files, fs)), notices };
   }
   const scope = resolveScopeForInstall(tool);
   const previous = command.previousFiles.get(tool.toolId);

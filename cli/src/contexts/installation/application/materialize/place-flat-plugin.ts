@@ -18,7 +18,7 @@ import { resolveScopeForInstall, scopeBaseOf } from "../plugin/plugin-target-res
 import { hashOutputFiles } from "../shared/hash-output-files.js";
 import type { AddPluginRequest, AddPluginResult } from "./add-plugin-request.js";
 import { materializeRequestedMcp, placedRulesGlob } from "./flat-mcp-materializer.js";
-import { listPlacedRules } from "./list-placed-rules.js";
+import { listPlacedRules } from "./listed-rules/list-placed-rules.js";
 import type { ProjectHooksMaterializer } from "./project-hooks-materializer.use-case.js";
 
 export interface FlatPlacementDeps {

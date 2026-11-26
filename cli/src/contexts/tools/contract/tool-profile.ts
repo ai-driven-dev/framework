@@ -50,6 +50,10 @@ export interface FlatLayout {
  * rules folder. */
 export interface RulesIndexAnswers {
   readonly relativePath: string;
+  /** The glob naming a plugin's rules when `paths` hold any of them, none to list otherwise. */
+  globIn(plugin: string, paths: Iterable<string>): string | null;
+  /** The glob naming a plugin's rules, whether or not any is placed. */
+  globOf(plugin: string): string | null;
   /** The file with `glob` listed beside what a person wrote there. */
   withGlob(existing: string | null, glob: string): string;
   /** The file without `glob`; the file itself when it is not listed. */
@@ -284,7 +288,7 @@ export interface AiToolProfile {
   /** Where it takes a plugin's hooks inside the project, or null when it takes none there. */
   projectHooksDelivery(): ProjectHooksLocation | null;
   /** The file that lists a plugin's rules for a tool reading no rules folder, or null. */
-  flatRulesIndex(): RulesIndexAnswers | null;
+  rulesIndex(): RulesIndexAnswers | null;
   /** Where its installed rules live and what they end in, or null when it installs none. */
   installedRulesLocation(): { readonly directory: string; readonly extension: string } | null;
   /** Where its own commands sit in the project at `projectRoot`, or null when it declares none. */

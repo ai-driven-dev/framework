@@ -21,7 +21,8 @@ export interface PluginRematerialization {
 /**
  * Re-registers a marketplace-sourced plugin the way its tool takes it: drops the existing
  * manifest entry and places the plugin again, so update and restore both end with the same
- * single entry an install would have produced.
+ * single entry an install would have produced. What the plugin keeps in the project beside its
+ * registration stays recorded as it was, not rewritten.
  *
  * Returns how many files were actually (re)written: not the plugin's total file count: so
  * a no-op restore reports zero. `written` is undefined for a placement that writes no files, and
@@ -47,7 +48,10 @@ export async function rematerializePlugin(
     hooksGuard,
   };
   if (mode === "marketplace") {
-    registerMarketplacePlugin(request);
+    const index = tool.rulesIndex();
+    const owned = ([path]: readonly [string, string]) =>
+      index !== null && index.globIn(plugin.name, [path]) !== null;
+    registerMarketplacePlugin({ ...request, kept: new Map([...plugin.files].filter(owned)) });
     return 0;
   }
   return (await placeBuiltTree(request)).written ?? 0;

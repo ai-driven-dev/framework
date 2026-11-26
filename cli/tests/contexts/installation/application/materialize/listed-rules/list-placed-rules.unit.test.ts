@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { listPlacedRules } from "../../../../../src/contexts/installation/application/materialize/list-placed-rules.js";
-import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
+import { listPlacedRules } from "../../../../../../src/contexts/installation/application/materialize/listed-rules/list-placed-rules.js";
+import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 
 const ROOT = "/project";
 const AGENTS = "/project/AGENTS.md";

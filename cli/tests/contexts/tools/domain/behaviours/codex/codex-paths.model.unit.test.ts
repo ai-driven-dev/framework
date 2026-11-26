@@ -19,3 +19,25 @@ describe("codexGlobalFilePath - the agents a machine-scope install copies into ~
     expect(codexGlobalFilePath(built, ORCHESTRATOR)).toBeNull();
   });
 });
+
+describe("codexGlobalFilePath - the rules a machine-scope install copies into ~/.codex", () => {
+  const CRAFT = { name: "aidd-craft", agents: new Set<string>() };
+
+  it("keeps a plugin's rule under instructions/, named as the flat build names it", () => {
+    expect(
+      codexGlobalFilePath(
+        "plugins/aidd-craft/.codex/instructions/aidd-craft-01-standards-1-naming.md",
+        CRAFT
+      )
+    ).toBe("instructions/aidd-craft-01-standards-1-naming.md");
+  });
+
+  it.each([
+    "plugins/aidd-dev/.codex/instructions/aidd-dev-1-naming.md",
+    "plugins/aidd-craft/.codex/instructions/other-1-naming.md",
+    "plugins/aidd-craft/.codex/instructions/nested/aidd-craft-1-naming.md",
+    "plugins/aidd-craft/.codex/instructions/aidd-craft-1-naming.txt",
+  ])("leaves %s out: another plugin's, or not one of its rules", (built) => {
+    expect(codexGlobalFilePath(built, CRAFT)).toBeNull();
+  });
+});

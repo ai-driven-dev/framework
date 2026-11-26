@@ -16,7 +16,7 @@ const plugin = RecordedPlugin.fromMetadata({
   scope: "project",
 });
 
-function removal(toolId: typeof TOOL.kimi | typeof TOOL.kilo) {
+function removal(toolId: typeof TOOL.kimi | typeof TOOL.kilo | typeof TOOL.codex) {
   return {
     plugin,
     tool: registeredTools().aiProfile(toolId),
@@ -46,5 +46,15 @@ describe("taking a plugin's rules out of the file its tool reads guidance from",
     await rules(fs).execute(removal(TOOL.kilo));
 
     expect(fs.getFile(AGENTS)).toBe(text);
+  });
+
+  it("takes a plugin's listing out of the file whichever route placed its rules, the team's text kept", async () => {
+    const text =
+      "# Team\n\n<!-- aidd_plugin_rules:start -->\n- `.codex/instructions/aidd-dev-*.md`\n<!-- aidd_plugin_rules:end -->\n";
+    const fs = new InMemoryFileAdapter({ [AGENTS]: text }, [ROOT]);
+
+    await rules(fs).execute(removal(TOOL.codex));
+
+    expect(fs.getFile(AGENTS)).toBe("# Team\n");
   });
 });

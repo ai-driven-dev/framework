@@ -1,3 +1,8 @@
+import {
+  type FlatArtifactLayout,
+  flatRulesPlacement,
+  rulesGlobOf,
+} from "../../../../shared/domain/materialization/flat-paths.js";
 import type { RulesIndexAnswers } from "../../contract/tool-profile.js";
 import {
   AGENTS_FILE,
@@ -8,8 +13,9 @@ import {
 type RulesSectionParams = {
   toolSuffix: string;
   inputSuffix?: string;
-  /** The tool reads markdown guidance only from AGENTS.md, so the rules it is given are listed there. */
-  listedInAgentsFile?: true;
+  /** The tool reads markdown guidance only from AGENTS.md, so the rules it is given are listed
+   * there: the layout is where they sit in a project. */
+  listedInAgentsFile?: FlatArtifactLayout;
   buildInstallPath: (fileName: string) => string | null;
   convertFrontmatter: (fm: Record<string, unknown>) => Record<string, unknown>;
 };
@@ -46,9 +52,12 @@ export class RulesSection {
 
   /** The file listing a plugin's rules, for a tool that reads no rules folder; null for any other. */
   agentsIndex(): RulesIndexAnswers | null {
-    if (this.#params.listedInAgentsFile === undefined) return null;
+    const layout = this.#params.listedInAgentsFile;
+    if (layout === undefined) return null;
     return {
       relativePath: AGENTS_FILE,
+      globIn: (plugin, paths) => rulesGlobOf(flatRulesPlacement(layout, plugin), paths),
+      globOf: (plugin) => flatRulesPlacement(layout, plugin)?.glob ?? null,
       withGlob: addAgentsRulesGlob,
       withoutGlob: removeAgentsRulesGlob,
     };
