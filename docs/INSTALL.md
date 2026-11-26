@@ -57,13 +57,14 @@ The commands below follow the latest version available for each tool in the [AID
 
 ### Claude Code
 
-Install the first plugin from your terminal:
+Register the AIDD catalog and install the first plugin from your terminal:
 
 ```sh
-claude plugin install aidd-context --marketplace 'https://github.com/ai-driven-dev/marketplaces.git#claude'
+claude plugin marketplace add 'https://github.com/ai-driven-dev/marketplaces.git#claude'
+claude plugin install aidd-context@aidd-marketplace
 ```
 
-Open Claude Code in your project and run `/aidd-context:00-onboard`. The first command also registers the AIDD catalog. Add the other recommended plugins as needed:
+Open Claude Code in your project and run `/aidd-context:00-onboard`. Add the other recommended plugins as needed:
 
 ```text
 /plugin install aidd-refine@aidd-marketplace
@@ -104,7 +105,7 @@ To pin a version, use `#copilot-v<version>`. For a local catalog, extract `aidd-
 **For AIDD subagents**, use the [Codex flat-file ZIP](#flat-files) for the current project, or install for all your projects with the CLI:
 
 ```sh
-npx @ai-driven-dev/cli@latest setup --global --ide codex --plugins recommended --provider openai --agents-only --yes
+npx @ai-driven-dev/cli@latest setup --global --ide codex --plugins recommended --agents-only --yes
 ```
 
 Codex loads subagents from its user or project agent directory. Installing from the catalog alone leaves the included agent TOMLs inactive.
@@ -120,7 +121,7 @@ To pin a version, use `--ref codex-v<version>`. For a local catalog, extract `ai
 
 ### Cursor
 
-AIDD publishes the Cursor catalog on the distribution repository's `cursor` branch. Adding it in Cursor is unverified: `cursor-agent plugin marketplace add` needs a signed-in account, so no install from it has been tested. [Cursor plugins](https://cursor.com/docs/plugins)
+AIDD hosts no Cursor catalog: `cursor-agent plugin marketplace add` needs a signed-in account, so no install from a Git ref has been verified. [Cursor plugins](https://cursor.com/docs/plugins)
 
 For a local installation where local plugins are enabled:
 

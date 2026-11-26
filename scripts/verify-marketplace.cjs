@@ -28,10 +28,6 @@ function verify(toolId, version, source, repository = published) {
   );
   if (!refs[tagRef] || !refs[branchRef]) throw new Error(`Expected ${tagRef} and ${branchRef} in ${repository}`);
   const ref = refs[tagRef] === refs[branchRef] ? toolId : release;
-  if (!tool.client) {
-    console.log(`${toolId} ${version} Git ref is reachable. Verify installation in the actual client.`);
-    return;
-  }
 
   const plugin = "aidd-context";
   const manifest = JSON.parse(readFileSync(join(source, "plugins", plugin, tool.manifest), "utf8"));

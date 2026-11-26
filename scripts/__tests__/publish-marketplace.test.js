@@ -113,21 +113,6 @@ test("the hosted catalog carries the one distribution name, whatever the tool", 
   }
 });
 
-test("only the first two Claude releases after the bootstrap reach the legacy branch", () => {
-  publishAll("claude", ["v1.0.0"]);
-  const bootstrap = git("commit-tree", tree("refs/tags/claude-v1.0.0"), "-m", "Bootstrap");
-  git("update-ref", "refs/heads/claude-legacy", bootstrap);
-  publishAll("claude", ["v1.1.0", "v1.2.0", "v1.3.0"]);
-  assert.equal(git("rev-list", "--count", "refs/heads/claude-legacy"), "3");
-  assert.equal(tree("refs/heads/claude-legacy"), tree("refs/tags/claude-v1.2.0"));
-  assert.equal(ref("refs/heads/claude"), ref("refs/tags/claude-v1.3.0"));
-});
-
-test("a tool without a legacy branch never gets one", () => {
-  publishAll("codex", ["v1.0.0", "v1.1.0"]);
-  assert.equal(git("for-each-ref", "--format=%(refname)", "refs/heads/*-legacy"), "");
-});
-
 test("a catalog with no plugin is refused", () => {
   const source = release("codex");
   write(join(source, CATALOGS.codex), `${JSON.stringify({ name: "aidd-framework", plugins: [] })}\n`);

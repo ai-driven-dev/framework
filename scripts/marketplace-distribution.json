@@ -6,13 +6,8 @@
     "codex": "@openai/codex@0.172.0",
     "copilot": "@github/copilot@1.0.114"
   },
-  "legacy": {
-    "claude": {
-      "branch": "claude-legacy",
-      "releases": 2
-    }
-  },
   "notHosted": {
+    "cursor": "Installing from a Git ref needs a signed-in Cursor account, so no install from a hosted catalog has been verified.",
     "antigravity": "Antigravity registers no marketplace: its plugins are directories under .agents/plugins/.",
     "kimi": "The marketplace layout builds no catalog, and Kimi installs a plugin directory through its web server, so there is no Git ref to install from."
   }

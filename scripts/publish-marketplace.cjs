@@ -48,21 +48,12 @@ function publish(tool, version, source, repository) {
     const previousVersion = previous && git("tag", "--points-at", stable, "--list", `${tool}-v*`).replace(`${tool}-`, "");
     if (previous && !releaseTag.test(previousVersion)) throw new Error(`Unexpected history on ${tool}`);
     const advance = !previous || compareVersions(version, previousVersion) > 0;
-    const commitTree = (parent, message) => git(
+    const commit = git(
       "-c", "user.name=AIDD Release", "-c", "user.email=release@ai-driven-dev.fr",
-      "commit-tree", tree, ...(parent ? ["-p", parent] : []), "-m", message,
+      "commit-tree", tree, ...(advance && previous ? ["-p", previous] : []), "-m", `Publish ${tool} ${version}`,
     );
-    const commit = commitTree(advance && previous, `Publish ${tool} ${version}`);
     const refs = [`${commit}:${versionRef}`];
     if (advance) refs.push(`${commit}:refs/heads/${tool}`);
-    if (target.legacy && advance) {
-      const legacy = `refs/remotes/origin/${target.legacy.branch}`;
-      const legacyHead = git("for-each-ref", "--format=%(objectname)", legacy);
-      const published = legacyHead ? Number(git("rev-list", "--count", `--grep=^Publish legacy ${tool} v`, legacy)) : 0;
-      if (published < target.legacy.releases) {
-        refs.push(`${commitTree(legacyHead, `Publish legacy ${tool} ${version}`)}:refs/heads/${target.legacy.branch}`);
-      }
-    }
     git("push", "--atomic", "origin", ...refs);
     console.log(`${tool} ${version} published${advance ? ` to ${tool}` : " as a version tag only"}`);
   } finally {

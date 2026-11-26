@@ -22,7 +22,6 @@ test("a tool whose marketplace layout builds a catalog the host reads is publish
     manifest: ".alpha/plugin.json",
     client: "alpha-cli",
     clientPackage: null,
-    legacy: null,
   });
 });
 
@@ -35,11 +34,12 @@ test("a catalog no host reads, and a layout with no catalog, are not publishable
   assert.deepEqual(publishableTools(record).map((tool) => tool.id), ["plain"]);
 });
 
-test("the client package and the legacy branch come from the distribution data", () => {
-  const tool = toolOf("claude");
-  assert.equal(tool.clientPackage, distribution.clients.claude);
-  assert.deepEqual(tool.legacy, distribution.legacy.claude);
-  assert.equal(toolOf("codex").legacy, null);
+test("the client package comes from the distribution data", () => {
+  assert.equal(toolOf("claude").clientPackage, distribution.clients.claude);
+});
+
+test("a tool the distribution data says is not hosted is not publishable", () => {
+  assert.equal(toolOf("cursor"), undefined);
 });
 
 test("an unknown tool is not one", () => {

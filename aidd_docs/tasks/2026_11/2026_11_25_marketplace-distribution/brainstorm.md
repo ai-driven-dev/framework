@@ -4,7 +4,7 @@ status: approved
 
 # Distribute AIDD marketplaces with each release
 
-Users install and update a released version of AIDD from the documented distribution URL for their tool. [Issue #1165](https://github.com/ai-driven-dev/framework/issues/1165)
+Users install and update a released version of AIDD from the documented distribution URL for their tool.
 
 ## Decisions
 

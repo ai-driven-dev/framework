@@ -119,13 +119,6 @@ test("a plugin manifest with no version is refused", posixOnly, () => {
   assert.match(result.stderr, /did not generate a version for aidd-context/);
 });
 
-test("a tool with no client to drive is only checked for its Git ref", posixOnly, () => {
-  publishedRemote("cursor");
-  const result = verify("cursor", "v1.0.0", source("cursor"));
-  assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /cursor v1\.0\.0 Git ref is reachable/);
-});
-
 test("a tool that publishes no catalog is refused with the usage", posixOnly, () => {
   const result = verify("kimi", "v1.0.0", dir);
   assert.equal(result.status, 1);

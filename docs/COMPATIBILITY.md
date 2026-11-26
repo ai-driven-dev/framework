@@ -7,7 +7,7 @@ What each AI tool receives from the framework.
 | Tool | Directory | Marketplace | Hosted catalog | Flat files | Skills | Agents | MCP | Hooks | Rules | Commands |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Claude Code | `.claude/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Cursor | `.cursor/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Cursor | `.cursor/` | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | GitHub Copilot | `.github/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | OpenCode | `.opencode/` | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | Some events | ✅ | ✅ |
 | Kilo Code | `.kilo/` | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | Some events | ✅ | ✅ |
