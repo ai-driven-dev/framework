@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { SyncServerPlugins } from "../../../../../src/contexts/host-registration/application/server/sync-server-plugins.use-case.js";
 import { FakeHostPluginServer } from "../../../../shared/testing/fake-host-plugin-server.fake.js";
@@ -5,6 +6,7 @@ import { FakeServerPluginLedger } from "../../../../shared/testing/fake-server-p
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
 const BUILT = "/built/aidd/kimi";
+const pluginDir = (name: string) => join(BUILT, "plugins", name);
 
 function setup(options: { server?: FakeHostPluginServer; owned?: string[] } = {}) {
   const server = options.server ?? new FakeHostPluginServer();
@@ -83,10 +85,7 @@ describe("installing plugins in a host's own server", () => {
       installed: ["aidd-dev", "aidd-vcs"],
       problems: [],
     });
-    expect(server.installedFrom).toEqual([
-      `${BUILT}/plugins/aidd-dev`,
-      `${BUILT}/plugins/aidd-vcs`,
-    ]);
+    expect(server.installedFrom).toEqual([pluginDir("aidd-dev"), pluginDir("aidd-vcs")]);
     expect(ledger.owned.get(TOOL.kimi)).toEqual(["aidd-dev", "aidd-vcs"]);
   });
 
@@ -96,7 +95,7 @@ describe("installing plugins in a host's own server", () => {
     const result = await run(["aidd-vcs"]);
 
     expect(result).toMatchObject({ installed: ["aidd-vcs", "aidd-dev"] });
-    expect(server.installedFrom).toContain(`${BUILT}/plugins/aidd-dev`);
+    expect(server.installedFrom).toContain(pluginDir("aidd-dev"));
     expect(ledger.owned.get(TOOL.kimi)).toEqual(["aidd-dev", "aidd-vcs"]);
   });
 
@@ -120,7 +119,7 @@ describe("installing plugins in a host's own server", () => {
     const server = new FakeHostPluginServer();
     server.held.set("aidd-dev", {
       id: "aidd-dev",
-      originalSource: `${BUILT}/plugins/aidd-dev`,
+      originalSource: pluginDir("aidd-dev"),
       healthy: true,
     });
     const { run, ledger } = setup({ server });

@@ -21,7 +21,3 @@ export function isComponentFile(relativePath: string): boolean {
   const top = relativePath.split("/")[0];
   return top === "agents" || top === "commands" || top === "rules" || top === "skills";
 }
-
-export function basename(relativePath: string): string {
-  return relativePath.split("/").at(-1) ?? relativePath;
-}

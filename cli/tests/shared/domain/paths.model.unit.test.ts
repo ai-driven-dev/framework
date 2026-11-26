@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  basename,
   dedupePathSegments,
   isStrictlyWithin,
   isWithin,
@@ -165,5 +166,14 @@ describe("checking a path stays inside a boundary", () => {
   it("rejects the parent directory and a sibling", () => {
     expect(isWithin("/home/dev/.cursor/plugins", BOUNDARY)).toBe(false);
     expect(isWithin(`${BOUNDARY}-evil`, BOUNDARY)).toBe(false);
+  });
+});
+
+describe("the file name of a path", () => {
+  it.each([
+    ["a/b/c.md", "c.md"],
+    ["plain.md", "plain.md"],
+  ])("takes the last segment of %s", (path, expected) => {
+    expect(basename(path)).toBe(expected);
   });
 });

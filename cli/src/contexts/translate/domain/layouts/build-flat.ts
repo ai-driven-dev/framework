@@ -3,6 +3,8 @@ import type {
   SupportedArtifact,
   ToolBuildContract,
 } from "../../../../shared/domain/materialization/build-contract.js";
+import type { CommandsArtifact } from "../../../../shared/domain/materialization/command-markdown.js";
+import { basename } from "../../../../shared/domain/paths.model.js";
 import type {
   PluginComponentFile,
   PluginDistribution,
@@ -10,20 +12,22 @@ import type {
 import { PLUGIN_HOOKS_RELATIVE } from "../canon-format.js";
 import { flatAgentPath, flatCommandFolders, flatLinkTarget } from "../flat-layout.js";
 import { agentLinks } from "../rules/agent-markdown.js";
+import { flatCommandPlan } from "../rules/command-plan.js";
 import { agentShape, type ComponentPlan } from "../rules/component-pipeline.js";
 import { foldsFlatMcp } from "../rules/flat-mcp.js";
 import { relativeLinks } from "../rules/links.js";
 import { flatHooks } from "./build-flat-hooks.js";
 import { flatRules } from "./build-flat-rules.js";
-import { agentFiles, baseOf, namedByFolder } from "./build-shared.js";
+import { agentFiles, namedByFolder } from "./build-shared.js";
 
 /** A flat build's files and its bridge's warnings; the sink merges its MCP servers and hooks file. */
 export function buildFlatPlans(canon: PluginDistribution, contract: ToolBuildContract) {
-  const { agents, hooks, rules, skills } = contract.artifacts;
+  const { agents, commands, hooks, rules, skills } = contract.artifacts;
   const hookPlans = hooks.supported ? flatHooks(canon, hooks) : { plans: [], warnings: [] };
   return {
     plans: [
       ...flatCommandFiles(canon, contract),
+      ...(commands?.supported ? flatSlashCommands(canon, contract, commands) : []),
       ...(agents.supported ? flatAgents(canon, contract, agents) : []),
       ...hookPlans.plans,
       ...(skills.supported ? flatSkills(canon, contract, skills) : []),
@@ -56,6 +60,25 @@ function flatCommandFiles(canon: PluginDistribution, contract: ToolBuildContract
     }));
 }
 
+/** A plugin's commands, each placed, named and linked as an install of them is. */
+function flatSlashCommands(
+  canon: PluginDistribution,
+  contract: ToolBuildContract,
+  artifact: CommandsArtifact
+): ComponentPlan[] {
+  const plugin = canon.manifest.name;
+  const { commandMarkdown } = artifact;
+  return canon.components.commands.map((file) =>
+    flatCommandPlan(file, {
+      plugin,
+      path: artifactPath(artifact, plugin, file.relativePath),
+      prefix: commandMarkdown.namePrefix,
+      linkSyntax: commandMarkdown.linkSyntax,
+      target: (rel) => flatLinkTarget(contract, plugin, rel),
+    })
+  );
+}
+
 const isHooksManifest = (file: PluginComponentFile): boolean =>
   file.relativePath === PLUGIN_HOOKS_RELATIVE;
 
@@ -83,7 +106,7 @@ export function flatAgentPlan(
   }
 ): ComponentPlan {
   const { plugin, contract, artifact, unshaped } = at;
-  const base = baseOf(relativePath);
+  const base = basename(relativePath);
   const path = flatAgentPath(artifact, plugin, base);
   const place = {
     plugin,
