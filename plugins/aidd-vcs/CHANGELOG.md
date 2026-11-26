@@ -1,5 +1,28 @@
 # Changelog
 
+## [2.6.0](https://github.com/ai-driven-dev/framework/compare/aidd-vcs-v2.5.1...aidd-vcs-v2.6.0) (2026-11-26)
+
+
+### Features
+
+* **aidd-vcs:** answer pull and merge request review comments ([#1128](https://github.com/ai-driven-dev/framework/issues/1128)) ([75659db](https://github.com/ai-driven-dev/framework/commit/75659dbcebd63e43358a051e092719fe6d52aba1))
+* **framework:** check framework content through contracts ([8922b9b](https://github.com/ai-driven-dev/framework/commit/8922b9be53cd946e09edf45d34a46a92d128cc29))
+
+
+### Bug Fixes
+
+* **framework:** mark the remaining template slots as {{...}} ([#1149](https://github.com/ai-driven-dev/framework/issues/1149)) ([bb11a8d](https://github.com/ai-driven-dev/framework/commit/bb11a8dfb09fc1ffec0165a461da38bf7bbc5815))
+
+
+### Documentation
+
+* **framework:** mark every template slot as {{…}} ([#1149](https://github.com/ai-driven-dev/framework/issues/1149)) ([04119a5](https://github.com/ai-driven-dev/framework/commit/04119a5f9b8d2b91fbff6b8f1f721c1993e0b0c0))
+
+
+### Refactoring
+
+* **aidd-refine:** give shadow-areas a router, a report contract and one home per fact ([e4c1d4f](https://github.com/ai-driven-dev/framework/commit/e4c1d4f5cfa2817e97bc9e632f76c54fbca78ffe))
+
 ## [2.5.1](https://github.com/ai-driven-dev/framework/compare/aidd-vcs-v2.5.0...aidd-vcs-v2.5.1) (2026-11-13)
 
 

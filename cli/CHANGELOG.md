@@ -1,5 +1,33 @@
 # Changelog
 
+## [5.8.0](https://github.com/ai-driven-dev/framework/compare/cli-v5.7.0...cli-v5.8.0) (2026-11-26)
+
+
+### Features
+
+* **cli:** run the main session and the agents on a chosen provider's models ([#1119](https://github.com/ai-driven-dev/framework/issues/1119)) ([a27436e](https://github.com/ai-driven-dev/framework/commit/a27436e06dde4abdb5f8e9714670a115841c9e2f))
+* **framework:** check written artifacts at turn end in plugins ([#1149](https://github.com/ai-driven-dev/framework/issues/1149)) ([2a3a53c](https://github.com/ai-driven-dev/framework/commit/2a3a53ce801c3f96d8da8e9de75247d8e4f1c4d1))
+
+
+### Bug Fixes
+
+* **cli:** drop the comments that cited a removed reference ([#1257](https://github.com/ai-driven-dev/framework/issues/1257)) ([28cdb8c](https://github.com/ai-driven-dev/framework/commit/28cdb8c08d1f54ff6f186a62117fab71c758300e))
+
+
+### Miscellaneous
+
+* **deps:** bump @inquirer/prompts from 8.7.5 to 8.8.0 in /cli ([#1267](https://github.com/ai-driven-dev/framework/issues/1267)) ([ff215aa](https://github.com/ai-driven-dev/framework/commit/ff215aa4a6f308d1aff8aa315ff79f27b71a8f57))
+* **deps:** bump commander from 15.0.0 to 15.1.0 in /cli ([#1268](https://github.com/ai-driven-dev/framework/issues/1268)) ([184d2f8](https://github.com/ai-driven-dev/framework/commit/184d2f882a5091092e67b24f2042c27238b4dff8))
+* **deps:** bump simple-git from 4.0.2 to 4.1.0 in /cli ([#1327](https://github.com/ai-driven-dev/framework/issues/1327)) ([95d67b6](https://github.com/ai-driven-dev/framework/commit/95d67b6f679abd6f88d469991855c35c5b9cd73e))
+* **framework:** merge feat/1149-artifact-hook ([#1149](https://github.com/ai-driven-dev/framework/issues/1149)) ([0c0a8e3](https://github.com/ai-driven-dev/framework/commit/0c0a8e38f6b3d40a8780a0df1f72e04ddd061c5f))
+* **framework:** merge feat/1149-artifact-hook into feat/1149-dev-contracts ([#1149](https://github.com/ai-driven-dev/framework/issues/1149)) ([6e866b8](https://github.com/ai-driven-dev/framework/commit/6e866b87c431085ed8cf1a9dd5b5baf85cd07d4c))
+
+
+### Refactoring
+
+* **aidd-context:** apply the lean skill contract to rule-generate ([#1226](https://github.com/ai-driven-dev/framework/issues/1226)) ([0604eaf](https://github.com/ai-driven-dev/framework/commit/0604eaf1a94be04b966c989052ef0edbf09aa719))
+* **aidd-refine:** give shadow-areas a router, a report contract and one home per fact ([e4c1d4f](https://github.com/ai-driven-dev/framework/commit/e4c1d4f5cfa2817e97bc9e632f76c54fbca78ffe))
+
 ## [5.7.0](https://github.com/ai-driven-dev/framework/compare/cli-v5.6.0...cli-v5.7.0) (2026-11-13)
 
 
