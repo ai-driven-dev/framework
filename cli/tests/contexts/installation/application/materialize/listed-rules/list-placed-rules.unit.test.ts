@@ -1,24 +1,36 @@
 import { describe, expect, it } from "vitest";
 import {
-  listPlacedRules,
+  syncPlacedRules,
   syncRulesListing,
 } from "../../../../../../src/contexts/installation/application/materialize/listed-rules/list-placed-rules.js";
+import { PluginDistribution } from "../../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { parsePluginName } from "../../../../../../src/shared/domain/plugin/plugin-name.js";
 import { InMemoryFileAdapter } from "../../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 
 const ROOT = "/project";
 const AGENTS = "/project/AGENTS.md";
 const GLOB = ".kimi-code/instructions/aidd-dev-*.md";
+const RULE_FILE = { relativePath: ".kimi-code/instructions/aidd-dev-1-naming.md" };
 
 function requestOf(toolId: typeof TOOL.kimi | typeof TOOL.kilo) {
-  return { tool: registeredTools().aiProfile(toolId), projectRoot: ROOT };
+  return {
+    dist: new PluginDistribution({
+      manifest: { name: parsePluginName("aidd-dev"), version: "1.0.0" },
+      format: TOOL.claude,
+      files: [],
+      components: { commands: [], agents: [], rules: [], skills: [], hooks: [], mcp: [] },
+    }),
+    tool: registeredTools().aiProfile(toolId),
+    projectRoot: ROOT,
+  };
 }
 
 describe("listing the rules a plugin placed", () => {
   it("lists the glob in the file the tool reads, after the team's text", async () => {
     const fs = new InMemoryFileAdapter({ [AGENTS]: "# Team\n" }, [ROOT]);
 
-    await listPlacedRules(fs, requestOf(TOOL.kimi), GLOB);
+    await syncPlacedRules(fs, requestOf(TOOL.kimi), [RULE_FILE]);
 
     expect(fs.getFile(AGENTS)?.startsWith("# Team\n\n")).toBe(true);
     expect(fs.getFile(AGENTS)).toContain(`- \`${GLOB}\``);
@@ -27,8 +39,8 @@ describe("listing the rules a plugin placed", () => {
   it("writes nothing for a plugin that placed no rule or a tool that lists in its config", async () => {
     const fs = new InMemoryFileAdapter({}, [ROOT]);
 
-    await listPlacedRules(fs, requestOf(TOOL.kimi), null);
-    await listPlacedRules(fs, requestOf(TOOL.kilo), GLOB);
+    await syncPlacedRules(fs, requestOf(TOOL.kimi), []);
+    await syncPlacedRules(fs, requestOf(TOOL.kilo), [RULE_FILE]);
 
     expect(fs.has(AGENTS)).toBe(false);
   });
@@ -37,7 +49,7 @@ describe("listing the rules a plugin placed", () => {
     const broken = "<!-- aidd_plugin_rules:start -->\nhand edit\n";
     const fs = new InMemoryFileAdapter({ [AGENTS]: broken }, [ROOT]);
 
-    await expect(listPlacedRules(fs, requestOf(TOOL.kimi), GLOB)).rejects.toThrow(/repair/);
+    await expect(syncPlacedRules(fs, requestOf(TOOL.kimi), [RULE_FILE])).rejects.toThrow(/repair/);
     expect(fs.getFile(AGENTS)).toBe(broken);
   });
 });

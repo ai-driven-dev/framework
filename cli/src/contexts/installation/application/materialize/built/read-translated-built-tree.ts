@@ -14,7 +14,7 @@ import type {
 } from "../../../ports/plugin/plugin-translation.js";
 import type { AddPluginRequest } from "../add-plugin-request.js";
 import { materializeRequestedMcp, placedRulesGlob } from "../flat-mcp-materializer.js";
-import { listPlacedRules } from "../listed-rules/list-placed-rules.js";
+import { syncPlacedRules } from "../listed-rules/list-placed-rules.js";
 import { deliversHooksToProject } from "../plugin-placement.js";
 import type { ProjectHooksMaterializer } from "../project-hooks-materializer.use-case.js";
 import {
@@ -63,7 +63,7 @@ export async function readTranslatedBuiltTree(request: AddPluginRequest, read: B
   });
   const { files, hooks } = await readBuiltContent(request, translated, read);
   const rulesGlob = placedRulesGlob(request, files);
-  await listPlacedRules(deps.fs, request, rulesGlob);
+  await syncPlacedRules(deps.fs, request, files);
   const mcp = await materializeRequestedMcp(deps.fs, request, {
     declaration: translated.installedMcp,
     rulesGlob,

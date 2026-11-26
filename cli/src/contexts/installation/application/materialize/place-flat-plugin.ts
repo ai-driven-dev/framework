@@ -18,7 +18,7 @@ import { resolveScopeForInstall, scopeBaseOf } from "../plugin/plugin-target-res
 import { hashOutputFiles } from "../shared/hash-output-files.js";
 import type { AddPluginRequest, AddPluginResult } from "./add-plugin-request.js";
 import { materializeRequestedMcp, placedRulesGlob } from "./flat-mcp-materializer.js";
-import { listPlacedRules } from "./listed-rules/list-placed-rules.js";
+import { syncPlacedRules } from "./listed-rules/list-placed-rules.js";
 import type { ProjectHooksMaterializer } from "./project-hooks-materializer.use-case.js";
 
 export interface FlatPlacementDeps {
@@ -55,7 +55,7 @@ export async function placeFlatPlugin(
   const ctx = flatContextOf(tool, dist, { projectRoot, deps });
   if (ctx === null) return { skipped: [] };
   const rulesGlob = placedRulesGlob(request, ctx.files);
-  await listPlacedRules(deps.fs, request, rulesGlob);
+  await syncPlacedRules(deps.fs, request, ctx.files);
   const mcp = await materializeRequestedMcp(deps.fs, request, {
     declaration: ctx.installedMcp,
     rulesGlob,

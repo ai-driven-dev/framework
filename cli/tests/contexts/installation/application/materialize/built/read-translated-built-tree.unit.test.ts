@@ -136,6 +136,18 @@ describe("reading a flat built tree of a tool that lists its rules in AGENTS.md"
     expect(agents).not.toContain("From the build");
   });
 
+  it("takes the listing out when the built tree holds no rule any more, the team's text staying", async () => {
+    const fs = new InMemoryFileAdapter();
+    fs.setFile(BUILT_RULE, "# Naming\n");
+    fs.setFile("/proj/AGENTS.md", "# Team notes\n");
+    await readBuilt(fs, translateDistribution, at);
+    await fs.deleteFile(BUILT_RULE);
+
+    await readBuilt(fs, translateDistribution, at);
+
+    expect(fs.getFile("/proj/AGENTS.md")).toBe("# Team notes\n");
+  });
+
   it("refuses a block of the team's AGENTS.md whose markers do not pair, before placing anything", async () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(BUILT_RULE, "# Naming\n");

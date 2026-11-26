@@ -39,17 +39,19 @@ async function install(rules: (typeof UNSCOPED)[], agents?: string) {
   ]);
   const manifest = Manifest.create();
   manifest.addTool(TOOL.kimi, "test", []);
-  await placeFlatPlugin(
-    {
-      dist: craft(rules),
-      tool: registeredTools().aiProfile(TOOL.kimi),
-      source: { kind: "local", path: "/plugin-source" },
-      projectRoot: PROJECT_ROOT,
-      manifest,
-      marketplace: undefined,
-    },
-    fakeFlatDeps(fs, () => "/stub-home")
-  );
+  const place = (shipped: (typeof UNSCOPED)[]) =>
+    placeFlatPlugin(
+      {
+        dist: craft(shipped),
+        tool: registeredTools().aiProfile(TOOL.kimi),
+        source: { kind: "local", path: "/plugin-source" },
+        projectRoot: PROJECT_ROOT,
+        manifest,
+        marketplace: undefined,
+      },
+      fakeFlatDeps(fs, () => "/stub-home")
+    );
+  await place(rules);
   const manifestRepo = new InMemoryManifestRepository(manifest);
   await manifestRepo.save(manifest);
   const remove = () =>
@@ -58,7 +60,7 @@ async function install(rules: (typeof UNSCOPED)[], agents?: string) {
       toolIds: [TOOL.kimi],
       projectRoot: PROJECT_ROOT,
     });
-  return { fs, manifest, remove };
+  return { fs, manifest, remove, place };
 }
 
 describe("a kimi plugin's rules, installed from a local path", () => {
@@ -96,6 +98,14 @@ describe("a kimi plugin's rules, installed from a local path", () => {
 
     expect(tracked()).toEqual([]);
     expect(fs.has(RULE)).toBe(false);
+    expect(fs.getFile(AGENTS)).toBe(PERSON);
+  });
+
+  it("takes the listing out when an update ships no rule, and the team's text stays", async () => {
+    const { fs, place } = await install([UNSCOPED], PERSON);
+
+    await place([]);
+
     expect(fs.getFile(AGENTS)).toBe(PERSON);
   });
 

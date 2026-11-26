@@ -31,17 +31,16 @@ export async function unlistRulesIn(
   else await fs.writeFile(path, content);
 }
 
-/** Lists the plugin's rules glob in the file a tool reads its guidance from, for a tool with no
- * rules folder of its own; nothing for a plugin that placed no rule. Refuses a file whose block a
- * person broke, before the plugin's files are written. */
-export async function listPlacedRules(
+/** Brings the guidance file of a tool listing its rules there in line with what the plugin placed;
+ * nothing for a tool that lists them elsewhere. */
+export async function syncPlacedRules(
   fs: FileReader & FileWriter,
-  { tool, projectRoot }: Pick<AddPluginRequest, "tool" | "projectRoot">,
-  rulesGlob: string | null
+  { dist, tool, projectRoot }: Pick<AddPluginRequest, "dist" | "tool" | "projectRoot">,
+  files: readonly { readonly relativePath: string }[]
 ): Promise<void> {
   const index = tool.rulesIndex();
-  if (index === null || rulesGlob === null) return;
-  await listRulesIn(fs, join(projectRoot, index.relativePath), { index, glob: rulesGlob });
+  if (index === null) return;
+  await syncRulesListing(fs, { index, projectRoot }, { plugin: dist.manifest.name, files });
 }
 
 /** Brings the guidance file in line with the plugin's placed `files`: the rules glob is listed
