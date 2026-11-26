@@ -80,6 +80,7 @@ Sources: [Claude Code](https://code.claude.com/docs/en/hooks), [Codex](https://l
 | Limit | What it means for you |
 | --- | --- |
 | A hook is skipped silently until a person trusts it | Approve it once in an interactive session, or pass `--dangerously-bypass-hook-trust` to `codex exec` |
+| A plugin installed from a marketplace registers no agent | Agents load from `~/.codex/agents` (`aidd setup --global`) or the project's `.codex/agents` (flat build) |
 
 ### Kiro
 
