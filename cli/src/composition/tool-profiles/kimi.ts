@@ -78,7 +78,10 @@ export const kimi = defineAiTool({
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
   displayName: "Kimi Code CLI",
-  distributionProbes: { manifest: [".kimi-plugin/plugin.json"] },
+  distributionProbes: {
+    manifest: [".kimi-plugin/plugin.json"],
+    marketplace: [".kimi-plugin/marketplace.json"],
+  },
   signalDir: null,
   buildContracts: {
     marketplace: contract(buildKimiPluginContract, { agentTools: AGENT_TOOLS, hooks }),

@@ -107,6 +107,16 @@ describe("a plugin build for kimi", () => {
     expect(logger.warnMessages).toContain("kimi: unmapped event 'PreToolUse' skipped");
   });
 
+  it("lists each built plugin in a catalog Kimi reads, by the path from the catalog to the plugin", async () => {
+    await buildKimiPlugin();
+
+    const catalog = JSON.parse(await readFile(join(out, ".kimi-plugin/marketplace.json"), "utf-8"));
+    expect(catalog).toEqual({
+      version: "2",
+      plugins: [{ id: "aidd-test", displayName: "aidd-test", source: "../plugins/aidd-test" }],
+    });
+  });
+
   it("writes the kimi names of declared tools and no model", async () => {
     await buildKimiPlugin();
 

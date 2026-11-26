@@ -110,6 +110,11 @@ export function buildKimiFlatContract(spec: KimiFlatSpec): ToolBuildContract {
 /** Where Kimi reads a plugin's manifest: https://www.kimi.com/code/docs/en/kimi-code-cli/customization/plugins.html */
 const PLUGIN_MANIFEST_RELATIVE = ".kimi-plugin/plugin.json";
 
+/** Kimi reads a catalog from any JSON path a user names, and resolves each entry's `source`
+ * against the catalog's own directory: https://www.kimi.com/code/docs/en/kimi-code-cli/customization/plugins.html */
+const MARKETPLACE_RELATIVE = ".kimi-plugin/marketplace.json";
+const CATALOG_VERSION = "2";
+
 /** Kimi's hooks, with the native event each canonical event fires on. */
 export type KimiHooks = HooksRouting & { readonly eventMap: Readonly<Record<string, string>> };
 
@@ -186,7 +191,15 @@ export function buildKimiPluginContract({ agentTools, hooks }: KimiPluginSpec): 
       mcp: { supported: false, reason: "Kimi reads a plugin's servers from its manifest" },
       hooks: pluginTreeHooksArtifact(hooks),
     },
-    buildMarketplaceCatalog: null,
-    buildMarketplaceEntry: null,
+    buildMarketplaceCatalog: async (_source, plugins) => ({
+      catalog: { version: CATALOG_VERSION, plugins },
+      schemaName: null,
+      destRelPath: MARKETPLACE_RELATIVE,
+    }),
+    buildMarketplaceEntry: async ({ name }) => ({
+      id: name,
+      displayName: name,
+      source: `../plugins/${name}`,
+    }),
   };
 }
