@@ -1,6 +1,6 @@
 # CLI Deployment
 
-Repository pipeline and release: [`../deployment.md`](../deployment.md).
+Repository pipeline and release: [`../../deployment.md`](../../deployment.md).
 
 ## Pipeline
 

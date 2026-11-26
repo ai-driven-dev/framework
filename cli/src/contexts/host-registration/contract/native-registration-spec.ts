@@ -62,9 +62,10 @@ export interface NativeActivationSpec {
    * Permits reclaiming a name, so declare it only alongside `sourceCheckVerb`. */
   forceRemoveArgs?: readonly string[];
   /** Verb after `plugin marketplace` whose exit code separates a registration whose source
-   * is gone from one that resolves. Measured: copilot's `update` discriminates, while
-   * codex's `upgrade` refuses every local marketplace and Claude's reports success on a
-   * path that does not exist. */
+   * is gone from one that resolves. Measured: copilot's `update` discriminates and Claude's
+   * reports success on a path that does not exist. Codex's `upgrade` was reported to refuse a
+   * local marketplace on 0.169.1, which its source does not show (it skips non-git ones and
+   * exits 0): unverified, so nothing relies on it. */
   sourceCheckVerb?: string;
   /** Verb this CLI uses to re-index its marketplaces, after `plugin marketplace`. Omit when
    * plugins are not enabled through the CLI. */

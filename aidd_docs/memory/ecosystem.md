@@ -13,8 +13,8 @@ flowchart LR
   Discord["Discord · human only"]
   ReleasePlease["release-please · deployment.md"]
   Dependabot["Dependabot · deployment.md"]
-  Gh["gh · cli/auth.md"]
-  Hosts["AI tool CLIs · cli/host-registration.md"]
+  Gh["gh · internal/cli/auth.md"]
+  Hosts["AI tool CLIs · internal/cli/host-registration.md"]
 
   Human -- web --> Discord
   Human -- cli --> Hosts

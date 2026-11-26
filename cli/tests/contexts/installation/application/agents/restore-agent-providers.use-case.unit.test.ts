@@ -33,4 +33,12 @@ describe("restoring the recorded agent providers", () => {
     expect(store.providers).toStrictEqual({ a: "x" });
     expect(forgotten).toStrictEqual(["a"]);
   });
+
+  it("does not name a host saved on no provider, it had none to forget", async () => {
+    const store = new InMemoryAgentModelStore({ a: "x", b: null });
+
+    const forgotten = await new RestoreAgentProviders(store).execute({ providers: {} });
+
+    expect(forgotten).toStrictEqual(["a"]);
+  });
 });

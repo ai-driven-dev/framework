@@ -1,6 +1,6 @@
 # Deployment
 
-How the repository ships: CI, targets and release. CLI build and publish: [CLI deployment](cli/deployment.md).
+How the repository ships: CI, targets and release. CLI build and publish: [CLI deployment](internal/cli/deployment.md).
 
 ## Pipeline
 
@@ -33,7 +33,7 @@ Only release assets and packages ship.
 
 ## Release
 
-Branch model: `vcs.md`. Cadence and safety rules: [`RELEASE.md`](../../../RELEASE.md).
+Branch model: `vcs.md`. Cadence and safety rules: [`RELEASE.md`](../../RELEASE.md).
 
 - The release PR merges with `--merge --admin`, the only method `.github/rulesets/main.json` allows.
 - So `main` never holds merged but unversioned code.

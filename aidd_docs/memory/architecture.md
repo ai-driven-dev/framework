@@ -8,7 +8,7 @@ CLI internals: [`internal/cli/architecture.md`](internal/cli/architecture.md). P
 | --- | --- |
 | Product | markdown skills, agents, rules and templates; an LLM interprets them, no runtime |
 | Delivery | Node and pnpm; `cli/` is the `aidd` binary, `kanban/` a private package |
-| Manifest | `.claude-plugin/marketplace.json`; plugin versions are release-please's (`internal/deployment.md`) |
+| Manifest | `.claude-plugin/marketplace.json`; plugin versions are release-please's (`deployment.md`) |
 
 ## How it fits together
 
