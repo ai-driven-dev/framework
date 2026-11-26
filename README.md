@@ -63,7 +63,7 @@ More details: [compatibility](docs/COMPATIBILITY.md).
 
 ## Get started
 
-Install AIDD in the current project with the CLI. This requires [Node](https://nodejs.org) 22.12 or later.
+Requires [Node](https://nodejs.org) 22.12 or later.
 
 ```sh
 npx @ai-driven-dev/cli@latest setup

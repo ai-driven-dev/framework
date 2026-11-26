@@ -458,7 +458,6 @@ jobs:
           gh auth setup-git --hostname github.com
           node scripts/publish-marketplace.cjs "$TOOL" "$TAG" "$MARKETPLACE_SOURCE"
       - name: Install the marketplace client
-        if: matrix.clientPackage != ''
         env:
           CLIENT: ${{ matrix.clientPackage }}
         run: |

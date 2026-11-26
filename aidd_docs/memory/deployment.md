@@ -53,7 +53,7 @@ Branch model: `vcs.md`. Cadence and safety rules: [`RELEASE.md`](../../RELEASE.m
 ## Gotchas
 
 - `build-per-tool` builds the CLI from the run's own checkout, never a published version: nothing to bump or go stale.
-- Each hosted catalog comes from the same ZIP used for local marketplace installs, renamed `aidd-marketplace` for every tool because the CLI reserves `aidd-framework`. The tools published are the ones the CLI's tool registry says have a catalog (`scripts/marketplace-tools.cjs`). The release pins no agent model: only `aidd setup` or `aidd translate --provider` does.
+- Each hosted catalog comes from the same ZIP used for local marketplace installs, renamed `aidd-marketplace` for every tool because the CLI reserves `aidd-framework`. The tools published are the ones the CLI's tool registry says have a catalog (`scripts/marketplace-tools.cjs`).
 
 ## Local reload
 

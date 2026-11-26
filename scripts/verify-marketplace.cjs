@@ -7,7 +7,7 @@ const { installedPlugins } = require("./lib/host-plugins.cjs");
 const { toolOf } = require("./marketplace-tools.cjs");
 
 /** What differs per client: how it adds a Git catalog at a ref, and the verb that installs. */
-const GIT_REF = {
+const DEFAULT_CLIENT = {
   add: (repository, ref) => ["plugin", "marketplace", "add", `${repository}#${ref}`],
   install: "install",
 };
@@ -39,7 +39,7 @@ function verify(toolId, version, source, repository = published) {
     mkdirSync(env[key]);
   }
   const client = (...args) => execFileSync(tool.client, args, { cwd: profile, env, encoding: "utf8" });
-  const { add, install } = CLIENTS[tool.client] ?? GIT_REF;
+  const { add, install } = CLIENTS[tool.client] ?? DEFAULT_CLIENT;
 
   try {
     client(...add(repository, ref));

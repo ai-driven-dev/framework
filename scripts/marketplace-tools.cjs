@@ -9,17 +9,18 @@ function readSupportRecord(root = join(__dirname, "..")) {
   return JSON.parse(readFileSync(join(root, "cli/tests/golden/snapshots/tool-support/surface.json"), "utf8"));
 }
 
-/** A tool with a plugin tree (Antigravity) writes a catalog no host reads, and a layout that builds
- * none (Kimi) has nothing to host. `notHosted` says why each unpublished tool is, and keeps one out. */
+/** A tool with a plugin tree (Antigravity) writes a catalog no host reads, a layout that builds none
+ * (Kimi) has nothing to host, and a tool with no native client cannot be verified. `notHosted` says
+ * why each unpublished tool is, and keeps one out. */
 function publishableTools(record = readSupportRecord()) {
   return record
-    .filter((tool) => tool.marketplace !== null && tool.pluginTree === null && !distribution.notHosted[tool.id])
+    .filter((tool) => tool.marketplace !== null && tool.pluginTree === null && tool.nativeCli !== null && !distribution.notHosted[tool.id])
     .map((tool) => ({
       id: tool.id,
       catalog: tool.marketplace.catalog,
       manifest: tool.marketplace.manifest,
       client: tool.nativeCli,
-      clientPackage: distribution.clients[tool.nativeCli] ?? null,
+      clientPackage: distribution.clients[tool.nativeCli],
     }));
 }
 
@@ -30,9 +31,6 @@ function toolOf(id, record) {
 module.exports = { publishableTools, readSupportRecord, toolOf };
 
 if (require.main === module) {
-  const include = publishableTools().map(({ id, clientPackage }) => ({
-    tool: id,
-    clientPackage: clientPackage ?? "",
-  }));
+  const include = publishableTools().map(({ id, clientPackage }) => ({ tool: id, clientPackage }));
   console.log(`matrix=${JSON.stringify({ include })}`);
 }

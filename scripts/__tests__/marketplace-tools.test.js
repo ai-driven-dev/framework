@@ -15,21 +15,21 @@ const hostable = (id, { nativeCli = null, pluginTree = null, catalog = `.${id}/c
 });
 
 test("a tool whose marketplace layout builds a catalog the host reads is publishable", () => {
-  const [tool] = publishableTools([hostable("alpha", { nativeCli: "alpha-cli" })]);
+  const [tool] = publishableTools([hostable("alpha", { nativeCli: "claude" })]);
   assert.deepEqual(tool, {
     id: "alpha",
     catalog: ".alpha/catalog.json",
     manifest: ".alpha/plugin.json",
-    client: "alpha-cli",
-    clientPackage: null,
+    client: "claude",
+    clientPackage: distribution.clients.claude,
   });
 });
 
 test("a catalog no host reads, and a layout with no catalog, are not publishable", () => {
   const record = [
-    hostable("plain"),
-    hostable("directory", { pluginTree: ".x/plugins/" }),
-    hostable("bare", { catalog: null }),
+    hostable("plain", { nativeCli: "claude" }),
+    hostable("directory", { nativeCli: "claude", pluginTree: ".x/plugins/" }),
+    hostable("bare", { nativeCli: "claude", catalog: null }),
   ];
   assert.deepEqual(publishableTools(record).map((tool) => tool.id), ["plain"]);
 });
@@ -42,8 +42,12 @@ test("a tool the distribution data says is not hosted is not publishable", () =>
   assert.equal(toolOf("cursor"), undefined);
 });
 
-test("an unknown tool is not one", () => {
-  assert.equal(toolOf("kimi"), undefined);
+test("a tool with a catalog but no native client to verify it is not publishable", () => {
+  assert.deepEqual(publishableTools([hostable("clientless")]), []);
+});
+
+test("an id absent from the registry is not publishable", () => {
+  assert.equal(toolOf("no-such-tool"), undefined);
 });
 
 const record = readSupportRecord();
@@ -71,7 +75,7 @@ test("every published tool has its release ZIP built and its client pinned", () 
     .map((entry) => entry.tool);
   for (const tool of publishableTools(record)) {
     assert.ok(built.includes(tool.id), `${tool.id} has no marketplace ZIP in build-per-tool`);
-    assert.ok(tool.client === null || tool.clientPackage, `${tool.id} client is not pinned`);
+    assert.ok(tool.clientPackage, `${tool.id} client is not pinned`);
   }
 });
 
