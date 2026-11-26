@@ -428,6 +428,16 @@ test("every host names its shell tool, and a captured name is one the host reall
   }
 });
 
+test("every host names the argument its shell tool takes the command in, as a capture holds it", (t) => {
+  for (const [id, host] of Object.entries(describe(t))) {
+    assert.ok("command" in host.shell, `${id}: names its shell command argument, or null when undocumented`);
+    if (!host.shell.source.startsWith("capture:")) continue;
+    const [nameField, inputField] = host.moments["before-tool"].payload;
+    const call = capture(host.shell.source).samples.find((sample) => dotted(sample.payload, nameField) === host.shell.value);
+    assert.equal(typeof dotted(call.payload, inputField)?.[host.shell.command], "string", `${id}: ${host.shell.command} in ${host.shell.source}`);
+  }
+});
+
 test("a Copilot fact never cites a capture: its captures used another route", (t) => {
   for (const fact of facts(describe(t, "--hosts", "copilot").copilot)) assert.match(fact.source, /^https:\/\//);
 });
