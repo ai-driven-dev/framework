@@ -1,14 +1,8 @@
 import type { ShippedHooks } from "../../../../../shared/domain/materialization/build-contract.js";
-import type { ProjectHooksFormat } from "../../../contract/tool-vocabulary.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import {
-  isWrappedCommandHooksFileEmpty,
   mergeWrappedCommandHooks,
-  unmergeWrappedCommandHooks,
   type WrappedCommandHooksTarget,
-  wrappedCommandHookEntries,
-  wrappedCommandHooksScriptDir,
-  wrappedCommandHooksScriptPath,
 } from "../../hooks/wrapped-command-hooks-merge.js";
 
 export type AntigravityHooks = HooksRouting & {
@@ -29,15 +23,19 @@ export function mergeAntigravityHooks(
   return mergeWrappedCommandHooks(targetOf(hooks), existingJson, shipped);
 }
 
-/** How `agy`'s `.agents/hooks.json` holds a plugin's entries. */
-export function antigravityHooksFormat(hooks: AntigravityHooks): ProjectHooksFormat {
-  const target = targetOf(hooks);
-  return {
-    merge: (existing, json, plugin) => mergeAntigravityHooks(hooks, existing, { json, plugin }),
-    unmerge: unmergeWrappedCommandHooks,
-    contributedEntries: (content, name) => wrappedCommandHookEntries(target, content, name),
-    isEmpty: isWrappedCommandHooksFileEmpty,
-    scriptPath: (name, rel) => wrappedCommandHooksScriptPath(target, name, rel),
-    scriptDir: (name) => wrappedCommandHooksScriptDir(target, name),
+/** A plugin's hooks as the `hooks.json` of its own directory, which `agy` runs each handler from:
+ * the named group `agy` reads, its scripts named from the project root they run in. */
+export function antigravityPluginHooks(
+  hooks: AntigravityHooks,
+  pluginsDir: string
+): (json: string, plugin: string) => string {
+  const depth = [...pluginsDir.split("/").filter(Boolean), "plugin"].map(() => "..");
+  const target: WrappedCommandHooksTarget = {
+    ...targetOf(hooks),
+    runsFrom: {
+      projectRoot: depth.join("/"),
+      pluginDir: (plugin) => `${pluginsDir}${plugin}/`,
+    },
   };
+  return (json, plugin) => mergeWrappedCommandHooks(target, null, { json, plugin }).content;
 }

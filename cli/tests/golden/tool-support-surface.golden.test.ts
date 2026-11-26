@@ -2,6 +2,7 @@
 
 import { join } from "node:path";
 import { describe, it } from "vitest";
+import type { AiToolProfile } from "../../src/contexts/tools/contract/tool-profile.js";
 import { foldsFlatMcp } from "../../src/contexts/translate/domain/rules/flat-mcp.js";
 import type {
   ArtifactContract,
@@ -28,6 +29,9 @@ interface ToolSupport {
   pluginMode: string | null;
   /** The tool's own CLI that `aidd` drives to register plugins, or null. */
   nativeCli: string | null;
+  /** The directory of the project where the tool loads each plugin's tree that `aidd` writes there
+   * itself, a native plugin install and no marketplace the tool could register; or null. */
+  pluginTree: string | null;
   /** What a user gets per output layout the tool supports: build output, plus rules from the install profile. */
   builds: Record<string, Record<Surface, Support>>;
 }
@@ -44,6 +48,14 @@ function supportOf(surface: Surface, build: ToolBuildContract, installsRules: bo
     return "bridge";
   }
   return "yes";
+}
+
+function pluginTreeOf(plugins: ReturnType<AiToolProfile["plugins"]>): string | null {
+  if (plugins?.kind !== "native" || plugins.requiresUserScope()) return null;
+  // A plugin's own directory below the tree: no name, so the directory ends in two slashes.
+  return plugins.materializesFromBuiltTree()
+    ? plugins.pluginOutputDir("").replace(/\/\/$/, "/")
+    : null;
 }
 
 function capture(): ToolSupport[] {
@@ -69,6 +81,7 @@ function capture(): ToolSupport[] {
         directory: tool.directory,
         pluginMode: plugins === null ? null : pluginModeOf(plugins),
         nativeCli: tool.nativeActivation()?.hostBinary() ?? null,
+        pluginTree: pluginTreeOf(plugins),
         builds,
       };
     });

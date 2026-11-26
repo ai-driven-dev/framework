@@ -63,7 +63,8 @@ function deliveryOf(
   const base = files?.dir;
   return {
     requiresUserScope: () => userScope,
-    materializesFromBuiltTree: () => layout.mode === "flat" || userScope,
+    materializesFromBuiltTree: () =>
+      layout.mode === "flat" || userScope || (layout.mode === "native" && layout.materializes),
     deliversHooksToProject: () => projectPlacement(hooks.delivery) !== null,
     copiesFilesGlobally: () => userScope || files !== null,
     userPluginsBaseDir: (home) =>
@@ -81,6 +82,13 @@ interface DeliverySections {
   readonly mcp: McpSection | null;
 }
 
+function pluginHooksFile(delivery: HooksDelivery): string {
+  if (delivery.kind === "project-merge") return delivery.pluginFile ?? DEFAULT_HOOKS_PATH;
+  return delivery.kind === "plugin-file"
+    ? (delivery.file ?? DEFAULT_HOOKS_PATH)
+    : DEFAULT_HOOKS_PATH;
+}
+
 function nativeAnswers(
   layout: NativeLayout,
   manifest: ManifestSection,
@@ -88,10 +96,7 @@ function nativeAnswers(
 ): NativePluginAnswers {
   const { delivery } = hooks;
   const plugin = mcp?.plugin ?? { accepts: false, relativePath: DEFAULT_PLUGIN_MCP_PATH };
-  const hooksFile =
-    delivery.kind === "project-merge" && delivery.pluginFile !== undefined
-      ? delivery.pluginFile
-      : DEFAULT_HOOKS_PATH;
+  const hooksFile = pluginHooksFile(delivery);
   const trust = delivery.kind === "none" ? null : (delivery.trustNotice ?? null);
   return {
     ...deliveryOf(layout, hooks),

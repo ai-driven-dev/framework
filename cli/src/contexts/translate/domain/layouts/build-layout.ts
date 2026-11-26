@@ -5,7 +5,7 @@ import type {
   ToolBuildContract,
 } from "../../../../shared/domain/materialization/build-contract.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
-import { PLUGIN_MCP_RELATIVE } from "../canon-format.js";
+import { PLUGIN_HOOKS_RELATIVE, PLUGIN_MCP_RELATIVE } from "../canon-format.js";
 import { agentLinks } from "../rules/agent-markdown.js";
 import {
   agentShape,
@@ -78,7 +78,7 @@ function marketplaceHooks(
   const plugin = canon.manifest.name;
   return canon.components.hooks.map(({ relativePath, content }) => ({
     source: relativePath,
-    path: `plugins/${plugin}/${relativePath}`,
+    path: `plugins/${plugin}/${hooksPath(artifact, plugin, relativePath)}`,
     content,
     shape:
       artifact.transform && relativePath.endsWith(".json")
@@ -87,6 +87,13 @@ function marketplaceHooks(
     rootToken,
     script: (text) => artifact.script?.(relativePath, text) ?? text,
   }));
+}
+
+// Only the hooks manifest has a place of its own; a script stays where the plugin ships it.
+function hooksPath(artifact: SupportedArtifact, plugin: string, relativePath: string): string {
+  return relativePath === PLUGIN_HOOKS_RELATIVE
+    ? artifactPath(artifact, plugin, relativePath)
+    : relativePath;
 }
 
 function marketplaceMcp(

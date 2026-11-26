@@ -1,11 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  isWrappedCommandHooksFileEmpty,
   mergeWrappedCommandHooks,
-  unmergeWrappedCommandHooks,
   type WrappedCommandHooksTarget,
-  wrappedCommandHookEntries,
-  wrappedCommandHooksScriptDir,
   wrappedCommandHooksScriptPath,
 } from "../../../../../src/contexts/tools/domain/hooks/wrapped-command-hooks-merge.js";
 
@@ -33,6 +29,28 @@ const pluginHooks = (command: string, event = "SessionStart") =>
 
 const merged = (existing: string | null, json: string, plugin = "p") =>
   mergeWrappedCommandHooks(target, existing, { json, plugin });
+
+const insidePlugin: WrappedCommandHooksTarget = {
+  ...target,
+  runsFrom: { projectRoot: "../..", pluginDir: (plugin) => `.h/plugins/${plugin}/` },
+};
+
+describe("wrapped command hooks of a plugin the host runs from its own directory", () => {
+  const command = (json: string): string =>
+    JSON.parse(mergeWrappedCommandHooks(insidePlugin, null, { json, plugin: "p" }).content).p
+      .SessionStart[0].command;
+  const decoded = (wrapped: string) =>
+    Buffer.from(wrapped.slice(wrapped.lastIndexOf(" ") + 1), "base64").toString();
+
+  it("runs the script from the plugin's own directory, and the handler from the project root", () => {
+    const wrapped = command(pluginHooks(`node ${ROOT}/hooks/run.cjs load`));
+
+    expect([decoded(wrapped), wrapped]).toEqual([
+      "node ./.h/plugins/p/hooks/run.cjs load",
+      expect.stringContaining("cwd:'../..'"),
+    ]);
+  });
+});
 
 describe("wrapped command hooks", () => {
   it("wraps each command of a mapped event under the plugin's name, keeping its timeout", () => {
@@ -80,37 +98,11 @@ describe("wrapped command hooks", () => {
     expect(wrapped).toBe("./.h/hooks/p/a.sh && ./L/b.sh");
   });
 
-  it("unmerges one plugin and reports the file empty once none is left", () => {
-    const file = unmergeWrappedCommandHooks(JSON.stringify({ p: {}, q: {} }), "p");
-
-    expect([JSON.parse(file), isWrappedCommandHooksFileEmpty(file)]).toEqual([{ q: {} }, false]);
-    expect(isWrappedCommandHooksFileEmpty("{}")).toBe(true);
-  });
-
-  it("lists the entries a plugin holds, by event, leaving out its enabled flag", () => {
-    const entry = { type: "command", command: "c" };
-    const content = JSON.stringify({ p: { enabled: true, SessionStart: [entry] } });
-
-    expect(wrappedCommandHookEntries(target, content, "p")).toEqual([
-      { event: "SessionStart", entry },
-    ]);
-    expect(wrappedCommandHookEntries(target, content, "other")).toEqual([]);
-  });
-
-  it("names its host when an event holds no array", () => {
-    const content = JSON.stringify({ p: { SessionStart: {} } });
-
-    expect(() => wrappedCommandHookEntries(target, content, "p")).toThrow(
-      "Host hook 'p.SessionStart' must be an array."
-    );
-  });
-
-  it("names the directory and the path a plugin's scripts land at", () => {
+  it("names the path a plugin's scripts land at", () => {
     expect([
-      wrappedCommandHooksScriptDir(target, "p"),
       wrappedCommandHooksScriptPath(target, "p", "hooks/a.sh"),
       wrappedCommandHooksScriptPath(target, "p", "other/a.sh"),
-    ]).toEqual([".h/hooks/p/", ".h/hooks/p/a.sh", ".h/hooks/p/other/a.sh"]);
+    ]).toEqual([".h/hooks/p/a.sh", ".h/hooks/p/other/a.sh"]);
   });
 
   it("keeps a path outside hooks/ as it is when no locator is given", () => {

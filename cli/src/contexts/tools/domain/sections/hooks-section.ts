@@ -70,6 +70,9 @@ interface HooksDeliveryShared {
 /** A native tool: the hooks stay in the plugin's own directory, where it reads them. */
 export interface PluginFileDelivery extends HooksDeliveryShared {
   readonly kind: "plugin-file";
+  /** The hooks file relative to the plugin's root, where the tool reads it elsewhere than
+   * `hooks/hooks.json`. */
+  readonly file?: string;
 }
 
 /** The hooks merge into one project file, which the tool reads in place of a plugin's own. */

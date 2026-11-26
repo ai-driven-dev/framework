@@ -156,8 +156,13 @@ describe("building Antigravity's flat contract", () => {
     ).toEqual(["antigravity: unmapped event 'SessionEnd' skipped"]);
   });
 
-  it.each(["mcp"] as const)("declares %s unsupported", (kind) => {
-    expect(present(antigravity.buildContracts.flat)().artifacts[kind].supported).toBe(false);
+  it("folds every plugin's MCP servers into the one file agy reads for the project", () => {
+    const mcp = supported(present(antigravity.buildContracts.flat)().artifacts.mcp);
+
+    expect([artifactPath(mcp, "aidd-dev", ".mcp.json"), mcp.mcpServersKey]).toEqual([
+      ".agents/mcp_config.json",
+      "mcpServers",
+    ]);
   });
 
   it("writes no manifest, catalog or config artifact", () => {
@@ -165,5 +170,54 @@ describe("building Antigravity's flat contract", () => {
     expect(contract.manifestFileRelative).toBeNull();
     expect(contract.buildMarketplaceCatalog).toBeNull();
     expect(contract.configArtifact).toBeUndefined();
+  });
+});
+
+// biome-ignore lint/suspicious/noTemplateCurlyInString: the Claude placeholder a plugin writes
+const PLUGIN_ROOT_VAR = "${CLAUDE_PLUGIN_ROOT}";
+
+describe("building Antigravity's plugin tree contract", () => {
+  const tree = () => present(antigravity.buildContracts.marketplace)();
+
+  it("keeps a plugin's manifest at plugin.json and its MCP servers at mcp_config.json", () => {
+    const { artifacts, manifestFileRelative } = tree();
+    const mcp = supported(artifacts.mcp);
+
+    expect([manifestFileRelative, artifactPath(mcp, "aidd-dev", ".mcp.json")]).toEqual([
+      "plugin.json",
+      "mcp_config.json",
+    ]);
+  });
+
+  it("keeps skills where the plugin ships them, below the plugin's directory", () => {
+    const skills = supported(tree().artifacts.skills);
+
+    expect(artifactPath(skills, "aidd-dev", "skills/01-plan/SKILL.md")).toBe(
+      "skills/01-plan/SKILL.md"
+    );
+  });
+
+  it("writes a plugin's hooks as the named group agy reads at the plugin's root, run from its directory", () => {
+    const hooks = supported(tree().artifacts.hooks);
+    const incoming = JSON.stringify({
+      hooks: {
+        SessionStart: [
+          {
+            hooks: [{ type: "command", command: `node ${PLUGIN_ROOT_VAR}/hooks/run.cjs load` }],
+          },
+        ],
+      },
+    });
+    const [handler] = JSON.parse(hooks.transform?.(incoming, "aidd-context", "hooks.json") ?? "")[
+      "aidd-context"
+    ].SessionStart;
+
+    expect([artifactPath(hooks, "aidd-context", "hooks/hooks.json"), handler.command]).toEqual([
+      "hooks.json",
+      expect.stringContaining(
+        Buffer.from("node ./.agents/plugins/aidd-context/hooks/run.cjs load").toString("base64")
+      ),
+    ]);
+    expect(handler.command).toContain("cwd:'../../..'");
   });
 });

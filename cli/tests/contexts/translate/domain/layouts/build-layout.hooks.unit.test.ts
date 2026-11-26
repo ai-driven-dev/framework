@@ -55,6 +55,18 @@ describe("the marketplace layout of a plugin's hooks", () => {
     );
   });
 
+  it("writes hooks.json where the artifact places it and keeps every script at its own path", () => {
+    expect(
+      hooksBuilt(
+        { "hooks/hooks.json": "{}", "hooks/lib/check.sh": "#!/bin/sh\n" },
+        aSupportedArtifact({ placement: { kind: "file", at: "hooks.json" } })
+      )
+    ).toEqual({
+      "plugins/plug/hooks.json": "{}",
+      "plugins/plug/hooks/lib/check.sh": "#!/bin/sh\n",
+    });
+  });
+
   it("hands hooks.json, and no other file, to the transform", () => {
     const transform = (content: string, plugin: string, base: string) =>
       `${plugin}:${base}:${content}`;

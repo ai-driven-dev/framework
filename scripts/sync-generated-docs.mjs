@@ -40,6 +40,13 @@ function table(header, rows) {
   return [line(header), line(header.map(() => "---")), ...rows.map(line)].join("\n");
 }
 
+/** A tool that loads the plugin tree `aidd` writes into a project directory has a native plugin
+ * install, and no marketplace to register. */
+function marketplaceCell(tool) {
+  if (tool.pluginTree !== null) return `Plugin directory \`${tool.pluginTree}\``;
+  return tool.builds.marketplace ? "✅" : "❌";
+}
+
 /** One row per tool: how it installs, then what each surface becomes. A surface no tool carries gets no column. */
 function supportTables() {
   const record = JSON.parse(readFileSync(SUPPORT_RECORD, "utf8"));
@@ -63,7 +70,7 @@ function supportTables() {
     record.map((tool) => [
       tool.name,
       `\`${tool.directory}\``,
-      tool.builds.marketplace ? "✅" : "❌",
+      marketplaceCell(tool),
       tool.builds.flat ? "✅" : "❌",
       ...carried.map(([key]) => cell(tool, key)),
     ])
@@ -92,7 +99,12 @@ function toolsTable() {
   const mark = (present) => (present ? "✅" : "—");
   return wideTable(
     ["Tool", "CLI", "Plugin marketplace", "Flat files"],
-    record.map((tool) => [`<b>${tool.name}</b>`, "✅", mark(tool.builds.marketplace), mark(tool.builds.flat)]),
+    record.map((tool) => [
+      `<b>${tool.name}</b>`,
+      "✅",
+      tool.pluginTree === null ? mark(tool.builds.marketplace) : "Plugin directory",
+      mark(tool.builds.flat),
+    ]),
     [800, 400, 400, 400]
   );
 }

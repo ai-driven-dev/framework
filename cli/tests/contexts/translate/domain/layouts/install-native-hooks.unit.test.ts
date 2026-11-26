@@ -4,7 +4,13 @@ import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-
 import { nativeOf } from "../../../../shared/testing/native-plugin-answers.builder.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { translator } from "../../testing/engine-kit.builder.js";
-import { codex, cursor, opencode } from "../../testing/registered-profiles.builder.js";
+import {
+  antigravity,
+  claude,
+  codex,
+  cursor,
+  opencode,
+} from "../../testing/registered-profiles.builder.js";
 
 const HOOKS_CONTENT = JSON.stringify({
   hooks: { SessionStart: [{ hooks: [{ type: "command", command: "node ./hooks/start.js" }] }] },
@@ -56,5 +62,31 @@ describe("the engine hook trust notice", () => {
     const result = translator.translateWithComponentPaths(buildDist(true), opencode);
 
     expect(result.notices).toEqual([]);
+  });
+});
+
+describe("a plugin's hooks file in a native install", () => {
+  it("is the file agy reads at the plugin's root, in the group agy reads", () => {
+    const tree = Object.fromEntries(
+      translator
+        .translate(buildDist(true, "test-plugin"), antigravity)
+        .map((file) => [file.relativePath, file.content])
+    );
+
+    const group = JSON.parse(tree[".agents/plugins/test-plugin/hooks.json"] ?? "{}");
+    expect([
+      Object.keys(tree).filter((path) => path.endsWith("hooks/hooks.json")),
+      Object.keys(group),
+    ]).toEqual([[], ["test-plugin"]]);
+  });
+
+  it("stays the plugin's own hooks.json for a tool that converts none", () => {
+    const tree = Object.fromEntries(
+      translator
+        .translate(buildDist(true, "test-plugin"), claude)
+        .map((file) => [file.relativePath, file.content])
+    );
+
+    expect(tree[".claude/plugins/test-plugin/hooks/hooks.json"]).toBe(HOOKS_CONTENT);
   });
 });

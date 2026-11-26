@@ -49,7 +49,7 @@ async function installLocalPlugin(): Promise<void> {
 describe("antigravity installation and restoration use the same artifacts", () => {
   it("restores a missing hooks file from a local plugin without claiming its scripts twice", async () => {
     await installLocalPlugin();
-    const hooksPath = join(project, ".agents/hooks.json");
+    const hooksPath = join(project, ".agents/plugins/sample-plugin/hooks.json");
     expect(existsSync(hooksPath), "local installation delivers the hooks file").toBe(true);
     const installed = await readJson<Record<string, unknown>>(hooksPath);
     await rm(hooksPath);
@@ -64,15 +64,16 @@ describe("antigravity installation and restoration use the same artifacts", () =
       (entry) => entry.name === "sample-plugin"
     );
     expect(
-      Object.keys(plugin?.files ?? {}).filter((path) => path.startsWith(".agents/hooks/"))
+      Object.keys(plugin?.files ?? {}).filter((path) => path.startsWith(".agents/hooks"))
     ).toEqual([]);
+    expect(plugin).not.toHaveProperty("projectHooks");
     const again = await aidd(["sync"]);
     expect(again.exitCode, again.stderr).toBe(0);
   });
 
-  it("installs and restores a local agent in the same portable shape as a flat build", async () => {
+  it("installs and restores a local agent in the same portable shape as a build", async () => {
     await installLocalPlugin();
-    const agentPath = join(project, ".agents/agents/sample-plugin-reviewer/agent.md");
+    const agentPath = join(project, ".agents/plugins/sample-plugin/agents/reviewer.md");
     const installed = await readFile(agentPath, "utf8");
     expect(parseFrontmatter(installed).frontmatter).toMatchObject({
       name: "sample-plugin-reviewer",
@@ -87,7 +88,7 @@ describe("antigravity installation and restoration use the same artifacts", () =
     expect(await readFile(agentPath, "utf8")).toBe(installed);
   });
 
-  it("persists hook provenance when only the source hook changes", async () => {
+  it("records the plugin again when only the source hook changes", async () => {
     const framework = join(tempDir, "framework");
     await cp(FRAMEWORK_REAL, framework, { recursive: true });
     const setup = await aidd(setupFromFixture("antigravity", "aidd-context", [], framework));
@@ -102,7 +103,7 @@ describe("antigravity installation and restoration use the same artifacts", () =
 
     expect(sync.exitCode, sync.stderr).toBe(0);
     expect(
-      await readFile(join(project, ".agents/hooks/aidd-context/update_memory.js"), "utf8")
+      await readFile(join(project, ".agents/plugins/aidd-context/hooks/update_memory.js"), "utf8")
     ).toBe(updated);
     expect(await readFile(manifestPath, "utf8")).not.toBe(before);
     const again = await aidd(["sync"]);
@@ -113,13 +114,13 @@ describe("antigravity installation and restoration use the same artifacts", () =
 
   it("leaves an unselected local agent untouched during a scoped sync", async () => {
     await installLocalPlugin();
-    const agentPath = join(project, ".agents/agents/sample-plugin-reviewer/agent.md");
+    const agentPath = join(project, ".agents/plugins/sample-plugin/agents/reviewer.md");
     const edited = `${await readFile(agentPath, "utf8")}\nUser addition.\n`;
     await writeFile(agentPath, edited);
 
     const sync = await aidd([
       "sync",
-      ".agents/skills/sample-plugin-hello/SKILL.md",
+      ".agents/plugins/sample-plugin/skills/hello/SKILL.md",
       "--tool",
       "antigravity",
       "--force",
