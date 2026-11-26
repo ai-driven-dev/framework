@@ -9,7 +9,7 @@ import { translateBuildLayout } from "../../../../shared/testing/build-files.bui
 import { present } from "../../../../shared/testing/present.builder.js";
 import { aCanon } from "../../testing/canon-distribution.builder.js";
 import { translator } from "../../testing/engine-kit.builder.js";
-import { antigravity, kilo, kiro } from "../../testing/registered-profiles.builder.js";
+import { kilo, kiro } from "../../testing/registered-profiles.builder.js";
 
 const UNSCOPED = '---\ndescription: "Naming"\n---\n# Naming\n';
 const SCOPED =
@@ -88,15 +88,6 @@ describe("the rules of a flat build for a tool that reads its own scope frontmat
       unscoped: '---\ninclusion: "always"\n---\n# Naming\n',
       dir: ".kiro/steering/",
     },
-    {
-      name: "antigravity",
-      tool: antigravityTool,
-      profile: antigravity,
-      scoped:
-        '---\ndescription: "TypeScript"\ntrigger: "glob"\nglobs: "**/*.ts, **/*.tsx"\n---\n# TypeScript\n',
-      unscoped: '---\ndescription: "Naming"\ntrigger: "always_on"\n---\n# Naming\n',
-      dir: ".agents/rules/",
-    },
   ])(
     "$name lands each rule at the top of its folder with its own frontmatter, as an install does",
     ({ tool, profile, scoped, unscoped, dir }) => {
@@ -114,4 +105,15 @@ describe("the rules of a flat build for a tool that reads its own scope frontmat
       expect(files).toEqual(installed);
     }
   );
+});
+
+describe("the rules of a flat build for antigravity", () => {
+  it("lands each rule at the top of .agents/rules/ with its own frontmatter", () => {
+    expect(built(RULES, antigravityTool)).toEqual({
+      ".agents/rules/aidd-craft-01-standards-1-naming.md":
+        '---\ndescription: "Naming"\ntrigger: "always_on"\n---\n# Naming\n',
+      ".agents/rules/aidd-craft-01-standards-2-ts.md":
+        '---\ndescription: "TypeScript"\ntrigger: "glob"\nglobs: "**/*.ts, **/*.tsx"\n---\n# TypeScript\n',
+    });
+  });
 });

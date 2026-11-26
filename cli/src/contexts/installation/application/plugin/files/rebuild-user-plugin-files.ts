@@ -7,6 +7,7 @@ import type { MarketplaceToBuild } from "../../../contract/built-marketplace.js"
 import { SharedSourceUnregisteredError } from "../../../contract/installation.error.js";
 import type { InstalledPlugin } from "../../../domain/plugins/installed-plugin.js";
 import {
+  pluginRootIn,
   readBuiltUserPluginFiles,
   withoutDroppedFiles,
 } from "../../materialize/built/read-built-plugin-files.js";
@@ -76,14 +77,16 @@ async function readBuiltFiles(
     const files = await readGlobalPluginFiles(deps.fs, { builtDir, tool, dist });
     return { files, componentPaths: new Map() };
   }
+  const root = pluginRootIn(tool, plugin.name);
   const built = await readBuiltUserPluginFiles(deps.fs, {
     builtDir,
     name: plugin.name,
+    root,
     platform: deps.builtDeps.platform,
   });
   const { dropsBuiltFile } = deps.builtDeps.translate.execute({ distribution: dist, tool });
   return {
-    files: withoutDroppedFiles(built, plugin.name, dropsBuiltFile),
+    files: withoutDroppedFiles(built, root, dropsBuiltFile),
     componentPaths: new Map(),
   };
 }

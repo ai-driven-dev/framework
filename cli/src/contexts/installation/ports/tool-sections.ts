@@ -86,6 +86,7 @@ export interface NativeHostTool extends ActivatedTool, HostRefCountingTool, Plug
 export interface ProjectHooksSection {
   readonly toolId: AiToolId;
   projectHooksDelivery(): ProjectHooksLocation | null;
+  releasedProjectHooks(): ProjectHooksLocation | null;
 }
 
 export interface FlatMcpSection {

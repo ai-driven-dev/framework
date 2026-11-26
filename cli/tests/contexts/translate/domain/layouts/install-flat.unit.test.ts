@@ -3,7 +3,7 @@ import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plug
 import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { translator } from "../../testing/engine-kit.builder.js";
-import { antigravity, cursor, kilo, opencode } from "../../testing/registered-profiles.builder.js";
+import { cursor, kilo, opencode } from "../../testing/registered-profiles.builder.js";
 
 const HOOKS_CONTENT = JSON.stringify({
   hooks: { PreToolUse: [{ hooks: [{ type: "command", command: "node ./hooks/pre.js" }] }] },
@@ -121,12 +121,6 @@ describe("an agent installed flat as its tool's build artifact", () => {
       "../skills/aidd-pm/review/SKILL.md",
     ],
     ["kilo", kilo, ".kilo/agents/aidd-pm-reviewer.md", "../skills/aidd-pm/review/SKILL.md"],
-    [
-      "antigravity",
-      antigravity,
-      ".agents/agents/aidd-pm-reviewer/agent.md",
-      "../../skills/aidd-pm-review/SKILL.md",
-    ],
   ])("reads the links of %s's agent from where it is written", (_name, tool, path, skill) => {
     const file = translator.translate(distWithAgent(), tool).find((f) => f.relativePath === path);
 

@@ -23,6 +23,7 @@ type AiToolFields = Omit<
   | "flatPluginMcp"
   | "settingsFiles"
   | "projectHooksDelivery"
+  | "releasedProjectHooks"
   | "frameworkBuildMode"
   | "distributionPaths"
   | "flatInstallPath"

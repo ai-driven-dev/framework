@@ -27,21 +27,21 @@ describe("the registered tool catalog", () => {
       "cursor",
       "copilot",
       "codex",
+      "antigravity",
       "opencode",
       "kilo",
-      "antigravity",
       "kiro",
       "kimi",
     ]);
     expect(catalogOf().inHelpOrder("ide")).toEqual(["vscode"]);
     expect(catalogOf([...REGISTERED_PROFILES].reverse()).inHelpOrder("ai")).toEqual([
+      "antigravity",
       "codex",
       "copilot",
       "cursor",
       "claude",
       "kimi",
       "kiro",
-      "antigravity",
       "kilo",
       "opencode",
     ]);
