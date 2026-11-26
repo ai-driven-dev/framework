@@ -6,7 +6,9 @@
  * Code's. Node built-ins only; anything unreadable is no event, and prints nothing.
  *
  * SessionStart, PreToolUse, PostToolUse and Stop are delivered to Kiro: they are the events whose
- * payload was captured, so a payload naming any other event is read as no event.
+ * payload was captured, so a payload naming any other event is read as no event. UserPromptSubmit
+ * and SubagentStop are captured too and delivered by the profile, but no framework script reads
+ * them: like Cursor's, their payloads read as no event until one does.
  */
 const fs = require("node:fs");
 const path = require("node:path");

@@ -1,9 +1,9 @@
 import type { FileReader } from "../../../shared/ports/file-reader.js";
-import type { MarketplaceSourceDrift } from "../contract/marketplace-source-drift.js";
 import {
   type MarketplaceCatalogIdentity,
   marketplaceSourceConflict,
 } from "../domain/source/marketplace-source-conflict.js";
+import type { MarketplaceSourceDrift } from "../domain/source/marketplace-source-drift.js";
 import {
   type HostMarketplaceSourceCheck,
   type MarketplaceSourceDriftContext,

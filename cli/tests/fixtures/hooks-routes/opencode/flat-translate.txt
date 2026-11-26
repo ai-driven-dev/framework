@@ -275,206 +275,235 @@ script, identical to the plugin source
 script, identical to the plugin source
 
 ## out-flat/.opencode/hooks/opencode-events.js
-// V2 reports a turn through its execution events. The tool hook is where a finished call's
-// result can change, so a hook's answer lands in the result the model reads.
-function eventsForV2(event, directory) {
-  const data = event?.data;
-  if (typeof data?.sessionID !== "string") return [];
-  if (event.type === "session.created") {
-    return [
-      {
-        type: "session.created",
-        properties: {
-          info: { id: data.sessionID, directory: data.location?.directory ?? directory },
-        },
-      },
-    ];
-  }
-  if (
-    event.type === "session.execution.succeeded" ||
-    event.type === "session.execution.failed" ||
-    event.type === "session.execution.interrupted"
-  ) {
-    if (event.type === "session.execution.interrupted" && data.reason === "shutdown") return [];
-    return [
-      {
-        type: "session.idle",
-        properties: { sessionID: data.sessionID, directory: event.location?.directory },
-      },
-    ];
-  }
-  return [];
+// OpenCode 2 hands a plugin hooks of its own: each is mapped onto the hook the bridge hands
+// OpenCode 1, so what a script receives and what its answer does stays the bridge's.
+
+// A V2 tool names the file it writes `path`; the bridge reads OpenCode 1's `filePath`.
+function argsOf(input) {
+  return typeof input?.path === "string" ? { ...input, filePath: input.path } : input;
 }
 
-// A string result takes the answer after a blank line; a list of parts takes a text part.
-function withAnswer(content, answer) {
-  if (Array.isArray(content)) return [...content, { type: "text", text: answer }];
-  return content ? `${content}\n\n${answer}` : answer;
+// The V2 shell tool is `shell`; the bridge's matchers and its adapter name OpenCode 1's `bash`.
+function toolOf(name) {
+  return name === "shell" ? "bash" : name;
 }
 
 export async function setupOpencodeEvents(ctx, factory) {
   // OpenCode 1.19 also calls setup with its early V2 context, which has no location, while
   // server() already serves that host.
   if (ctx.location === undefined) return;
-  const controller = new AbortController();
-  // A Stop script's block becomes the session's next prompt, sent through the V2 session API.
+  // The follow-ups a Stop sent, settled: the bridge reports a refused one. Shared by every
+  // session, so an idle also waits for another session's follow-ups.
+  const followUps = [];
   const client = {
     session: {
-      prompt: ({ path, body }) =>
-        ctx.session.prompt({
+      prompt: ({ path, body }) => {
+        const sent = ctx.session.synthetic({
           sessionID: path.id,
           text: body.parts.map((part) => part.text).join("\n"),
-        }),
+          delivery: "steer",
+        });
+        followUps.push(sent.then(() => undefined, () => undefined));
+        return sent;
+      },
     },
   };
   const hooks = await factory({ directory: ctx.location.directory, client });
-  const toolHook = await ctx.tool.hook("execute.after", async (call) => {
-    if (call.status !== "completed" || !call.result) return;
-    const output = { output: "" };
-    await hooks["tool.execute.after"]({ tool: call.tool, sessionID: call.sessionID, args: call.input }, output);
-    const answer = output.output.trim();
-    if (answer) call.result.content = withAnswer(call.result.content, answer);
+  // What the UserPromptSubmit scripts answered to each session's latest prompt.
+  const promptAnswers = new Map();
+
+  // A session's first prompt starts it: the run's own session is created before the plugin
+  // listens. A subagent's child session names its parent.
+  await ctx.session.hook("prompt", async (prompt) => {
+    const { sessionID } = prompt;
+    const session = await ctx.session.get({ sessionID });
+    await hooks.event({
+      event: { type: "session.created", properties: { sessionID, info: { parentID: session.parentID } } },
+    });
+    const output = {
+      message: { id: prompt.messageID },
+      parts: [{ id: prompt.messageID, type: "text", text: prompt.prompt.text }],
+    };
+    await hooks["chat.message"]({ sessionID }, output);
+    promptAnswers.set(sessionID, output.parts.slice(1).map((part) => part.text));
   });
-  // The subscription lives until cleanup. Awaiting it here would block plugin startup.
-  void (async () => {
-    try {
-      for await (const event of ctx.event.subscribe({ signal: controller.signal })) {
-        if (controller.signal.aborted) break;
-        for (const mapped of eventsForV2(event, ctx.location.directory)) {
-          await hooks.event({ event: mapped });
-        }
-      }
-    } catch {
-      // Stream failures and cancellation must not reject into the host.
-      controller.abort();
+
+  // Each request of a turn carries what SessionStart and the turn's prompt hooks answered.
+  await ctx.session.hook("context", async (request) => {
+    const added = { system: [] };
+    await hooks["experimental.chat.system.transform"]({ sessionID: request.sessionID }, added);
+    for (const text of [...added.system, ...(promptAnswers.get(request.sessionID) ?? [])]) {
+      request.system.push({ type: "text", text });
     }
-  })();
-  return async () => {
-    controller.abort();
-    await toolHook.dispose();
-  };
+  });
+
+  // A throw from this hook alone refuses the call.
+  await ctx.tool.hook("execute.before", (call) =>
+    hooks["tool.execute.before"]({ tool: toolOf(call.tool), sessionID: call.sessionID }, { args: argsOf(call.input) })
+  );
+
+  // The tool hook is where a finished call's result can change, so a hook's answer lands in the
+  // result the model reads.
+  await ctx.tool.hook("execute.after", async (call) => {
+    if (call.status !== "completed") return;
+    const output = { output: "" };
+    await hooks["tool.execute.after"]({ tool: toolOf(call.tool), sessionID: call.sessionID, args: argsOf(call.input) }, output);
+    const answer = output.output.trim();
+    if (answer) call.result.content.push({ type: "text", text: answer });
+  });
+
+  // The session goes idle unless input waits once this hook returns, so the follow-ups land first.
+  await ctx.session.hook("experimental.idle", async ({ sessionID }) => {
+    await hooks.event({ event: { type: "session.idle", properties: { sessionID } } });
+    await Promise.all(followUps.splice(0));
+  });
 }
 
 
 ## out-flat/.opencode/plugin/aidd-context-hooks.js
-// Generated by aidd from plugins/aidd-context/hooks/hooks.json - do not edit by hand.
-// OpenCode's plugin loader scans no "hooks" family and this profile writes no hooks.json
-// (build.ts's skipHooksJson, translated here rather than skipped) - this file is the only
-// trigger this plugin's declared hooks have on OpenCode. See opencode-hooks-bridge.ts for
-// the mapping this generator applies and the measurements behind it.
+// Generated by aidd - do not edit by hand. OpenCode's plugin loader scans no "hooks" family,
+// so this file is the only trigger this plugin's declared hooks have on OpenCode.
 import { setupOpencodeEvents } from "../hooks/opencode-events.js";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-// Never process.execPath: OpenCode ships as its own standalone binary - that path names `opencode`
-// itself, not a Node runtime able to run this plugin's own hook scripts.
 const HOOKS_DIR = fileURLToPath(new URL("../hooks/aidd-context/", import.meta.url));
 
 const SESSION_START = [{"script":"memory.cjs","args":["load"]},{"script":"artifacts.cjs","args":["start"]}];
+const POST_TOOL_USE = [{"script":"artifacts.cjs","args":["mark"],"tools":["write","edit","bash","shell","bash","powershell","apply_patch"]}];
 const STOP = [{"script":"memory.cjs","args":["sync"]}];
-const POST_TOOL_USE = [{"script":"artifacts.cjs","args":["mark"],"matcher":"Write|Edit|Bash|Shell|bash|PowerShell|apply_patch"}];
-
-// Asynchronous on purpose: this can spawn one script per matching hook across every mapped
-// event, and blocking OpenCode's event loop once per hook would multiply the cost. A failed spawn (ENOENT, a killed timeout)
-// must not throw past this function - both listeners below, plus the caller's own
-// try/catch, exist because a spawn that never launches can still throw on the stdin write.
-function runHook(script, args, payload, directory) {
-  const child = spawn("node", [HOOKS_DIR + script, ...args], {
-    cwd: directory,
-    stdio: ["pipe", "ignore", "ignore"],
-    timeout: 5000,
-  });
-  child.on("error", () => {});
-  child.stdin.on("error", () => {});
-  child.stdin.end(JSON.stringify(payload));
-}
-
-/** Pure: `session.idle` -> every Stop hook's own {script, args, payload} - or `[]` for
- * any other event. Exported as a property (never a second named export - F6) so this
- * generated module's own mapping can be asserted without spawning anything. */
-function stopCallsFor(event, directory) {
-  if (event?.type !== "session.idle") return [];
-  const sessionId = event.properties?.sessionID;
-  return STOP.map((hook) => ({
-    script: hook.script,
-    args: hook.args,
-    payload: { hook_event_name: "Stop", session_id: sessionId ?? null, cwd: directory },
-  }));
-}
-
-// Awaited, unlike runHook: the script has something the model must read.
-// Exit 2 puts it on stderr; exit 0 puts it in additionalContext on stdout.
-function answerFrom(code, stdout, stderr) {
-  if (code === 2) return stderr.trim();
-  if (code !== 0) return "";
-  try {
-    const output = JSON.parse(stdout);
-    return String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim();
-  } catch {
-    return "";
-  }
-}
-
-/** Runs one hook script with its payload on stdin and collects what it wrote. */
-function runCapture(script, args, payload, directory) {
-  return new Promise((resolve) => {
-    let stdout = "";
-    let stderr = "";
-    const child = spawn("node", [HOOKS_DIR + script, ...args], {
-      cwd: directory,
-      stdio: ["pipe", "pipe", "pipe"],
-      timeout: 5000,
-    });
-    child.stdout.on("data", (chunk) => {
-      stdout += chunk;
-    });
-    child.stderr.on("data", (chunk) => {
-      stderr += chunk;
-    });
-    child.on("error", () => resolve({ code: null, stdout: "", stderr: "" }));
-    child.on("close", (code) => resolve({ code, stdout, stderr }));
-    child.stdin.on("error", () => {});
-    child.stdin.end(JSON.stringify(payload));
-  });
-}
-
-function answerOf(script, args, payload, directory) {
-  return runCapture(script, args, payload, directory).then(({ code, stdout, stderr }) =>
-    answerFrom(code, stdout, stderr)
-  );
-}
-
-/** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
-function stopReasonOf(script, args, payload, directory) {
-  return runCapture(script, args, payload, directory).then(({ code, stdout }) => {
-    if (code !== 0) return "";
-    try {
-      const output = JSON.parse(stdout);
-      return output?.decision === "block" ? String(output.reason ?? "").trim() : "";
-    } catch {
-      return "";
-    }
-  });
-}
+const PRE_TOOL_USE = [];
+const USER_PROMPT_SUBMIT = [];
 
 function reportHookFailure(script, error) {
   console.warn("[aidd] OpenCode hook " + script + " failed: " + String(error));
 }
 
-/** Pure: a finished tool call -> every PostToolUse hook whose matcher allows its tool. OpenCode
- * names the written file `filePath`; the scripts read Claude Code's `file_path`. */
-function postToolUseCallsFor(call, directory) {
-  const tool = String(call?.tool ?? "");
-  const args = call?.args;
-  const matches = (matcher) =>
-    !matcher || matcher.split("|").some((name) => name.toLowerCase() === tool.toLowerCase());
-  const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;
-  return POST_TOOL_USE.filter((hook) => matches(hook.matcher)).map((hook) => ({
+function exitDescription(code, signal) {
+  return "exited with code " + String(code) + (signal === null ? "" : " (" + signal + ")");
+}
+
+/** Runs one hook script under node from the plugin's scripts folder, in the payload's directory,
+ * with its payload on stdin, and collects what it wrote. Never process.execPath: a host's own path
+ * need not be a Node runtime. */
+function runCapture(script, args, payload, directory) {
+  return new Promise((resolve) => {
+    const failed = (error) => resolve({ error, code: null, signal: null, stdout: "", stderr: "" });
+    let stdout = "";
+    let stderr = "";
+    try {
+      const child = spawn("node", [HOOKS_DIR + script, ...args], {
+        cwd: directory,
+        stdio: ["pipe", "pipe", "pipe"],
+        timeout: 5000,
+      });
+      child.stdout.on("data", (chunk) => {
+        stdout += chunk;
+      });
+      child.stderr.on("data", (chunk) => {
+        stderr += chunk;
+      });
+      // A spawn that never launches emits both an error and a close: the first settles it.
+      child.on("error", failed);
+      child.on("close", (code, signal) => resolve({ code, signal, stdout, stderr }));
+      // A script that never reads its stdin must not throw.
+      child.stdin.on("error", () => {});
+      child.stdin.end(JSON.stringify(payload));
+    } catch (error) {
+      // An argument spawn refuses (a NUL byte) throws before any child exists.
+      failed(error);
+    }
+  });
+}
+
+/** A script's run, or null once a script that failed to run, or exited other than 0 or 2, is
+ * reported. */
+function settledRun(script, args, payload, directory) {
+  return runCapture(script, args, payload, directory).then((run) => {
+    if (run.error !== undefined) {
+      reportHookFailure(script, run.error);
+      return null;
+    }
+    if ((run.code !== 0 && run.code !== 2) || run.signal !== null) {
+      reportHookFailure(script, exitDescription(run.code, run.signal));
+      return null;
+    }
+    return run;
+  });
+}
+
+/** The JSON a script printed on stdout, or an empty object when it printed none. */
+function stdoutJson(stdout) {
+  try {
+    return JSON.parse(stdout) ?? {};
+  } catch {
+    return {};
+  }
+}
+
+/** What a script printed for the person, never the model. */
+function personOf(output) {
+  return String(output?.systemMessage ?? "").trim();
+}
+
+const NO_ANSWER = { text: "", person: "", required: false };
+
+/** A settled run, which exited 0 or 2. `required` is what the adapter prints for a finding the
+ * model must deal with before going on. */
+function answerFrom(code, stdout, stderr) {
+  if (code === 2) return { text: stderr.trim(), person: "", required: false };
+  const output = stdoutJson(stdout);
+  return {
+    text: String(output?.additionalContext ?? "").trim(),
+    person: personOf(output),
+    required: output?.required === true,
+  };
+}
+
+/** A script that fails to run, or exits other than 0 or 2, is reported and answers nothing. */
+function answerOf(script, args, payload, directory) {
+  return settledRun(script, args, payload, directory).then((run) =>
+    run === null ? NO_ANSWER : answerFrom(run.code, run.stdout, run.stderr)
+  );
+}
+
+/** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
+function stopReasonOf(script, args, payload, directory) {
+  return settledRun(script, args, payload, directory).then((run) => {
+    if (run === null || run.code !== 0) return { reason: "", person: "" };
+    const output = stdoutJson(run.stdout);
+    const reason = output?.decision === "block" ? String(output.reason ?? "").trim() : "";
+    return { reason, person: personOf(output) };
+  });
+}
+
+const FOLLOW_UP = { aidd: "stop-follow-up" };
+const FINDING = { aidd: "finding" };
+
+function isBridgePrompt(parts) {
+  return parts.some((part) => typeof part.metadata?.aidd === "string");
+}
+
+function sendPrompt(client, method, sessionId, text, mark, script, failure) {
+  return client.session[method]({ path: { id: sessionId }, body: { parts: [{ type: "text", text, metadata: mark }] } })
+    .catch((error) => reportHookFailure(script, failure + String(error)));
+}
+
+function matchesTool(tools, tool) {
+  return !tools || tools.includes(tool.toLowerCase());
+}
+
+/** Pure: a tool call -> every hook of one event whose matcher allows its tool. The host names the
+ * written file `filePath`; the scripts read Claude Code's `file_path`. */
+function toolUseCallsFor(event, hooks, call, args, directory) {
+  const tool = call.tool;
+  const toolInput = typeof args.filePath === "string" ? { ...args, file_path: args.filePath } : args;
+  return hooks.filter((hook) => matchesTool(hook.tools, tool)).map((hook) => ({
     script: hook.script,
     args: hook.args,
     payload: {
-      hook_event_name: "PostToolUse",
-      session_id: call?.sessionID ?? null,
+      hook_event_name: event,
+      session_id: call.sessionID,
       cwd: directory,
       tool_name: tool,
       tool_input: toolInput,
@@ -482,81 +511,220 @@ function postToolUseCallsFor(call, directory) {
   }));
 }
 
-// Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
-// Module-level: the host creates the plugin again, and a fresh set would forget a continuation.
-const continued = new Set();
+/** A call about to run: the host hands the arguments in the output, not in the call. */
+function preToolUseCallsFor(call, output, directory) {
+  return toolUseCallsFor("PreToolUse", PRE_TOOL_USE, call, output.args, directory);
+}
+
+/** A call that ran. */
+function postToolUseCallsFor(call, directory) {
+  return toolUseCallsFor("PostToolUse", POST_TOOL_USE, call, call.args, directory);
+}
+
+/** The reason the first script that refuses gave, or null when none does. */
+async function refusalOf(calls) {
+  for (const call of calls) {
+    const run = await settledRun(call.script, call.args, call.payload, call.payload.cwd);
+    if (run?.code === 2) return run.stderr.trim();
+  }
+  return null;
+}
+
+/** The refusal is thrown out of the host's hook, the one way it stops the call. */
+async function refuseToolUse(call, output, directory) {
+  const refusal = await refusalOf(preToolUseCallsFor(call, output, directory));
+  if (refusal !== null) throw new Error(refusal);
+}
+
+/** Each PostToolUse answer is appended to the output the model reads, its message for the person
+ * handed to `show` where the host has one. An answer the script marks required is also queued as
+ * the session's next prompt, which the model takes up after the current step; not awaited, so the
+ * host's prompt call never holds the tool. A client with no `promptAsync` queues nothing: the
+ * answer is appended alone. */
+async function addToolAnswers(call, output, directory, client, show) {
+  try {
+    for (const hook of postToolUseCallsFor(call, directory)) {
+      const { text, person, required } = await answerOf(hook.script, hook.args, hook.payload, directory);
+      show?.(person);
+      if (!text) continue;
+      output.output = output.output + "\n\n" + text;
+      if (required && typeof client.session.promptAsync === "function") sendPrompt(client, "promptAsync", call.sessionID, text, FINDING, hook.script, "finding not queued: ");
+    }
+  } catch (error) {
+    reportHookFailure("PostToolUse", error);
+  }
+}
+
+/** Pure: the user's message -> every UserPromptSubmit hook's call, none for a prompt a bridge
+ * sent. The text is the user's own: a part another hook added is not. */
+function userPromptCallsFor(input, output, directory) {
+  const parts = output.parts;
+  if (isBridgePrompt(parts)) return [];
+  const prompt = parts
+    .filter((part) => part.type === "text" && !part.synthetic)
+    .map((part) => part.text)
+    .join("\n");
+  return USER_PROMPT_SUBMIT.map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: {
+      hook_event_name: "UserPromptSubmit",
+      session_id: input.sessionID,
+      cwd: directory,
+      prompt,
+    },
+  }));
+}
+
+/** Each answer becomes a synthetic text part after the user's, its id derived from the first
+ * part's, this plugin's name and the hook's place in its list, so no two parts share one. */
+async function addPromptContext(input, output, directory) {
+  const calls = userPromptCallsFor(input, output, directory);
+  for (const [index, call] of calls.entries()) {
+    const { text } = await answerOf(call.script, call.args, call.payload, directory);
+    if (!text) continue;
+    output.parts.push({
+      id: output.parts[0].id + "-" + "aidd-context" + "-" + index,
+      messageID: output.message.id,
+      sessionID: input.sessionID,
+      type: "text",
+      text,
+      synthetic: true,
+    });
+  }
+}
+
+const sessions = new Map();
+const childSessions = new Set();
+
+function runSessionStart(event, fallbackDirectory) {
+  const named = event.properties.sessionID;
+  if (typeof named !== "string" || sessions.has(named) || childSessions.has(named)) return;
+  if (typeof event.properties.info?.parentID === "string") {
+    childSessions.add(named);
+    return;
+  }
+  const directory = event.properties.info?.directory ?? fallbackDirectory;
+  const answers = SESSION_START.map((hook) =>
+    answerOf(hook.script, hook.args, { hook_event_name: "SessionStart", session_id: named, cwd: directory }, directory)
+  );
+  const joined = (texts) => texts.filter(Boolean).join("\n\n");
+  sessions.set(named, {
+    directory,
+    started: Promise.all(answers).then((all) => ({
+      context: joined(all.map((answer) => answer.text)),
+      person: joined(all.map((answer) => answer.person)),
+    })),
+  });
+}
+
+/** The folder a session's hooks run in. */
+function sessionDirectory(sessionId, fallbackDirectory) {
+  return sessions.get(sessionId)?.directory ?? fallbackDirectory;
+}
+
+/** What SessionStart answered, added to the system prompt of the session's turn; its message for
+ * the person handed to `show` once, where the host has one. */
+async function addSessionContext(input, output, show) {
+  const started = await sessions.get(input.sessionID)?.started;
+  if (started === undefined) return;
+  if (started.context) output.system.push(started.context);
+  const person = started.person;
+  started.person = "";
+  show?.(person);
+}
+
+const continuedTurns = new Set();
+
+/** An idle session's Stop calls; `runStop` adds `stop_hook_active` to each payload. */
+function stopCallsFor(sessionId, directory) {
+  return STOP.map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: { hook_event_name: "Stop", session_id: sessionId, cwd: directory },
+  }));
+}
+
+function noteTurn(sessionId, parts) {
+  if (!isFollowUp(parts)) continuedTurns.delete(sessionId);
+}
+
+function isFollowUp(parts) {
+  return parts.some((part) => part.metadata?.aidd === FOLLOW_UP.aidd);
+}
+
+/** Resolves once the scripts ran, with the follow-ups still in flight: the prompt is the session's
+ * next turn, and the turn end must not hold it. */
+async function runStop(sessionId, directory, { client, method, show }) {
+  const sends = [];
+  for (const call of stopCallsFor(sessionId, directory)) {
+    const payload = { ...call.payload, stop_hook_active: continuedTurns.has(sessionId) };
+    const { reason, person } = await stopReasonOf(call.script, call.args, payload, directory);
+    show?.(person);
+    if (!reason) continue;
+    continuedTurns.add(sessionId);
+    sends.push(sendPrompt(client, method, sessionId, reason, FOLLOW_UP, call.script, "follow-up not delivered: "));
+  }
+  return sends;
+}
+
+function bridgeHooks({ directory, client, followUp, show, track }) {
+  const folderOf = (sessionId) => sessionDirectory(sessionId, directory);
+  return {
+    event: async ({ event }) => {
+      runSessionStart(event, directory);
+      const sessionId = event.properties.sessionID;
+      if (typeof sessionId !== "string" || event.type !== "session.idle" || childSessions.has(sessionId)) return;
+      const stopping = runStop(sessionId, folderOf(sessionId), { client, method: followUp, show });
+      track?.(stopping.then((sends) => Promise.all(sends)));
+      await stopping;
+    },
+    "experimental.chat.system.transform": (input, output) => addSessionContext(input, output, show),
+    "chat.message": async (input, output) => {
+      noteTurn(input.sessionID, output.parts);
+      await addPromptContext(input, output, folderOf(input.sessionID));
+    },
+    "tool.execute.before": (call, output) => refuseToolUse(call, output, folderOf(call.sessionID)),
+    "tool.execute.after": (call, output) =>
+      addToolAnswers(call, output, folderOf(call.sessionID), client, show),
+  };
+}
+
+/** The person's message goes to the TUI's toast. Never awaited: the call comes back only once the
+ * server is up, and a toast the TUI cannot show is not worth holding a hook for. */
+function showToast(client, person) {
+  if (!person) return;
+  Promise.resolve()
+    .then(() => client.tui.showToast({ body: { message: person, variant: "warning" } }))
+    .catch(() => {});
+}
 
 export const AiddContextHooks = async (input) => {
   // Stop handlings in flight: `opencode run` exits once the session is idle, so dispose waits.
   let pending = Promise.resolve();
-  // OpenCode keeps delivering events to an instance it disposed once it has created the next one.
+  // Limit: an event reaching an instance after its dispose was never captured; a disposed
+  // instance relays none, so a Stop is never run by two instances at once.
   let disposed = false;
-  // SessionStart's own approximation (module doc comment above): fired once here, never
-  // per session. Silent on purpose: a memory refresh
-  // that breaks OpenCode's own startup is worse than one that never ran.
-  try {
-    for (const hook of SESSION_START) {
-      runHook(
-        hook.script,
-        hook.args,
-        { hook_event_name: "SessionStart", session_id: null, cwd: input.directory },
-        input.directory
-      );
-    }
-  } catch {
-    // Silent on purpose - see above.
-  }
+  const hooks = bridgeHooks({
+    directory: input.directory,
+    client: input.client,
+    followUp: "prompt",
+    show: (person) => showToast(input.client, person),
+    track: (handling) => {
+      pending = Promise.all([pending, handling]).then(() => {});
+    },
+  });
   return {
+    ...hooks,
     dispose: async () => {
       disposed = true;
       await pending;
     },
-    event: async ({ event }) => {
-      if (disposed) return;
-      try {
-        const directory = event?.properties?.directory ?? input.directory;
-        // Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
-        for (const call of stopCallsFor(event, directory)) {
-          const sessionId = call.payload.session_id;
-          const payload = { ...call.payload, stop_hook_active: continued.has(sessionId) };
-          const asking = stopReasonOf(call.script, call.args, payload, directory);
-          // Pending before the script ends: dispose waits for a handling whose script still runs.
-          // The prompt is the session's next turn, and this handler must not hold it.
-          const handling = asking
-            .then((reason) => {
-              if (!reason) {
-                continued.delete(sessionId);
-                return undefined;
-              }
-              continued.add(sessionId);
-              return input.client.session.prompt({
-                path: { id: sessionId },
-                body: { parts: [{ type: "text", text: reason }] },
-              });
-            })
-            .catch((error) => reportHookFailure(call.script, "follow-up not delivered: " + String(error)));
-          pending = Promise.all([pending, handling]).then(() => {});
-          await asking;
-        }
-      } catch {
-        // Silent on purpose - see above.
-      }
-    },
-    "tool.execute.after": async (call, output) => {
-      try {
-        for (const hook of postToolUseCallsFor(call, input.directory)) {
-          const answer = await answerOf(hook.script, hook.args, hook.payload, input.directory);
-          if (answer) output.output = `${output.output ?? ""}\n\n${answer}`;
-        }
-      } catch {
-        // Silent on purpose - see above.
-      }
+    event: async (payload) => {
+      if (!disposed) await hooks.event(payload);
     },
   };
 };
-
-AiddContextHooks.stopCallsFor = stopCallsFor;
-AiddContextHooks.postToolUseCallsFor = postToolUseCallsFor;
 
 export default {
   id: "aidd-context-hooks",
@@ -566,124 +734,149 @@ export default {
 
 
 ## out-flat/.opencode/plugin/aidd-telemetry-hooks.js
-// Generated by aidd from plugins/aidd-telemetry/hooks/hooks.json - do not edit by hand.
-// OpenCode's plugin loader scans no "hooks" family and this profile writes no hooks.json
-// (build.ts's skipHooksJson, translated here rather than skipped) - this file is the only
-// trigger this plugin's declared hooks have on OpenCode. See opencode-hooks-bridge.ts for
-// the mapping this generator applies and the measurements behind it.
+// Generated by aidd - do not edit by hand. OpenCode's plugin loader scans no "hooks" family,
+// so this file is the only trigger this plugin's declared hooks have on OpenCode.
 import { setupOpencodeEvents } from "../hooks/opencode-events.js";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-// Never process.execPath: OpenCode ships as its own standalone binary - that path names `opencode`
-// itself, not a Node runtime able to run this plugin's own hook scripts.
 const HOOKS_DIR = fileURLToPath(new URL("../hooks/aidd-telemetry/", import.meta.url));
 
 const SESSION_START = [{"script":"task.cjs","args":["remind"]},{"script":"ledger.cjs","args":["ingest"]}];
-const STOP = [];
 const POST_TOOL_USE = [];
-
-// Asynchronous on purpose: this can spawn one script per matching hook across every mapped
-// event, and blocking OpenCode's event loop once per hook would multiply the cost. A failed spawn (ENOENT, a killed timeout)
-// must not throw past this function - both listeners below, plus the caller's own
-// try/catch, exist because a spawn that never launches can still throw on the stdin write.
-function runHook(script, args, payload, directory) {
-  const child = spawn("node", [HOOKS_DIR + script, ...args], {
-    cwd: directory,
-    stdio: ["pipe", "ignore", "ignore"],
-    timeout: 5000,
-  });
-  child.on("error", () => {});
-  child.stdin.on("error", () => {});
-  child.stdin.end(JSON.stringify(payload));
-}
-
-/** Pure: `session.idle` -> every Stop hook's own {script, args, payload} - or `[]` for
- * any other event. Exported as a property (never a second named export - F6) so this
- * generated module's own mapping can be asserted without spawning anything. */
-function stopCallsFor(event, directory) {
-  if (event?.type !== "session.idle") return [];
-  const sessionId = event.properties?.sessionID;
-  return STOP.map((hook) => ({
-    script: hook.script,
-    args: hook.args,
-    payload: { hook_event_name: "Stop", session_id: sessionId ?? null, cwd: directory },
-  }));
-}
-
-// Awaited, unlike runHook: the script has something the model must read.
-// Exit 2 puts it on stderr; exit 0 puts it in additionalContext on stdout.
-function answerFrom(code, stdout, stderr) {
-  if (code === 2) return stderr.trim();
-  if (code !== 0) return "";
-  try {
-    const output = JSON.parse(stdout);
-    return String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim();
-  } catch {
-    return "";
-  }
-}
-
-/** Runs one hook script with its payload on stdin and collects what it wrote. */
-function runCapture(script, args, payload, directory) {
-  return new Promise((resolve) => {
-    let stdout = "";
-    let stderr = "";
-    const child = spawn("node", [HOOKS_DIR + script, ...args], {
-      cwd: directory,
-      stdio: ["pipe", "pipe", "pipe"],
-      timeout: 5000,
-    });
-    child.stdout.on("data", (chunk) => {
-      stdout += chunk;
-    });
-    child.stderr.on("data", (chunk) => {
-      stderr += chunk;
-    });
-    child.on("error", () => resolve({ code: null, stdout: "", stderr: "" }));
-    child.on("close", (code) => resolve({ code, stdout, stderr }));
-    child.stdin.on("error", () => {});
-    child.stdin.end(JSON.stringify(payload));
-  });
-}
-
-function answerOf(script, args, payload, directory) {
-  return runCapture(script, args, payload, directory).then(({ code, stdout, stderr }) =>
-    answerFrom(code, stdout, stderr)
-  );
-}
-
-/** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
-function stopReasonOf(script, args, payload, directory) {
-  return runCapture(script, args, payload, directory).then(({ code, stdout }) => {
-    if (code !== 0) return "";
-    try {
-      const output = JSON.parse(stdout);
-      return output?.decision === "block" ? String(output.reason ?? "").trim() : "";
-    } catch {
-      return "";
-    }
-  });
-}
+const STOP = [];
+const PRE_TOOL_USE = [];
+const USER_PROMPT_SUBMIT = [];
 
 function reportHookFailure(script, error) {
   console.warn("[aidd] OpenCode hook " + script + " failed: " + String(error));
 }
 
-/** Pure: a finished tool call -> every PostToolUse hook whose matcher allows its tool. OpenCode
- * names the written file `filePath`; the scripts read Claude Code's `file_path`. */
-function postToolUseCallsFor(call, directory) {
-  const tool = String(call?.tool ?? "");
-  const args = call?.args;
-  const matches = (matcher) =>
-    !matcher || matcher.split("|").some((name) => name.toLowerCase() === tool.toLowerCase());
-  const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;
-  return POST_TOOL_USE.filter((hook) => matches(hook.matcher)).map((hook) => ({
+function exitDescription(code, signal) {
+  return "exited with code " + String(code) + (signal === null ? "" : " (" + signal + ")");
+}
+
+/** Runs one hook script under node from the plugin's scripts folder, in the payload's directory,
+ * with its payload on stdin, and collects what it wrote. Never process.execPath: a host's own path
+ * need not be a Node runtime. */
+function runCapture(script, args, payload, directory) {
+  return new Promise((resolve) => {
+    const failed = (error) => resolve({ error, code: null, signal: null, stdout: "", stderr: "" });
+    let stdout = "";
+    let stderr = "";
+    try {
+      const child = spawn("node", [HOOKS_DIR + script, ...args], {
+        cwd: directory,
+        stdio: ["pipe", "pipe", "pipe"],
+        timeout: 5000,
+      });
+      child.stdout.on("data", (chunk) => {
+        stdout += chunk;
+      });
+      child.stderr.on("data", (chunk) => {
+        stderr += chunk;
+      });
+      // A spawn that never launches emits both an error and a close: the first settles it.
+      child.on("error", failed);
+      child.on("close", (code, signal) => resolve({ code, signal, stdout, stderr }));
+      // A script that never reads its stdin must not throw.
+      child.stdin.on("error", () => {});
+      child.stdin.end(JSON.stringify(payload));
+    } catch (error) {
+      // An argument spawn refuses (a NUL byte) throws before any child exists.
+      failed(error);
+    }
+  });
+}
+
+/** A script's run, or null once a script that failed to run, or exited other than 0 or 2, is
+ * reported. */
+function settledRun(script, args, payload, directory) {
+  return runCapture(script, args, payload, directory).then((run) => {
+    if (run.error !== undefined) {
+      reportHookFailure(script, run.error);
+      return null;
+    }
+    if ((run.code !== 0 && run.code !== 2) || run.signal !== null) {
+      reportHookFailure(script, exitDescription(run.code, run.signal));
+      return null;
+    }
+    return run;
+  });
+}
+
+/** The JSON a script printed on stdout, or an empty object when it printed none. */
+function stdoutJson(stdout) {
+  try {
+    return JSON.parse(stdout) ?? {};
+  } catch {
+    return {};
+  }
+}
+
+/** What a script printed for the person, never the model. */
+function personOf(output) {
+  return String(output?.systemMessage ?? "").trim();
+}
+
+const NO_ANSWER = { text: "", person: "", required: false };
+
+/** A settled run, which exited 0 or 2. `required` is what the adapter prints for a finding the
+ * model must deal with before going on. */
+function answerFrom(code, stdout, stderr) {
+  if (code === 2) return { text: stderr.trim(), person: "", required: false };
+  const output = stdoutJson(stdout);
+  return {
+    text: String(output?.additionalContext ?? "").trim(),
+    person: personOf(output),
+    required: output?.required === true,
+  };
+}
+
+/** A script that fails to run, or exits other than 0 or 2, is reported and answers nothing. */
+function answerOf(script, args, payload, directory) {
+  return settledRun(script, args, payload, directory).then((run) =>
+    run === null ? NO_ANSWER : answerFrom(run.code, run.stdout, run.stderr)
+  );
+}
+
+/** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
+function stopReasonOf(script, args, payload, directory) {
+  return settledRun(script, args, payload, directory).then((run) => {
+    if (run === null || run.code !== 0) return { reason: "", person: "" };
+    const output = stdoutJson(run.stdout);
+    const reason = output?.decision === "block" ? String(output.reason ?? "").trim() : "";
+    return { reason, person: personOf(output) };
+  });
+}
+
+const FOLLOW_UP = { aidd: "stop-follow-up" };
+const FINDING = { aidd: "finding" };
+
+function isBridgePrompt(parts) {
+  return parts.some((part) => typeof part.metadata?.aidd === "string");
+}
+
+function sendPrompt(client, method, sessionId, text, mark, script, failure) {
+  return client.session[method]({ path: { id: sessionId }, body: { parts: [{ type: "text", text, metadata: mark }] } })
+    .catch((error) => reportHookFailure(script, failure + String(error)));
+}
+
+function matchesTool(tools, tool) {
+  return !tools || tools.includes(tool.toLowerCase());
+}
+
+/** Pure: a tool call -> every hook of one event whose matcher allows its tool. The host names the
+ * written file `filePath`; the scripts read Claude Code's `file_path`. */
+function toolUseCallsFor(event, hooks, call, args, directory) {
+  const tool = call.tool;
+  const toolInput = typeof args.filePath === "string" ? { ...args, file_path: args.filePath } : args;
+  return hooks.filter((hook) => matchesTool(hook.tools, tool)).map((hook) => ({
     script: hook.script,
     args: hook.args,
     payload: {
-      hook_event_name: "PostToolUse",
-      session_id: call?.sessionID ?? null,
+      hook_event_name: event,
+      session_id: call.sessionID,
       cwd: directory,
       tool_name: tool,
       tool_input: toolInput,
@@ -691,81 +884,220 @@ function postToolUseCallsFor(call, directory) {
   }));
 }
 
-// Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
-// Module-level: the host creates the plugin again, and a fresh set would forget a continuation.
-const continued = new Set();
+/** A call about to run: the host hands the arguments in the output, not in the call. */
+function preToolUseCallsFor(call, output, directory) {
+  return toolUseCallsFor("PreToolUse", PRE_TOOL_USE, call, output.args, directory);
+}
+
+/** A call that ran. */
+function postToolUseCallsFor(call, directory) {
+  return toolUseCallsFor("PostToolUse", POST_TOOL_USE, call, call.args, directory);
+}
+
+/** The reason the first script that refuses gave, or null when none does. */
+async function refusalOf(calls) {
+  for (const call of calls) {
+    const run = await settledRun(call.script, call.args, call.payload, call.payload.cwd);
+    if (run?.code === 2) return run.stderr.trim();
+  }
+  return null;
+}
+
+/** The refusal is thrown out of the host's hook, the one way it stops the call. */
+async function refuseToolUse(call, output, directory) {
+  const refusal = await refusalOf(preToolUseCallsFor(call, output, directory));
+  if (refusal !== null) throw new Error(refusal);
+}
+
+/** Each PostToolUse answer is appended to the output the model reads, its message for the person
+ * handed to `show` where the host has one. An answer the script marks required is also queued as
+ * the session's next prompt, which the model takes up after the current step; not awaited, so the
+ * host's prompt call never holds the tool. A client with no `promptAsync` queues nothing: the
+ * answer is appended alone. */
+async function addToolAnswers(call, output, directory, client, show) {
+  try {
+    for (const hook of postToolUseCallsFor(call, directory)) {
+      const { text, person, required } = await answerOf(hook.script, hook.args, hook.payload, directory);
+      show?.(person);
+      if (!text) continue;
+      output.output = output.output + "\n\n" + text;
+      if (required && typeof client.session.promptAsync === "function") sendPrompt(client, "promptAsync", call.sessionID, text, FINDING, hook.script, "finding not queued: ");
+    }
+  } catch (error) {
+    reportHookFailure("PostToolUse", error);
+  }
+}
+
+/** Pure: the user's message -> every UserPromptSubmit hook's call, none for a prompt a bridge
+ * sent. The text is the user's own: a part another hook added is not. */
+function userPromptCallsFor(input, output, directory) {
+  const parts = output.parts;
+  if (isBridgePrompt(parts)) return [];
+  const prompt = parts
+    .filter((part) => part.type === "text" && !part.synthetic)
+    .map((part) => part.text)
+    .join("\n");
+  return USER_PROMPT_SUBMIT.map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: {
+      hook_event_name: "UserPromptSubmit",
+      session_id: input.sessionID,
+      cwd: directory,
+      prompt,
+    },
+  }));
+}
+
+/** Each answer becomes a synthetic text part after the user's, its id derived from the first
+ * part's, this plugin's name and the hook's place in its list, so no two parts share one. */
+async function addPromptContext(input, output, directory) {
+  const calls = userPromptCallsFor(input, output, directory);
+  for (const [index, call] of calls.entries()) {
+    const { text } = await answerOf(call.script, call.args, call.payload, directory);
+    if (!text) continue;
+    output.parts.push({
+      id: output.parts[0].id + "-" + "aidd-telemetry" + "-" + index,
+      messageID: output.message.id,
+      sessionID: input.sessionID,
+      type: "text",
+      text,
+      synthetic: true,
+    });
+  }
+}
+
+const sessions = new Map();
+const childSessions = new Set();
+
+function runSessionStart(event, fallbackDirectory) {
+  const named = event.properties.sessionID;
+  if (typeof named !== "string" || sessions.has(named) || childSessions.has(named)) return;
+  if (typeof event.properties.info?.parentID === "string") {
+    childSessions.add(named);
+    return;
+  }
+  const directory = event.properties.info?.directory ?? fallbackDirectory;
+  const answers = SESSION_START.map((hook) =>
+    answerOf(hook.script, hook.args, { hook_event_name: "SessionStart", session_id: named, cwd: directory }, directory)
+  );
+  const joined = (texts) => texts.filter(Boolean).join("\n\n");
+  sessions.set(named, {
+    directory,
+    started: Promise.all(answers).then((all) => ({
+      context: joined(all.map((answer) => answer.text)),
+      person: joined(all.map((answer) => answer.person)),
+    })),
+  });
+}
+
+/** The folder a session's hooks run in. */
+function sessionDirectory(sessionId, fallbackDirectory) {
+  return sessions.get(sessionId)?.directory ?? fallbackDirectory;
+}
+
+/** What SessionStart answered, added to the system prompt of the session's turn; its message for
+ * the person handed to `show` once, where the host has one. */
+async function addSessionContext(input, output, show) {
+  const started = await sessions.get(input.sessionID)?.started;
+  if (started === undefined) return;
+  if (started.context) output.system.push(started.context);
+  const person = started.person;
+  started.person = "";
+  show?.(person);
+}
+
+const continuedTurns = new Set();
+
+/** An idle session's Stop calls; `runStop` adds `stop_hook_active` to each payload. */
+function stopCallsFor(sessionId, directory) {
+  return STOP.map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: { hook_event_name: "Stop", session_id: sessionId, cwd: directory },
+  }));
+}
+
+function noteTurn(sessionId, parts) {
+  if (!isFollowUp(parts)) continuedTurns.delete(sessionId);
+}
+
+function isFollowUp(parts) {
+  return parts.some((part) => part.metadata?.aidd === FOLLOW_UP.aidd);
+}
+
+/** Resolves once the scripts ran, with the follow-ups still in flight: the prompt is the session's
+ * next turn, and the turn end must not hold it. */
+async function runStop(sessionId, directory, { client, method, show }) {
+  const sends = [];
+  for (const call of stopCallsFor(sessionId, directory)) {
+    const payload = { ...call.payload, stop_hook_active: continuedTurns.has(sessionId) };
+    const { reason, person } = await stopReasonOf(call.script, call.args, payload, directory);
+    show?.(person);
+    if (!reason) continue;
+    continuedTurns.add(sessionId);
+    sends.push(sendPrompt(client, method, sessionId, reason, FOLLOW_UP, call.script, "follow-up not delivered: "));
+  }
+  return sends;
+}
+
+function bridgeHooks({ directory, client, followUp, show, track }) {
+  const folderOf = (sessionId) => sessionDirectory(sessionId, directory);
+  return {
+    event: async ({ event }) => {
+      runSessionStart(event, directory);
+      const sessionId = event.properties.sessionID;
+      if (typeof sessionId !== "string" || event.type !== "session.idle" || childSessions.has(sessionId)) return;
+      const stopping = runStop(sessionId, folderOf(sessionId), { client, method: followUp, show });
+      track?.(stopping.then((sends) => Promise.all(sends)));
+      await stopping;
+    },
+    "experimental.chat.system.transform": (input, output) => addSessionContext(input, output, show),
+    "chat.message": async (input, output) => {
+      noteTurn(input.sessionID, output.parts);
+      await addPromptContext(input, output, folderOf(input.sessionID));
+    },
+    "tool.execute.before": (call, output) => refuseToolUse(call, output, folderOf(call.sessionID)),
+    "tool.execute.after": (call, output) =>
+      addToolAnswers(call, output, folderOf(call.sessionID), client, show),
+  };
+}
+
+/** The person's message goes to the TUI's toast. Never awaited: the call comes back only once the
+ * server is up, and a toast the TUI cannot show is not worth holding a hook for. */
+function showToast(client, person) {
+  if (!person) return;
+  Promise.resolve()
+    .then(() => client.tui.showToast({ body: { message: person, variant: "warning" } }))
+    .catch(() => {});
+}
 
 export const AiddTelemetryHooks = async (input) => {
   // Stop handlings in flight: `opencode run` exits once the session is idle, so dispose waits.
   let pending = Promise.resolve();
-  // OpenCode keeps delivering events to an instance it disposed once it has created the next one.
+  // Limit: an event reaching an instance after its dispose was never captured; a disposed
+  // instance relays none, so a Stop is never run by two instances at once.
   let disposed = false;
-  // SessionStart's own approximation (module doc comment above): fired once here, never
-  // per session. Silent on purpose: a memory refresh
-  // that breaks OpenCode's own startup is worse than one that never ran.
-  try {
-    for (const hook of SESSION_START) {
-      runHook(
-        hook.script,
-        hook.args,
-        { hook_event_name: "SessionStart", session_id: null, cwd: input.directory },
-        input.directory
-      );
-    }
-  } catch {
-    // Silent on purpose - see above.
-  }
+  const hooks = bridgeHooks({
+    directory: input.directory,
+    client: input.client,
+    followUp: "prompt",
+    show: (person) => showToast(input.client, person),
+    track: (handling) => {
+      pending = Promise.all([pending, handling]).then(() => {});
+    },
+  });
   return {
+    ...hooks,
     dispose: async () => {
       disposed = true;
       await pending;
     },
-    event: async ({ event }) => {
-      if (disposed) return;
-      try {
-        const directory = event?.properties?.directory ?? input.directory;
-        // Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
-        for (const call of stopCallsFor(event, directory)) {
-          const sessionId = call.payload.session_id;
-          const payload = { ...call.payload, stop_hook_active: continued.has(sessionId) };
-          const asking = stopReasonOf(call.script, call.args, payload, directory);
-          // Pending before the script ends: dispose waits for a handling whose script still runs.
-          // The prompt is the session's next turn, and this handler must not hold it.
-          const handling = asking
-            .then((reason) => {
-              if (!reason) {
-                continued.delete(sessionId);
-                return undefined;
-              }
-              continued.add(sessionId);
-              return input.client.session.prompt({
-                path: { id: sessionId },
-                body: { parts: [{ type: "text", text: reason }] },
-              });
-            })
-            .catch((error) => reportHookFailure(call.script, "follow-up not delivered: " + String(error)));
-          pending = Promise.all([pending, handling]).then(() => {});
-          await asking;
-        }
-      } catch {
-        // Silent on purpose - see above.
-      }
-    },
-    "tool.execute.after": async (call, output) => {
-      try {
-        for (const hook of postToolUseCallsFor(call, input.directory)) {
-          const answer = await answerOf(hook.script, hook.args, hook.payload, input.directory);
-          if (answer) output.output = `${output.output ?? ""}\n\n${answer}`;
-        }
-      } catch {
-        // Silent on purpose - see above.
-      }
+    event: async (payload) => {
+      if (!disposed) await hooks.event(payload);
     },
   };
 };
-
-AiddTelemetryHooks.stopCallsFor = stopCallsFor;
-AiddTelemetryHooks.postToolUseCallsFor = postToolUseCallsFor;
 
 export default {
   id: "aidd-telemetry-hooks",

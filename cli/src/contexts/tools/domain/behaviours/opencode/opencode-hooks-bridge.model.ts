@@ -2,221 +2,116 @@
  * Generates OpenCode's event bridge for one plugin's hooks.json. OpenCode's loader scans no
  * "hooks" family and this profile writes no hooks.json, so without this module a plugin's
  * declared hooks have no trigger on OpenCode at all. The generated file is a real OpenCode
- * plugin with V1/server and V2/setup entrypoints, spawning the scripts every host's hooks.json
- * already names over the stdin-JSON contract those scripts already read.
+ * plugin with V1/server and V2/setup entrypoints; what it does on each event is the shared
+ * bridge runtime's (`bridges/`), and this file holds only what OpenCode does its own way.
  *
- * Only three hook events are replayed:
+ * V1 (OpenCode 1.19.3) carries the five replayed events:
  *
- * - `SessionStart` runs once per server/directory at factory initialization and requires
- *   idempotent commands. V1 did not deliver `session.created` to this event hook;
- *   the V2 adapter delivers it.
- * - `Stop` maps to V1's `session.idle` or V2's execution terminal, once per turn.
- * - `PostToolUse` maps to V1's `tool.execute.after`, the one hook that waits for the script and
- *   can append its exit-2 stderr to the tool's output, which is how a problem reaches the model.
- *   V2's adapter calls the same hook from a successful tool call, without that answer.
+ * - `SessionStart` on the first event naming a session; its answer through
+ *   `experimental.chat.system.transform`, which also runs for the session's title call, not told
+ *   apart. A subagent's child session emits its own `session.created`, naming its parent, and
+ *   `session.idle` (observed on 1.19.3): SessionStart and Stop skip it.
+ * - `Stop` on `session.idle`. The follow-up goes through `session.prompt`, which resolves once its
+ *   turn ran: `opencode run` exits once the session is idle, so `dispose` waits for it.
+ * - `PostToolUse` on `tool.execute.after`. A required finding is queued through `promptAsync`; on
+ *   1.19.3 the model took it up and dropped the original request's last step. Whether it resumes
+ *   that request was not probed.
+ * - `PreToolUse` on `tool.execute.before`: a throw from that hook refuses the call on 1.19.3.
+ * - `UserPromptSubmit` on `chat.message`. A throw from that hook stops the prompt, but its reason
+ *   reaches neither the person nor the model (1.19.3 answers a generic server error), so no script
+ *   refuses.
  *
- * A `matcher` on a `PostToolUse` group filters by tool name, exact or pipe-separated
- * alternation, ignoring case: OpenCode names its tools in lowercase. Absent, every tool matches.
+ * What a script prints for the person goes to the TUI's toast through the server plugin's own
+ * client (`tui.showToast`, captured in `opencode-tui.toast.show.json`); the variant is the
+ * bridge's choice, which the host echoes. `opencode run` has no TUI and shows none.
+ *
+ * OpenCode 2.4.1 (`@opencode/cli`) runs `setup` alone, through `opencode-events.js`, which maps
+ * each of its hooks onto the ones above:
+ *
+ * - `SessionStart` at a session's first `prompt` hook: the `run` session's own `session.created`
+ *   reaches no plugin. A child session names its parent through `session.get`. The answer goes
+ *   through the `context` hook, which runs for the agent's requests only, not the title call.
+ * - `UserPromptSubmit` on the `prompt` hook; its answers join the system prompt of each request
+ *   until the next prompt, not the message itself.
+ * - `PreToolUse` on `execute.before`, whose throw refuses the call; `PostToolUse` on
+ *   `execute.after`. A V2 tool names its file `path`, read as `filePath`, and its shell tool
+ *   `shell`, read as `bash`.
+ * - `Stop` on `experimental.idle`; the follow-up is a steering `synthetic` message, admitted before
+ *   the hook returns, which runs in the same execution. A synthetic message reaches no `prompt`
+ *   hook, so only the person's next prompt starts a fresh turn.
+ *
+ * Limits of the V2 entrypoint:
+ * - On 1.19.3 OpenCode calls both `server` and `setup`; `setup` sees no location in that early
+ *   context and does nothing.
+ * - Its client has no toast and no `promptAsync`: a script's message for the person is not
+ *   shown, and a required finding is appended to the tool's result but never queued.
+ * - It goes through the V1 entrypoint, whose `dispose` it never calls: the Stop handlings that
+ *   entrypoint tracks are never drained, and nothing reads them.
+ * - A call made through Code Mode (`codemode: true`) was not observed reaching a hook.
+ * - A child session's prompt, the one its parent wrote, reaches UserPromptSubmit too.
  */
 
 import { type BridgeParts, generateBridge } from "../../bridges/event-bridge.js";
+import type { GeneratedBridge } from "../../formats/hooks/flat-routes.js";
 
 // Every plugin this generator sees is already named "aidd-<something>", so an "Aidd" prefix
 // here would stutter rather than name anything the plugin's own PascalCased name does not.
 const OPENCODE_HOST = {
   identifierSuffix: "Hooks",
+  label: "OpenCode",
   render: (
     parts: BridgeParts
-  ): string => `// Generated by aidd from plugins/${parts.plugin}/hooks/hooks.json - do not edit by hand.
-// OpenCode's plugin loader scans no "hooks" family and this profile writes no hooks.json
-// (build.ts's skipHooksJson, translated here rather than skipped) - this file is the only
-// trigger this plugin's declared hooks have on OpenCode. See opencode-hooks-bridge.ts for
-// the mapping this generator applies and the measurements behind it.
+  ): string => `${parts.header} OpenCode's plugin loader scans no "hooks" family,
+// so this file is the only trigger this plugin's declared hooks have on OpenCode.
 import { setupOpencodeEvents } from "../hooks/opencode-events.js";
-${parts.nodeImports}
+${parts.body}
 
-// Never process.execPath: OpenCode ships as its own standalone binary - that path names \`opencode\`
-// itself, not a Node runtime able to run this plugin's own hook scripts.
-${parts.hooksDir}
-
-${parts.callTables}
-
-// Asynchronous on purpose: this can spawn one script per matching hook across every mapped
-// event, and blocking OpenCode's event loop once per hook would multiply the cost. A failed spawn (ENOENT, a killed timeout)
-// must not throw past this function - both listeners below, plus the caller's own
-// try/catch, exist because a spawn that never launches can still throw on the stdin write.
-function runHook(script, args, payload, directory) {
-${parts.spawnHook(2, '["pipe", "ignore", "ignore"]')}
-  child.on("error", () => {});
-${parts.feedStdin(2)}
+/** The person's message goes to the TUI's toast. Never awaited: the call comes back only once the
+ * server is up, and a toast the TUI cannot show is not worth holding a hook for. */
+function showToast(client, person) {
+  if (!person) return;
+  Promise.resolve()
+    .then(() => client.tui.showToast({ body: { message: person, variant: "warning" } }))
+    .catch(() => {});
 }
-
-/** Pure: \`session.idle\` -> every Stop hook's own {script, args, payload} - or \`[]\` for
- * any other event. Exported as a property (never a second named export - F6) so this
- * generated module's own mapping can be asserted without spawning anything. */
-function stopCallsFor(event, directory) {
-  if (event?.type !== "session.idle") return [];
-  const sessionId = event.properties?.sessionID;
-  return STOP.map((hook) => ({
-    script: hook.script,
-    args: hook.args,
-    payload: { hook_event_name: "Stop", session_id: sessionId ?? null, cwd: directory },
-  }));
-}
-
-// Awaited, unlike runHook: the script has something the model must read.
-// Exit 2 puts it on stderr; exit 0 puts it in additionalContext on stdout.
-${parts.answerFrom}
-
-/** Runs one hook script with its payload on stdin and collects what it wrote. */
-function runCapture(script, args, payload, directory) {
-  return new Promise((resolve) => {
-    let stdout = "";
-    let stderr = "";
-${parts.spawnHook(4, '["pipe", "pipe", "pipe"]')}
-    child.stdout.on("data", (chunk) => {
-      stdout += chunk;
-    });
-    child.stderr.on("data", (chunk) => {
-      stderr += chunk;
-    });
-    child.on("error", () => resolve({ code: null, stdout: "", stderr: "" }));
-    child.on("close", (code) => resolve({ code, stdout, stderr }));
-${parts.feedStdin(4)}
-  });
-}
-
-function answerOf(script, args, payload, directory) {
-  return runCapture(script, args, payload, directory).then(({ code, stdout, stderr }) =>
-    answerFrom(code, stdout, stderr)
-  );
-}
-
-/** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
-function stopReasonOf(script, args, payload, directory) {
-  return runCapture(script, args, payload, directory).then(({ code, stdout }) => {
-    if (code !== 0) return "";
-    try {
-      const output = JSON.parse(stdout);
-      return ${parts.stopReason};
-    } catch {
-      return "";
-    }
-  });
-}
-
-function reportHookFailure(script, error) {
-  console.warn("[aidd] OpenCode hook " + script + " failed: " + String(error));
-}
-
-/** Pure: a finished tool call -> every PostToolUse hook whose matcher allows its tool. OpenCode
- * names the written file \`filePath\`; the scripts read Claude Code's \`file_path\`. */
-function postToolUseCallsFor(call, directory) {
-  const tool = String(call?.tool ?? "");
-  const args = call?.args;
-  const matches = (matcher) =>
-    !matcher || matcher.split("|").some((name) => name.toLowerCase() === tool.toLowerCase());
-  ${parts.toolInput}
-  return POST_TOOL_USE.filter((hook) => matches(hook.matcher)).map((hook) => ({
-    script: hook.script,
-    args: hook.args,
-    payload: {
-      hook_event_name: "PostToolUse",
-      session_id: call?.sessionID ?? null,
-      cwd: directory,
-      tool_name: tool,
-      tool_input: toolInput,
-    },
-  }));
-}
-
-// Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
-// Module-level: the host creates the plugin again, and a fresh set would forget a continuation.
-const continued = new Set();
 
 export const ${parts.identifier} = async (input) => {
   // Stop handlings in flight: \`opencode run\` exits once the session is idle, so dispose waits.
   let pending = Promise.resolve();
-  // OpenCode keeps delivering events to an instance it disposed once it has created the next one.
+  // Limit: an event reaching an instance after its dispose was never captured; a disposed
+  // instance relays none, so a Stop is never run by two instances at once.
   let disposed = false;
-  // SessionStart's own approximation (module doc comment above): fired once here, never
-  // per session. Silent on purpose: a memory refresh
-  // that breaks OpenCode's own startup is worse than one that never ran.
-  try {
-    for (const hook of SESSION_START) {
-      runHook(
-        hook.script,
-        hook.args,
-        { hook_event_name: "SessionStart", session_id: null, cwd: input.directory },
-        input.directory
-      );
-    }
-  } catch {
-    // Silent on purpose - see above.
-  }
+  const hooks = bridgeHooks({
+    directory: input.directory,
+    client: input.client,
+    followUp: "prompt",
+    show: (person) => showToast(input.client, person),
+    track: (handling) => {
+      pending = Promise.all([pending, handling]).then(() => {});
+    },
+  });
   return {
+    ...hooks,
     dispose: async () => {
       disposed = true;
       await pending;
     },
-    event: async ({ event }) => {
-      if (disposed) return;
-      try {
-        const directory = event?.properties?.directory ?? input.directory;
-        // Limit: one Stop hook per plugin; with several, the last verdict decides the continuation.
-        for (const call of stopCallsFor(event, directory)) {
-          const sessionId = call.payload.session_id;
-          const payload = { ...call.payload, stop_hook_active: continued.has(sessionId) };
-          const asking = stopReasonOf(call.script, call.args, payload, directory);
-          // Pending before the script ends: dispose waits for a handling whose script still runs.
-          // The prompt is the session's next turn, and this handler must not hold it.
-          const handling = asking
-            .then((reason) => {
-              if (!reason) {
-                continued.delete(sessionId);
-                return undefined;
-              }
-              continued.add(sessionId);
-              return input.client.session.prompt({
-                path: { id: sessionId },
-                body: { parts: [{ type: "text", text: reason }] },
-              });
-            })
-            .catch((error) => reportHookFailure(call.script, "follow-up not delivered: " + String(error)));
-          pending = Promise.all([pending, handling]).then(() => {});
-          await asking;
-        }
-      } catch {
-        // Silent on purpose - see above.
-      }
-    },
-    "tool.execute.after": async (call, output) => {
-      try {
-        for (const hook of postToolUseCallsFor(call, input.directory)) {
-          const answer = await answerOf(hook.script, hook.args, hook.payload, input.directory);
-          ${parts.appendAnswer}
-        }
-      } catch {
-        // Silent on purpose - see above.
-      }
+    event: async (payload) => {
+      if (!disposed) await hooks.event(payload);
     },
   };
 };
 
-${parts.identifier}.stopCallsFor = stopCallsFor;
-${parts.identifier}.postToolUseCallsFor = postToolUseCallsFor;
-
 export default {
-  id: ${JSON.stringify(`${parts.plugin}-hooks`)},
+  id: ${parts.descriptorId},
   server: ${parts.identifier},
   setup: (ctx) => setupOpencodeEvents(ctx, ${parts.identifier}),
 };
 `,
 };
 
-/** A plugin's raw hooks.json + its name -> the full text of its generated OpenCode bridge
- * module, or `null` when none of the three mapped events named anything replayable: a bridge
- * with nothing to spawn is not a file worth writing. */
-export function generateOpencodeHooksBridge(rawHooksJson: string, plugin: string): string | null {
+/** A plugin's raw hooks.json + its name -> its generated OpenCode bridge module, and the events
+ * it leaves out. */
+export function generateOpencodeHooksBridge(rawHooksJson: string, plugin: string): GeneratedBridge {
   return generateBridge(OPENCODE_HOST, rawHooksJson, plugin);
 }

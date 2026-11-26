@@ -1,3 +1,4 @@
+import type { FrontmatterShape } from "../markdown.js";
 import type { SourceMarketplaceRef, SourcePluginEntryRef } from "../plugin/source-refs.js";
 import type { ConfigAsset, SchemaName } from "../reading/config-asset.js";
 import type { FlatArtifactLayout, FlatHooksLoaderEntry } from "./flat-paths.js";
@@ -14,8 +15,15 @@ export interface BuildFileReader {
  */
 export interface FlatHooksBridge {
   /** Raw (unrewritten) hooks.json content + plugin name -> the generated bridge module's
-   * full text, or `null` when nothing in it named an event the bridge maps. */
-  readonly generate: (rawHooksJson: string, plugin: string) => string | null;
+   * full text, `null` when nothing in it named an event the bridge maps, and what the bridge
+   * leaves out of the hooks it was read from, one reason each, as an install names a skip: read
+   * once, both told together. */
+  readonly generate: (
+    rawHooksJson: string,
+    plugin: string
+  ) => { readonly content: string | null; readonly warnings: readonly string[] };
+  /** One of those reasons as a build warns it, under the tool it is reported for. */
+  readonly warning: (reason: string) => string;
   /** The directory, relative to the project root, the generated bridge module lands in, named
    * `<plugin>-hooks.js`. */
   readonly dir: string;
@@ -46,6 +54,9 @@ export interface AgentMarkdown {
   /** `double` for a reader that keeps single quotes literally. */
   readonly quote?: "double";
 }
+
+/** How a tool keeps a rule's frontmatter: the keys it reads, from the rule's own. */
+export type RuleMarkdown = Pick<FrontmatterShape, "frontmatter" | "quote">;
 
 /** Where an artifact's files land, as data: a skills or agents layout, the path a file has in its
  * plugin, one shared file, or a hooks route. */
@@ -85,6 +96,9 @@ export type ArtifactContract =
       readonly agentMarkdown?: AgentMarkdown;
       /** A skill entry's frontmatter, as the tool keeps it: absent, the entry is a byte-copy. */
       readonly skillFrontmatter?: (frontmatter: Record<string, unknown>) => Record<string, unknown>;
+      /** A rule's markdown, as the tool keeps it for the scope it reads: absent, the rule is
+       * carried as shipped. */
+      readonly ruleMarkdown?: RuleMarkdown;
       /** Defaults to identity, a byte-copy. For an agent whose file is no markdown (Codex's
        * TOML), the whole conversion. */
       readonly transform?: (content: string, plugin: string, basename: string) => string;

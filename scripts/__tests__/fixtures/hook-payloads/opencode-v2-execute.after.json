@@ -1,0 +1,130 @@
+{
+  "host": "opencode-v2",
+  "event": "execute.after",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "tool": "write",
+        "info": {
+          "name": "write",
+          "options": {
+            "codemode": false,
+            "permission": "edit"
+          },
+          "description": "Writes a file to the local filesystem, overwriting if one exists.\n\nMissing parent directories are created automatically.\n\nUse this tool to create new files or overwrite existing files. For partial changes, use the edit tool instead.",
+          "id": "write"
+        },
+        "codemode": false,
+        "sessionID": "00000000-0000-4000-8000-000000000000",
+        "agent": "build",
+        "messageID": "msg_2148d416b001s56OzkAavFrckV",
+        "id": "chatcmpl-tool-8a0a1713a86da9e2",
+        "input": {
+          "path": "a.md",
+          "content": "hello"
+        },
+        "status": "completed",
+        "result": {
+          "output": "Created file successfully: a.md",
+          "content": [
+            {
+              "type": "text",
+              "text": "Created file successfully: a.md"
+            }
+          ]
+        }
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "log",
+      "payload": {
+        "tool": "edit",
+        "info": {
+          "name": "edit",
+          "options": {
+            "codemode": false,
+            "permission": "edit"
+          },
+          "description": "Edit the contents of a file by finding and replacing exact text. When editing text from Read output, preserve the exact indentation (tabs or spaces) and omit the line-number prefix, such as `1: `. Never include the prefix in oldString or newString. Write line breaks as \\n; the file's existing CRLF or LF line endings are matched and preserved. To change line endings themselves, make oldString and newString differ only in \\r; that edit applies to the exact bytes. If there is no exact match, the edit retries while ignoring typographic quote, dash, and space variants, then trailing whitespace on each line. The edit fails if oldString is not found. By default, oldString must identify a UNIQUE location. Multiple matches FAIL unless replaceAll is true. Add more surrounding context to disambiguate, or set replaceAll to true to replace every occurrence. Use replaceAll when the change should apply to every occurrence, such as renaming a variable.",
+          "id": "edit"
+        },
+        "codemode": false,
+        "sessionID": "00000000-0000-4000-8000-000000000000",
+        "agent": "build",
+        "messageID": "msg_2148d4d3f001DtN3eljXoZlswJ",
+        "id": "chatcmpl-tool-bc5c135c104a74ba",
+        "input": {
+          "path": "a.md",
+          "oldString": "hello",
+          "newString": "bye"
+        },
+        "status": "completed",
+        "result": {
+          "output": "Edited a.md (1 replacement)",
+          "content": [
+            {
+              "type": "text",
+              "text": "Edited a.md (1 replacement)"
+            }
+          ],
+          "metadata": {
+            "files": [
+              {
+                "file": "a.md",
+                "patch": "Index: a.md\n===================================================================\n--- a.md\n+++ a.md\n@@ -1,1 +1,1 @@\n-hello\n\\ No newline at end of file\n+bye\n\\ No newline at end of file\n",
+                "status": "modified",
+                "additions": 1,
+                "deletions": 1
+              }
+            ]
+          }
+        }
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "log",
+      "payload": {
+        "tool": "shell",
+        "info": {
+          "name": "shell",
+          "options": {
+            "codemode": false
+          },
+          "description": "Execute a shell command and return its output. Commands run on macOS using zsh. Quote file paths containing spaces or special characters. Prefer dedicated tools over shell commands when possible. When output is large, the full result is saved to a file and a truncated preview is returned. Rely on automatic truncation unless filtering the output is more useful. Commands still running after their timeout move to the background. Background commands return immediately, and you will be notified when they complete. The current session ID is available in the OPENCODE_SESSION_ID environment variable.",
+          "id": "shell"
+        },
+        "codemode": false,
+        "sessionID": "00000000-0000-4000-8000-000000000000",
+        "agent": "build",
+        "messageID": "msg_2148d55d2001XvG0yTTCW7hKn0",
+        "id": "chatcmpl-tool-8e1a4bff684961e3",
+        "input": {
+          "command": "echo hi"
+        },
+        "status": "completed",
+        "result": {
+          "output": {
+            "exitCode": 0,
+            "wallTimeSeconds": 0.008,
+            "output": "hi\n"
+          },
+          "content": [
+            {
+              "type": "text",
+              "text": "hi\n"
+            }
+          ],
+          "metadata": {
+            "status": "completed",
+            "truncated": false,
+            "exit": 0
+          }
+        }
+      },
+      "hookAnswer": null
+    }
+  ]
+}

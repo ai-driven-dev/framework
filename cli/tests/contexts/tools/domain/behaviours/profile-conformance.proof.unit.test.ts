@@ -178,7 +178,10 @@ function withBridgeGeneratingNothing(profile: AiTool): AiTool {
   }
   const artifacts = {
     ...contract.artifacts,
-    hooks: { ...hooks, hooksBridge: { ...bridge, generate: () => null } },
+    hooks: {
+      ...hooks,
+      hooksBridge: { ...bridge, generate: () => ({ content: null, warnings: [] }) },
+    },
   };
   return { ...profile, buildContract: () => ({ ...contract, artifacts }) };
 }
