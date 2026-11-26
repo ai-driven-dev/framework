@@ -10,11 +10,11 @@ function readSupportRecord(root = join(__dirname, "..")) {
 }
 
 /** A tool with a plugin tree (Antigravity) writes a catalog no host reads, a layout that builds none
- * (Kimi) has nothing to host, and a tool with no native client cannot be verified. `notHosted` says
- * why each unpublished tool is, and keeps one out. */
+ * (Kimi) has nothing to host, and a tool with no native client cannot be verified. `notHosted` only
+ * records why each unpublished tool is; the coverage tests hold it to the filters. */
 function publishableTools(record = readSupportRecord()) {
   return record
-    .filter((tool) => tool.marketplace !== null && tool.pluginTree === null && tool.nativeCli !== null && !distribution.notHosted[tool.id])
+    .filter((tool) => tool.marketplace !== null && tool.pluginTree === null && tool.nativeCli !== null)
     .map((tool) => ({
       id: tool.id,
       catalog: tool.marketplace.catalog,

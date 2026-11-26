@@ -38,10 +38,6 @@ test("the client package comes from the distribution data", () => {
   assert.equal(toolOf("claude").clientPackage, distribution.clients.claude);
 });
 
-test("a tool the distribution data says is not hosted is not publishable", () => {
-  assert.equal(toolOf("cursor"), undefined);
-});
-
 test("a tool with a catalog but no native client to verify it is not publishable", () => {
   assert.deepEqual(publishableTools([hostable("clientless")]), []);
 });

@@ -26,4 +26,4 @@
 
 | Task | Validation | Result |
 | --- | --- | --- |
-| 1.1 | Run the marketplace tools, publication, verification and generated-docs tests under `node --test`. | All 28 passed. Removing the `notHosted` exclusion turned the Cursor publishability test red. |
+| 1.1 | Run the marketplace tools, publication, verification and generated-docs tests under `node --test`. | All 27 passed. `notHosted` is a record of reasons, not a filter: the coverage tests fail when it names a published tool or omits an unpublished one. |

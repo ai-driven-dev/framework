@@ -53,7 +53,7 @@ It lists what is installed and what needs fixing.
 
 Choose your tool. [Claude Code](#claude-code) · [GitHub Copilot](#github-copilot) · [Codex](#codex) · [Cursor](#cursor) · [Antigravity CLI](#antigravity-cli)
 
-The commands below follow the latest version available for each tool in the [AIDD distribution repository](https://github.com/ai-driven-dev/marketplaces). Each tool also has [release ZIPs](https://github.com/ai-driven-dev/framework/releases).
+The commands below follow the latest version available for each tool in the [AIDD distribution repository](https://github.com/ai-driven-dev/marketplaces). Each tool also has [release ZIPs](https://github.com/ai-driven-dev/framework/releases). The `aidd-marketplace` catalog name applies from the first release published after this change; earlier published versions carry `aidd-framework`.
 
 ### Claude Code
 

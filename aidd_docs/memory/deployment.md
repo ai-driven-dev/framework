@@ -41,7 +41,7 @@ Branch model: `vcs.md`. Cadence and safety rules: [`RELEASE.md`](../../RELEASE.m
 - Tags: umbrella, `cli-v<semver>`, `<plugin>-v<semver>`.
 - `scripts/credit-release-authors.cjs` appends each author as `(@login)`, until release-please credits authors itself.
 - The umbrella stays a draft until every asset is attached; n8n listens for its publication.
-- After publication, each marketplace job reads its own release ZIP and publishes its own tool branch and immutable version tag in the distribution repository. A failed job leaves the release and the other marketplace jobs independent. n8n announces the release on its publication, before the catalogs move: a failed tool keeps serving its previous release.
+- After publication, each marketplace job reads its own release ZIP and publishes its own tool branch and immutable version tag in the distribution repository. A failed job leaves the release and the other marketplace jobs independent. n8n announces the release on its publication, before the catalogs move. The branch and version tag are pushed together before the public ref is verified, so a failed verification leaves the new release live on the branch.
 - Publication runs only while `AIDD_PUBLISH_MARKETPLACES` is `true` on `framework`, and needs `marketplaces` in the `aidd-bot` GitHub App installation with Contents write access.
 - The root Claude Code catalog keeps local plugin sources, so one entry has one meaning for Claude Code and the CLI.
 - A failed video build keeps the release a draft: nothing is announced without its video.
@@ -53,7 +53,7 @@ Branch model: `vcs.md`. Cadence and safety rules: [`RELEASE.md`](../../RELEASE.m
 ## Gotchas
 
 - `build-per-tool` builds the CLI from the run's own checkout, never a published version: nothing to bump or go stale.
-- Each hosted catalog comes from the same ZIP used for local marketplace installs, renamed `aidd-marketplace` for every tool because the CLI reserves `aidd-framework`. The tools published are the ones the CLI's tool registry says have a catalog (`scripts/marketplace-tools.cjs`).
+- Each hosted catalog comes from the same ZIP used for local marketplace installs, renamed `aidd-marketplace` for every tool because the CLI reserves `aidd-framework`. The tools published are the ones the CLI's tool registry says have a catalog (`scripts/marketplace-tools.cjs`). Client versions are pinned in `scripts/marketplace-distribution.json` where Dependabot does not look: bumping them is manual.
 
 ## Local reload
 
