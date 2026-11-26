@@ -1,3 +1,4 @@
+import type { FrontmatterShape } from "../markdown.js";
 import type { SourceMarketplaceRef, SourcePluginEntryRef } from "../plugin/source-refs.js";
 import type { ConfigAsset, SchemaName } from "../reading/config-asset.js";
 import type { FlatArtifactLayout, FlatHooksLoaderEntry } from "./flat-paths.js";
@@ -14,8 +15,15 @@ export interface BuildFileReader {
  */
 export interface FlatHooksBridge {
   /** Raw (unrewritten) hooks.json content + plugin name -> the generated bridge module's
-   * full text, or `null` when nothing in it named an event the bridge maps. */
-  readonly generate: (rawHooksJson: string, plugin: string) => string | null;
+   * full text, `null` when nothing in it named an event the bridge maps, and what the bridge
+   * leaves out of the hooks it was read from, one reason each, as an install names a skip: read
+   * once, both told together. */
+  readonly generate: (
+    rawHooksJson: string,
+    plugin: string
+  ) => { readonly content: string | null; readonly warnings: readonly string[] };
+  /** One of those reasons as a build warns it, under the tool it is reported for. */
+  readonly warning: (reason: string) => string;
   /** The directory, relative to the project root, the generated bridge module lands in, named
    * `<plugin>-hooks.js`. */
   readonly dir: string;
@@ -47,13 +55,16 @@ export interface AgentMarkdown {
   readonly quote?: "double";
 }
 
+/** How a tool keeps a rule's frontmatter: the keys it reads, from the rule's own. */
+export type RuleMarkdown = Pick<FrontmatterShape, "frontmatter" | "quote">;
+
 /** Where an artifact's files land, as data: a skills or agents layout, the path a file has in its
  * plugin, one shared file, or a hooks route. */
 export type ArtifactPlacement =
   | {
       readonly kind: "layout";
       readonly layout: FlatArtifactLayout;
-      readonly of: "skill" | "agent";
+      readonly of: "skill" | "agent" | "rule";
     }
   | { readonly kind: "relative" }
   | { readonly kind: "file"; readonly at: string }
@@ -85,6 +96,9 @@ export type ArtifactContract =
       readonly agentMarkdown?: AgentMarkdown;
       /** A skill entry's frontmatter, as the tool keeps it: absent, the entry is a byte-copy. */
       readonly skillFrontmatter?: (frontmatter: Record<string, unknown>) => Record<string, unknown>;
+      /** A rule's markdown, as the tool keeps it for the scope it reads: absent, the rule is
+       * carried as shipped. */
+      readonly ruleMarkdown?: RuleMarkdown;
       /** Defaults to identity, a byte-copy. For an agent whose file is no markdown (Codex's
        * TOML), the whole conversion. */
       readonly transform?: (content: string, plugin: string, basename: string) => string;
@@ -143,6 +157,8 @@ export interface ToolBuildContract {
     readonly agents: ArtifactContract;
     readonly mcp: ArtifactContract;
     readonly hooks: ArtifactContract;
+    /** A tool that carries a plugin's rules as files. Absent, the build leaves rules out and says so. */
+    readonly rules?: ArtifactContract;
   };
 
   /** The tool's own config file (Codex's config.toml, opencode.json), built once every plugin
@@ -203,6 +219,8 @@ export interface ConfigArtifactInput {
   /** Each built plugin's own `.mcp.json`, by plugin, its server keys already prefixed with the
    * plugin's name; a plugin shipping none is absent. */
   readonly pluginMcp: ReadonlyMap<string, string>;
+  /** The glob listing each built plugin's rules, for a plugin that placed any. */
+  readonly rulesGlobs: readonly string[];
   /** Each file `reads` named that exists, by its path under the output root. */
   readonly existing: ReadonlyMap<string, string>;
   /** Each file `probes` named that exists, by its path under the output root. */

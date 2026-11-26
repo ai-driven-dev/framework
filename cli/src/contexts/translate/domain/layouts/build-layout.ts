@@ -7,7 +7,11 @@ import type {
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import { PLUGIN_MCP_RELATIVE } from "../canon-format.js";
 import { agentLinks } from "../rules/agent-markdown.js";
-import { agentShape, type ComponentPlan } from "../rules/component-pipeline.js";
+import {
+  agentShape,
+  type ComponentPlan,
+  type PlannedComponents,
+} from "../rules/component-pipeline.js";
 import { relativeLinks } from "../rules/links.js";
 import type { FrameworkBuildMode } from "../translate-profile.js";
 import { buildFlatPlans } from "./build-flat.js";
@@ -20,8 +24,10 @@ export function buildPlans(
   canon: PluginDistribution,
   contract: ToolBuildContract,
   mode: FrameworkBuildMode
-): ComponentPlan[] {
-  return mode === "flat" ? buildFlatPlans(canon, contract) : marketplacePlans(canon, contract);
+): PlannedComponents {
+  return mode === "flat"
+    ? buildFlatPlans(canon, contract)
+    : { plans: marketplacePlans(canon, contract), warnings: [] };
 }
 
 function marketplacePlans(canon: PluginDistribution, contract: ToolBuildContract): ComponentPlan[] {

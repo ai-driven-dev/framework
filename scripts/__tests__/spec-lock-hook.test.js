@@ -106,9 +106,53 @@ test("does nothing on another event", () => {
   assert.deepEqual([result.status, result.stderr], [0, ""]);
 });
 
+const ADAPTERS = path.join(REPO, "cli/assets/hooks-runtime");
+const PAYLOADS = path.join(REPO, "scripts/__tests__/fixtures/hook-payloads");
+const adapter = (host) => fs.readFileSync(path.join(ADAPTERS, `host-${host}.cjs`), "utf8");
+const captured = (file) => JSON.parse(fs.readFileSync(path.join(PAYLOADS, file), "utf8")).samples;
+const CAPTURED_ROOT = "/Users/user/project";
+
+/** A captured payload, its project folder moved to `root`. */
+function rebase(value, root) {
+  if (typeof value === "string") return value.replaceAll(CAPTURED_ROOT, root);
+  if (Array.isArray(value)) return value.map((item) => rebase(item, root));
+  if (value !== null && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, rebase(item, root)]));
+  return value;
+}
+
+// Every host that reports the moment before a tool, with the run captured from it: its first sample
+// is a write to the locked spec the hook refused, its second a file created beside it.
+const HOSTS = [
+  ["claude", "claude-PreToolUse.json"],
+  ["codex", "codex-PreToolUse.json"],
+  ["copilot", "copilot-PreToolUse.json"],
+  ["antigravity", "antigravity-PreToolUse.json"],
+  ["kiro", "kiro-PreToolUse.json"],
+];
+
+for (const [host, file] of HOSTS) {
+  test(`refuses the write to a locked spec the way ${host} delivers a refusal, and lets the rest through`, () => {
+    const [refused, created] = captured(file);
+    const root = project({ [SPEC]: spec("locked") });
+    const result = run(hooksWith(adapter(host)), root, rebase(refused.payload, root));
+    if (refused.hookExit === undefined) {
+      assert.deepEqual([result.status, result.stderr, JSON.parse(result.stdout)], [0, "", refused.hookAnswer]);
+    } else {
+      assert.deepEqual([result.status, result.stdout, result.stderr], [refused.hookExit, "", refused.hookStderr]);
+    }
+    const draft = project({ [SPEC]: spec("draft") });
+    const allowed = run(hooksWith(adapter(host)), draft, rebase(refused.payload, draft));
+    assert.deepEqual([allowed.status, allowed.stdout, allowed.stderr], [0, "", ""]);
+    const beside = run(hooksWith(adapter(host)), root, rebase(created.payload, root));
+    assert.deepEqual([beside.status, beside.stdout, beside.stderr], [0, "", ""]);
+  });
+}
+
+// No Cursor payload was captured before a tool (the account had no quota left), so its adapter does not report it.
 test("does nothing under an adapter that does not report the moment before a tool", () => {
   const root = project({ [SPEC]: spec("locked") });
-  const payload = { hook_event_name: "PreToolUse", tool_name: "Write", tool_input: { file_path: path.join(root, SPEC), content: "x" }, cwd: root };
-  const result = run(hooksWith(undefined), root, payload);
+  const [post] = captured("cursor-postToolUse.json");
+  const payload = { ...rebase(post.payload, root), hook_event_name: "preToolUse", tool_input: { file_path: path.join(root, SPEC) } };
+  const result = run(hooksWith(adapter("cursor")), root, payload);
   assert.deepEqual([result.status, result.stdout, result.stderr], [0, "", ""]);
 });

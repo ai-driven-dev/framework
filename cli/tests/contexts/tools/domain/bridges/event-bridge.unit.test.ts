@@ -1,86 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { REGISTERED_PROFILES } from "../../../../../src/composition/tool-profiles/index.js";
 import { generateKiloHooksBridge } from "../../../../../src/contexts/tools/domain/behaviours/kilo/kilo-hooks-bridge.model.js";
 import { generateOpencodeHooksBridge } from "../../../../../src/contexts/tools/domain/behaviours/opencode/opencode-hooks-bridge.model.js";
-import {
-  parseHooksJsonForBridge,
-  pascalCasePluginName,
-  replaysNothing,
-} from "../../../../../src/contexts/tools/domain/bridges/event-bridge.js";
-
-const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
-const hooksOf = (event: string, ...commands: (string | undefined)[]) =>
-  JSON.stringify({
-    hooks: { [event]: [{ hooks: commands.map((command) => ({ type: "command", command })) }] },
-  });
-const stopCalls = (...commands: (string | undefined)[]) =>
-  parseHooksJsonForBridge(hooksOf("Stop", ...commands)).stop;
-
-describe("reading a hooks file for the bridge", () => {
-  it.each([
-    [
-      "splits arguments on any run of whitespace",
-      `node ${ROOT}/hooks/a.cjs x   --q\t-y`,
-      ["x", "--q", "-y"],
-    ],
-    ["reads a command with surrounding whitespace", `  node ${ROOT}/hooks/a.cjs  `, []],
-  ])("%s", (_name, command, args) => {
-    expect(stopCalls(command)).toStrictEqual([{ script: "a.cjs", args }]);
-  });
-
-  it("keeps a hook beside one that carries no command", () => {
-    expect(stopCalls(undefined, `node ${ROOT}/hooks/a.cjs`)).toStrictEqual([
-      { script: "a.cjs", args: [] },
-    ]);
-  });
-
-  it.each([
-    ["not run by node", `${ROOT}/hooks/a.sh`],
-    ["run by another interpreter", `python ${ROOT}/hooks/a.py`],
-    ["outside the plugin's hooks/ folder", `node ${ROOT}/scripts/a.cjs`],
-  ])("drops a command %s", (_name, command) => {
-    expect(stopCalls(command)).toStrictEqual([]);
-  });
-
-  it("reads each of the three mapped events and ignores any other", () => {
-    const group = [{ hooks: [{ command: `node ${ROOT}/hooks/a.cjs` }] }];
-    const table = parseHooksJsonForBridge(
-      JSON.stringify({ hooks: { SessionStart: group, PostToolUse: group, PreToolUse: group } })
-    );
-
-    expect([table.sessionStart.length, table.stop.length, table.postToolUse.length]).toEqual([
-      1, 0, 1,
-    ]);
-  });
-});
-
-describe("when no event has a replayable command", () => {
-  it.each([
-    ["no hooks key", "{}"],
-    ["no event", JSON.stringify({ hooks: {} })],
-    ["an event with an empty group", JSON.stringify({ hooks: { SessionStart: [{}] } })],
-    ["an event with no groups", JSON.stringify({ hooks: { Stop: [] } })],
-    ["only an unmapped event", hooksOf("PreToolUse", `node ${ROOT}/hooks/a.cjs`)],
-    ["only a command no bridge replays", hooksOf("Stop", `${ROOT}/hooks/a.sh`)],
-  ])("holds for %s", (_name, hooksJson) => {
-    expect(replaysNothing(parseHooksJsonForBridge(hooksJson))).toBe(true);
-  });
-
-  it("does not hold once any one mapped event names a replayable command", () => {
-    expect(
-      replaysNothing(parseHooksJsonForBridge(hooksOf("PostToolUse", `node ${ROOT}/hooks/a.cjs`)))
-    ).toBe(false);
-  });
-  it("does not hold when two events each name a replayable command", () => {
-    const hooksJson = JSON.stringify({
-      hooks: {
-        SessionStart: [{ hooks: [{ type: "command", command: `node ${ROOT}/hooks/a.cjs` }] }],
-        Stop: [{ hooks: [{ type: "command", command: `node ${ROOT}/hooks/b.cjs` }] }],
-      },
-    });
-
-    expect(replaysNothing(parseHooksJsonForBridge(hooksJson))).toBe(false);
-  });
-});
+import { BRIDGE_EVENTS } from "../../../../../src/contexts/tools/domain/bridges/bridge-hook-table.js";
+import { pascalCasePluginName } from "../../../../../src/contexts/tools/domain/bridges/event-bridge.js";
+import { hooksOf, ROOT } from "../../testing/bridged-hosts.builder.js";
 
 describe("naming a plugin in Pascal case", () => {
   it.each([
@@ -91,16 +15,69 @@ describe("naming a plugin in Pascal case", () => {
   });
 });
 
+// What every host's generator writes the same way, held once through Kilo's, whose template adds
+// nothing to the shared body.
+describe("the shared bridge generator", () => {
+  const generate = generateKiloHooksBridge;
+
+  it.each(["SessionStart", "Stop", "PostToolUse", "PreToolUse", "UserPromptSubmit"])(
+    "writes a module for %s alone",
+    (event) => {
+      expect(
+        generate(hooksOf(event, `node ${ROOT}/hooks/a.cjs`), "aidd-test").content
+      ).not.toBeNull();
+    }
+  );
+
+  it("tells the events no bridge replays, with the module or without", () => {
+    const hooks = JSON.stringify({
+      hooks: { Stop: [{ hooks: [{ command: `node ${ROOT}/hooks/a.cjs` }] }], SessionEnd: [] },
+    });
+
+    expect([
+      generate(hooks, "aidd-test").unrelayed,
+      generate(hooksOf("SubagentStop"), "aidd-test").unrelayed,
+    ]).toStrictEqual([["SessionEnd"], ["SubagentStop"]]);
+  });
+
+  it("builds the Stop calls once, in the shared builder", () => {
+    const source = generate(hooksOf("Stop", `node ${ROOT}/hooks/a.cjs`), "aidd-test").content ?? "";
+
+    expect(source.match(/hook_event_name: "Stop"/g)).toHaveLength(1);
+    expect(source).toContain("function stopCallsFor(sessionId, directory) {");
+  });
+});
+
 describe.each([
   ["OpenCode", generateOpencodeHooksBridge],
   ["Kilo", generateKiloHooksBridge],
-])("the bridge generator of %s", (_host, generate) => {
-  it("writes no module for a hooks.json no mapped event of which is replayable", () => {
-    expect(generate(hooksOf("Stop", `${ROOT}/hooks/a.sh`), "aidd-test")).toBeNull();
-    expect(generate(hooksOf("PreToolUse", `node ${ROOT}/hooks/a.cjs`), "aidd-test")).toBeNull();
+])("the module generated for %s", (_host, generate) => {
+  it("ships no pointer to a repository file or a tracking tag", () => {
+    const text = generate(hooksOf("Stop", `node ${ROOT}/hooks/a.cjs`), "aidd-test").content ?? "";
+
+    expect(text).not.toMatch(/\.(ts|md)\b|skipHooksJson|hooks-bridge|\bF\d+\b|hooks\/hooks\.json/);
   });
 
-  it.each(["SessionStart", "Stop", "PostToolUse"])("writes a module for %s alone", (event) => {
-    expect(generate(hooksOf(event, `node ${ROOT}/hooks/a.cjs`), "aidd-test")).not.toBeNull();
+  it("declares no function it never calls", () => {
+    const source = generate(hooksOf("Stop", `node ${ROOT}/hooks/a.cjs`), "aidd-test").content ?? "";
+    // An exposed property such as `Plugin.name = name;` is a reference nobody reads.
+    const code = source
+      .split("\n")
+      .filter((line) => !/^\w+\.\w+ = \w+;$/.test(line))
+      .join("\n");
+    const unused = [...code.matchAll(/^(?:async )?function (?<name>\w+)\(/gm)]
+      .flatMap((match) => (match.groups?.name === undefined ? [] : [match.groups.name]))
+      .filter((name) => code.match(new RegExp(`\\b${name}\\b`, "g"))?.length === 1);
+
+    expect(unused).toEqual([]);
+  });
+});
+
+describe.each(["opencode", "kilo"])("the events %s routes through its bridge", (toolId) => {
+  it("are the ones a bridge replays, no more and no fewer", () => {
+    const profile = REGISTERED_PROFILES.find((registered) => registered.toolId === toolId);
+    const events = profile?.kind === "ai" ? [...(profile.hooks?.events.keys() ?? [])] : [];
+
+    expect(events.sort()).toStrictEqual([...BRIDGE_EVENTS].sort());
   });
 });

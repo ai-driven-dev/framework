@@ -1,7 +1,11 @@
 /** Kilo's project distribution is flat. Its config and MCP format follow the OpenCode runtime,
  * but Kilo has its own .kilo/ discovery paths and bundled base configuration. */
 
-import { agentsIn, skillsIn } from "../../../../../shared/domain/materialization/artifact-path.js";
+import {
+  agentsIn,
+  rulesIn,
+  skillsIn,
+} from "../../../../../shared/domain/materialization/artifact-path.js";
 import type {
   AgentMarkdown,
   ConfigArtifactFile,
@@ -14,6 +18,7 @@ import type {
 } from "../../../../../shared/domain/materialization/flat-paths.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
+import { addTypedInstruction } from "../../formats/mcp/typed-instructions.js";
 import { buildTypedMcpFlatConfig } from "../../formats/mcp/typed-mcp-merge.js";
 import { collectTypedMcp } from "../../formats/mcp/typed-mcp-section.js";
 import { chooseOutputPath, type McpOutputPathCandidates } from "../../sections/mcp-section.js";
@@ -33,7 +38,7 @@ interface KiloFlatData {
 
 function emitKiloConfig(
   candidates: McpOutputPathCandidates,
-  { builtPlugins, pluginMcp, existing, assets }: ConfigArtifactInput
+  { builtPlugins, pluginMcp, rulesGlobs, existing, assets }: ConfigArtifactInput
 ): readonly ConfigArtifactFile[] {
   const configPath = chooseOutputPath(candidates, (relPath) => existing.has(relPath));
   const incoming = collectTypedMcp(builtPlugins, pluginMcp);
@@ -44,7 +49,8 @@ function emitKiloConfig(
     existing: existing.get(configPath) ?? null,
     incoming,
   });
-  return [{ path: configPath, content: config }];
+  const listed = rulesGlobs.reduce(addTypedInstruction, config);
+  return [{ path: configPath, content: listed }];
 }
 
 export function buildKiloFlatContract(
@@ -69,8 +75,13 @@ export function buildKiloFlatContract(
         placement: agentsIn(layout),
         agentMarkdown,
       },
+      rules: {
+        supported: true,
+        source: { kind: "fullTree", srcDir: "rules" },
+        placement: rulesIn(layout),
+      },
       mcp: { supported: false, reason: "carried by the config artifact, not a file of its own" },
-      hooks: flatHooksArtifact(hooks, { bridge: generateKiloHooksBridge }),
+      hooks: flatHooksArtifact(hooks, { tool: "kilo", bridge: generateKiloHooksBridge }),
     },
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,

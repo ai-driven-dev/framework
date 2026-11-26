@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
+import type { RegistrationIssue } from "../../../src/contexts/host-registration/contract/registration-issue.js";
 import { ReadMachineInstallation } from "../../../src/contexts/installation/application/doctor/read-machine-installation.use-case.js";
-import type { DoctorIssue } from "../../../src/contexts/installation/contract/doctor-issue.js";
 import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { RunUserScopeDoctor } from "../../../src/orchestration/doctor/run-user-scope-doctor.use-case.js";
 import { UserScopeFilterUnsupportedError } from "../../../src/orchestration/orchestration.error.js";
@@ -8,7 +8,7 @@ import { aManifest } from "../../contexts/installation/testing/manifest.builder.
 import { manifestRepositoryLoading } from "../../shared/testing/partial-ports.builder.js";
 import { SYNTHETIC_TOOL } from "../../shared/testing/synthetic-tool-id.builder.js";
 
-const ISSUES: DoctorIssue[] = [];
+const ISSUES: RegistrationIssue[] = [];
 
 function aRun(machine: Manifest | null) {
   const checked: unknown[] = [];

@@ -1,0 +1,31 @@
+{
+  "host": "opencode-v2",
+  "event": "prompt",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "sessionID": "00000000-0000-4000-8000-000000000000",
+        "messageID": "msg_2148d40ea001IuYHjbn3jZ2vZM",
+        "prompt": {
+          "text": "Do these steps in order, each with its own tool call, calling the tools directly: 1) use the write tool to create a.md containing hello. 2) use the edit tool to replace hello with bye in a.md. 3) use the shell tool to run: echo hi. 4) use the subagent tool to ask a subagent to reply with the word OK, without tools. Then say DONE.",
+          "files": []
+        },
+        "delivery": "steer"
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "child",
+      "payload": {
+        "sessionID": "00000000-0000-4000-8000-000000000001",
+        "messageID": "msg_2148d6465001ZfrfSu8YDs58jm",
+        "prompt": {
+          "text": "You are a subagent spawned by another session.\nReply with the word OK only. Do not use any tools."
+        },
+        "delivery": "steer"
+      },
+      "hookAnswer": null
+    }
+  ]
+}

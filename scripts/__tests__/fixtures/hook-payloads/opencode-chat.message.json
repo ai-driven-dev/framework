@@ -1,0 +1,77 @@
+{
+  "host": "opencode",
+  "event": "chat.message",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "input": {
+          "sessionID": "00000000-0000-4000-8000-000000000000",
+          "model": {
+            "providerID": "opencode",
+            "modelID": "big-pickle"
+          }
+        },
+        "output": {
+          "message": {
+            "id": "msg_212e4cefd001VAiJL7xjY53bfN",
+            "role": "user",
+            "sessionID": "00000000-0000-4000-8000-000000000000",
+            "time": {
+              "created": 0
+            },
+            "agent": "build",
+            "model": {
+              "providerID": "opencode",
+              "modelID": "big-pickle"
+            }
+          },
+          "parts": [
+            {
+              "type": "text",
+              "text": "\"Using tools, create notes.md containing hello with the write tool, then run the shell command echo hi with the bash tool, then say done.\"",
+              "messageID": "msg_212e4cefd001VAiJL7xjY53bfN",
+              "sessionID": "00000000-0000-4000-8000-000000000000",
+              "id": "prt_212e4cf090014mT0gFqVE04mMk"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "run": "follow-up",
+      "payload": {
+        "input": {
+          "sessionID": "00000000-0000-4000-8000-000000000000"
+        },
+        "output": {
+          "message": {
+            "id": "msg_212e684a0001VH5s4rD3C6Rd2w",
+            "role": "user",
+            "sessionID": "00000000-0000-4000-8000-000000000000",
+            "time": {
+              "created": 0
+            },
+            "agent": "build",
+            "model": {
+              "providerID": "opencode",
+              "modelID": "big-pickle"
+            }
+          },
+          "parts": [
+            {
+              "type": "text",
+              "text": "Now say the word ok.",
+              "metadata": {
+                "aidd": "stop-follow-up"
+              },
+              "messageID": "msg_212e684a0001VH5s4rD3C6Rd2w",
+              "sessionID": "00000000-0000-4000-8000-000000000000",
+              "id": "prt_212e684a0002fYBj04BVsejGdU"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

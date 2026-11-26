@@ -1,6 +1,10 @@
 /** Flat only. A skill sits one level under `.agents/skills/`: `agy` expands none nested deeper. */
 
-import { agentsIn, skillsIn } from "../../../../../shared/domain/materialization/artifact-path.js";
+import {
+  agentsIn,
+  rulesIn,
+  skillsIn,
+} from "../../../../../shared/domain/materialization/artifact-path.js";
 import type {
   AgentMarkdown,
   ToolBuildContract,
@@ -8,6 +12,8 @@ import type {
 import type { FlatArtifactLayout } from "../../../../../shared/domain/materialization/flat-paths.js";
 import { portableAgentFrontmatter } from "../../formats/agents/portable-agent.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
+import { hostToolNames } from "../../formats/host-tool-names.js";
+import { activationTriggersRule } from "../../formats/rule-frontmatter.js";
 import { type AntigravityHooks, mergeAntigravityHooks } from "./antigravity-hooks.model.js";
 
 /** The agy name of each Claude tool an agent may declare; a Claude tool absent from it has no agy
@@ -20,8 +26,7 @@ export type AntigravityAgentTools = ReadonlyMap<string, string>;
  * inline so an empty list stays `[]`, not a null key. */
 function agyTools(declared: string[] | undefined, byClaudeTool: AntigravityAgentTools): string {
   const claudeTools = declared ?? [...byClaudeTool.keys()];
-  const names = claudeTools.flatMap((tool) => byClaudeTool.get(tool) ?? []);
-  return JSON.stringify([...new Set(names)]);
+  return JSON.stringify(hostToolNames(claudeTools, byClaudeTool));
 }
 
 function antigravityAgentMarkdown(agentTools: AntigravityAgentTools): AgentMarkdown {
@@ -58,6 +63,12 @@ export function buildAntigravityFlatContract(
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
         placement: agentsIn(layout),
         agentMarkdown: antigravityAgentMarkdown(agentTools),
+      },
+      rules: {
+        supported: true,
+        source: { kind: "fullTree", srcDir: "rules" },
+        placement: rulesIn(layout),
+        ruleMarkdown: { frontmatter: activationTriggersRule, quote: "double" },
       },
       mcp: { supported: false, reason: "the flat build ships no MCP file" },
       hooks: flatHooksArtifact(hooks, { tool: "antigravity" }, (existing, shipped) =>

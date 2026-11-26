@@ -15,7 +15,7 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "*",
+        "matcher": "write_file|edit_file|run_command",
         "hooks": [
           {
             "type": "command",
@@ -55,11 +55,10 @@ script, identical to the plugin source
 
 ## out-flat/.agents/hooks/aidd-context/lib/contracts/04-skill-generate/scripts/contract.json
 {
-  "version": 1,
   "kind": "skill",
   "unit": "folder",
   "targets": "plugins/*/skills/*",
-  "scope": [".claude/skills/*", ".cursor/skills/*", ".opencode/skills/*", ".kilo/skills/*", ".github/skills/*", ".agents/skills/*"],
+  "scope": [".claude/skills/*", ".cursor/skills/*", ".opencode/skills/*", ".kilo/skills/*", ".github/skills/*", ".agents/skills/*", ".kiro/skills/*"],
   "shell": false,
   "marker": "SKILL.md",
   "rules": {
@@ -144,7 +143,6 @@ targets: [{{host tools}}]
 
 ## out-flat/.agents/hooks/aidd-context/lib/contracts/05-rule-generate/scripts/contract.json
 {
-  "version": 1,
   "kind": "rule",
   "unit": "file",
   "scope": ["aidd_docs/rules/*/*.md"],
@@ -163,23 +161,26 @@ targets: [{{host tools}}]
 
 ## out-flat/.agents/hooks/aidd-context/lib/contracts/06-agent-generate/scripts/contract.json
 {
-  "version": 1,
   "kind": "agent",
   "unit": "file",
   "targets": "plugins/*/agents/*.md",
   "scope": [
     ".claude/agents/*.md",
-    ".cursor/agents/*.md"
+    ".cursor/agents/*.md",
+    ".github/agents/*.agent.md",
+    ".agents/agents/*/agent.md",
+    ".opencode/agents/*.md",
+    ".kilo/agents/*.md",
+    ".kiro/agents/*.md",
+    ".kimi-code/agents/*.md"
   ],
   "shell": false,
   "rules": {
     "AGENT-02": {
-      "op": "equals",
+      "op": "custom",
       "in": "*.md",
-      "field": "name",
-      "to": "basename",
-      "why": "hosts resolve the agent by file name",
-      "fix": "set name to {expected}"
+      "check": "name",
+      "why": "hosts resolve the agent by file name"
     },
     "AGENT-03": {
       "op": "pattern",
@@ -218,6 +219,9 @@ targets: [{{host tools}}]
 }
 
 
+## out-flat/.agents/hooks/aidd-context/lib/contracts/06-agent-generate/scripts/custom/name.cjs
+script, identical to the plugin source
+
 ## out-flat/.agents/hooks/aidd-context/lib/contracts/07-command-generate/assets/command-template.md
 ---
 description: "{{what the command does, one line}}"
@@ -240,7 +244,6 @@ disable-model-invocation:
 
 ## out-flat/.agents/hooks/aidd-context/lib/contracts/07-command-generate/scripts/contract.json
 {
-  "version": 1,
   "kind": "command",
   "unit": "file",
   "scope": [

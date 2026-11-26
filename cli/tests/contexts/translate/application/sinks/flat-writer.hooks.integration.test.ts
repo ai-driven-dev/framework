@@ -91,9 +91,10 @@ describe("the hooks a flat layout writes", () => {
         hooks: supportedArtifact(STUB_HOOKS, {
           skipHooksJson: true,
           hooksBridge: {
-            generate: (raw, plugin) => `bridge(${plugin}):${raw}`,
+            generate: (raw, plugin) => ({ content: `bridge(${plugin}):${raw}`, warnings: [] }),
             dir: ".stub/plugin/",
             skipIfSourceHas: "own-plugin.js",
+            warning: (reason: string) => reason,
           },
         }),
       },
@@ -113,9 +114,10 @@ describe("the hooks a flat layout writes", () => {
         hooks: supportedArtifact(STUB_HOOKS, {
           skipHooksJson: true,
           hooksBridge: {
-            generate: () => null,
+            generate: () => ({ content: null, warnings: [] }),
             dir: ".stub/plugin/",
             skipIfSourceHas: "own-plugin.js",
+            warning: (reason: string) => reason,
           },
         }),
       },
@@ -135,9 +137,10 @@ describe("the hooks a flat layout writes", () => {
         hooks: supportedArtifact(STUB_HOOKS, {
           skipHooksJson: true,
           hooksBridge: {
-            generate: (raw, plugin) => `bridge(${plugin}):${raw}`,
+            generate: (raw, plugin) => ({ content: `bridge(${plugin}):${raw}`, warnings: [] }),
             dir: ".stub/plugin/",
             skipIfSourceHas: "own-plugin.js",
+            warning: (reason: string) => reason,
           },
         }),
       },

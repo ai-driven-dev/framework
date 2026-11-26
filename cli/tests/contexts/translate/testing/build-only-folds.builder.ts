@@ -42,7 +42,10 @@ const FLAT_FOLDS: Record<string, Record<string, string[]>> = {
     "flat config artifact": [".codex/config.toml"],
   },
   antigravity: { "flat hooks file": [".agents/hooks.json"] },
-  kiro: { "flat hooks file": [".kiro/hooks/aidd.json"] },
+  kiro: {
+    "flat hooks file": [".kiro/hooks/aidd.json"],
+    "flat MCP file": [".kiro/settings/mcp.json"],
+  },
   kimi: { "flat MCP file": [".kimi-code/mcp.json"] },
 };
 

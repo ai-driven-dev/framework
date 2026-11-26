@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CheckAuthentication } from "../../../src/orchestration/doctor/check-authentication.use-case.js";
+import { CheckAuthentication } from "../../../../src/contexts/auth/application/check-authentication.use-case.js";
 
 describe("checking authentication", () => {
   it("reports an info line when no token resolves", async () => {

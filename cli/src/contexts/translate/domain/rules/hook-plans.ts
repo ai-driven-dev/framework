@@ -1,8 +1,8 @@
 import type { FlatHooksBridge } from "../../../../shared/domain/materialization/build-contract.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import { PLUGIN_HOOKS_RELATIVE } from "../canon-format.js";
-import { flatHooksBridgeFile, sourceShipsHooksBridge } from "../flat-layout.js";
-import type { ComponentPlan } from "./component-pipeline.js";
+import { flatHooksBridge, sourceShipsHooksBridge } from "../flat-layout.js";
+import type { ComponentPlan, PlannedComponents } from "./component-pipeline.js";
 import { hookScripts } from "./hook-scripts.js";
 
 /** Where a flat layout puts a plugin's hooks, as data. */
@@ -20,11 +20,15 @@ export interface FlatHooksLayout {
 
 /** A plugin's hooks as a flat tool holds them: every script below hooks/ keeping its folders,
  * and the generated bridge once the plugin's hooks name an event it carries. The manifest is no
- * file here: a merge reads it. */
-export function flatHookPlans(dist: PluginDistribution, layout: FlatHooksLayout): ComponentPlan[] {
+ * file here: a merge reads it. The manifest is read once, by the bridge, and the events it leaves
+ * out come back as the warnings. */
+export function flatHookPlans(
+  dist: PluginDistribution,
+  layout: FlatHooksLayout
+): PlannedComponents {
   const { hooks } = dist.components;
   const manifest = hooks.find((file) => file.relativePath === PLUGIN_HOOKS_RELATIVE);
-  if (manifest === undefined && layout.needsManifest) return [];
+  if (manifest === undefined && layout.needsManifest) return { plans: [], warnings: [] };
   const plans = hookScripts<ComponentPlan>(hooks, (relativePath, content) => {
     const path = layout.place(relativePath);
     return path === null
@@ -36,20 +40,14 @@ export function flatHookPlans(dist: PluginDistribution, layout: FlatHooksLayout)
           script: (script) => layout.script(relativePath, script),
         };
   });
-  const generated =
-    manifest === undefined || layout.bridge === null
-      ? null
-      : flatHooksBridgeFile({
-          bridge: layout.bridge,
-          rawHooksJson: manifest.content,
-          pluginName: dist.manifest.name,
-          sourceShipsItsOwn: sourceShipsHooksBridge(hooks, layout.bridge),
-        });
-  if (generated === null) return plans;
-  const bridge: ComponentPlan = {
-    source: "",
-    path: generated.relativePath,
-    content: generated.content,
-  };
-  return layout.bridgeFirst ? [bridge, ...plans] : [...plans, bridge];
+  if (manifest === undefined || layout.bridge === null) return { plans, warnings: [] };
+  const { file, warnings } = flatHooksBridge({
+    bridge: layout.bridge,
+    rawHooksJson: manifest.content,
+    pluginName: dist.manifest.name,
+    sourceShipsItsOwn: sourceShipsHooksBridge(hooks, layout.bridge),
+  });
+  if (file === null) return { plans, warnings };
+  const bridge: ComponentPlan = { source: "", path: file.relativePath, content: file.content };
+  return { plans: layout.bridgeFirst ? [bridge, ...plans] : [...plans, bridge], warnings };
 }

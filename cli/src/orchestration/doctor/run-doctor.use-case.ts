@@ -1,11 +1,11 @@
+import type { CheckAuthentication } from "../../contexts/auth/application/check-authentication.use-case.js";
 import type { CheckProjectLayout } from "../../contexts/installation/application/doctor/check-project-layout.use-case.js";
 import type { InspectInstallation } from "../../contexts/installation/application/doctor/inspect-installation.use-case.js";
 import { isReportHealthy } from "../../contexts/installation/contract/doctor-verdict.model.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { ToolCategory } from "../../shared/domain/tool.js";
-import type { CheckAuthentication } from "./check-authentication.use-case.js";
 import type { CheckRegistration } from "./check-registration.use-case.js";
-import type { DoctorReport } from "./doctor-report.js";
+import type { DoctorReport, ReportedIssue } from "./doctor-report.js";
 
 export interface RunDoctorRequest {
   projectRoot: string;
@@ -36,7 +36,7 @@ export class RunDoctor {
     const { projectRoot, category, pluginName } = options;
     const allowedIds = category ? new Set<string>(this.tools.idsInCanonicalOrder(category)) : null;
     const inspection = await this.deps.inspect.execute({ projectRoot, allowedIds, pluginName });
-    const issues = [
+    const issues: ReportedIssue[] = [
       ...inspection.fileIssues,
       ...(await this.deps.registration.execute({ projectRoot, allowedIds })),
     ];

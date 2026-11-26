@@ -30,6 +30,7 @@ export class FlatWriter implements FlatPluginWriter {
       pluginMcp: new Map(
         builtPlugins.flatMap((p) => (p.declaredMcp ? [[p.name, p.declaredMcp] as const] : []))
       ),
+      rulesGlobs: builtPlugins.flatMap((p) => (p.rulesGlob ? [p.rulesGlob] : [])),
       existing: await this.readEach(step.reads(names), (relPath) => join(t.outDir, relPath)),
       present: await this.presentOf(step.probes(names), t.outDir),
       assets: new Map(

@@ -75,6 +75,49 @@ flowchart LR
 6. Write only what the target tool supports.
 7. Delegate agent work by responsibility, never by agent name.
 
+## Contracts
+
+A contract states the shape of the files a skill writes, so a script judges it, never a model. One engine, `scripts/check/engine/`, reads every contract; the skill carries a copy to validate its own output, the hook another to recheck it at turn end.
+
+| Key | Holds |
+| --- | --- |
+| `kind` | the rule ID prefix: `spec` gives `SPEC-01` |
+| `unit` | `file`, or `folder` judged as one artifact |
+| `marker` | the file that makes a folder an artifact, required for `folder` |
+| `scope` | where the artifacts live in a user's project; the hook judges only these |
+| `targets` | where they live in this repository; CI judges only these |
+| `shell` | `false` when an install writes the kind: a shell turn then judges only the files a command names |
+| `watch` | the paths whose change reruns every target in a scoped run |
+| `rules` | each rule by ID |
+
+| Rule key | Holds |
+| --- | --- |
+| `op` | the check, from the table below |
+| `in` | the files of the unit the rule judges; required for `folder`, every file by default |
+| `notIn` | the files it skips |
+| `fix` | the only text the agent reads: what to do, never why |
+| `why` | for the maintainer, never printed |
+
+| Op | Fails when |
+| --- | --- |
+| `template` | the file breaks its template; `optional` names the fields and sections it may omit, `values` a field's allowed values |
+| `pattern` | `regex` misses a `field`, a `line` or a prose line, or every one with `any` |
+| `forbidden` | `regex` matches one |
+| `max` | a value is over `max` chars, or the file over `max` lines |
+| `equals` | a field differs from `to`, the file's basename or its folder |
+| `sections` | a heading at `level` is not `allowed`, out of `order`, or a `required` one is missing |
+| `oneSentence` | a bullet in `sections` holds two sentences |
+| `flatList` | a list in `sections` nests |
+| `links` | a relative link resolves nowhere, or, with `inside`, outside the unit |
+| `json` | the file breaks `schema` |
+| `custom` | `scripts/custom/<check>.cjs` returns hits: a judgment no op states |
+
+- A shared op covers a check two contracts need; one contract's own judgment is `custom`.
+- A custom check gets the file's `lines`, `prose` and front matter, may call `shape` from `lib/ops.cjs`, and returns `{ line, offending, fix }` per hit.
+- A contract loads only when each template, custom check and schema it names exists, each `optional` name is in its template, and each `regex` compiles.
+- A test fails on a rule no fixture makes fire, and on a custom script no rule reaches.
+- A contract stays in the skill that writes the kind. Add one: copy `plugins/aidd-pm/skills/02-user-stories/scripts/`, then run `node scripts/check/engine/sync.cjs`.
+
 ## Hooks
 
 The contract for the framework's own hooks, not for a hook a user generates with `aidd-context:08-hook-generate`. `aidd-context`, `aidd-dev`, `aidd-pm` and `aidd-telemetry` follow it; `aidd-ui` adopts it in its own change.
@@ -86,7 +129,7 @@ The contract for the framework's own hooks, not for a hook a user generates with
 | 0. Silent | the hook runs, nothing is sent | exit 0, no output | it only keeps a state true, such as the memory sync |
 | 1. Inform | the model reads the finding and decides | `additionalContext` | the rule is certain but a deviation can be legitimate, or it has a false positive on real data |
 | 2. Require | the model fixes before going on | `decision: "block"` with `reason` | the rule is certain, has no false positive on real data, and the fix is local |
-| 3. Refuse | the write does not happen | the host's deny, through `refuse(reason)` | the file on disk declares itself frozen, such as a spec whose status is `locked`; never judged on the written content, whose `Edit` fragment would block drafts. Inert on every host: no adapter reports the moment before a tool yet |
+| 3. Refuse | the write does not happen | the host's deny, through `refuse(reason)` | the file on disk declares itself frozen, such as a spec whose status is `locked`; never judged on the written content, whose `Edit` fragment would block drafts. Delivered on Claude Code, Codex, Copilot, Antigravity, Kiro, OpenCode (V2: write and edit only) and Kilo; inert on the others |
 
 A check that needs judgment gets no hook: the skill's check and CI hold it.
 
@@ -116,11 +159,11 @@ A check that needs judgment gets no hook: the skill's check and CI hold it.
 
 | Call of `hooks/lib/host.cjs` | Does |
 | --- | --- |
-| `readEvent()` | gives the event and its `files`, each with `path`, `written` and `replaced`, the last two absent where the host gives none; a file may be deleted: tolerate `ENOENT` |
+| `readEvent()` | gives the event and its `files`, each with `path`, `written` and `replaced`, the last two absent where the host gives none, and before a tool every file carries its `path` only; a file may be deleted: tolerate `ENOENT` |
 | `answer({ level, text, person })` | informs or requires; with no `text`, shows only `person`, at any event |
 | `continueTurn(text, person)` | asks once at the turn end |
 | `refuse(reason)` | denies the tool call about to run; does nothing on any other event or adapter |
-| `person` argument | for the person, never the model: Claude Code and Codex show it as `systemMessage`; beside a `text`, only Claude Code's `continueTurn` at Stop; the other hosts ignore it |
+| `person` argument | for the person, never the model: Claude Code and Codex show it as `systemMessage`; beside a `text`, Claude Code's `continueTurn` at Stop. OpenCode 1's bridge shows a `person` alone as a TUI toast at SessionStart (held to the session's first turn), PostToolUse and Stop, and beside a `text` at Stop; OpenCode 2's, Kilo's bridge and the other hosts ignore it |
 
 ### What the CLI carries
 

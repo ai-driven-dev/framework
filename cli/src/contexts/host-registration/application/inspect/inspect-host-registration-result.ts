@@ -1,5 +1,5 @@
-import type { AiToolId } from "../../../shared/domain/tool.js";
-import type { MarketplaceSourceDriftFound } from "./marketplace-source-drift.js";
+import type { AiToolId } from "../../../../shared/domain/tool.js";
+import type { MarketplaceSourceDriftFound } from "../../domain/source/marketplace-source-drift.js";
 
 /**
  * One thing a host's own registries say about what aidd asked it to register, in the host's own
