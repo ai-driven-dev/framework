@@ -81,6 +81,25 @@ describe("a flat artifact layout", () => {
   });
 });
 
+describe("a command in a flat layout's commands folder", () => {
+  it("keeps only its file name, wherever its plugin keeps it", () => {
+    const place = (name: string) =>
+      flatSectionPath(nested, "commands", { plugin: "aidd-dev", name });
+
+    expect(place("commands/01_plan/plan.md")).toBe(place("plan.md"));
+  });
+
+  it("is owned by the plugin whose folder holds it, and only by it", () => {
+    const own = flatSectionPath(nested, "commands", { plugin: "aidd-dev", name: "plan.md" });
+
+    expect([
+      ownsFlatArtifact(nested, own, "aidd-dev"),
+      ownsFlatArtifact(nested, own, "aidd-pm"),
+      ownsFlatArtifact(nested, own, "aidd"),
+    ]).toStrictEqual([true, false, false]);
+  });
+});
+
 describe("a rule at the top of a flat layout's rules folder", () => {
   const topLevel = flatArtifactLayout(".kilo/", {
     skills: "nested",

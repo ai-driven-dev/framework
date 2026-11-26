@@ -1,6 +1,7 @@
 import type { FrontmatterShape } from "../markdown.js";
 import type { SourceMarketplaceRef, SourcePluginEntryRef } from "../plugin/source-refs.js";
 import type { ConfigAsset, SchemaName } from "../reading/config-asset.js";
+import type { CommandsSlot } from "./command-markdown.js";
 import type { FlatArtifactLayout, FlatHooksLoaderEntry } from "./flat-paths.js";
 
 /** All a marketplace builder reads of the output tree. */
@@ -64,7 +65,7 @@ export type ArtifactPlacement =
   | {
       readonly kind: "layout";
       readonly layout: FlatArtifactLayout;
-      readonly of: "skill" | "agent" | "rule";
+      readonly of: "skill" | "agent" | "rule" | "command";
     }
   | { readonly kind: "relative" }
   | { readonly kind: "file"; readonly at: string }
@@ -168,7 +169,7 @@ export interface ToolBuildContract {
     readonly hooks: ArtifactContract;
     /** A tool that carries a plugin's rules as files. Absent, the build leaves rules out and says so. */
     readonly rules?: ArtifactContract;
-  };
+  } & CommandsSlot;
 
   /** The tool's own config file (Codex's config.toml, opencode.json), built once every plugin
    * is written. */

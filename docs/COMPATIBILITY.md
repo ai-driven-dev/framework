@@ -4,17 +4,17 @@ What each AI tool receives from the framework.
 
 <!--support:start-->
 
-| Tool | Directory | Marketplace | Flat files | Skills | Agents | MCP | Hooks | Rules |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Claude Code | `.claude/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Cursor | `.cursor/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| GitHub Copilot | `.github/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| OpenCode | `.opencode/` | ❌ | ✅ | ✅ | ✅ | ✅ | Some events | ✅ |
-| Kilo Code | `.kilo/` | ❌ | ✅ | ✅ | ✅ | ✅ | Some events | ✅ |
-| Codex | `.codex/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Antigravity CLI | `.agents/` | Plugin directory `.agents/plugins/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Kiro | `.kiro/` | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Kimi Code CLI | `.kimi-code/` | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| Tool | Directory | Marketplace | Flat files | Skills | Agents | MCP | Hooks | Rules | Commands |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Claude Code | `.claude/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Cursor | `.cursor/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| GitHub Copilot | `.github/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| OpenCode | `.opencode/` | ❌ | ✅ | ✅ | ✅ | ✅ | Some events | ✅ | ✅ |
+| Kilo Code | `.kilo/` | ❌ | ✅ | ✅ | ✅ | ✅ | Some events | ✅ | ✅ |
+| Codex | `.codex/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Antigravity CLI | `.agents/` | Plugin directory `.agents/plugins/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Kiro | `.kiro/` | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Kimi Code CLI | `.kimi-code/` | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
 
 <!--support:end-->
 

@@ -2,6 +2,7 @@ import type {
   PluginInstallNotice,
   ReadonlyNoticeList,
 } from "../../../../shared/domain/materialization/plugin-install-notice.js";
+import { basename } from "../../../../shared/domain/paths.model.js";
 import type {
   PluginComponentFile,
   PluginDistribution,
@@ -13,7 +14,6 @@ import { presenceOf } from "../plugin-presence.js";
 import type { ComponentPlan } from "../rules/component-pipeline.js";
 import { toolLinks } from "../rules/links.js";
 import type { TranslatedAiTool, TranslatedNativePlugin } from "../translate-profile.js";
-import { baseOf } from "./build-shared.js";
 
 interface HooksTarget {
   readonly tool: TranslatedAiTool;
@@ -62,7 +62,7 @@ function hooksManifestShape(
   const transform = hooks?.supported ? hooks.transform : undefined;
   return transform === undefined
     ? undefined
-    : (text) => transform(text, pluginName, baseOf(PLUGIN_HOOKS_RELATIVE));
+    : (text) => transform(text, pluginName, basename(PLUGIN_HOOKS_RELATIVE));
 }
 
 /** The plugin's own manifest, at the place the tool reads one, synthesized as the tool's

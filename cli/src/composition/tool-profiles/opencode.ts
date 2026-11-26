@@ -143,6 +143,8 @@ export const opencode = defineAiTool(
     buildContracts: {
       flat: contract(buildOpencodeFlatContract, hooks, OPENCODE_FLAT_LAYOUT, {
         agentMarkdown: { frontmatter: AGENT_FRONTMATTER },
+        // Limit: no plugin ships a command, so no command link to a `.opencode/commands/` path is observed.
+        commandMarkdown: { namePrefix: FLAT_PLACEMENT.namespacePrefix, linkSyntax: [] },
         config: FLAT_CONFIG_CANDIDATES,
       }),
     },
