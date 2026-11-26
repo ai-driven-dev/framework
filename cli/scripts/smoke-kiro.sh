@@ -16,6 +16,8 @@ MODEL="qwen3-coder-next"
 TURN_SECONDS="${SMOKE_KIRO_TIMEOUT:-150}"
 SKILL="aidd-context-00-onboard"
 
+source "$ROOT/scripts/smoke-host.sh"
+
 command -v kiro-cli >/dev/null 2>&1 || { echo "FATAL: kiro-cli not on PATH, install kiro-cli $KIRO_VERSION and log in"; exit 1; }
 [[ -f "$CLI" ]] || { echo "FATAL: $CLI missing, run 'pnpm build' first"; exit 1; }
 kiro-cli whoami >/dev/null 2>&1 || { echo "FATAL: kiro-cli is not logged in, run 'kiro-cli login' once"; exit 1; }
@@ -32,34 +34,23 @@ trap cleanup EXIT
 export AIDD_USER_CONFIG_DIR="$TMP/aidd-config"
 export AIDD_SKIP_UPDATE_CHECK=1
 
-FAIL=0
-pass() { echo "  PASS  $1"; echo "        $2"; }
-fail() { echo "  FAIL  $1"; FAIL=$((FAIL + 1)); }
+installed="$(kiro-cli --version 2>&1 | head -1)"
+echo "kiro-cli $installed"
+[[ "$installed" == *"$KIRO_VERSION"* ]] || echo "WARN: probed on kiro-cli $KIRO_VERSION, results on this version are unverified"
 
-echo "kiro-cli $(kiro-cli --version 2>&1 | head -1)"
-
-mkdir -p "$WS/aidd_docs/memory"
-printf '# Architecture\n' >"$WS/aidd_docs/memory/architecture.md"
-printf '# Project\n\n<!-- aidd_project_memory:start -->\n<!-- aidd_project_memory:end -->\n' >"$WS/AGENTS.md"
-git -C "$WS" init -q
-
-if ! (cd "$WS" && node "$CLI" setup --source local --path "$FRAMEWORK" --ide kiro --plugins recommended --yes) >"$TMP/setup.log" 2>&1; then
-  echo "FATAL: aidd setup failed"; tail -5 "$TMP/setup.log"; exit 1
-fi
-for f in ".kiro/skills/$SKILL/SKILL.md" ".kiro/hooks/aidd.json"; do
-  [[ -f "$WS/$f" ]] || { echo "FATAL: setup did not write $f"; exit 1; }
-done
+smoke_setup --ide kiro ".kiro/skills/$SKILL/SKILL.md" ".kiro/hooks/aidd.json"
 
 STREAM="$TMP/stream.jsonl"
 (cd "$WS" && perl -e 'alarm shift; exec @ARGV' -- "$TURN_SECONDS" kiro-cli chat --v3 --no-interactive --trust-workspace \
   --model "$MODEL" --output-format stream-json "Reply with the single word OK." </dev/null) >"$STREAM" 2>"$TMP/kiro.err"
 
-# Reads the JSON Lines stream and prints `session=`, `skill=` and `hook=` facts.
+# V3 stream-json is an ACP payload: skills arrive as `available_commands_update` entries typed `skill` in `_meta.kiro`.
 facts="$(node -e '
 const events = require("node:fs").readFileSync(process.argv[1], "utf8").split("\n").filter(Boolean).flatMap((line) => { try { return [JSON.parse(line)]; } catch { return []; } });
 const updates = events.map((event) => event.data?.update).filter(Boolean);
 const finished = events.find((event) => event.type === "runFinished");
-if (finished?.data?.sessionId) console.log(`session=${finished.data.sessionId}`);
+const sessionId = events.find((event) => event.data?.sessionId)?.data.sessionId;
+if (sessionId) console.log(`session=${sessionId}`);
 if (finished) console.log(`status=${finished.data.status}`);
 const commands = updates.filter((update) => update.availableCommands).flatMap((update) => update.availableCommands);
 const skill = commands.find((command) => command.name === process.argv[2] && command._meta?.kiro?.type === "skill");
@@ -75,9 +66,6 @@ line="$(fact skill)"
 [[ -n "$line" ]] && pass "skill listed" "available command of type skill: $line" || fail "skill: $SKILL is not an available skill command"
 line="$(fact hook)"
 [[ -n "$line" ]] && pass "hook ran" "completed from .kiro/hooks/aidd.json: $line" || fail "hook: no completed hook event from .kiro/hooks/aidd.json"
-line="$(grep -m1 'aidd_docs/memory/architecture.md' "$WS/AGENTS.md")"
-[[ -n "$line" ]] && pass "memory refreshed at the repo root" "AGENTS.md: $line" || fail "memory: AGENTS.md block still empty"
+smoke_assert_memory
 
-echo
-[[ "$FAIL" -eq 0 ]] && { echo "smoke-kiro: all passed"; exit 0; }
-echo "smoke-kiro: $FAIL failed"; exit 1
+smoke_finish smoke-kiro
