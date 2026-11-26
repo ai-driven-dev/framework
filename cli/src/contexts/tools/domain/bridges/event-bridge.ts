@@ -1,157 +1,120 @@
 /**
- * What the generated event bridges of the loaders that read no hooks file (Kilo, OpenCode) share:
- * the three hook events a bridge replays and how a plugin's name becomes its module's identifier.
+ * The generated event bridges of the loaders that read no hooks file (Kilo, OpenCode): a plugin's
+ * hooks read once into the call tables and the events no bridge carries, the shared runtime every
+ * module is written with, how a plugin's name becomes its module's identifier, and the routes a
+ * bridged tool declares.
  */
 
 import type { FlatHooksLoaderEntry } from "../../../../shared/domain/materialization/flat-paths.js";
 import { declareHooks } from "../formats/hooks/declaration.js";
 import type { HookEventRoute, HooksDescriptor } from "../formats/hooks/descriptor.js";
+import type { GeneratedBridge } from "../formats/hooks/flat-routes.js";
+import { matcherNames } from "../hooks/plugin-hooks-shape.js";
 import {
-  type BridgeHookCall,
-  bridgeHookCalls,
-  type PluginHooksShape,
-} from "../hooks/plugin-hooks-shape.js";
-
-export interface BridgeHookTable {
-  readonly sessionStart: readonly BridgeHookCall[];
-  readonly stop: readonly BridgeHookCall[];
-  readonly postToolUse: readonly BridgeHookCall[];
-}
-
-/** A plugin's raw hooks.json: still carrying `${CLAUDE_PLUGIN_ROOT}`, since a generated
- * bridge resolves its scripts from its own `import.meta.url` and the outDir-relative rewrite
- * every other flat target needs buys it nothing: reduced to the three mapped events. */
-export function parseHooksJsonForBridge(rawHooksJson: string): BridgeHookTable {
-  const parsed = JSON.parse(rawHooksJson) as PluginHooksShape;
-  const hooks = parsed.hooks ?? {};
-  return {
-    sessionStart: bridgeHookCalls(hooks.SessionStart),
-    stop: bridgeHookCalls(hooks.Stop),
-    postToolUse: bridgeHookCalls(hooks.PostToolUse),
-  };
-}
-
-/** The generated modules' reading of a finished script: exit 2 puts the answer on stderr, exit 0
- * puts it in `additionalContext` on stdout, anything else says nothing. Written once here, so
- * both hosts' bridges tell the model the same thing. */
-const ANSWER_FROM_SOURCE = `function answerFrom(code, stdout, stderr) {
-  if (code === 2) return stderr.trim();
-  if (code !== 0) return "";
-  try {
-    const output = JSON.parse(stdout);
-    return String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim();
-  } catch {
-    return "";
-  }
-}`;
-
-/** A bridge with nothing to spawn is not a file worth writing. */
-export function replaysNothing(table: BridgeHookTable): boolean {
-  return table.sessionStart.length + table.stop.length + table.postToolUse.length === 0;
-}
+  BRIDGE_EVENTS,
+  type BridgeEvent,
+  type BridgeHookTable,
+  parseHooksJsonForBridge,
+  replaysNothing,
+} from "./bridge-hook-table.js";
+import {
+  BRIDGE_HOOKS_SOURCE,
+  SESSION_START_SOURCE,
+  TOOL_USE_SOURCE,
+  TURN_END_SOURCE,
+  userPromptSource,
+} from "./bridge-relay-source.js";
+import {
+  ANSWER_OF_SOURCE,
+  hooksDirDeclaration,
+  NODE_IMPORTS_SOURCE,
+  RUN_CAPTURE_SOURCE,
+  reportHookFailureSource,
+  SEND_PROMPT_SOURCE,
+  STOP_REASON_OF_SOURCE,
+} from "./bridge-source.js";
 
 /** A plugin's bridge identifier: its PascalCase name and the suffix the host gives its modules. */
 function bridgeIdentifier(plugin: string, suffix: string): string {
   return `${pascalCasePluginName(plugin)}${suffix}`;
 }
 
-/** The node modules every generated module spawns its scripts with. One string literal, so no
- * line of this file opens with the keyword the import rule reads as this file's own. */
-const NODE_IMPORTS_SOURCE =
-  'import { spawn } from "node:child_process";\nimport { fileURLToPath } from "node:url";';
-
-/** The scripts folder of a plugin, resolved from the generated module's own url. */
-function hooksDirDeclaration(plugin: string): string {
-  return `const HOOKS_DIR = fileURLToPath(new URL("../hooks/${plugin}/", import.meta.url));`;
-}
-
-/** The three call tables a generated module replays, one constant per mapped event. */
+/** The call tables a generated module replays, one constant per replayed event: `SessionStart`
+ * is `SESSION_START`. A matcher is written as the tool names it lists, so the module only looks
+ * a tool up. */
 function callTableDeclarations(table: BridgeHookTable): string {
+  return BRIDGE_EVENTS.map((event) => {
+    const name = event.replace(/([a-z])([A-Z])/g, "$1_$2").toUpperCase();
+    const calls = table
+      .callsOf(event)
+      .map(({ matcher, ...call }) =>
+        matcher === undefined ? call : { ...call, tools: matcherNames(matcher) }
+      );
+    return `const ${name} = ${JSON.stringify(calls)};`;
+  }).join("\n");
+}
+
+/** Every function the hosts' modules share, written once so both tell the model and the log the
+ * same things: running a script and reading its answer or its Stop reason, sending a prompt of
+ * the bridge's own, the hooks around a tool call, the user's message, the once-per-session
+ * SessionStart trigger, the turn end, and the hooks object a host hands its loader. */
+function sharedRuntimeSource(label: string, plugin: string): string {
   return [
-    `const SESSION_START = ${JSON.stringify(table.sessionStart)};`,
-    `const STOP = ${JSON.stringify(table.stop)};`,
-    `const POST_TOOL_USE = ${JSON.stringify(table.postToolUse)};`,
-  ].join("\n");
+    reportHookFailureSource(label),
+    RUN_CAPTURE_SOURCE,
+    ANSWER_OF_SOURCE,
+    STOP_REASON_OF_SOURCE,
+    SEND_PROMPT_SOURCE,
+    TOOL_USE_SOURCE,
+    userPromptSource(plugin),
+    SESSION_START_SOURCE,
+    TURN_END_SOURCE,
+    BRIDGE_HOOKS_SOURCE,
+  ].join("\n\n");
 }
-
-function padded(lines: readonly string[], indent: number): string {
-  return lines.map((line) => " ".repeat(indent) + line).join("\n");
-}
-
-/** Spawns one hook script under node from the plugin's scripts folder, in the payload's directory. */
-function spawnHookSource(indent: number, stdio: string): string {
-  return padded(
-    [
-      'const child = spawn("node", [HOOKS_DIR + script, ...args], {',
-      "  cwd: directory,",
-      `  stdio: ${stdio},`,
-      "  timeout: 5000,",
-      "});",
-    ],
-    indent
-  );
-}
-
-/** Hands the payload to the script's stdin; a script that never reads it must not throw. */
-function feedStdinSource(indent: number): string {
-  return padded(
-    ['child.stdin.on("error", () => {});', "child.stdin.end(JSON.stringify(payload));"],
-    indent
-  );
-}
-
-/** The hosts name the written file `filePath`; the scripts read Claude Code's `file_path`. */
-const TOOL_INPUT_SOURCE =
-  'const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;';
-
-/** A Stop script's `{"decision":"block","reason"}`: the reason to keep working on, else nothing. */
-const STOP_REASON_SOURCE = 'output?.decision === "block" ? String(output.reason ?? "").trim() : ""';
-
-/** A PostToolUse answer joins the tool's own output. */
-// Written as a split literal to avoid biome's noTemplateCurlyInString warning.
-const APPEND_ANSWER_SOURCE = `if (answer) output.output = \`$${"{"}output.output ?? ""}\\n\\n$${"{"}answer}\`;`;
 
 /** What a host's module template composes its generated module from: the pieces every bridge
- * writes the same way. What the host writes itself is its event table, its export descriptor and
- * how it reports a failed script. */
+ * writes the same way. What the host writes itself is its own imports, its factory, which hands
+ * `bridgeHooks` its folder, its follow-up call and its person channel, and its export descriptor. */
 export interface BridgeParts {
-  readonly plugin: string;
   readonly identifier: string;
-  /** The `spawn` and `fileURLToPath` imports the spawning code below reads. */
-  readonly nodeImports: string;
-  readonly hooksDir: string;
-  readonly callTables: string;
-  /** The generated `answerFrom`: exit 2 puts the answer on stderr, exit 0 in `additionalContext`. */
-  readonly answerFrom: string;
-  readonly toolInput: string;
-  readonly stopReason: string;
-  readonly appendAnswer: string;
-  spawnHook(indent: number, stdio: string): string;
-  feedStdin(indent: number): string;
+  /** The line that opens every generated module, before a host's own words on it. */
+  readonly header: string;
+  /** The descriptor's `id`, already a JSON string literal. */
+  readonly descriptorId: string;
+  /** The module's shared body, after the host's own imports: the `spawn` and `fileURLToPath`
+   * imports, the scripts folder, the call tables, and every function the hosts share,
+   * `bridgeHooks` (`BRIDGE_HOOKS_SOURCE`) the one a host's factory calls. */
+  readonly body: string;
 }
 
-/** A plugin's raw hooks.json for one host, or `null` when no mapped event names anything
- * replayable: a bridge with nothing to spawn is not a file worth writing. */
-export function generateBridge<R>(
-  host: { readonly identifierSuffix: string; render(parts: BridgeParts): R },
+/** A plugin's raw hooks.json for one host, written with that host's template. */
+export function generateBridge(
+  host: {
+    readonly identifierSuffix: string;
+    /** How the host is named in what its modules log. */
+    readonly label: string;
+    render(parts: BridgeParts): string;
+  },
   rawHooksJson: string,
   plugin: string
-): R | null {
+): GeneratedBridge {
   const table = parseHooksJsonForBridge(rawHooksJson);
-  if (replaysNothing(table)) return null;
-  return host.render({
-    plugin,
-    identifier: bridgeIdentifier(plugin, host.identifierSuffix),
-    nodeImports: NODE_IMPORTS_SOURCE,
-    hooksDir: hooksDirDeclaration(plugin),
-    callTables: callTableDeclarations(table),
-    answerFrom: ANSWER_FROM_SOURCE,
-    toolInput: TOOL_INPUT_SOURCE,
-    stopReason: STOP_REASON_SOURCE,
-    appendAnswer: APPEND_ANSWER_SOURCE,
-    spawnHook: spawnHookSource,
-    feedStdin: feedStdinSource,
-  });
+  if (replaysNothing(table)) return { content: null, unrelayed: table.unrelayed };
+  return {
+    unrelayed: table.unrelayed,
+    content: host.render({
+      identifier: bridgeIdentifier(plugin, host.identifierSuffix),
+      header: "// Generated by aidd - do not edit by hand.",
+      descriptorId: JSON.stringify(`${plugin}-hooks`),
+      body: [
+        NODE_IMPORTS_SOURCE,
+        hooksDirDeclaration(plugin),
+        callTableDeclarations(table),
+        sharedRuntimeSource(host.label, plugin),
+      ].join("\n\n"),
+    }),
+  };
 }
 
 /** A plugin's name in PascalCase, the stem of its bridge's exported identifier. */
@@ -163,10 +126,35 @@ export function pascalCasePluginName(plugin: string): string {
     .join("");
 }
 
-/** The native events of a loader that reads no hooks file, one per event a bridge replays. */
-export type BridgeNativeEvents = readonly [sessionStart: string, postToolUse: string, stop: string];
+/** The native event of a loader for each event a bridge replays. */
+export type BridgeNativeEvents = readonly [
+  sessionStart: string,
+  postToolUse: string,
+  stop: string,
+  preToolUse: string,
+  userPromptSubmit: string,
+];
 
-/** A loader that reads no hooks file: the three events it fires reach the hook through a bridge
+/** Each replayed event on the loader's own: written as a record of `BridgeEvent`, so an event
+ * added to the one list and missing here does not compile. */
+function bridgedEvents([
+  sessionStart,
+  postToolUse,
+  stop,
+  preToolUse,
+  userPromptSubmit,
+]: BridgeNativeEvents): Record<BridgeEvent, HookEventRoute> {
+  const bridged = (native: string): HookEventRoute => ({ native, relay: "bridge" });
+  return {
+    SessionStart: bridged(sessionStart),
+    PostToolUse: bridged(postToolUse),
+    Stop: bridged(stop),
+    PreToolUse: bridged(preToolUse),
+    UserPromptSubmit: bridged(userPromptSubmit),
+  };
+}
+
+/** A loader that reads no hooks file: the events it fires reach the hook through a bridge
  * generated per plugin, and one adapter, handed in and stamped for the tool, serves them all. */
 export function declareBridgeHooks<
   const L extends {
@@ -176,20 +164,15 @@ export function declareBridgeHooks<
   },
 >(
   { toolId, directory, adapter }: { toolId: string; directory: string; adapter: string },
-  [sessionStart, postToolUse, stop]: BridgeNativeEvents,
+  natives: BridgeNativeEvents,
   { loaderEntry, ...rest }: L
 ) {
-  const bridged = (native: string): HookEventRoute => ({ native, relay: "bridge" });
   return declareHooks(
     { toolId, directory, adapter },
     {
       ...rest,
       flat: { scriptsDir: `${directory}hooks/`, loaderEntry },
-      events: {
-        SessionStart: bridged(sessionStart),
-        PostToolUse: bridged(postToolUse),
-        Stop: bridged(stop),
-      },
+      events: bridgedEvents(natives),
     }
   );
 }

@@ -1,5 +1,4 @@
 import type { AiToolId } from "../../../../shared/domain/tool.js";
-import type { HostRegistrationFinding } from "../../contract/inspect-host-registration-result.js";
 import {
   type RegistryAnswer,
   registrationAnswer,
@@ -12,6 +11,7 @@ import {
   type HostMarketplaceSourceCheck,
   isDriftFound,
 } from "../../domain/source/marketplace-source-drift.js";
+import type { HostRegistrationFinding } from "./inspect-host-registration-result.js";
 
 /** What one expected plugin says about the host's registry: nothing when it is there and enabled. */
 export function pluginFinding(

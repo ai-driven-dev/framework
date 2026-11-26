@@ -14,6 +14,7 @@ import {
   read,
   restoreHostIo,
   sample,
+  samples,
 } from "./testing/hooks-runtime-host.builder.js";
 
 afterEach(restoreHostIo);
@@ -106,6 +107,15 @@ describe("reading Kiro hook payloads", () => {
       raw: payload,
     });
   });
+
+  it.each(["kiro-UserPromptSubmit.json", "kiro-SubagentStop.json"])(
+    "reads no event from the captured %s: no framework script reads it",
+    (file) => {
+      for (const { payload } of samples(file)) {
+        expect(read("kiro", payload).event).toBe(undefined);
+      }
+    }
+  );
 
   it("reads no event from any other event name", () => {
     const { payload } = sample("kiro-SessionStart.json", 0);

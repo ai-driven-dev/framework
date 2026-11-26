@@ -13,10 +13,11 @@ import type { OutputFile } from "./output-file.js";
 
 /**
  * The generated hooks bridge of a flat install, whether it is built to disk or translated for an
- * install. `sourceShipsItsOwn` is whether the plugin's own hooks already carry the file the
- * bridge would replace. Nothing when it does, or when no event in the hooks maps to the bridge.
+ * install, and what it leaves out of the plugin's hooks, told by the one reading of them.
+ * `sourceShipsItsOwn` is whether the plugin's own hooks already carry the file the bridge would
+ * replace. Nothing of either when it does; no file when no event in the hooks maps to the bridge.
  */
-export function flatHooksBridgeFile({
+export function flatHooksBridge({
   bridge,
   rawHooksJson,
   pluginName,
@@ -26,11 +27,11 @@ export function flatHooksBridgeFile({
   rawHooksJson: string;
   pluginName: string;
   sourceShipsItsOwn: boolean;
-}): OutputFile | null {
-  if (sourceShipsItsOwn) return null;
-  const content = bridge.generate(rawHooksJson, pluginName);
-  if (content === null) return null;
-  return { relativePath: hooksBridgeFilePath(bridge, pluginName), content };
+}): { file: OutputFile | null; warnings: readonly string[] } {
+  if (sourceShipsItsOwn) return { file: null, warnings: [] };
+  const { content, warnings } = bridge.generate(rawHooksJson, pluginName);
+  if (content === null) return { file: null, warnings };
+  return { file: { relativePath: hooksBridgeFilePath(bridge, pluginName), content }, warnings };
 }
 
 /** Whether a plugin's own hooks already carry the file a bridge would replace, in any folder. */

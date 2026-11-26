@@ -1,12 +1,15 @@
-import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join, resolve } from "node:path";
 import { expect, vi } from "vitest";
-import { REPOSITORY_ROOT } from "../../../shared/testing/repository-root.builder.js";
+import {
+  type CapturedSample,
+  capturedSample,
+  capturedSamples,
+  SCRUBBED_PROJECT,
+} from "./hook-payload-captures.builder.js";
 
 // Beside this package, never the repository's: a mutation run mutates its own copy.
 export const RUNTIME = join(import.meta.dirname, "..", "..", "..", "..", "assets", "hooks-runtime");
-const PAYLOADS = join(REPOSITORY_ROOT, "scripts", "__tests__", "fixtures", "hook-payloads");
 export const HOSTS = [
   "claude",
   "codex",
@@ -38,23 +41,12 @@ interface Adapter {
   refuse(reason: string): void;
 }
 
-interface Sample {
-  readonly run: string;
-  readonly payload: Record<string, unknown>;
-  readonly hookAnswer: Record<string, unknown> | null;
-  /** Present when the logging hook ended with a non-zero code, and what it wrote to stderr. */
-  readonly hookExit?: number;
-  readonly hookStderr?: string;
+export function samples(file: string): readonly CapturedSample[] {
+  return capturedSamples(file);
 }
 
-export function samples(file: string): readonly Sample[] {
-  return (JSON.parse(readFileSync(join(PAYLOADS, file), "utf8")) as { samples: Sample[] }).samples;
-}
-
-export function sample(file: string, index: number): Sample {
-  const found = samples(file)[index];
-  if (found === undefined) throw new Error(`${file} has no sample ${index}`);
-  return found;
+export function sample(file: string, index: number): CapturedSample {
+  return capturedSample(file, (_, at) => at === index, `sample ${index}`);
 }
 
 /** A fresh copy of the adapter, as each hook process loads it once. */
@@ -106,8 +98,7 @@ export function output(): unknown {
   return JSON.parse(printed[0] as string);
 }
 
-export const CWD = "/Users/user/project";
+export const CWD = SCRUBBED_PROJECT;
 // The adapters resolve a path against the session folder, which gives a drive-rooted path on Windows.
 export const at = (relative: string): string => resolve(CWD, relative);
-export const SESSION = "00000000-0000-4000-8000-000000000000";
 export const NOTES = at("notes.md");

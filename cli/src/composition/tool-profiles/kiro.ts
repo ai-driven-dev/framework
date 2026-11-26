@@ -8,8 +8,10 @@ import {
   flatHooksSupport,
   flatProjectHooksDelivery,
 } from "../../contexts/tools/domain/formats/hooks/flat-routes.js";
+import { inclusionModesRule } from "../../contexts/tools/domain/formats/rule-frontmatter.js";
 import { contract } from "../../contexts/tools/domain/profile/contract-builders.js";
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
+import { installUnder } from "../../contexts/tools/domain/profile/tool-suffix.js";
 import { flatPlacement } from "../../contexts/tools/domain/sections/layout-section.js";
 import type { AgentMarkdown } from "../../shared/domain/materialization/build-contract.js";
 import {
@@ -19,6 +21,7 @@ import {
 
 const DIRECTORY = ".kiro/";
 const TOOL_SUFFIX = ".kiro.md";
+const STEERING = "steering/";
 /** Kiro's project MCP servers file, an `mcpServers` object (https://kiro.dev/docs/mcp/configuration/). */
 const MCP_PATH = `${DIRECTORY}settings/mcp.json`;
 
@@ -36,10 +39,14 @@ const AGENT_MARKDOWN: AgentMarkdown = {
   pluginPrefixedName: true,
 };
 
-/** Skills and agents live under `.kiro/skills/` and `.kiro/agents/` (https://kiro.dev/docs/configuration/);
- * a skill's `name` must equal its folder (https://kiro.dev/docs/skills/), so the folder carries the plugin. */
+/** Skills, agents and rules live under `.kiro/skills/`, `.kiro/agents/` and `.kiro/steering/`
+ * (https://kiro.dev/docs/configuration/); a skill's `name` must equal its folder
+ * (https://kiro.dev/docs/skills/), so the folder carries the plugin. A rule is a steering file
+ * scoped by its `inclusion` front matter (https://kiro.dev/docs/steering/). */
 const KIRO_FLAT_LAYOUT: FlatArtifactLayout = flatArtifactLayout(DIRECTORY, {
   skills: "single-level",
+  rules: "top-level",
+  rulesDir: `${DIRECTORY}${STEERING}`,
   agent: { ext: ".md" },
 });
 
@@ -60,15 +67,18 @@ const MATCHER_TOOLS: ReadonlyMap<string, string> = new Map([
 const hooks = declareHooks(
   { toolId: "kiro", directory: DIRECTORY, adapter },
   {
-    // Only SessionStart, PreToolUse, PostToolUse and Stop have a payload captured from kiro-cli V3
-    // (the kiro-* hook-payload fixtures); https://kiro.dev/docs/hooks/types/ names the triggers.
-    // Every other event is dropped from the merge with a warning.
+    // Only the events with a payload captured from kiro-cli V3 (the kiro-* hook-payload fixtures)
+    // are delivered; https://kiro.dev/docs/hooks/types/ names the triggers. SessionEnd is
+    // documented but seen firing in one of six headless runs, so it is dropped from the merge with a
+    // warning, like every other event.
     undeclaredEvents: "skipped",
     events: {
       SessionStart: "SessionStart",
+      UserPromptSubmit: "UserPromptSubmit",
       PreToolUse: "PreToolUse",
       PostToolUse: "PostToolUse",
       Stop: "Stop",
+      SubagentStop: "SubagentStop",
     },
     toolNames: MATCHER_TOOLS,
     // Kiro loads every `.kiro/hooks/*.json` of a project, and CLI V3 those of `~/.kiro/hooks/`
@@ -102,6 +112,10 @@ export const kiro = defineAiTool({
   capabilities: {
     agents: { format: "markdown", frontmatter: AGENT_FRONTMATTER },
     skills: { directory: DIRECTORY },
+    rules: {
+      buildInstallPath: installUnder(DIRECTORY, TOOL_SUFFIX, STEERING),
+      convertFrontmatter: inclusionModesRule,
+    },
     hooks: { delivery: hooksDelivery },
     layout: flatPlacement({ namespacePrefix: "aidd-", artifacts: KIRO_FLAT_LAYOUT }),
   },

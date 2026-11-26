@@ -10,20 +10,29 @@ import { buildTree } from "../testing/build-tree.builder.js";
 import { makeValidator } from "../testing/flat-writer-world.builder.js";
 
 const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
-const OUT = resolve("/tmp/aidd-kilo-rules-test").replaceAll("\\", "/");
+const OUT = resolve("/tmp/aidd-flat-rules-test").replaceAll("\\", "/");
 const RULE = `${OUT}/.kilo/rules/aidd-test-01-standards-naming.md`;
 const CONFIG = `${OUT}/.kilo/kilo.jsonc`;
 
 const KILO_BASE = { $schema: "https://app.kilo.ai/config.json" };
+const OPENCODE_BASE = {
+  $schema: "https://opencode.ai/config.json",
+  instructions: [".opencode/rules/**/*.md"],
+};
 
-async function buildKilo(target: typeof TOOL.kilo | typeof TOOL.opencode = TOOL.kilo) {
+async function buildFlat(
+  target: typeof TOOL.kilo | typeof TOOL.opencode | typeof TOOL.kimi = TOOL.kilo,
+  existing: Record<string, string> = {}
+) {
   const fs = new InMemoryFileAdapter();
   await seedFromDirectory(fs, FIXTURE_DIR, { useAbsolutePaths: true });
   fs.setFile(`${OUT}/.keep`, "");
+  for (const [path, content] of Object.entries(existing)) fs.setFile(path, content);
   const logger = new CapturingLogger();
   const assets = {
     loadConfigAsset: (_tool: string, name: string) => {
-      if (name === "kilo.json" || name === "opencode.json") return KILO_BASE;
+      if (name === "kilo.json") return KILO_BASE;
+      if (name === "opencode.json") return OPENCODE_BASE;
       return "export async function setupOpencodeEvents() {}";
     },
   };
@@ -39,10 +48,33 @@ async function buildKilo(target: typeof TOOL.kilo | typeof TOOL.opencode = TOOL.
   return { fs, logger };
 }
 
+describe("a flat build of the rules of a plugin for OpenCode", () => {
+  const RULE_OC = `${OUT}/.opencode/rules/aidd-test-01-standards-naming.md`;
+
+  it("writes a path-scoped rule with its scope stated in the body, and does not warn it skipped it", async () => {
+    const { fs, logger } = await buildFlat(TOOL.opencode);
+
+    expect(fs.getFile(RULE_OC)?.startsWith("Applies to files matching `src/**/*.ts`.\n\n")).toBe(
+      true
+    );
+    expect(fs.getFile(RULE_OC)).not.toContain("paths:");
+    expect(logger.warnMessages.filter((line) => line.includes("rules/"))).toEqual([]);
+  });
+
+  it("lists the rules in the config's instructions next to an entry a person listed, comments in their file or not", async () => {
+    const { fs } = await buildFlat(TOOL.opencode, {
+      [`${OUT}/opencode.jsonc`]: '// mine\n{ "instructions": ["mine.md"] }',
+    });
+    const config = asPlainObject(JSON.parse(fs.getFile(`${OUT}/opencode.jsonc`) ?? "null"));
+
+    expect(config?.instructions).toEqual(["mine.md", ".opencode/rules/**/*.md"]);
+  });
+});
+
 describe("a flat build of the rules of a plugin", () => {
-  let kilo: Awaited<ReturnType<typeof buildKilo>>;
+  let kilo: Awaited<ReturnType<typeof buildFlat>>;
   beforeAll(async () => {
-    kilo = await buildKilo();
+    kilo = await buildFlat();
   });
 
   it("writes a path-scoped rule with its scope stated in the body", () => {
@@ -63,7 +95,7 @@ describe("a flat build of the rules of a plugin", () => {
   });
 
   it("still warns, for a tool that carries no rules, that it skipped them", async () => {
-    const { logger } = await buildKilo(TOOL.opencode);
+    const { logger } = await buildFlat(TOOL.kimi);
 
     expect(logger.warnMessages).toContain(
       "Skipping rules/ in plugin 'aidd-test' (out of scope for MVP1)."

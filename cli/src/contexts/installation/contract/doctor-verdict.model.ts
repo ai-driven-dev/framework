@@ -1,4 +1,4 @@
-import type { IssueSeverity } from "./doctor-issue.js";
+import type { IssueSeverity } from "../../../shared/domain/issue/issue-severity.js";
 
 /** One run is healthy when it found nothing above information and no plugin issue. */
 export function isReportHealthy(

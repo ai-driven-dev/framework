@@ -11,6 +11,7 @@
 import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { SESSION } from "./testing/hook-payload-captures.builder.js";
 import {
   at,
   CWD,
@@ -24,7 +25,6 @@ import {
   RUNTIME,
   read,
   restoreHostIo,
-  SESSION,
   sample,
 } from "./testing/hooks-runtime-host.builder.js";
 

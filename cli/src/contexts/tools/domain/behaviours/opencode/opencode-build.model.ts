@@ -2,7 +2,11 @@
  * Opencode's build contract: flat only: opencode has no marketplace mode.
  */
 
-import { agentsIn, skillsIn } from "../../../../../shared/domain/materialization/artifact-path.js";
+import {
+  agentsIn,
+  rulesIn,
+  skillsIn,
+} from "../../../../../shared/domain/materialization/artifact-path.js";
 import type {
   AgentMarkdown,
   ConfigArtifactFile,
@@ -61,6 +65,7 @@ function emitOpencodeConfig(
       baseConfig: base,
       existing: existing.get(configPath) ?? null,
       incoming,
+      mergedKeys: ["instructions"],
     }),
   };
   const runsHooks = builtPlugins.some((plugin) =>
@@ -95,8 +100,13 @@ export function buildOpencodeFlatContract(
         placement: agentsIn(layout),
         agentMarkdown,
       },
+      rules: {
+        supported: true,
+        source: { kind: "fullTree", srcDir: "rules" },
+        placement: rulesIn(layout),
+      },
       mcp: { supported: false, reason: "carried by the config artifact (opencode.json mcp)" },
-      hooks: flatHooksArtifact(hooks, { bridge: generateOpencodeHooksBridge }),
+      hooks: flatHooksArtifact(hooks, { tool: "opencode", bridge: generateOpencodeHooksBridge }),
     },
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,
