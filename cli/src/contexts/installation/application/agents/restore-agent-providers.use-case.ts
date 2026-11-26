@@ -11,7 +11,7 @@ export interface RestoreAgentProvidersRequest {
 }
 
 /** Puts the recorded providers back to a given state and returns the hosts that no longer have
- * one. */
+ * one; a host saved on none had no provider to lose. */
 export class RestoreAgentProviders {
   constructor(private readonly store: Pick<AgentModelStore, "loadProviders" | "saveProviders">) {}
 
@@ -19,8 +19,9 @@ export class RestoreAgentProviders {
     providers,
     dryRun = false,
   }: RestoreAgentProvidersRequest): Promise<readonly string[]> {
-    const forgotten = Object.keys(await this.store.loadProviders()).filter(
-      (host) => providers[host] === undefined
+    const saved = await this.store.loadProviders();
+    const forgotten = Object.keys(saved).filter(
+      (host) => saved[host] !== null && providers[host] === undefined
     );
     if (!dryRun) await this.store.saveProviders(providers);
     return forgotten;

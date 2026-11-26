@@ -1,6 +1,6 @@
 # AI-Driven Dev Docs
 
-AIDD structures your AI coding assistant with skills, agents, rules, and a memory bank so it produces consistent, high-quality work, regardless of which AI tool you use (Claude Code, Cursor, Copilot, Codex, OpenCode).
+AIDD structures your AI coding assistant with skills, agents, rules, and a memory bank so it produces consistent, high-quality work, regardless of which AI tool you use (the list is in [COMPATIBILITY](../docs/COMPATIBILITY.md)).
 
 - [What You Get](#what-you-get)
   - [Concepts](#concepts)
@@ -55,7 +55,7 @@ my-project/
 ├── .claude/                     # Claude Code: skills, agents, rules, hooks
 ├── .cursor/                     # Cursor: skills, agents, rules
 ├── .github/copilot-instructions.md   # GitHub Copilot
-├── AGENTS.md                    # Cursor, Codex, OpenCode (shared)
+├── AGENTS.md                    # shared by the tools that read it
 ├── CLAUDE.md                    # Claude Code
 ├── aidd_docs/
 │   ├── memory/                  # Project context (loaded each conversation)

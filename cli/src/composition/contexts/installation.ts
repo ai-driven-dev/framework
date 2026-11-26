@@ -146,7 +146,7 @@ export function frameworkBuildsOf(
     variant: async (target) => {
       const id = tools.aiToolId(target);
       if (id === null || tools.aiProfile(id).agentModels() === null) return undefined;
-      return (await store.loadProviders())[id];
+      return (await store.loadProviders())[id] ?? undefined;
     },
     buildFor,
   };

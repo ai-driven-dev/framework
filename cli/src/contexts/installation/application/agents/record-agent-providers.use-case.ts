@@ -7,8 +7,12 @@ import type {
 
 export interface RecordAgentProvidersRequest {
   readonly hosts: readonly AiToolId[];
-  /** Absent, every host forgets its provider. */
+  /** Absent, every host saves the choice of no provider. */
   readonly provider?: string;
+  /** Each host keeps the provider saved for it, a host saved on no provider stays on the IDE's
+   * model, and a host never set takes its tool's first.
+   * Wins over an absent `provider`, which would make every host forget its own. */
+  readonly keepSaved?: boolean;
 }
 
 export interface RecordAgentProvidersResult {
@@ -29,31 +33,35 @@ export class RecordAgentProviders {
   async execute({
     hosts,
     provider,
+    keepSaved,
   }: RecordAgentProvidersRequest): Promise<RecordAgentProvidersResult> {
-    const chosen = this.chosenProviders(hosts, provider);
     const before = await this.store.loadProviders();
+    const chosen = this.chosenProviders(hosts, keepSaved === true ? before : provider);
     const providers = { ...before };
-    for (const host of hosts) {
-      const one = chosen.get(host);
-      if (one === undefined) delete providers[host];
-      else providers[host] = one;
-    }
+    for (const host of hosts) providers[host] = chosen.get(host) ?? null;
     await this.store.saveProviders(providers);
     return { chosen, before };
   }
 
-  /** Each host's provider, refused where the host does not run it. */
+  /** Each host's provider, refused where the host does not run it: the one provider named, or,
+   * given the saved ones, each host's own, no provider included, else its tool's first. */
   private chosenProviders(
     hosts: readonly AiToolId[],
-    provider: string | undefined
+    named: string | Providers | undefined
   ): Map<string, string> {
     const chosen = new Map<string, string>();
-    if (provider === undefined) return chosen;
+    if (named === undefined) return chosen;
     for (const host of hosts) {
-      const models = this.tools.aiProfile(host).agentModels();
-      if (models === null) throw new Error(`No agent provider is supported for "${host}".`);
-      chosen.set(host, models.supportedProvider(provider));
+      const provider = this.providerOf(host, typeof named === "string" ? named : named[host]);
+      if (provider !== null) chosen.set(host, provider);
     }
     return chosen;
+  }
+
+  private providerOf(host: AiToolId, saved: string | null | undefined): string | null {
+    const models = this.tools.aiProfile(host).agentModels();
+    if (models === null) throw new Error(`No agent provider is supported for "${host}".`);
+    if (saved === null) return null;
+    return models.supportedProvider(saved === undefined ? models.providers()[0] : saved);
   }
 }
