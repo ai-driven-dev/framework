@@ -7,10 +7,8 @@
  * reach this instead.
  */
 import { join } from "node:path";
-import type {
-  BuildFileReader,
-  PluginPresence,
-} from "../../../shared/domain/materialization/build-contract.js";
+import type { BuildFileReader } from "../../../shared/domain/materialization/build-contract.js";
+import type { PluginPresence } from "../../../shared/domain/materialization/plugin-presence.js";
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import { InvalidSourceMarketplaceError } from "../../../shared/domain/shared.error.js";
 

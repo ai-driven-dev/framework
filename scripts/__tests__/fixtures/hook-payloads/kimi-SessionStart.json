@@ -1,0 +1,19 @@
+{
+  "host": "kimi",
+  "event": "SessionStart",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "hook_event_name": "SessionStart",
+        "session_id": "session_00000000-0000-4000-8000-000000000000",
+        "cwd": "/Users/user/project",
+        "client_type": "kimi_code_cli",
+        "source": "startup",
+        "model": "kimi-code/kimi-for-coding",
+        "profile": "agent"
+      },
+      "hookAnswer": null
+    }
+  ]
+}

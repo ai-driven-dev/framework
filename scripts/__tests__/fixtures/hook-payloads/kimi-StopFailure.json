@@ -1,0 +1,18 @@
+{
+  "host": "kimi",
+  "event": "StopFailure",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "hook_event_name": "StopFailure",
+        "session_id": "session_00000000-0000-4000-8000-000000000000",
+        "cwd": "/Users/user/project",
+        "client_type": "kimi_code_cli",
+        "error_type": "APIStatusError",
+        "error_message": "403 Your current subscription does not have access to Kimi Code right now. Upgrade your plan to keep coding with Kimi Code: https://www.kimi.com/code/#pricing"
+      },
+      "hookAnswer": null
+    }
+  ]
+}

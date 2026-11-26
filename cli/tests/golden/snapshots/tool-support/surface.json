@@ -195,7 +195,7 @@
         "skills": "yes",
         "agents": "yes",
         "mcp": "yes",
-        "hooks": "no",
+        "hooks": "yes",
         "rules": "yes",
         "commands": "no"
       },

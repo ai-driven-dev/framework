@@ -11,14 +11,20 @@ import {
 } from "../../../../../shared/domain/materialization/artifact-path.js";
 import type {
   AgentMarkdown,
-  PluginPresence,
   ToolBuildContract,
 } from "../../../../../shared/domain/materialization/build-contract.js";
 import type { FlatArtifactLayout } from "../../../../../shared/domain/materialization/flat-paths.js";
+import type { PluginPresence } from "../../../../../shared/domain/materialization/plugin-presence.js";
 import { rewritePluginRootInJson } from "../../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import { portableAgentFrontmatter } from "../../formats/agents/portable-agent.js";
 import { AGENTS_FILE, agentsIndexFiles } from "../../formats/agents-rules-index.js";
+import type { HooksRouting } from "../../formats/hooks/descriptor.js";
+import { pluginTreeHooksArtifact } from "../../formats/hooks/routes.js";
 import { hostToolNames } from "../../formats/host-tool-names.js";
+import { shapeEntries } from "../../hooks/hooks-entry-shape.js";
+import { routeEvents } from "../../hooks/hooks-route.js";
+import { toolWarning, unmappedEventWarning } from "../../hooks/hooks-warnings.js";
+import { matcherGroupsByEvent } from "../../hooks/plugin-hooks-shape.js";
 import { identityFields } from "../../marketplace-catalog.js";
 
 /** The Kimi name of each Claude tool an agent may declare; a Claude tool absent from it has no
@@ -104,35 +110,66 @@ export function buildKimiFlatContract(spec: KimiFlatSpec): ToolBuildContract {
 /** Where Kimi reads a plugin's manifest: https://www.kimi.com/code/docs/en/kimi-code-cli/customization/plugins.html */
 const PLUGIN_MANIFEST_RELATIVE = ".kimi-plugin/plugin.json";
 
+/** Kimi's hooks, with the native event each canonical event fires on. */
+export type KimiHooks = HooksRouting & { readonly eventMap: Readonly<Record<string, string>> };
+
 export interface KimiPluginSpec {
   readonly agentTools: KimiAgentTools;
-  readonly hooksReason: string;
+  readonly hooks: KimiHooks;
 }
 
-/** The manifest Kimi installs. Every path starts with `./`, and Kimi finds `agents/` by itself
- * when the manifest names none. Its servers are an inline object, not a path, with the plugin
- * root its own directory. `repository` is left out: Kimi lists no such field. */
-function kimiPluginManifest(
-  source: Record<string, unknown>,
-  { skillsList, mcpServers }: PluginPresence
-): Record<string, unknown> {
-  const { repository: _repository, ...identity } = identityFields(source);
+/** A hook as Kimi's manifest lists it: `event`, `matcher`, `command` and `timeout`
+ * (https://www.kimi.com/code/docs/en/kimi-code-cli/customization/plugins.html). */
+const MANIFEST_ENTRY = {
+  wrapper: {},
+  entries: { shape: "flat", fieldsKept: ["command", "matcher", "timeout"] },
+} as const;
+
+/** The hooks a manifest lists, from the plugin's events: commands run from the plugin root, an
+ * event Kimi never fires left out and named. */
+function manifestHooks(shipped: Readonly<Record<string, unknown>>, { eventMap }: KimiHooks) {
+  const { routed, skipped } = routeEvents(
+    matcherGroupsByEvent(rewritePluginRootInJson(shipped)),
+    eventMap,
+    (groups) => shapeEntries(groups, MANIFEST_ENTRY)
+  );
   return {
-    ...identity,
-    ...(skillsList.length > 0 && { skills: "./skills/" }),
-    ...(Object.keys(mcpServers).length > 0 && { mcpServers: rewritePluginRootInJson(mcpServers) }),
+    entries: routed.flatMap(([event, entries]) => entries.map((entry) => ({ event, ...entry }))),
+    skipped,
+  };
+}
+
+/** The manifest Kimi installs, which also reports each event Kimi never fires. Every path starts
+ * with `./`, and Kimi finds `agents/` by itself when the manifest names none. Its servers and
+ * hooks are inline, not paths, with the plugin root its own directory. `repository` is left
+ * out: Kimi lists no such field. */
+function kimiPluginManifest(hooks: KimiHooks) {
+  return (
+    source: Record<string, unknown>,
+    { skillsList, mcpServers, hooks: shipped }: PluginPresence,
+    warn?: (warning: string) => void
+  ): Record<string, unknown> => {
+    const { repository: _repository, ...identity } = identityFields(source);
+    const { entries, skipped } = manifestHooks(shipped, hooks);
+    for (const event of skipped) warn?.(toolWarning("kimi", unmappedEventWarning(event)));
+    return {
+      ...identity,
+      ...(skillsList.length > 0 && { skills: "./skills/" }),
+      ...(Object.keys(mcpServers).length > 0 && {
+        mcpServers: rewritePluginRootInJson(mcpServers),
+      }),
+      ...(entries.length > 0 && { hooks: entries }),
+    };
   };
 }
 
 /** The tree `aidd translate --to kimi --as marketplace` builds and the user-scope install hands
- * to Kimi's own plugin server: skills and agents under the plugin, the servers in the manifest. */
-export function buildKimiPluginContract({
-  agentTools,
-  hooksReason,
-}: KimiPluginSpec): ToolBuildContract {
+ * to Kimi's own plugin server: skills and agents under the plugin, the servers and hooks in the
+ * manifest. */
+export function buildKimiPluginContract({ agentTools, hooks }: KimiPluginSpec): ToolBuildContract {
   return {
     manifestFileRelative: PLUGIN_MANIFEST_RELATIVE,
-    synthesizeManifest: kimiPluginManifest,
+    synthesizeManifest: kimiPluginManifest(hooks),
     manifestSchemaName: null,
     artifacts: {
       skills: {
@@ -147,7 +184,7 @@ export function buildKimiPluginContract({
         agentMarkdown: kimiAgentMarkdown(agentTools),
       },
       mcp: { supported: false, reason: "Kimi reads a plugin's servers from its manifest" },
-      hooks: { supported: false, reason: hooksReason },
+      hooks: pluginTreeHooksArtifact(hooks),
     },
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,

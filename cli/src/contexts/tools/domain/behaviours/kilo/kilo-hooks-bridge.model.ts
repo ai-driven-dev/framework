@@ -1,8 +1,7 @@
 /**
  * Kilo's event bridge for one plugin's hooks.json, on OpenCode's event shapes.
  *
- * Limit: in `kilo run` a Stop follow-up's turn never runs: the drain closes before the unawaited
- * Stop script queues it.
+ * Limit: a follow-up sent from `dispose` fails: `kilo run` drains and exits before it.
  * Limit: no person channel; a plugin's toast was never seen rendered.
  */
 

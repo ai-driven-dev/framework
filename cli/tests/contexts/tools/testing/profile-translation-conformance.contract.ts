@@ -47,6 +47,7 @@ const PRESENCE = {
   agentsList: ["reviewer.md"],
   skillsList: ["hello"],
   hasHooksJson: true,
+  hooks: {},
   hasMcpJson: true,
   mcpServers: {},
 };

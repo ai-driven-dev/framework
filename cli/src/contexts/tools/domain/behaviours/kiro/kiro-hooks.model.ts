@@ -6,15 +6,18 @@
 
 import type { ShippedHooks } from "../../../../../shared/domain/materialization/build-contract.js";
 import { genericFlatHooksScriptPath } from "../../../../../shared/domain/materialization/flat-paths.js";
+import { hookEventsOf } from "../../../../../shared/domain/reading/hook-events.js";
 import { asPlainObject } from "../../../../../shared/domain/reading/plain-object.js";
 import type { ProjectHooksFormat } from "../../../contract/tool-vocabulary.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { hostToolNamesMatching, matcherNamesNoToolWarning } from "../../formats/host-tool-names.js";
 import { pluginScriptDir, pluginScriptPath } from "../../hooks/hooks-merge.js";
+import { routeEvents } from "../../hooks/hooks-route.js";
 import { unmappedEventWarning } from "../../hooks/hooks-warnings.js";
 import {
   type BridgeHookCall,
   bridgeHookCalls,
+  matcherGroupsByEvent,
   type PluginMatcherGroup,
 } from "../../hooks/plugin-hooks-shape.js";
 
@@ -75,19 +78,6 @@ function hooksOf(content: string | null): readonly KiroHook[] {
 /** The file with its hooks replaced; every other key a person wrote stays. */
 function serialize(existing: string | null, hooks: readonly KiroHook[]): string {
   return `${JSON.stringify({ version: VERSION, ...fileOf(existing), hooks }, null, 2)}\n`;
-}
-
-function isGroup(value: unknown): value is PluginMatcherGroup {
-  const group = asPlainObject(value);
-  return group !== null && Array.isArray(group.hooks);
-}
-
-/** A plugin's shipped hooks by event; an event whose groups are not groups of hooks is none. */
-function shippedEvents(json: string): [string, PluginMatcherGroup[]][] {
-  const { hooks } = asPlainObject(JSON.parse(json)) ?? {};
-  return Object.entries(asPlainObject(hooks) ?? {}).flatMap(([event, groups]) =>
-    Array.isArray(groups) && groups.every(isGroup) ? [[event, groups]] : []
-  );
 }
 
 /** A hook is a plugin's when its command names that plugin's own scripts folder. */
@@ -151,26 +141,25 @@ export function mergeKiroHooks(
   shipped: ShippedHooks
 ): { content: string; warnings: readonly string[] } {
   const kept = hooksOf(existingJson).filter((hook) => !runs(hooks, hook, shipped.plugin));
-  const added: KiroHook[] = [];
-  const warnings: string[] = [];
-  for (const [event, groups] of shippedEvents(shipped.json)) {
-    const trigger = Object.hasOwn(hooks.eventMap, event) ? hooks.eventMap[event] : undefined;
-    if (trigger === undefined) {
-      warnings.push(unmappedEventWarning(event));
-      continue;
-    }
-    const built = hooksOfEvent(
-      {
-        scriptsDir: hooks.flat.scriptsDir,
-        plugin: shipped.plugin,
-        trigger,
-        toolNames: hooks.toolNames,
-      },
-      groups
-    );
-    added.push(...built.hooks);
-    warnings.push(...built.warnings);
-  }
+  const { routed, skipped } = routeEvents(
+    matcherGroupsByEvent(hookEventsOf(shipped.json)),
+    hooks.eventMap,
+    (groups, trigger) =>
+      hooksOfEvent(
+        {
+          scriptsDir: hooks.flat.scriptsDir,
+          plugin: shipped.plugin,
+          trigger,
+          toolNames: hooks.toolNames,
+        },
+        groups
+      )
+  );
+  const added = routed.flatMap(([, built]) => built.hooks);
+  const warnings = [
+    ...skipped.map(unmappedEventWarning),
+    ...routed.flatMap(([, built]) => built.warnings),
+  ];
   return { content: serialize(existingJson, [...kept, ...added]), warnings };
 }
 

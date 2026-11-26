@@ -99,6 +99,10 @@ describe("repo content rules", () => {
     assert.deepEqual(ids({ "plugins/a/agents/x.md": "---\nname: x\nmodel:\n---\n" }), ["REPO-08"]);
   });
 
+  it("REPO-08 flags a bundled skill that sets a reasoning effort", () => {
+    assert.deepEqual(ids({ "plugins/a/skills/s/SKILL.md": "---\nname: s\neffort: high\n---\n" }), ["REPO-08"]);
+  });
+
   it("REPO-11 flags a path in a skill file that climbs out of its skill", () => {
     assert.deepEqual(ids({ "plugins/a/skills/s/references/engine.md": "Run `node ../../hooks/e.cjs` from here.\n" }), ["REPO-11"]);
   });

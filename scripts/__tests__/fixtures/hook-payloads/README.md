@@ -70,7 +70,11 @@ PostToolUse (an `fs_write` creating a file, a `str_replace` edit, an `execute_ba
 --model qwen3-coder-next "<prompt>"`. Their stdin carries no `stop_hook_active`. After a Stop hook
 printed `{"decision": "block", "reason": ...}` the model answered the reason and Stop fired once
 for that prompt, never again on the continuation turn. Output printed by a PostToolUse hook, in
-every shape tried, was not read by the model.
+every shape tried, was not read by the model. Kimi's SessionStart, UserPromptSubmit, TurnStarted and
+StopFailure, from `kimi` 0.42.0 started with `kimi web` and a plugin installed over
+`POST /api/v1/plugins`, then `kimi --output-format stream-json -p`: the model turn itself was
+refused (403), so no tool or Stop payload exists. The host's `session_` prefix on the session id is
+kept.
 
 ## How the harder ones were reached
 

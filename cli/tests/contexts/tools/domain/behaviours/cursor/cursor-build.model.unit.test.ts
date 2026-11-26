@@ -58,6 +58,7 @@ describe("building Cursor's marketplace contract", () => {
         agentsList: ["planner.md"],
         skillsList: ["01-plan"],
         hasHooksJson: true,
+        hooks: {},
         hasMcpJson: true,
         mcpServers: {},
       }

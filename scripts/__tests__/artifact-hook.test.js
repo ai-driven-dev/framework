@@ -5,6 +5,8 @@ const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 
+const { readHookOutput } = require("../lib/hook-output.cjs");
+
 const REPO = path.resolve(__dirname, "../..");
 const RUNTIME = path.join(REPO, "cli/assets/hooks-runtime");
 const PAYLOADS = path.join(__dirname, "fixtures/hook-payloads");
@@ -128,9 +130,10 @@ function session(plugin, host, files = {}, env = {}) {
 
 /** The finding lines a Stop answered, after its fix hint, whatever the host's shape; null when it printed nothing. */
 function lines(stdout) {
-  if (stdout === "") return null;
-  const answer = JSON.parse(stdout);
-  assert.equal(stdout.trim().split("\n").length, 1, "one answer per turn");
+  const { answer: text } = readHookOutput(stdout);
+  if (text === "") return null;
+  const answer = JSON.parse(text);
+  assert.equal(text.split("\n").length, 1, "one answer per turn");
   const [hint, ...found] = (answer.reason ?? answer.followup_message).split("\n");
   assert.match(hint, /^These files break their AIDD contract\. /u, "the answer opens with the fix hint");
   return found;

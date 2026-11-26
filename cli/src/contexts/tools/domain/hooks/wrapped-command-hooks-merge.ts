@@ -4,8 +4,9 @@ import type { ProjectHookEntry } from "../../contract/tool-vocabulary.js";
 import { toBase64 } from "../formats/base64.js";
 import { hostToolNamesMatching, matcherNamesNoToolWarning } from "../formats/host-tool-names.js";
 import { pluginScriptPath, SCRIPTS } from "./hooks-merge.js";
+import { routeEvents } from "./hooks-route.js";
 import { unmappedEventWarning } from "./hooks-warnings.js";
-import type { PluginHookItem, PluginHooksShape } from "./plugin-hooks-shape.js";
+import type { PluginHookItem, PluginHooksShape, PluginMatcherGroup } from "./plugin-hooks-shape.js";
 
 // The host runs a handler from its own directory under the project and requires JSON stdout even
 // for a silent hook. Before a tool, `{}` is a deny: a silent script lets the tool run by saying so.
@@ -63,11 +64,6 @@ function hostMatcher(target: WrappedCommandHooksTarget, matcher: string | undefi
   return names.length > 0 ? names.join("|") : undefined;
 }
 
-/** The way up from where a handler runs to the project root. */
-function projectRootOf(target: WrappedCommandHooksTarget): string {
-  return target.runsFrom?.projectRoot ?? "..";
-}
-
 /** Where a script a plugin names sits from the project root. */
 function scriptPathOf(
   target: WrappedCommandHooksTarget,
@@ -80,46 +76,55 @@ function scriptPathOf(
     : locate(suffix);
 }
 
+/** One event's handlers: a tool event goes in `{ matcher, hooks: [handler] }`, one group per group
+ * the plugin wrote; any other event holds its handlers flat. */
+function handlersOf(
+  target: WrappedCommandHooksTarget,
+  groups: readonly PluginMatcherGroup[],
+  toolEvent: string
+): { entries: (ProjectHookEntry | HandlerGroup)[]; warnings: string[] } {
+  const handler = toHandler(toolEvent, target.runsFrom?.projectRoot ?? "..");
+  if (!TOOL_EVENTS.has(toolEvent)) {
+    return {
+      entries: groups.flatMap((group) => (group.hooks ?? []).filter(runsCommand).map(handler)),
+      warnings: [],
+    };
+  }
+  const warnings: string[] = [];
+  const entries = groups.flatMap((group) => {
+    const matcher = hostMatcher(target, group.matcher);
+    if (matcher === undefined) {
+      warnings.push(matcherNamesNoToolWarning(target.label, toolEvent, group.matcher ?? ""));
+      return [];
+    }
+    return [{ matcher, hooks: (group.hooks ?? []).filter(runsCommand).map(handler) }];
+  });
+  return { entries, warnings };
+}
+
 function convert(
   target: WrappedCommandHooksTarget,
   { json, plugin: pluginName, locate = (pluginPath) => pluginPath }: ShippedHooks
 ): { handlers: Record<string, (ProjectHookEntry | HandlerGroup)[]>; warnings: string[] } {
-  const parsed = JSON.parse(json) as unknown;
-  const projectRoot = projectRootOf(target);
   const rewritten = rewritePluginRootInJson(
-    parsed,
+    JSON.parse(json),
     (suffix) => `./${scriptPathOf(target, { pluginName, suffix, locate })}`
   ) as PluginHooksShape;
-  const handlers: Record<string, (ProjectHookEntry | HandlerGroup)[]> = {};
-  const warnings: string[] = [];
-  for (const [event, groups] of Object.entries(rewritten.hooks ?? {})) {
-    if (!Object.hasOwn(target.descriptor.eventMap, event)) {
-      warnings.push(unmappedEventWarning(event));
-      continue;
-    }
-    if (!TOOL_EVENTS.has(event)) {
-      handlers[event] = groups.flatMap((group) =>
-        (group.hooks ?? []).filter(runsCommand).map(toHandler(event, projectRoot))
-      );
-      continue;
-    }
-    // A tool event goes in `{ matcher, hooks: [handler] }`, one group per group the plugin wrote.
-    const grouped = groups.flatMap((group) => {
-      const matcher = hostMatcher(target, group.matcher);
-      if (matcher === undefined) {
-        warnings.push(matcherNamesNoToolWarning(target.label, event, group.matcher ?? ""));
-        return [];
-      }
-      return [
-        {
-          matcher,
-          hooks: (group.hooks ?? []).filter(runsCommand).map(toHandler(event, projectRoot)),
-        },
-      ];
-    });
-    if (grouped.length > 0) handlers[event] = grouped;
-  }
-  return { handlers, warnings };
+  const { routed, skipped } = routeEvents(
+    Object.entries(rewritten.hooks ?? {}),
+    target.descriptor.eventMap,
+    (groups, toolEvent) => handlersOf(target, groups, toolEvent)
+  );
+  const kept = routed.filter(
+    ([toolEvent, { entries }]) => !TOOL_EVENTS.has(toolEvent) || entries.length > 0
+  );
+  return {
+    handlers: Object.fromEntries(kept.map(([toolEvent, { entries }]) => [toolEvent, entries])),
+    warnings: [
+      ...skipped.map(unmappedEventWarning),
+      ...routed.flatMap(([, { warnings }]) => warnings),
+    ],
+  };
 }
 
 export function readNamedHooks(json: string): NamedHooks {
