@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- [Node](https://nodejs.org) 22.12 or later (`node --version`).
+- [Node](https://nodejs.org) 22.12 or later (`node --version`) for the AIDD CLI and JavaScript hooks.
 - An AI coding tool: Claude Code, Cursor, GitHub Copilot, Codex, OpenCode, Kilo Code, Antigravity CLI, Kiro or Kimi Code CLI.
 
 ## Pick a method
@@ -51,20 +51,23 @@ It lists what is installed and what needs fixing.
 
 ## Marketplace
 
-Use the [AIDD distribution repository](https://github.com/ai-driven-dev/marketplaces) with the ref for your tool. The tool branch follows releases. To stay on one release, use `<tool>-v<version>` as the ref where documented below. The [release ZIPs](https://github.com/ai-driven-dev/framework/releases) remain available for local installs.
+Choose your tool. [Claude Code](#claude-code) · [GitHub Copilot](#github-copilot) · [Codex](#codex) · [Cursor](#cursor) · [Antigravity CLI](#antigravity-cli)
 
-The per-tool distributions for Claude Code, Cursor, and Copilot ship AIDD's recommended Anthropic models and effort for the orchestration agents. The Codex distribution includes the recommended OpenAI models and effort. See [agent model settings](SUBAGENTS.md#-models) to use a different provider or inherit the host model.
+The commands below follow the latest version available for each tool in the [AIDD distribution repository](https://github.com/ai-driven-dev/marketplaces). Each tool also has [release ZIPs](https://github.com/ai-driven-dev/framework/releases).
 
-<details>
-<summary><b>Claude Code</b></summary>
+Claude Code, Cursor, and Copilot release builds use AIDD’s recommended Anthropic models and effort for the orchestration agents. The Codex flat distribution uses OpenAI. These recommendations apply to subagents. See [agent model settings](SUBAGENTS.md#-models) for other provider choices.
 
-<br />
+### Claude Code
 
-In a session, run:
+Install the first plugin from your terminal:
+
+```sh
+claude plugin install aidd-context --marketplace 'https://github.com/ai-driven-dev/marketplaces.git#claude'
+```
+
+Open Claude Code in your project and run `/aidd-context:00-onboard`. The first command also registers the AIDD catalog. Add the other recommended plugins as needed:
 
 ```text
-/plugin marketplace add https://github.com/ai-driven-dev/marketplaces.git#claude
-/plugin install aidd-context@aidd-marketplace
 /plugin install aidd-refine@aidd-marketplace
 /plugin install aidd-dev@aidd-marketplace
 /plugin install aidd-vcs@aidd-marketplace
@@ -74,20 +77,20 @@ In a session, run:
 
 For a pinned install, replace `claude` with `claude-v<version>`.
 
+<details>
+<summary>Migrate an existing Claude Code installation</summary>
+
 If you already use `ai-driven-dev/framework`, that catalog follows the first two releases successfully published to the new Claude Code branch during the transition, then serves the second of those releases indefinitely. Replays of older releases cannot roll back the catalog. Before switching, use `claude plugin list --json` to record plugin names and scopes. In your user, project, and project-local settings, check for old IDs in `enabledPlugins` and `pluginConfigs` and for an old marketplace declaration in `extraKnownMarketplaces`.
 
 1. Add the new catalog and install each plugin using `claude plugin install <plugin>@aidd-marketplace --scope <scope>` for each scope where it was installed.
 2. Restore enablement and settings under the new plugin IDs. Re-enter secrets in Claude Code. Update any project or user settings that declare the old marketplace. Avoid enabling both copies of a plugin during normal use.
 3. Verify the new plugins and their settings, then remove the old catalog with `claude plugin marketplace remove aidd-framework`. Removal uninstalls plugins tied to the old catalog and can delete their saved settings and data. [Claude Code marketplace management](https://code.claude.com/docs/en/plugins/host-marketplace) · [Settings scopes](https://code.claude.com/docs/en/settings)
 
-For a local install, extract `aidd-framework-claude-marketplace-<version>.zip` and add the extracted directory. Its plugin IDs use `@aidd-framework`.
-
 </details>
 
-<details>
-<summary><b>GitHub Copilot</b></summary>
+For a local install, extract `aidd-framework-claude-marketplace-<version>.zip` and add the extracted directory. Its plugin IDs use `@aidd-framework`.
 
-<br />
+### GitHub Copilot
 
 With GitHub Copilot CLI:
 
@@ -98,14 +101,17 @@ copilot plugin install aidd-context@aidd-framework
 
 To pin a version, use `#copilot-v<version>`. For a local catalog, extract `aidd-framework-copilot-marketplace-<version>.zip` and pass its directory to `copilot plugin marketplace add`.
 
-</details>
+### Codex
 
-<details>
-<summary><b>Codex</b></summary>
+**For AIDD subagents**, use the [Codex flat-file ZIP](#flat-files) for the current project, or install for all your projects with the CLI:
 
-<br />
+```sh
+npx @ai-driven-dev/cli@latest setup --global --ide codex --plugins recommended --provider openai --agents-only --yes
+```
 
-With Codex CLI:
+Codex loads subagents from its user or project agent directory. Installing from the catalog alone leaves the included agent TOMLs inactive.
+
+**For native plugins** (skills, hooks, and MCP), use the Codex CLI:
 
 ```sh
 codex plugin marketplace add https://github.com/ai-driven-dev/marketplaces.git --ref codex
@@ -114,14 +120,7 @@ codex plugin add aidd-context@aidd-framework
 
 To pin a version, use `--ref codex-v<version>`. For a local catalog, extract `aidd-framework-codex-marketplace-<version>.zip` and pass its directory to `codex plugin marketplace add`.
 
-To use the AIDD subagents, install with `aidd setup --global --ide codex --provider openai`, or use the [Codex flat-file ZIP](#flat-files) for the project. Codex loads agents from its user or project agent directory, so installing from the catalog alone leaves the included agent TOMLs inactive.
-
-</details>
-
-<details>
-<summary><b>Cursor</b></summary>
-
-<br />
+### Cursor
 
 Cursor Teams and Enterprise offer Git-backed team marketplaces. The AIDD catalog is on the distribution repository’s default branch, `cursor`. The hosted installation in the team client still needs verification. [Cursor team marketplaces](https://cursor.com/docs/plugins)
 
@@ -141,14 +140,9 @@ cp -r aidd-framework-cursor-marketplace-<version>/plugins/aidd-* ~/.cursor/plugi
 
 4. In Cursor, run **Developer: Reload Window**.
 
-</details>
+### Antigravity CLI
 
-<details>
-<summary><b>Antigravity CLI</b></summary>
-
-<br />
-
-1. Download `aidd-framework-antigravity-marketplace-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest). It holds plugin directories, not a catalog: Antigravity registers no marketplace.
+1. Download `aidd-framework-antigravity-marketplace-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest). The bundle contains plugin directories for local installation.
 2. Unzip it.
 3. From your project's root, copy the plugins:
 
@@ -156,8 +150,6 @@ cp -r aidd-framework-cursor-marketplace-<version>/plugins/aidd-* ~/.cursor/plugi
 mkdir -p .agents/plugins
 cp -r aidd-framework-antigravity-marketplace-<version>/plugins/aidd-* .agents/plugins/
 ```
-
-</details>
 
 For OpenCode, Kilo Code, Kiro, and Kimi Code CLI, AIDD distributes flat files. See [Compatibility](COMPATIBILITY.md#hosted-marketplaces) for each tool’s distribution options.
 
