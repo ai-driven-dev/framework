@@ -222,8 +222,6 @@ jobs:
       - run: cd cli && pnpm build
 
       - name: Build the target-native distribution
-        env:
-          TOOL: ${{ matrix.tool }}
         run: |
           VERSION="${{ needs.release-please.outputs.version }}"
           NAME="aidd-framework-${{ matrix.tool }}-${{ matrix.mode }}-${VERSION}"
@@ -231,9 +229,8 @@ jobs:
           # contains the other, so stage under RUNNER_TEMP rather than the repo tree.
           OUT="${RUNNER_TEMP}/dist/${{ matrix.tool }}/${{ matrix.mode }}"
           mkdir -p "$OUT"
-          PROVIDER=$(node -p "require('./scripts/marketplace-distribution.json').tools[process.env.TOOL]?.recommendedProvider ?? 'none'")
           node cli/dist/cli.js translate . \
-            --to "$TOOL" --out "$OUT" --as ${{ matrix.mode }} --provider "$PROVIDER"
+            --to ${{ matrix.tool }} --out "$OUT" --as ${{ matrix.mode }}
           STAGE="$(mktemp -d)/${NAME}"
           mkdir -p "$STAGE"
           cp -R "$OUT"/. "$STAGE"/

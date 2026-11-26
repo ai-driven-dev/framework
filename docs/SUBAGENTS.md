@@ -60,7 +60,7 @@ aidd sync --global   # after a framework update
 
 ## 🧠 Models
 
-The Claude Code release bundle sets AIDD's recommended Anthropic models and effort for the agents. The Codex flat bundle uses OpenAI. Copilot and Cursor agents inherit the host's session settings by default. To select a provider during setup or return to the host's model, use `--provider`:
+The main session and the agents run on the IDE's model unless you pick a provider when installing:
 
 ```bash
 aidd setup --ide opencode --provider mistral   # main session and agents on Mistral models
@@ -84,7 +84,7 @@ Claude Code takes anthropic, Codex openai, Copilot openai or anthropic, Cursor a
 - Effort: smart runs at `high`, the others at `medium`. Mistral Small takes no effort between `none` and `high`, so the light tier runs at `high`.
 - The command ends with a report: per IDE, the model of the main session and of each agent, and the plugins it updated.
 
-### Change the recommended models
+### Change the agents' models
 
 For an installation managed by AIDD, `--agents-only` applies the change to the subagents. For example, choose the OpenAI profile for Copilot or let its agents inherit the session model:
 

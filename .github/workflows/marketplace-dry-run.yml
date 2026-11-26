@@ -39,29 +39,13 @@ jobs:
           export GIT_CONFIG_VALUE_0
           for TOOL in $(node -p "Object.keys(require('./scripts/marketplace-distribution.json').tools).join(' ')"); do
             OUT="$RUNNER_TEMP/marketplaces/$TOOL"
-            PROVIDER=$(TOOL="$TOOL" node -p "require('./scripts/marketplace-distribution.json').tools[process.env.TOOL]?.recommendedProvider ?? 'none'")
-            node cli/dist/cli.js translate . --to "$TOOL" --out "$OUT" --as marketplace --provider "$PROVIDER"
+            node cli/dist/cli.js translate . --to "$TOOL" --out "$OUT" --as marketplace
             node scripts/publish-marketplace.cjs "$TOOL" v0.0.1 "$OUT" "$REMOTE"
             CLIENT=$(TOOL="$TOOL" node -p "require('./scripts/marketplace-distribution.json').tools[process.env.TOOL].clientPackage || ''")
             if [ -n "$CLIENT" ]; then
               npm install --prefix "$RUNNER_TEMP/marketplace-client-$TOOL" "$CLIENT"
             fi
             PATH="$RUNNER_TEMP/marketplace-client-$TOOL/node_modules/.bin:$PATH" node scripts/verify-marketplace.cjs "$TOOL" v0.0.1 "$OUT"
-          done
-          REVIEWER="$RUNNER_TEMP/marketplaces/claude/plugins/aidd-orchestrator/agents/reviewer.md"
-          grep -q '^model: ' "$REVIEWER"
-          grep -q '^effort: ' "$REVIEWER"
-          REVIEWER="$RUNNER_TEMP/marketplaces/codex/plugins/aidd-orchestrator/codex-agents/reviewer.toml"
-          grep -q '^model = ' "$REVIEWER"
-          grep -q '^model_reasoning_effort = ' "$REVIEWER"
-          for REVIEWER in \
-            "$RUNNER_TEMP/marketplaces/copilot/plugins/aidd-orchestrator/agents/reviewer.agent.md" \
-            "$RUNNER_TEMP/marketplaces/cursor/plugins/aidd-orchestrator/agents/reviewer.md"; do
-            test -f "$REVIEWER"
-            if grep -Eq '^(model|effort|reasoningEffort):' "$REVIEWER"; then
-              printf 'Expected the reviewer to inherit session settings: %s\n' "$REVIEWER" >&2
-              exit 1
-            fi
           done
       - name: Check legacy overlap and release retries
         run: |

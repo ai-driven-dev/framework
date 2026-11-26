@@ -3,7 +3,6 @@
   "tools": {
     "claude": {
       "ref": "claude",
-      "recommendedProvider": "anthropic",
       "catalog": ".claude-plugin/marketplace.json",
       "manifest": ".claude-plugin/plugin.json",
       "name": "aidd-marketplace",
@@ -11,7 +10,6 @@
     },
     "codex": {
       "ref": "codex",
-      "recommendedProvider": "openai",
       "catalog": ".agents/plugins/marketplace.json",
       "manifest": ".codex-plugin/plugin.json",
       "clientPackage": "@openai/codex@0.172.0"

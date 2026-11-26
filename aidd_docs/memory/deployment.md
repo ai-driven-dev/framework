@@ -53,7 +53,7 @@ Branch model: `vcs.md`. Cadence and safety rules: [`RELEASE.md`](../../RELEASE.m
 ## Gotchas
 
 - `build-per-tool` builds the CLI from the run's own checkout, never a published version: nothing to bump or go stale.
-- `build-per-tool` reads the recommended providers from `scripts/marketplace-distribution.json` and passes them to `aidd translate`. Each hosted catalog comes from the same ZIP used for local marketplace installs. When a recommendation changes, release a new version of the affected agent plugin so clients refresh their caches.
+- Each hosted catalog comes from the same ZIP used for local marketplace installs. The release pins no agent model: only `aidd setup` or `aidd translate --provider` does.
 
 ## Local reload
 
