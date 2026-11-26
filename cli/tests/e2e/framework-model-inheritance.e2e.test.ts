@@ -1,20 +1,20 @@
 import { mkdir, readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { frameworkBuildTargetModes } from "../../src/contexts/translate/domain/build-target.js";
-import "../../src/runtime/wiring/translate.js";
-import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
-import { createTestEnv, runCli } from "./helpers.js";
+import { buildTargetModesOf } from "../../src/contexts/translate/contract/build-targets.js";
+import { catalogOf } from "../shared/testing/catalog-of.builder.js";
+import { createTestEnv, runCli } from "../shared/testing/cli-sandbox.builder.js";
+import { REPOSITORY_ROOT } from "../shared/testing/repository-root.builder.js";
 
 // Every target/mode the CLI announces, built from the shipped plugins rather than a fixture.
-const CELLS = frameworkBuildTargetModes();
+const CELLS = buildTargetModesOf(catalogOf());
 
 // A recipe may show a model in an example block; only a declaration the host reads counts.
-// `inherit` hands the choice back to the host, so it is not an override.
+// An empty slot or `inherit` hands the choice back to the host, so neither is an override.
 function overridesModel(path: string, content: string): boolean {
   if (path.endsWith(".toml")) return /^model\s*=/m.test(content);
   const frontmatter = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-  return frontmatter !== null && /^model\s*:(?!\s*["']?inherit["']?\s*$)/m.test(frontmatter[1]);
+  return frontmatter !== null && /^model\s*:(?!\s*(["']?inherit["']?)?\s*$)/m.test(frontmatter[1]);
 }
 
 describe.concurrent("E2E: the shipped framework leaves model selection to the host", () => {
