@@ -58,7 +58,7 @@ export async function materializeFlatMcp(materialization: {
     fs.fileExists(join(projectRoot, relativePath))
   );
   const outputPath = join(projectRoot, outputRelPath);
-  const existingContent = await readExisting(fs, outputPath);
+  const existingContent = await whenAbsent(() => fs.readFile(outputPath), null);
   const merged = mergedServers(mcpCap, { existingContent, declaration, previousMcpEntries });
   const content =
     rulesGlob === null ? merged.content : mcpCap.withInstruction(merged.content, rulesGlob);
@@ -98,29 +98,9 @@ function mergedServers(
   return { ...merged, content: touched ? merged.mergedContent : existingContent };
 }
 
-async function readExisting(fs: FileReader, path: string): Promise<string | null> {
-  return whenAbsent(() => fs.readFile(path), null);
-}
-
-/** Lists the plugin's rules glob in the file a tool reads its guidance from, for a tool with no
- * rules folder of its own; nothing for a plugin that placed no rule. */
-async function listRulesInIndex(
-  fs: FileReader & FileWriter,
-  { tool, projectRoot }: AddPluginRequest,
-  rulesGlob: string | null
-): Promise<void> {
-  const index = tool.flatRulesIndex();
-  if (index === null || rulesGlob === null) return;
-  const path = join(projectRoot, index.relativePath);
-  const existing = await readExisting(fs, path);
-  const content = index.withGlob(existing, rulesGlob);
-  if (content !== existing) await fs.writeFile(path, content);
-}
-
 /**
  * Merges the plugin's MCP servers into the tool's flat config, then refreshes the hash the manifest
- * tracks for that config so the merge does not read back as drift. The rules it placed are listed
- * in the file its tool reads guidance from.
+ * tracks for that config so the merge does not read back as drift.
  */
 export async function materializeRequestedMcp(
   fs: FileReader & FileWriter,
@@ -143,7 +123,6 @@ export async function materializeRequestedMcp(
     projectRoot,
     outputRelPath: mcp.outputRelPath,
   });
-  await listRulesInIndex(fs, request, contribution.rulesGlob);
   return mcp;
 }
 

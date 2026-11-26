@@ -188,6 +188,7 @@ export function projectIntegrationOf(fs: FileReader & FileWriter, settings: Trac
   const assertHooksRemovable = new AssertProjectHooksRemovable(unchanged);
   const plan = new PlanProjectMcpRemoval(fs, withinRoot);
   const enablement = removeEnabledPluginOf(settings);
+  const unlistRules = new UnlistProjectRules(fs, withinRoot);
   const assertMcpRemovable = new AssertProjectMcpEntriesRemovable(plan);
   return {
     materializer,
@@ -198,12 +199,13 @@ export function projectIntegrationOf(fs: FileReader & FileWriter, settings: Trac
     assertMcpRemovable,
     assertIntegration: new AssertProjectIntegrationRemovable(
       assertMcpRemovable,
-      assertHooksRemovable
+      assertHooksRemovable,
+      withinRoot
     ),
     removeIntegration: new RemoveProjectIntegration({
       plan,
       hooks: removeHooks,
-      rules: new UnlistProjectRules(fs, withinRoot),
+      rules: unlistRules,
       write: new WriteProjectMcpRewrite(fs, withinRoot),
       enablement,
     }),

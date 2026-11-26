@@ -13,7 +13,10 @@ import { FakeMarketplaceRegistry } from "../../../testing/fake-marketplace-regis
 async function readBuilt(
   fs: InMemoryFileAdapter,
   translate: BuiltMaterializationDeps["translate"] = translateDistribution,
-  at: { tool: typeof TOOL.cursor | typeof TOOL.kilo; mode: "marketplace" | "flat" } = {
+  at: {
+    tool: typeof TOOL.cursor | typeof TOOL.kilo | typeof TOOL.kimi;
+    mode: "marketplace" | "flat";
+  } = {
     tool: TOOL.cursor,
     mode: "marketplace",
   }
@@ -108,5 +111,36 @@ describe("reading a flat built tree of a tool that lists its rules in its config
     await readBuilt(fs, translateDistribution, at);
 
     expect(fs.has("/proj/.kilo/kilo.jsonc")).toBe(false);
+  });
+});
+
+describe("reading a flat built tree of a tool that lists its rules in AGENTS.md", () => {
+  const BUILT_RULE = "/built/kimi/.kimi-code/instructions/sample-plugin-01-standards-naming.md";
+  const GLOB = ".kimi-code/instructions/sample-plugin-*.md";
+  const at = { tool: TOOL.kimi, mode: "flat" } as const;
+
+  it("lists the plugin's rules after the team's text, which the build's own file never replaces", async () => {
+    const fs = new InMemoryFileAdapter();
+    fs.setFile(BUILT_RULE, "# Naming\n");
+    fs.setFile("/built/kimi/AGENTS.md", "# From the build\n");
+    fs.setFile("/proj/AGENTS.md", "# Team notes\n");
+
+    const { files } = await readBuilt(fs, translateDistribution, at);
+
+    expect(files.map((f) => f.relativePath)).toStrictEqual([
+      ".kimi-code/instructions/sample-plugin-01-standards-naming.md",
+    ]);
+    const agents = fs.getFile("/proj/AGENTS.md") ?? "";
+    expect(agents.startsWith("# Team notes\n\n<!-- aidd_plugin_rules:start -->")).toBe(true);
+    expect(agents).toContain(`- \`${GLOB}\``);
+    expect(agents).not.toContain("From the build");
+  });
+
+  it("refuses a block of the team's AGENTS.md whose markers do not pair, before placing anything", async () => {
+    const fs = new InMemoryFileAdapter();
+    fs.setFile(BUILT_RULE, "# Naming\n");
+    fs.setFile("/proj/AGENTS.md", "<!-- aidd_plugin_rules:start -->\nhand edit\n");
+
+    await expect(readBuilt(fs, translateDistribution, at)).rejects.toThrow(/AGENTS\.md.*repair/);
   });
 });

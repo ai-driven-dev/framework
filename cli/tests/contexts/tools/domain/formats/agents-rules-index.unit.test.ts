@@ -61,12 +61,24 @@ describe("listing a plugin's rules glob in AGENTS.md", () => {
     expect(globsOf(text)).toStrictEqual([GLOB]);
   });
 
-  it("writes nothing into a block whose markers do not pair", () => {
+  it("refuses a block whose markers do not pair, so the person repairs it", () => {
     const broken = `${PERSON}\n${START}\nhand edit\n`;
-
-    expect(addAgentsRulesGlob(broken, GLOB)).toBe(broken);
     const twice = `${START}\n- \`${OTHER}\`\n${START}\n${END}\n`;
-    expect(addAgentsRulesGlob(twice, GLOB)).toBe(twice);
+
+    expect(() => addAgentsRulesGlob(broken, GLOB)).toThrow(/AGENTS\.md.*repair/);
+    expect(() => addAgentsRulesGlob(twice, GLOB)).toThrow(/AGENTS\.md.*repair/);
+  });
+
+  it("does not take a marker quoted inside a line for a block", () => {
+    const quoted = `${PERSON}\nThe block opens with \`${START}\` and ends with ${END} in a line.\nIt starts at ${START}\n`;
+    const text = addAgentsRulesGlob(quoted, GLOB);
+
+    expect(text.startsWith(`${quoted}\n${START}\n`)).toBe(true);
+    expect(globsOf(text)).toStrictEqual([GLOB]);
+  });
+
+  it("tells the model that a rule stating no files applies to every file", () => {
+    expect(addAgentsRulesGlob(null, GLOB)).toContain("any other rule applies to every file");
   });
 });
 

@@ -283,9 +283,9 @@ export interface AiToolProfile {
   machineLocalFiles(): readonly string[];
   /** Where it takes a plugin's hooks inside the project, or null when it takes none there. */
   projectHooksDelivery(): ProjectHooksLocation | null;
-  /** Where its installed rules live and what they end in, or null when it installs none. */
   /** The file that lists a plugin's rules for a tool reading no rules folder, or null. */
   flatRulesIndex(): RulesIndexAnswers | null;
+  /** Where its installed rules live and what they end in, or null when it installs none. */
   installedRulesLocation(): { readonly directory: string; readonly extension: string } | null;
   /** Where its own commands sit in the project at `projectRoot`, or null when it declares none. */
   signalDirectoryIn(projectRoot: string): SignalDirectory | null;
