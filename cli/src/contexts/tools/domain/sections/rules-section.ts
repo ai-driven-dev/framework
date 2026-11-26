@@ -1,6 +1,15 @@
+import type { RulesIndexAnswers } from "../../contract/tool-profile.js";
+import {
+  AGENTS_FILE,
+  addAgentsRulesGlob,
+  removeAgentsRulesGlob,
+} from "../formats/agents-rules-index.js";
+
 type RulesSectionParams = {
   toolSuffix: string;
   inputSuffix?: string;
+  /** The tool reads markdown guidance only from AGENTS.md, so the rules it is given are listed there. */
+  listedInAgentsFile?: true;
   buildInstallPath: (fileName: string) => string | null;
   convertFrontmatter: (fm: Record<string, unknown>) => Record<string, unknown>;
 };
@@ -32,6 +41,16 @@ export class RulesSection {
     return {
       directory: installed.slice(0, lastSlash + 1),
       extension: installed.slice(stemAt + RulesSection.#PROBE_STEM.length),
+    };
+  }
+
+  /** The file listing a plugin's rules, for a tool that reads no rules folder; null for any other. */
+  agentsIndex(): RulesIndexAnswers | null {
+    if (this.#params.listedInAgentsFile === undefined) return null;
+    return {
+      relativePath: AGENTS_FILE,
+      withGlob: addAgentsRulesGlob,
+      withoutGlob: removeAgentsRulesGlob,
     };
   }
 

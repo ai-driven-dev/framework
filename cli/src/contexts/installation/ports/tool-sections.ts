@@ -6,6 +6,7 @@ import type {
   ConfigWrite,
   McpConfigAnswers,
   PluginAnswers,
+  RulesIndexAnswers,
 } from "../../tools/contract/tool-profile.js";
 import type {
   ProjectHooksLocation,
@@ -92,6 +93,7 @@ export interface FlatMcpSection {
   readonly toolId: AiToolId;
   flatPluginMcp(): McpConfigAnswers | null;
   flatRulesPlacement(pluginName: string): { readonly prefix: string; readonly glob: string } | null;
+  flatRulesIndex(): RulesIndexAnswers | null;
 }
 
 /** The shared settings file a tool enables its plugins in. */

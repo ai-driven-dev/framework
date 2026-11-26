@@ -46,6 +46,16 @@ export interface FlatLayout {
   rules: FlatArtifactLayout["rules"];
 }
 
+/** The project file that lists a plugin's rules by glob, for a tool that reads guidance from no
+ * rules folder. */
+export interface RulesIndexAnswers {
+  readonly relativePath: string;
+  /** The file with `glob` listed beside what a person wrote there. */
+  withGlob(existing: string | null, glob: string): string;
+  /** The file without `glob`; the file itself when it is not listed. */
+  withoutGlob(existing: string, glob: string): string;
+}
+
 /** A tool that installs a plugin through its own plugin CLI, as an outside caller asks it. */
 export interface NativePluginAnswers extends PluginDelivery {
   readonly kind: "native";
@@ -274,6 +284,8 @@ export interface AiToolProfile {
   /** Where it takes a plugin's hooks inside the project, or null when it takes none there. */
   projectHooksDelivery(): ProjectHooksLocation | null;
   /** Where its installed rules live and what they end in, or null when it installs none. */
+  /** The file that lists a plugin's rules for a tool reading no rules folder, or null. */
+  flatRulesIndex(): RulesIndexAnswers | null;
   installedRulesLocation(): { readonly directory: string; readonly extension: string } | null;
   /** Where its own commands sit in the project at `projectRoot`, or null when it declares none. */
   signalDirectoryIn(projectRoot: string): SignalDirectory | null;

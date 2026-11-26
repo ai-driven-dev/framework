@@ -128,7 +128,7 @@
         "agents": "yes",
         "mcp": "yes",
         "hooks": "yes",
-        "rules": "no",
+        "rules": "yes",
         "commands": "no"
       }
     }
@@ -179,7 +179,7 @@
         "agents": "yes",
         "mcp": "yes",
         "hooks": "no",
-        "rules": "no",
+        "rules": "yes",
         "commands": "no"
       }
     }

@@ -43,6 +43,8 @@ import { ListPlugins } from "../../contexts/installation/application/plugin/list
 import { AssertProjectIntegrationRemovable } from "../../contexts/installation/application/removal/assert-project-integration-removable.use-case.js";
 import { PlanProjectMcpRemoval } from "../../contexts/installation/application/removal/plan-project-mcp-removal.use-case.js";
 import { RemoveEnabledPlugin } from "../../contexts/installation/application/removal/project/remove-enabled-plugin.use-case.js";
+import { UnlistProjectRules } from "../../contexts/installation/application/removal/project/unlist-project-rules.use-case.js";
+import { WriteProjectMcpRewrite } from "../../contexts/installation/application/removal/project/write-project-mcp-rewrite.use-case.js";
 import { RemoveProjectHooks } from "../../contexts/installation/application/removal/remove-project-hooks.use-case.js";
 import { RemoveProjectIntegration } from "../../contexts/installation/application/removal/remove-project-integration.use-case.js";
 import { AssertProjectHooksRemovable } from "../../contexts/installation/application/shared/assert-project-hooks-removable.use-case.js";
@@ -199,10 +201,10 @@ export function projectIntegrationOf(fs: FileReader & FileWriter, settings: Trac
       assertHooksRemovable
     ),
     removeIntegration: new RemoveProjectIntegration({
-      fs,
       plan,
       hooks: removeHooks,
-      withinRoot,
+      rules: new UnlistProjectRules(fs, withinRoot),
+      write: new WriteProjectMcpRewrite(fs, withinRoot),
       enablement,
     }),
   };

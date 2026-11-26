@@ -52,6 +52,8 @@ const CODEX_FLAT: { readonly layout: FlatArtifactLayout; readonly configPath: st
   layout: flatArtifactLayout(".codex/", {
     skillsDir: ".agents/skills/",
     skills: "single-level",
+    rules: "top-level-no-frontmatter",
+    rulesDir: `${DIRECTORY}instructions/`,
     agent: { ext: ".toml" },
   }),
   configPath: ".codex/config.toml",
@@ -141,8 +143,10 @@ const MCP_CONFIG: McpTomlDeclaration = {
   consumes: [MCP_CONFIG_REF],
 };
 
-// No `rules` capability: Codex reads markdown guidance only from AGENTS.md, and
-// `.codex/rules/` takes Starlark command policy (https://developers.openai.com/codex/rules).
+// Codex reads markdown guidance only from AGENTS.md, and `.codex/rules/` takes Starlark command
+// policy (https://developers.openai.com/codex/rules): a flat build places a plugin's rules in
+// `.codex/instructions/` and lists them in AGENTS.md. Its install is the native plugin route,
+// which carries no rules, so there is no `rules` capability.
 const CODEX_CAPABILITIES = {
   agents: { format: "toml", frontmatter: tomlAgentFrontmatter },
   skills: { agentsSkillsDirectory: true },

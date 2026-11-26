@@ -76,3 +76,24 @@ describe("RulesSection installed location edge cases", () => {
     expect(cap.installedLocation()).toBeNull();
   });
 });
+
+describe("a rules section listed in AGENTS.md", () => {
+  const base = {
+    toolSuffix: ".x.md",
+    buildInstallPath: (fileName: string) => `.x/instructions/${fileName}`,
+    convertFrontmatter: (fm: Record<string, unknown>) => fm,
+  };
+
+  it("answers no index for a tool that reads a rules folder", () => {
+    expect(new RulesSection(base).agentsIndex()).toBeNull();
+  });
+
+  it("answers AGENTS.md and the owner's listing for a tool that declares it", () => {
+    const index = new RulesSection({ ...base, listedInAgentsFile: true }).agentsIndex();
+
+    expect(index?.relativePath).toBe("AGENTS.md");
+    expect(
+      index?.withoutGlob(index.withGlob(null, ".x/instructions/a-*.md"), ".x/instructions/a-*.md")
+    ).toBe("");
+  });
+});
