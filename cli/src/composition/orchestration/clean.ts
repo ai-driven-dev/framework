@@ -47,8 +47,7 @@ function wireCleanUserScope(
   wired: { purgeCache: ResolvePurgeCandidate; claims: CleanClaims }
 ) {
   const { purgeCache, claims } = wired;
-  const { fs, logger, prompter, userManifestRepo, marketplaceRegistry, withdrawFromHost, tools } =
-    base;
+  const { fs, logger, prompter, userManifestRepo, marketplaceRegistry, tools } = base;
   const guards: MachineStateGuards = {
     userConfigDir,
     resolveCacheCandidate: (cacheRoot, segments, label) =>
@@ -76,7 +75,8 @@ function wireCleanUserScope(
     confirm: new ConfirmRemoval(prompter),
     remove: new RemoveUserScope({
       purgeFiles: purgeUserScopeFiles,
-      withdrawFromHost,
+      withdrawFromHost: base.withdrawFromHost,
+      removeServerPlugins: base.removeServerPlugins,
       removeMarketplace: new RemoveMarketplace(marketplaceRegistry),
       claims,
     }),

@@ -1,10 +1,5 @@
-/** The glob patterns a rule scopes itself to, `paths` before `globs`; none when it declares neither. */
-export function rulePatterns(fm: Record<string, unknown>): unknown[] {
-  if (Array.isArray(fm.paths)) return fm.paths;
-  return Array.isArray(fm.globs) ? fm.globs : [];
-}
+import { rulePatterns } from "../../../../shared/domain/markdown.js";
 
-/** The description a rule declares, none when it has none. */
 function describedRule(fm: Record<string, unknown>): Record<string, unknown> {
   return fm.description === undefined ? {} : { description: fm.description };
 }
@@ -67,8 +62,7 @@ export function inclusionModesRule(fm: Record<string, unknown>): Record<string, 
 /** A rule for Antigravity, which reads a `trigger`: always on, or `glob` with the rule's `paths` as
  * one comma-joined string, its description kept (https://antigravity.google/docs/rules).
  *
- * Limit: only the always-on trigger was seen reaching the model (agy 1.5.17, headless); the glob
- * trigger follows the documentation and was not observed applying.
+ * Limit: only the always-on trigger was observed reaching the model; the glob trigger follows the docs.
  * Limit: `alwaysApply` is not read, so a rule that opts out of it is always on; a glob holding a
  * comma, such as a brace group, splits once joined. */
 export function activationTriggersRule(fm: Record<string, unknown>): Record<string, unknown> {

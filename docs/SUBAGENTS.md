@@ -75,7 +75,7 @@ aidd setup --global --ide codex,opencode --plugins all --agents-only   # every p
 | standard | Main session | `gpt-6.1-terra` | `claude-sonnet-5-5` | `mistral-large-4` |
 | light | Explorer, executor, validator | `gpt-6-luna` | `claude-haiku-5-5` | `mistral-small-latest` |
 
-Claude Code takes anthropic, Codex openai, Copilot openai or anthropic, Cursor anthropic, OpenCode and Kilo all three. A run takes one provider, so every `--ide` it names must take it: `--ide claude,codex` is refused. The model ids live in [`agent-models.ts`](../cli/src/contexts/tools/domain/models/agent-models.ts), and the providers each IDE takes in its profile under [`tool-profiles/`](../cli/src/composition/tool-profiles).
+Claude Code takes anthropic, Codex openai, Copilot openai or anthropic, Cursor anthropic, OpenCode and Kilo all three. A run takes one provider, so every `--ide` it names must take it: `--ide claude,codex` is refused.
 
 - `--agents-only` leaves main-session settings and their saved restore state untouched, including with `--provider none`. With no `--provider`, each `--ide` tool keeps the provider saved for it, else the first its profile lists. A tool set to `none` stays on the IDE's model. A tool whose `none` was saved before none was remembered is saved on its first provider by its first agents-only run, and stays there until `--provider none` is run again.
 - The provider holds for the whole machine: other projects get it at their next install; to update the agents they already have, run `aidd setup --ide … --provider …` there, `none` included.
@@ -101,7 +101,7 @@ Claude Code applies its allowlist and falls back to an allowed model. Cursor app
 
 - **Tools:** every agent inherits the calling session's tools and permissions; what it writes is an instruction, not a restriction.
 - **Codex:** a Codex plugin cannot carry agents, so only the flat distribution installs them, in `.codex/agents/`, and Codex loads them only in a trusted project; `aidd setup --global` puts them in `~/.codex/agents/` instead.
-- **Models:** OpenCode V1 reads the same file but not the `#<effort>` variant. `aidd translate --provider none` generates a distribution that inherits the IDE's model. `aidd clean` cleans one project and keeps the machine-wide provider. `aidd clean --global --force` forgets it and restores the main session's model.
+- **Models:** OpenCode V1 reads the same file but not the `#<effort>` variant. Only `aidd setup` or `aidd translate --provider` pins them, not `/plugin install`. `aidd clean` cleans one project and keeps the machine-wide provider; `aidd clean --global --force` forgets it and restores the main session's model.
 - **Updates:** reinstalling replaces the agents still shipped; one removed from the plugin stays where a copy put it until you delete it.
 
 Sources: [Claude Code sub-agents](https://code.claude.com/docs/en/sub-agents), [Copilot custom agents](https://docs.github.com/en/copilot/reference/custom-agents-configuration), [OpenCode agents](https://opencode.ai/v2/docs/agents), [Codex subagents](https://developers.openai.com/codex/subagents), [Cursor subagents](https://cursor.com/docs/subagents).

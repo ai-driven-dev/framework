@@ -25,9 +25,11 @@ What a hook can do, and how its handler is written.
 
 ## Rules
 
-- H1: One hook, one purpose, at the narrowest moment that fits.
-- H2: Give a tool event a matcher on the exact tool it guards where the host takes one, and filter in the handler where it does not.
-- H3: Write each host's handler for that host alone: its payload fields, its shell tool name and its answer, as its description states.
-- H4: Write a command host's handler in a runtime the project already uses, and a plugin host's handler as the plugin module its description names.
-- H5: Answer nothing and exit 0 when the hook has nothing to say.
-- H6: Keep a `continue` hook to one extra turn, through the loop field its description names.
+| ID | Rule |
+| --- | --- |
+| H1 | One hook, one purpose, at the narrowest moment that fits. |
+| H2 | Give a tool event a matcher on the exact tool it guards where the host takes one, and filter in the handler where it does not. |
+| H3 | Write each host's handler for that host alone: its payload fields, its shell tool, the argument holding the command, and its answer, as its description states. |
+| H4 | Write a command host's handler in a runtime the project already uses, and a plugin host's handler as the plugin module its description names. |
+| H5 | Answer nothing and exit 0 when the hook has nothing to say. |
+| H6 | Keep a `continue` hook to one extra turn, through the loop field its description names. |

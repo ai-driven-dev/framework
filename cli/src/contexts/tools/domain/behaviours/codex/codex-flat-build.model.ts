@@ -3,10 +3,15 @@
  * sibling models.
  */
 
-import { agentsIn, skillsIn } from "../../../../../shared/domain/materialization/artifact-path.js";
+import {
+  agentsIn,
+  rulesArtifact,
+  skillsIn,
+} from "../../../../../shared/domain/materialization/artifact-path.js";
 import type { ToolBuildContract } from "../../../../../shared/domain/materialization/build-contract.js";
 import type { FlatArtifactLayout } from "../../../../../shared/domain/materialization/flat-paths.js";
 import { tomlAgentMarkdownToToml } from "../../formats/agents/toml-agent.js";
+import { AGENTS_FILE, agentsIndexFiles } from "../../formats/agents-rules-index.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { flatHooksArtifact } from "../../formats/hooks/flat-routes.js";
 import type { TomlCodec } from "../../formats/toml.js";
@@ -56,6 +61,7 @@ function codexFlatArtifacts(
       placement: agentsIn(layout),
       transform: tomlAgentMarkdownToToml(toml),
     },
+    rules: rulesArtifact(layout),
     mcp: {
       supported: false,
       reason: "carried by the config artifact (config.toml mcp_servers)",
@@ -77,14 +83,14 @@ export function buildCodexFlatContract(
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,
     configArtifact: {
-      reads: () => [configPath],
+      reads: () => [configPath, AGENTS_FILE],
       probes: () => [],
       assets: { tool: "codex", names: [] },
-      emit: ({ builtPlugins, pluginMcp, existing }) => {
+      emit: ({ builtPlugins, pluginMcp, rulesGlobs, existing }) => {
         const mcpServers = collectMcpServers(builtPlugins, pluginMcp);
         const aiddPayload = buildCodexConfigPayload(toml, mcpServers);
         const merged = mergeCodexConfigToml(toml)(existing.get(configPath) ?? "", aiddPayload);
-        return [{ path: configPath, content: merged }];
+        return [{ path: configPath, content: merged }, ...agentsIndexFiles(existing, rulesGlobs)];
       },
     },
   };

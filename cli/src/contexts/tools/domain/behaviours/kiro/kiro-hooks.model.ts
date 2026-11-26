@@ -2,33 +2,28 @@
  * command action (https://kiro.dev/docs/hooks/). No `HooksFileFormat` describes that list, so its
  * merge is Kiro's own.
  *
- * Only a command of the form `node ${CLAUDE_PLUGIN_ROOT}/hooks/...` is delivered; any other is
- * dropped, and no plugin ships one. Only `SessionStart`, `UserPromptSubmit`, `PreToolUse`,
- * `PostToolUse`, `Stop` and `SubagentStop` are delivered. A PostToolUse matcher names Claude
- * Code's tools; Kiro selects by a tool's tag (https://kiro.dev/docs/hooks/types/), and a matcher
- * with `|` is a regex there, never a selector, so each tag gets its own hook. PreToolUse takes
- * none: it runs for every tool, and its script tells a write by the files it reads. Stop and
- * UserPromptSubmit take no matcher, SubagentStop's names an agent, never a tool, and SessionStart
- * none a plugin ships. */
+ * Limit: only `node ${CLAUDE_PLUGIN_ROOT}/hooks/...` commands are delivered; a `|` matcher is a regex in Kiro, so each tag gets its own hook. */
 
 import type { ShippedHooks } from "../../../../../shared/domain/materialization/build-contract.js";
 import { genericFlatHooksScriptPath } from "../../../../../shared/domain/materialization/flat-paths.js";
+import { hookEventsOf } from "../../../../../shared/domain/reading/hook-events.js";
 import { asPlainObject } from "../../../../../shared/domain/reading/plain-object.js";
 import type { ProjectHooksFormat } from "../../../contract/tool-vocabulary.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { hostToolNamesMatching, matcherNamesNoToolWarning } from "../../formats/host-tool-names.js";
 import { pluginScriptDir, pluginScriptPath } from "../../hooks/hooks-merge.js";
+import { routeEvents } from "../../hooks/hooks-route.js";
 import { unmappedEventWarning } from "../../hooks/hooks-warnings.js";
 import {
   type BridgeHookCall,
   bridgeHookCalls,
+  matcherGroupsByEvent,
   type PluginMatcherGroup,
 } from "../../hooks/plugin-hooks-shape.js";
 
 export type KiroHooks = HooksRouting & {
   readonly flat: FlatHooksRoute;
   readonly eventMap: Readonly<Record<string, string>>;
-  /** The tag Kiro selects a tool by, for each Claude tool a plugin's matcher can name. */
   readonly toolNames: ReadonlyMap<string, string>;
 };
 
@@ -85,19 +80,6 @@ function serialize(existing: string | null, hooks: readonly KiroHook[]): string 
   return `${JSON.stringify({ version: VERSION, ...fileOf(existing), hooks }, null, 2)}\n`;
 }
 
-function isGroup(value: unknown): value is PluginMatcherGroup {
-  const group = asPlainObject(value);
-  return group !== null && Array.isArray(group.hooks);
-}
-
-/** A plugin's shipped hooks by event; an event whose groups are not groups of hooks is none. */
-function shippedEvents(json: string): [string, PluginMatcherGroup[]][] {
-  const { hooks } = asPlainObject(JSON.parse(json)) ?? {};
-  return Object.entries(asPlainObject(hooks) ?? {}).flatMap(([event, groups]) =>
-    Array.isArray(groups) && groups.every(isGroup) ? [[event, groups]] : []
-  );
-}
-
 /** A hook is a plugin's when its command names that plugin's own scripts folder. */
 function runs(hooks: KiroHooks, hook: KiroHook, plugin: string): boolean {
   return (
@@ -117,9 +99,8 @@ interface Where {
   readonly toolNames: ReadonlyMap<string, string>;
 }
 
-/** One hook per tag of the call's matcher, or one selecting every tool when it has none. Kiro keys
- * a hook by its place in the file (`<file>#hook-<index>`, seen on kiro-cli 3.6.0), so a name only has to read well: each trigger and tag of a
- * script gets its own. Ownership is matched by command, not name. */
+/** One hook per tag of the call's matcher, or one for every tool when it has none. Kiro keys a hook
+ * by its index in the file, so ownership is matched by command, not name. */
 function hooksOfCall(
   { scriptsDir, plugin, trigger, toolNames }: Where,
   call: BridgeHookCall,
@@ -160,26 +141,25 @@ export function mergeKiroHooks(
   shipped: ShippedHooks
 ): { content: string; warnings: readonly string[] } {
   const kept = hooksOf(existingJson).filter((hook) => !runs(hooks, hook, shipped.plugin));
-  const added: KiroHook[] = [];
-  const warnings: string[] = [];
-  for (const [event, groups] of shippedEvents(shipped.json)) {
-    const trigger = Object.hasOwn(hooks.eventMap, event) ? hooks.eventMap[event] : undefined;
-    if (trigger === undefined) {
-      warnings.push(unmappedEventWarning(event));
-      continue;
-    }
-    const built = hooksOfEvent(
-      {
-        scriptsDir: hooks.flat.scriptsDir,
-        plugin: shipped.plugin,
-        trigger,
-        toolNames: hooks.toolNames,
-      },
-      groups
-    );
-    added.push(...built.hooks);
-    warnings.push(...built.warnings);
-  }
+  const { routed, skipped } = routeEvents(
+    matcherGroupsByEvent(hookEventsOf(shipped.json)),
+    hooks.eventMap,
+    (groups, trigger) =>
+      hooksOfEvent(
+        {
+          scriptsDir: hooks.flat.scriptsDir,
+          plugin: shipped.plugin,
+          trigger,
+          toolNames: hooks.toolNames,
+        },
+        groups
+      )
+  );
+  const added = routed.flatMap(([, built]) => built.hooks);
+  const warnings = [
+    ...skipped.map(unmappedEventWarning),
+    ...routed.flatMap(([, built]) => built.warnings),
+  ];
   return { content: serialize(existingJson, [...kept, ...added]), warnings };
 }
 

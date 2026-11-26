@@ -4,9 +4,6 @@ const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 const { UI, PATHS, LIB, makeTmp, removeTmp, filesUnder, engine, validate, writeProject } = require("../fixtures/aidd-ui/project.js");
 
-// A set of variants is driven as a subprocess, as the skill calls it: `showcase` checks it and
-// writes its page, `keep` makes one of its variants the design system's own file.
-
 const DRAFTS = `${UI}/drafts`;
 const CHOICES = `${UI}/choices.md`;
 const CHOICES_HEADER = "# Choices\n\n| Set | Kept | Set aside | Intent |\n| --- | --- | --- | --- |\n";

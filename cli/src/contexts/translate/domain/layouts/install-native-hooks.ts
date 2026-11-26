@@ -2,6 +2,7 @@ import type {
   PluginInstallNotice,
   ReadonlyNoticeList,
 } from "../../../../shared/domain/materialization/plugin-install-notice.js";
+import { basename } from "../../../../shared/domain/paths.model.js";
 import type {
   PluginComponentFile,
   PluginDistribution,
@@ -13,7 +14,6 @@ import { presenceOf } from "../plugin-presence.js";
 import type { ComponentPlan } from "../rules/component-pipeline.js";
 import { toolLinks } from "../rules/links.js";
 import type { TranslatedAiTool, TranslatedNativePlugin } from "../translate-profile.js";
-import { baseOf } from "./build-shared.js";
 
 interface HooksTarget {
   readonly tool: TranslatedAiTool;
@@ -24,7 +24,11 @@ interface HooksTarget {
  * other file a script the host runs, beside it. */
 export function nativeHooksPlan(
   file: PluginComponentFile,
-  at: HooksTarget & { readonly pluginRoot: string; readonly pluginName: string }
+  at: HooksTarget & {
+    readonly pluginRoot: string;
+    readonly pluginName: string;
+    readonly carriesRelease: boolean;
+  }
 ): ComponentPlan | null {
   const { tool, plugins, pluginRoot } = at;
   if (!plugins.hooksAcceptance().accepts) return null;
@@ -35,7 +39,7 @@ export function nativeHooksPlan(
       source,
       path,
       content,
-      shape: hooksManifestShape(tool, at.pluginName),
+      shape: hooksManifestShape(tool, at.pluginName, at.carriesRelease),
       rootToken: plugins.rootToken(),
     };
   }
@@ -56,13 +60,18 @@ export function nativeHooksPlan(
 // that reads it in a form of its own.
 function hooksManifestShape(
   tool: TranslatedAiTool,
-  pluginName: string
+  pluginName: string,
+  carriesRelease: boolean
 ): ComponentPlan["shape"] | undefined {
   const hooks = tool.buildContract("marketplace")?.artifacts.hooks;
-  const transform = hooks?.supported ? hooks.transform : undefined;
+  if (!hooks?.supported) return undefined;
+  const { convertHooks, transform } = hooks;
+  if (convertHooks !== undefined) {
+    return (text) => convertHooks(text, pluginName, carriesRelease).content;
+  }
   return transform === undefined
     ? undefined
-    : (text) => transform(text, pluginName, baseOf(PLUGIN_HOOKS_RELATIVE));
+    : (text) => transform(text, pluginName, basename(PLUGIN_HOOKS_RELATIVE));
 }
 
 /** The plugin's own manifest, at the place the tool reads one, synthesized as the tool's

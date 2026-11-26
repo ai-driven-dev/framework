@@ -1,4 +1,5 @@
 import type { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.use-case.js";
+import type { RemoveServerPlugins } from "../../contexts/host-registration/application/server/remove-server-plugins.use-case.js";
 import type { WithdrawFromHost } from "../../contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import type { PurgeUserScopeFiles } from "../../contexts/installation/application/clean/purge-user-scope-files.js";
 import type { CleanClaims } from "./clean-claims.js";
@@ -18,6 +19,8 @@ export interface RemoveUserScopeDeps {
     "assertNothingDepends" | "proveWithdrawals" | "purge" | "deleteManifest"
   >;
   readonly withdrawFromHost: Pick<WithdrawFromHost, "execute">;
+  /** The plugins aidd installed in a host's own server, which no host CLI verb removes. */
+  readonly removeServerPlugins: Pick<RemoveServerPlugins, "execute">;
   readonly removeMarketplace: Pick<RemoveMarketplace, "execute">;
   readonly claims: Pick<CleanClaims, "purgeCache" | "frameworkMarketplaceName">;
 }
@@ -51,6 +54,7 @@ export class RemoveUserScope {
       resolveCacheCandidate: (cacheRoot, relativeSegments, label) =>
         this.deps.claims.purgeCache.execute(cacheRoot, relativeSegments, label),
     });
+    await this.deps.removeServerPlugins.execute();
     await this.deps.purgeFiles.purge(projectRoot);
     await this.deps.removeMarketplace.execute({
       projectRoot,

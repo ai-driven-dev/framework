@@ -24,11 +24,17 @@ import { NativeMarketplaceSourceReaderAdapter } from "../../contexts/host-regist
 import { EnabledPluginsMapReader } from "../../contexts/host-registration/infrastructure/plugin-registry/enabled-plugins-map-reader.js";
 import { PluginEntriesByScopeReader } from "../../contexts/host-registration/infrastructure/plugin-registry/plugin-entries-by-scope-reader.js";
 import { TomlPluginTablesReader } from "../../contexts/host-registration/infrastructure/plugin-registry/toml-plugin-tables-reader.js";
+import { PluginServerAdapter } from "../../contexts/host-registration/infrastructure/server/plugin-server-adapter.js";
 import type { HostActions } from "../../contexts/host-registration/ports/host-actions.js";
 import type { HostMarketplaceRegistry } from "../../contexts/host-registration/ports/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../../contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../contexts/host-registration/ports/host-plugin-registry.js";
 import type { RegistrationRecordRepository } from "../../contexts/host-registration/ports/registration-record-repository.js";
+import type {
+  PluginServerHosts,
+  ServerHost,
+} from "../../contexts/host-registration/ports/server/plugin-server-hosts.js";
+import type { ServerPluginLedger } from "../../contexts/host-registration/ports/server/server-plugin-ledger.js";
 import { DuplicateToolIdError } from "../../contexts/tools/contract/errors/tools.error.js";
 import type { SettingsDeclarationRules } from "../../orchestration/sync/settings/sync-tool-settings-files.use-case.js";
 import { asPlainObject } from "../../shared/domain/reading/plain-object.js";
@@ -89,6 +95,7 @@ interface MutableWiring {
   pluginRegistries: Map<AiToolId, HostPluginRegistry>;
   marketplaceRegistries: Map<AiToolId, HostMarketplaceRegistry>;
   marketplaceSources: Map<AiToolId, HostMarketplaceSources>;
+  pluginServers: Map<ToolId, ServerHost>;
 }
 
 export interface HostRegistrationDeps {
@@ -97,6 +104,7 @@ export interface HostRegistrationDeps {
   pluginRegistries: ReadonlyMap<AiToolId, HostPluginRegistry>;
   marketplaceRegistries: ReadonlyMap<AiToolId, HostMarketplaceRegistry>;
   marketplaceSources: ReadonlyMap<AiToolId, HostMarketplaceSources>;
+  pluginServers: ReadonlyMap<ToolId, ServerHost>;
 }
 
 /** Everything a host's own CLI and registries need, read off each tool's declared activation:
@@ -111,8 +119,16 @@ export function wireHostRegistration(
     pluginRegistries: new Map(),
     marketplaceRegistries: new Map(),
     marketplaceSources: new Map(),
+    pluginServers: new Map(),
   };
   for (const aiId of tools.inHelpOrder("ai")) {
+    const server = tools.aiProfile(aiId).pluginServer();
+    if (server !== undefined) {
+      wiring.pluginServers.set(aiId, {
+        binary: server.binary,
+        server: new PluginServerAdapter(server),
+      });
+    }
     if (tools.aiProfile(aiId).nativeActivation() === undefined) continue;
     const activation = registrations.get(aiId);
     if (activation === undefined) throw new UnregisteredToolError(aiId);
@@ -167,5 +183,22 @@ export function registrationRecordFile(
       const record = asPlainObject(value);
       return record === null ? null : { ...record };
     }
+  );
+}
+
+export function pluginServerHostsOver(servers: ReadonlyMap<ToolId, ServerHost>): PluginServerHosts {
+  return { of: (toolId) => servers.get(toolId) };
+}
+
+/** The plugins aidd installed in each host's own server, in one file beside the machine manifest. */
+export function serverPluginLedgerFile(
+  dir: () => string,
+  deps: ToolKeyedJsonFileDeps
+): ServerPluginLedger {
+  return new ToolKeyedJsonFile(
+    () => join(dir(), "host-server-plugins.json"),
+    deps,
+    (value): readonly string[] | null =>
+      Array.isArray(value) && value.every((id) => typeof id === "string") ? value : null
   );
 }

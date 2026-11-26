@@ -1,6 +1,10 @@
 /** Copilot's flat build contract: direct workspace materialization. */
 
-import { agentsIn, skillsIn } from "../../../../../shared/domain/materialization/artifact-path.js";
+import {
+  agentsIn,
+  flatMcpFileArtifact,
+  skillsIn,
+} from "../../../../../shared/domain/materialization/artifact-path.js";
 import type { ToolBuildContract } from "../../../../../shared/domain/materialization/build-contract.js";
 import type { FlatArtifactLayout } from "../../../../../shared/domain/materialization/flat-paths.js";
 import type { AgentFrontmatter } from "../../formats/agents/agent-format.js";
@@ -35,12 +39,7 @@ export function buildCopilotFlatContract(
           pluginPrefixedName: true,
         },
       },
-      mcp: {
-        supported: true,
-        source: { kind: "configFile", srcPath: ".mcp.json" },
-        placement: { kind: "file", at: mcpPath },
-        mcpServersKey: "servers",
-      },
+      mcp: flatMcpFileArtifact(mcpPath, "servers"),
       hooks: flatHooksArtifact(hooks, { tool: "copilot" }),
     },
     buildMarketplaceCatalog: null,

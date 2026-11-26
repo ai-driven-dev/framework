@@ -1,5 +1,6 @@
 import { reshapeFrontmatter, serializeFrontmatter } from "../../../../shared/domain/markdown.js";
 import type { ReadonlyNoticeList } from "../../../../shared/domain/materialization/plugin-install-notice.js";
+import { carriesRelease } from "../../../../shared/domain/plugin/canon-paths.js";
 import type {
   PluginComponentFile,
   PluginDistribution,
@@ -9,6 +10,7 @@ import { namedByPlugin } from "../rules/agent-markdown.js";
 import type { ComponentPlan } from "../rules/component-pipeline.js";
 import { chainLinks, relativeLinks, toolLinks } from "../rules/links.js";
 import type { TranslatedAiTool, TranslatedNativePlugin } from "../translate-profile.js";
+import { flatRulePlan } from "./build-flat-rules.js";
 import { marketplaceAgentPlan } from "./build-layout.js";
 import { isEntry } from "./build-shared.js";
 import { hooksTrustNotices, manifestPlan, nativeHooksPlan } from "./install-native-hooks.js";
@@ -29,7 +31,13 @@ export function nativeInstallPlan(
 } {
   const { tool, plugins, manifestPaths } = target;
   const pluginRoot = plugins.pluginOutputDir(dist.manifest.name);
-  const at = { tool, plugins, pluginRoot, pluginName: dist.manifest.name };
+  const at = {
+    tool,
+    plugins,
+    pluginRoot,
+    pluginName: dist.manifest.name,
+    carriesRelease: carriesRelease(dist.manifest.name, dist.components.hooks),
+  };
   const plans = dist.files.flatMap((file) => nativeFilePlan(file, at) ?? []);
   const manifest = manifestPlan(dist, { tool, plugins, pluginRoot, manifestPaths });
   if (manifest !== null) plans.push(manifest);
@@ -42,13 +50,15 @@ export function nativeInstallPlan(
 interface NativeAt extends NativeTarget {
   readonly pluginRoot: string;
   readonly pluginName: string;
+  readonly carriesRelease: boolean;
 }
 
 function nativeFilePlan(file: PluginComponentFile, at: NativeAt): ComponentPlan | null {
   const { source, top } = { source: file.relativePath, top: file.relativePath.split("/")[0] };
   if (source === ".mcp.json") return mcpPlan(file, at);
   if (top === PLUGIN_HOOKS_DIR) return nativeHooksPlan(file, at);
-  if (top === "commands" || top === "agents" || top === "rules") return markdownPlan(file, top, at);
+  if (top === "rules") return stagedRulePlan(file, at) ?? markdownPlan(file, top, at);
+  if (top === "commands" || top === "agents") return markdownPlan(file, top, at);
   return top === "skills" ? skillPlan(file, at) : null;
 }
 
@@ -148,6 +158,14 @@ function stagedAgentPlan(file: PluginComponentFile, at: NativeAt): ComponentPlan
     return null;
   }
   return marketplaceAgentPlan({ plugin: at.pluginName, root: at.pluginRoot }, agents, file);
+}
+
+/** A rule the tool's marketplace build places where its flat build does, in the project rather
+ * than in the plugin's directory: planned as that build plans it, so both write the same bytes. */
+function stagedRulePlan(file: PluginComponentFile, at: NativeAt): ComponentPlan | null {
+  const rules = at.tool.buildContract("marketplace")?.artifacts.rules;
+  if (!rules?.supported || rules.placement.kind !== "layout") return null;
+  return flatRulePlan(rules, at.pluginName, file);
 }
 
 function toPluginRelativePath(fullPath: string, toolDirectory: string): string {

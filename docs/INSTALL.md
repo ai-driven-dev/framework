@@ -37,7 +37,7 @@ npx @ai-driven-dev/cli@latest setup --ide claude --plugins recommended --yes
 npx @ai-driven-dev/cli@latest setup --global --ide claude,codex,opencode --plugins all --yes
 ```
 
-It installs the plugins once for the whole machine and writes nothing in your project. It takes any of `claude`, `codex`, `copilot`, `cursor`, `kilo` and `opencode`: [what each one gets](../cli/README.md#scope).
+It installs the plugins once for the whole machine and writes nothing in your project. It takes any of `claude`, `codex`, `copilot`, `cursor`, `kilo`, `kimi` and `opencode`: [what each one gets](../cli/README.md#scope).
 
 ### Check
 
@@ -142,7 +142,7 @@ cp -r aidd-framework-cursor-marketplace-<version>/plugins/aidd-* ~/.cursor/plugi
 
 ### Antigravity CLI
 
-1. Download `aidd-framework-antigravity-marketplace-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest). The bundle contains plugin directories for local installation.
+1. Download `aidd-framework-antigravity-marketplace-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest). Antigravity registers no marketplace: copy its plugin directories.
 2. Unzip it.
 3. From your project's root, copy the plugins:
 
@@ -151,7 +151,13 @@ mkdir -p .agents/plugins
 cp -r aidd-framework-antigravity-marketplace-<version>/plugins/aidd-* .agents/plugins/
 ```
 
-For OpenCode, Kilo Code, Kiro, and Kimi Code CLI, AIDD distributes flat files. See [Compatibility](COMPATIBILITY.md#hosted-marketplaces) for each tool’s distribution options.
+### Kimi Code CLI
+
+1. Download `aidd-framework-kimi-marketplace-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest). It holds plugin directories, not a catalog.
+2. Unzip it. The plugins are the `plugins/aidd-*` directories.
+3. Installing them by hand in Kimi's web UI is unverified. `aidd setup --global --ide kimi` installs the plugins through the server Kimi starts.
+
+OpenCode and Kilo Code have no marketplace: use flat files. Kiro also uses flat files. The Antigravity CLI installs each plugin as a directory under `.agents/plugins/`.
 
 ## Flat files
 

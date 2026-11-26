@@ -9,14 +9,15 @@ import type {
   PluginTranslationSkip,
   ReadonlySkipList,
 } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
-import { basename, isProse } from "../plugin-paths.js";
+import { isProse } from "../plugin-paths.js";
+import { installedCommandPlan } from "../rules/command-plan.js";
 import type { ComponentPlan } from "../rules/component-pipeline.js";
 import { flatHookPlans } from "../rules/hook-plans.js";
 import { chainLinks, toolLinks } from "../rules/links.js";
 import type { TranslatedAiTool, TranslatedFlatPlugin } from "../translate-profile.js";
 import { flatAgentPlan, flatSkillLinks } from "./build-flat.js";
 import { namedByFolder } from "./build-shared.js";
-import { installedRulePlan, prefixCommandName } from "./install-flat-rules.js";
+import { installedRulePlan } from "./install-flat-rules.js";
 
 type FlatSection = "agents" | "rules" | "skills";
 
@@ -51,7 +52,7 @@ export function flatInstallPlan(
     needsManifest: false,
   });
   const plans = [
-    ...commands.map((file) => commandPlan(file, at, namespacePrefix)),
+    ...commands.map((file) => installedCommandPlan(file, at, namespacePrefix)),
     ...sectionPlans(dist, at, plugins),
     ...hooks,
   ];
@@ -85,18 +86,6 @@ function sectionPlans(
 function flatHooksArtifact(tool: TranslatedAiTool): SupportedArtifact | null {
   const hooks = tool.buildContract("flat")?.artifacts.hooks;
   return hooks?.supported ? hooks : null;
-}
-
-function commandPlan(file: PluginComponentFile, at: FlatAt, prefix: string): ComponentPlan {
-  const { tool, pluginName } = at;
-  const { relativePath: source, content } = file;
-  return {
-    source,
-    path: tool.flatInstallPath("commands", pluginName, basename(source)),
-    content,
-    links: toolLinks(tool),
-    shape: (text) => prefixCommandName(text, { source, prefix, pluginName }),
-  };
 }
 
 function sectionPlan(

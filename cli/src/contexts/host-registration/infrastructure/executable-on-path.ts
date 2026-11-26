@@ -1,6 +1,10 @@
 import { accessSync, constants } from "node:fs";
 import { posix, win32 } from "node:path";
 
+/** How long a host's own CLI or server may take to answer: `plugin add` and `install` may fetch and
+ * cache a marketplace snapshot from a git remote. */
+export const HOST_COMMAND_TIMEOUT_MS = 120000;
+
 /** What resolving a tool's binary on `PATH` needs to know about the machine. Injected so
  * a test can describe a Windows machine from anywhere. */
 export interface ExecutableLookup {

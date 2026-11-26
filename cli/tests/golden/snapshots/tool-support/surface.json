@@ -13,7 +13,7 @@
         "mcp": "yes",
         "hooks": "yes",
         "rules": "yes",
-        "commands": "no"
+        "commands": "yes"
       },
       "flat": {
         "skills": "yes",
@@ -21,7 +21,7 @@
         "mcp": "yes",
         "hooks": "yes",
         "rules": "yes",
-        "commands": "no"
+        "commands": "yes"
       }
     }
   },
@@ -39,7 +39,7 @@
         "mcp": "yes",
         "hooks": "yes",
         "rules": "yes",
-        "commands": "no"
+        "commands": "yes"
       },
       "flat": {
         "skills": "yes",
@@ -47,7 +47,7 @@
         "mcp": "yes",
         "hooks": "yes",
         "rules": "yes",
-        "commands": "no"
+        "commands": "yes"
       }
     }
   },
@@ -65,7 +65,7 @@
         "mcp": "yes",
         "hooks": "yes",
         "rules": "yes",
-        "commands": "no"
+        "commands": "yes"
       },
       "flat": {
         "skills": "yes",
@@ -73,7 +73,7 @@
         "mcp": "yes",
         "hooks": "yes",
         "rules": "yes",
-        "commands": "no"
+        "commands": "yes"
       }
     }
   },
@@ -91,7 +91,7 @@
         "mcp": "yes",
         "hooks": "bridge",
         "rules": "yes",
-        "commands": "no"
+        "commands": "yes"
       }
     }
   },
@@ -109,7 +109,7 @@
         "mcp": "yes",
         "hooks": "bridge",
         "rules": "yes",
-        "commands": "no"
+        "commands": "yes"
       }
     }
   },
@@ -126,7 +126,7 @@
         "agents": "yes",
         "mcp": "yes",
         "hooks": "yes",
-        "rules": "no",
+        "rules": "yes",
         "commands": "no"
       },
       "flat": {
@@ -134,7 +134,7 @@
         "agents": "yes",
         "mcp": "yes",
         "hooks": "yes",
-        "rules": "no",
+        "rules": "yes",
         "commands": "no"
       }
     }
@@ -191,12 +191,20 @@
     "nativeCli": null,
     "pluginTree": null,
     "builds": {
+      "marketplace": {
+        "skills": "yes",
+        "agents": "yes",
+        "mcp": "yes",
+        "hooks": "yes",
+        "rules": "yes",
+        "commands": "no"
+      },
       "flat": {
         "skills": "yes",
         "agents": "yes",
         "mcp": "yes",
         "hooks": "no",
-        "rules": "no",
+        "rules": "yes",
         "commands": "no"
       }
     }

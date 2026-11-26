@@ -23,11 +23,12 @@ const SHELLS = new Set(["Shell"]);
 
 // @part read-payload
 
+// @part first-root-or
+
 /** The session's folder is the first workspace root: a shell call's own `cwd` is where that
  * one command ran, never the session's. */
 function folderOf(raw) {
-  const [root] = Array.isArray(raw.workspace_roots) ? raw.workspace_roots : [];
-  return typeof root === "string" && root !== "" ? root : process.cwd();
+  return firstRootOr(raw.workspace_roots);
 }
 
 function writtenFiles(tool, input, cwd) {
@@ -74,12 +75,17 @@ function continueTurn(text) {
   print({ followup_message: text });
 }
 
-/** Both levels inform: Cursor was seen dropping a block after a write, so the model would
- * see nothing. At stop, any answer continues the turn. */
+/** Both levels inform: Cursor drops a block after a write (Limit: observed, undocumented). At stop,
+ * any answer continues the turn. */
 function answer({ text } = {}) {
   if (current === undefined || typeof text !== "string" || text === "") return;
   if (current.event === "Stop") return continueTurn(text);
   print({ additional_context: text });
 }
 
-module.exports = { readEvent, answer, continueTurn };
+/** Refuses nothing: no Cursor `preToolUse` payload has been captured. */
+function refuse() {}
+
+// @part own-folder
+
+module.exports = { readEvent, answer, continueTurn, refuse, ownFolder, hooksFolder };

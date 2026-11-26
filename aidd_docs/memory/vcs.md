@@ -30,6 +30,7 @@
 
 - A stacked pull request targets its base branch. Retarget it with `gh pr edit <n> --base next` before merging the base.
 - Never delete a branch another open pull request targets: GitHub closes that pull request.
+- A squash merge into `next` closes no issue: close it by hand with the evidence.
 - After a squash merge of the base, replay only the dependent's commits: `git rebase --onto origin/next <base's last commit>`, then `--force-with-lease`.
 
 ## Commits

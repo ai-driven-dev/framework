@@ -1,3 +1,5 @@
+import { basename } from "../paths.model.js";
+
 /** An agent file's name without its extension: `.md`, or `.md` after an `.agent` infix. */
 export function agentStem(agentFile: string): string {
   return agentFile.replace(/(\.agent)?\.md$/, "");
@@ -78,8 +80,8 @@ export function belowSection(section: string, path: string): string {
 export const statesRuleScope = ({ rules }: Pick<FlatArtifactLayout, "rules">): boolean =>
   rules === "top-level-no-frontmatter";
 
-/** Where a file of a section lands: skills and agents as a build places them, every other section
- * nested under its plugin. */
+/** Where a file of a section lands: skills and agents as a build places them, rules per the layout,
+ * and a command by its file name alone under its plugin. */
 export function flatSectionPath(
   layout: FlatArtifactLayout,
   section: "commands" | "agents" | "rules" | "skills",
@@ -89,7 +91,8 @@ export function flatSectionPath(
   if (section === "agents") return flatAgentFilePath(layout, plugin, name);
   const top = flatRulesPlacement(layout, plugin);
   if (section === "rules" && top !== null) return `${top.prefix}${name.replaceAll("/", "-")}`;
-  return `${layout.directory}${section}/${plugin}/${name}`;
+  const file = section === "commands" ? basename(name) : name;
+  return `${layout.directory}${section}/${plugin}/${file}`;
 }
 
 /** Where a plugin's rules sit at the top of the rules folder: the path prefix of each and the glob
@@ -116,7 +119,7 @@ export function rulesGlobOf(
   return null;
 }
 
-/** Whether a project-relative path is one of the plugin's skills, agents or top-level rules: the
+/** Whether a project-relative path is one of the plugin's skills, agents, commands or top-level rules: the
  * inverse of the placements above, read from the same declaration.
  *
  * Limit: a flat single-level skill, agent or top-level rule is owned by the `<plugin>-` name prefix, so plugin
@@ -131,12 +134,11 @@ export function ownsFlatArtifact(
   const below = (dir: string): string | null =>
     relativePath.startsWith(dir) ? relativePath.slice(dir.length) : null;
   const skill = below(layout.skillsDir);
-  if (skill !== null) {
-    return layout.skills === "nested"
-      ? skill.startsWith(`${plugin}/`)
-      : skill.startsWith(`${plugin}-`);
-  }
+  if (skill !== null) return skill.startsWith(`${plugin}${layout.skills === "nested" ? "/" : "-"}`);
   if (rulesGlobOf(flatRulesPlacement(layout, plugin), [relativePath]) !== null) return true;
+  if (relativePath.startsWith(flatSectionPath(layout, "commands", { plugin, name: "" }))) {
+    return true;
+  }
   return below(layout.agentsDir)?.startsWith(`${plugin}-`) ?? false;
 }
 

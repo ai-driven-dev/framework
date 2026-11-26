@@ -1,11 +1,6 @@
 import type { ProjectHookEntry } from "../../contract/tool-vocabulary.js";
-import {
-  type HandlerGroup,
-  readNamedHooks,
-  serialize,
-  type WrappedCommandHooksTarget,
-  withoutPlugin,
-} from "./wrapped-command-hooks-merge.js";
+import type { HandlerGroup, WrappedCommandHooksTarget } from "./wrapped-command-hooks-convert.js";
+import { readNamedHooks, serialize, withoutPlugin } from "./wrapped-command-hooks-merge.js";
 
 const isGroup = (entry: ProjectHookEntry | HandlerGroup): entry is HandlerGroup => "hooks" in entry;
 
@@ -31,11 +26,4 @@ export function wrappedCommandHookEntries(
 
 export function isWrappedCommandHooksFileEmpty(content: string): boolean {
   return Object.keys(readNamedHooks(content)).length === 0;
-}
-
-export function wrappedCommandHooksScriptDir(
-  target: WrappedCommandHooksTarget,
-  pluginName: string
-): string {
-  return `${target.descriptor.flat.scriptsDir}${pluginName}/`;
 }

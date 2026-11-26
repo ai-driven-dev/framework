@@ -1,10 +1,11 @@
+import { rulePatterns } from "../../../../../shared/domain/markdown.js";
 import {
   type LinkSyntax,
   REFERENCE_CHARS,
 } from "../../../../../shared/domain/materialization/link-syntax.js";
 import { escapeRegExp } from "../../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
+import { basename } from "../../../../../shared/domain/paths.model.js";
 import { GITKEEP_FILE } from "../../../../../shared/domain/redundant-gitkeeps.js";
-import { rulePatterns } from "../../formats/rule-frontmatter.js";
 
 export const DIRECTORY = ".github/";
 export const TOOL_SUFFIX = ".copilot.md";
@@ -21,10 +22,6 @@ const DOCS_DIR = "aidd_docs" as const;
 export const EXT_AGENT = ".agent.md";
 export const EXT_PROMPT = ".prompt.md";
 export const EXT_INSTRUCTIONS = ".instructions.md";
-
-function basename(path: string): string {
-  return path.split("/").at(-1) ?? path;
-}
 
 /** The file's own name, numbering and tool suffix stripped as asked, underscores made dashes. */
 function leafName(

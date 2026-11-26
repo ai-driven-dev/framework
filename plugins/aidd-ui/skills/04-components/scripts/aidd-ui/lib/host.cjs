@@ -6,6 +6,7 @@
  * the plugin tree. Node built-ins only; anything unreadable is no event, and prints nothing.
  */
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 
 const HOST = "claude";
@@ -36,7 +37,7 @@ function replacedByWrite(response) {
   return response?.type === "create" && response.originalFile === null ? "" : undefined;
 }
 
-function writtenFiles(tool, input, response, cwd) {
+function writtenFiles(tool, input, cwd, response) {
   if (!WRITES.has(tool) || typeof input?.file_path !== "string") return [];
   const file = { path: path.resolve(cwd, input.file_path) };
   // A write carries the whole file; an edit carries fragments of it, never `content`.
@@ -67,7 +68,7 @@ function readEvent() {
   current = {
     host: HOST,
     event,
-    files: filesOf(event, writtenFiles(tool, input, raw.tool_response, cwd)),
+    files: filesOf(event, writtenFiles(tool, input, cwd, raw.tool_response)),
     ...(SHELLS.has(tool) && typeof input?.command === "string" ? { command: input.command } : {}),
     stopActive: raw.stop_hook_active === true,
     sessionId: typeof raw.session_id === "string" ? raw.session_id : null,
@@ -81,7 +82,6 @@ function print(output) {
   process.stdout.write(`${JSON.stringify(output)}\n`);
 }
 
-/** Whether there is a message to show the person. */
 function hasPerson(person) {
   return typeof person === "string" && person !== "";
 }
@@ -90,7 +90,8 @@ function hasPerson(person) {
  * person `person` where the host allows it. Asks once: a turn end that is already a continuation
  * is never continued again. */
 function continueTurn(text, person) {
-  if (typeof text !== "string" || text === "" || current?.stopActive === true) return;
+  if (current?.event !== "Stop" || typeof text !== "string" || text === "") return;
+  if (current.stopActive === true) return;
   print({
     decision: "block",
     reason: text,
@@ -120,6 +121,10 @@ function answer({ level, text, person } = {}) {
  * other event: a hook that refuses is written once and is harmless where nothing can be refused. */
 function refuse(reason) {
   if (current?.event !== "PreToolUse" || typeof reason !== "string" || reason === "") return;
+  denyToolCall(reason);
+}
+
+function denyToolCall(reason) {
   print({
     hookSpecificOutput: {
       hookEventName: "PreToolUse",
@@ -129,4 +134,35 @@ function refuse(reason) {
   });
 }
 
-module.exports = { readEvent, answer, continueTurn, refuse };
+/** Whether `folder` is a folder of this user's alone, created when `create` and missing; its parent must exist. */
+function ownFolder(folder, create) {
+  if (create) {
+    try {
+      fs.mkdirSync(folder, { mode: 0o700 });
+    } catch (error) {
+      if (error.code !== "EEXIST") return false;
+    }
+  }
+  try {
+    const stat = fs.lstatSync(folder);
+    if (!stat.isDirectory()) return false;
+    return (
+      typeof process.getuid !== "function" ||
+      (stat.uid === process.getuid() && (stat.mode & 0o077) === 0)
+    );
+  } catch {
+    return false;
+  }
+}
+
+/** `<tmpdir>/aidd-hooks-<uid>/<name>` when it and the hooks folder above it are this user's alone, else null. */
+function hooksFolder(name, create) {
+  const hooks = path.join(
+    os.tmpdir(),
+    typeof process.getuid === "function" ? `aidd-hooks-${process.getuid()}` : "aidd-hooks"
+  );
+  const own = path.join(hooks, name);
+  return ownFolder(hooks, create) && ownFolder(own, create) ? own : null;
+}
+
+module.exports = { readEvent, answer, continueTurn, refuse, ownFolder, hooksFolder };

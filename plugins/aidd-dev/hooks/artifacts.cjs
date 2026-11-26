@@ -7,14 +7,11 @@
 // and names none. Node built-ins only.
 const crypto = require("node:crypto");
 const fs = require("node:fs");
-const os = require("node:os");
 const path = require("node:path");
 const host = require("./lib/host.cjs");
 
 const CONTRACTS = path.join(__dirname, "lib", "contracts");
 const SAFE_SESSION_ID = /^[A-Za-z0-9_-]{1,128}$/u;
-const HOOKS_FOLDER = typeof process.getuid === "function" ? `aidd-hooks-${process.getuid()}` : "aidd-hooks";
-const OTHERS_BITS = 0o077;
 const STATE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const SKIPPED_DIRS = new Set([".git", "node_modules"]);
 const WILDCARD = /[*{]/u;
@@ -29,29 +26,9 @@ const sessionOf = (event) => (typeof event.sessionId === "string" && SAFE_SESSIO
 
 // ---- state: one folder per user and installed copy in the system temp folder ---------------------------------
 
-/** Whether `folder` is a folder of this user's alone, created when `create` and missing. */
-function ownFolder(folder, create) {
-  if (create) {
-    try {
-      fs.mkdirSync(folder, { mode: 0o700 });
-    } catch (error) {
-      if (error.code !== "EEXIST") return false;
-    }
-  }
-  try {
-    const stat = fs.lstatSync(folder);
-    if (!stat.isDirectory()) return false;
-    return typeof process.getuid !== "function" || (stat.uid === process.getuid() && (stat.mode & OTHERS_BITS) === 0);
-  } catch {
-    return false;
-  }
-}
-
 /** `<tmpdir>/aidd-hooks-<uid>/<copy>`, or null when it is not this user's alone; created only when `create`. */
 function stateFolder(create) {
-  const hooks = path.join(os.tmpdir(), HOOKS_FOLDER);
-  const own = path.join(hooks, copy());
-  return ownFolder(hooks, create) && ownFolder(own, create) ? own : null;
+  return host.hooksFolder(copy(), create);
 }
 
 /** Writes beside the file then renames over it: a link planted at the path is replaced, never written through. */

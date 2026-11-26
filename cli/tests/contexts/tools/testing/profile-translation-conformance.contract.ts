@@ -47,7 +47,9 @@ const PRESENCE = {
   agentsList: ["reviewer.md"],
   skillsList: ["hello"],
   hasHooksJson: true,
+  hooks: {},
   hasMcpJson: true,
+  mcpServers: {},
 };
 
 export const PROFILE_TRANSLATION_CHECKS: readonly ConformanceCheck<TranslationSubject>[] = [

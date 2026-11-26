@@ -42,7 +42,7 @@ async function requestOf(
     options: { projectRoot: PROJECT_ROOT, ...extra },
     scope,
     context,
-    activation: { outcomes: new Map(), binaryMissing: [], warnings: [], errors: [] },
+    activation: { outcomes: new Map(), served: [], binaryMissing: [], warnings: [], errors: [] },
   };
 }
 

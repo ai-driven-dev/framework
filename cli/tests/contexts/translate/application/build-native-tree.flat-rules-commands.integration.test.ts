@@ -21,8 +21,13 @@ const OPENCODE_BASE = {
 };
 
 async function buildFlat(
-  target: typeof TOOL.kilo | typeof TOOL.opencode | typeof TOOL.kimi = TOOL.kilo,
-  existing: Record<string, string> = {}
+  target:
+    | typeof TOOL.kilo
+    | typeof TOOL.opencode
+    | typeof TOOL.kimi
+    | typeof TOOL.codex = TOOL.kilo,
+  existing: Record<string, string> = {},
+  force = false
 ) {
   const fs = new InMemoryFileAdapter();
   await seedFromDirectory(fs, FIXTURE_DIR, { useAbsolutePaths: true });
@@ -42,7 +47,8 @@ async function buildFlat(
     assets,
     logger,
     buildContractOf(registeredTools(), target, "flat"),
-    "flat"
+    "flat",
+    force
   );
   await build.execute({ sourceDir: FIXTURE_DIR, outDir: OUT, target });
   return { fs, logger };
@@ -71,6 +77,28 @@ describe("a flat build of the rules of a plugin for OpenCode", () => {
   });
 });
 
+describe("a flat build of the commands of a plugin for OpenCode", () => {
+  const COMMAND = `${OUT}/.opencode/commands/aidd-test/implement.md`;
+
+  it("writes the command in its plugin's folder, and does not warn it skipped it", async () => {
+    const { fs, logger } = await buildFlat(TOOL.opencode);
+
+    expect(fs.getFile(COMMAND)).toContain("name: 'aidd-aidd-test:implement'");
+    expect(logger.warnMessages.filter((line) => line.includes("commands/"))).toEqual([]);
+  });
+
+  it("writes the same bytes when built again over its own output", async () => {
+    const first = await buildFlat(TOOL.opencode);
+    const again = await buildFlat(
+      TOOL.opencode,
+      { [COMMAND]: first.fs.getFile(COMMAND) ?? "" },
+      true
+    );
+
+    expect(again.fs.getFile(COMMAND)).toBe(first.fs.getFile(COMMAND));
+  });
+});
+
 describe("a flat build of the rules of a plugin", () => {
   let kilo: Awaited<ReturnType<typeof buildFlat>>;
   beforeAll(async () => {
@@ -93,12 +121,31 @@ describe("a flat build of the rules of a plugin", () => {
   it("does not warn that it skipped the rules", () => {
     expect(kilo.logger.warnMessages.filter((line) => line.includes("rules/"))).toEqual([]);
   });
-
-  it("still warns, for a tool that carries no rules, that it skipped them", async () => {
-    const { logger } = await buildFlat(TOOL.kimi);
-
-    expect(logger.warnMessages).toContain(
-      "Skipping rules/ in plugin 'aidd-test' (out of scope for MVP1)."
-    );
-  });
 });
+
+describe.each([
+  { tool: TOOL.kimi, directory: ".kimi-code" },
+  { tool: TOOL.codex, directory: ".codex" },
+])(
+  "a flat build of the rules of a plugin for $tool, which reads guidance only from AGENTS.md",
+  ({ tool, directory }) => {
+    const PERSON = "# Team notes\n";
+
+    it("writes the rule with its scope stated in the body, and lists the plugin's rules in AGENTS.md after the team's text", async () => {
+      const { fs, logger } = await buildFlat(tool, { [`${OUT}/AGENTS.md`]: PERSON });
+
+      expect(
+        fs
+          .getFile(`${OUT}/${directory}/instructions/aidd-test-01-standards-naming.md`)
+          ?.startsWith("Applies to files matching `src/**/*.ts`.\n\n")
+      ).toBe(true);
+      expect(fs.getFile(`${OUT}/AGENTS.md`)).toContain(
+        `${PERSON}\n<!-- aidd_plugin_rules:start -->`
+      );
+      expect(fs.getFile(`${OUT}/AGENTS.md`)).toContain(
+        `- \`${directory}/instructions/aidd-test-*.md\``
+      );
+      expect(logger.warnMessages.filter((line) => line.includes("rules/"))).toEqual([]);
+    });
+  }
+);

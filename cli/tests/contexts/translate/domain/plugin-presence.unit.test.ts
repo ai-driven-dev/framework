@@ -41,15 +41,18 @@ describe("telling what a plugin ships", () => {
     const canon = await canonOf({
       [`${PLUGIN_SRC}/agents/reviewer.md`]: "# Reviewer",
       [`${PLUGIN_SRC}/skills/hello/SKILL.md`]: "# Hello",
-      [`${PLUGIN_SRC}/hooks/hooks.json`]: "{}",
-      [`${PLUGIN_SRC}/.mcp.json`]: "{}",
+      [`${PLUGIN_SRC}/hooks/hooks.json`]:
+        '{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"node a.cjs"}]}]}}',
+      [`${PLUGIN_SRC}/.mcp.json`]: '{"mcpServers":{"docs":{"url":"https://example.com/mcp"}}}',
     });
     expect(presenceOf(canon)).toEqual({
       hasAgents: true,
       agentsList: ["reviewer.md"],
       skillsList: ["hello"],
       hasHooksJson: true,
+      hooks: { SessionStart: [{ hooks: [{ type: "command", command: "node a.cjs" }] }] },
       hasMcpJson: true,
+      mcpServers: { docs: { url: "https://example.com/mcp" } },
     });
   });
 
@@ -60,7 +63,24 @@ describe("telling what a plugin ships", () => {
       agentsList: [],
       skillsList: [],
       hasHooksJson: false,
+      hooks: {},
       hasMcpJson: false,
+      mcpServers: {},
     });
+  });
+
+  it("reads the hooks file once however often the hooks are read", async () => {
+    const canon = await canonOf({ [`${PLUGIN_SRC}/hooks/hooks.json`]: '{"hooks":{"Stop":[]}}' });
+    const presence = presenceOf(canon);
+
+    expect(presence.hooks).toBe(presence.hooks);
+  });
+
+  it("names the plugin whose mcp declaration cannot be parsed", async () => {
+    const canon = await canonOf({ [`${PLUGIN_SRC}/.mcp.json`]: "{ not json" });
+
+    expect(() => presenceOf(canon)).toThrow(
+      expect.objectContaining({ detail: expect.stringContaining("plugin 'aidd-test' MCP config") })
+    );
   });
 });

@@ -37,7 +37,8 @@ flowchart LR
 | The manifest reads v9, and v8 only to split it once | no migration chain: [`decisions/manifest-reads-v9-and-splits-v8.md`](decisions/manifest-reads-v9-and-splits-v8.md) |
 | A build leaves `{{TOOLS}}` unresolved on copilot, an install resolves it to `.github/` | a build is location-independent; only an install knows the tool directory it writes into |
 | An install writes the plugin manifest the build synthesizes | `synthesizeManifest` is a per-tool member of the build contract, shared by most tools through `synthesizeSharedManifest`; Codex builds its own and the others declare none, so a manifest never names a component or a field the files do not match |
-| One hooks descriptor per tool, one merge engine, one host adapter per tool that delivers hooks (OpenCode and Kilo share `host-bridge.cjs`; Kimi has none) | adapters in `cli/assets/hooks-runtime/`; adding a tool: [`01-tool.md`](../../../../.claude/skills/working-on-cli/actions/01-tool.md) |
+| A tool that reads guidance only from AGENTS.md lists a plugin's rules there | `agents-rules-index.ts` owns one marked block beside the team's text, written by the Kimi install, both Codex routes (a project install lists `.codex/instructions/`, a machine-scope install lists `~/.codex/instructions/` in `~/.codex/AGENTS.md`) and both flat builds, refusing a block whose markers do not pair |
+| One hooks descriptor per tool, one merge engine, one host adapter per tool that delivers hooks (OpenCode and Kilo share `host-bridge.cjs`) | adapters in `cli/assets/hooks-runtime/`; adding a tool: [`01-tool.md`](../../../../.claude/skills/working-on-cli/actions/01-tool.md) |
 
 ## Machine claims lock
 

@@ -50,7 +50,7 @@ src/
 | `cli/src/composition/` | the wiring; imported only by the composition root and `cli/src/cli.ts` |
 | `cli/src/shared/` | what two or more contexts need; `cli/tests/architecture/earned-sharing.arch.test.ts` |
 | `cli/tests/` | mirrors `cli/src/`, one tier per file suffix; `architecture/` guards, `golden/` snapshots, `cli/tests/shared/testing/` builders |
-| `cli/assets/` | configs inlined at build time, schemas copied beside the binary, hook runtimes |
+| `cli/assets/` | configs inlined at build time, schemas copied beside the binary, hook runtimes (`host-*.cjs` generated from `hooks-runtime/parts/`: edit the template, then `node scripts/check/run.cjs --fix`) |
 | `cli/scripts/` | bundle budget, mutation runner, smoke harnesses, profile-copy check |
 
 ## Entry points
