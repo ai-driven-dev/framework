@@ -22,7 +22,6 @@ What each AI tool receives from the framework.
 | --- | --- |
 | ✅ | Supported |
 | ❌ | Not supported |
-| Marketplace only | Supported when installed through the tool's marketplace, not as flat files |
 | Some events | Through a generated bridge; events in [Hook events](#hook-events) |
 
 ## Hook events
@@ -47,36 +46,16 @@ Sources: [Claude Code](https://code.claude.com/docs/en/hooks), [Codex](https://l
 
 ## Limits
 
-### Antigravity CLI
-
-- A matcher is a `|` list of `agy` tool names (`edit_file`); a regular-expression part selects nothing.
-- A `PostToolUse` answer does not reach the model.
-- A silent `PreToolUse` script answers `allow`, because `{}` denies.
-
-### Cursor
-
-- Only a project `.cursor/hooks.json` fires; a plugin-scope one fires nothing.
-- `PostToolUse` takes `additional_context` only, so `decision: block` is dropped.
-- A headless `cursor-agent -p` delivers no `stop`.
-
-### OpenCode and Kilo Code
-
-- A subagent's child session runs neither `SessionStart` nor `Stop`.
-- One `Stop` hook per plugin: after one blocks, the next stay silent.
-- A `SessionStart` script that exits 2 has its stderr added to the model's system prompt (Claude Code shows it to the person only).
-
-### Codex
-
-- A hook runs only after it is approved in `/hooks`; an unapproved one is skipped silently.
-
-### Kiro
-
-- A matcher becomes Kiro's tool tags, one hook per tag.
-- With a home and a project install, each Kiro hook runs twice.
-- A `PostToolUse` script's output does not reach the model.
-
-### Kimi Code CLI
-
-- Hooks live only in the user-level `~/.kimi-code/config.toml`; a build ships none.
-- A Claude agent tool with no Kimi name is dropped from `tools`.
-- The install does not merge MCP servers; the flat build writes `.kimi-code/mcp.json`.
+| Host | Limit | What it means for you |
+| --- | --- | --- |
+| Antigravity CLI | A hook matcher takes only the tools Write, Edit and Bash, renamed to `agy`'s own | Any other tool name is dropped from the matcher |
+| Antigravity CLI | A `PostToolUse` answer is not relayed to the model | Do not use `PostToolUse` to feed the model |
+| Antigravity CLI | A silent `PreToolUse` script answers `allow` | Print a refusal to block; silence never does |
+| Antigravity CLI, Kimi Code CLI | A subagent's `tools` list keeps only tools with a name on the host | A Claude tool with no host name is dropped from its agent |
+| Cursor | Only a project `.cursor/hooks.json` fires | A plugin-scope hooks file does nothing |
+| Cursor | A headless `cursor-agent -p` run delivers no `stop` | A `Stop` hook such as a memory sync does not run headless |
+| OpenCode, Kilo Code | A subagent's child session runs neither `SessionStart` nor `Stop` | Hooks fire once per task, not per subagent |
+| OpenCode, Kilo Code | One `Stop` hook per plugin can continue a turn | After one blocks, the next stay silent |
+| OpenCode, Kilo Code | A `SessionStart` script that exits 2 has its stderr added to the model's system prompt | Claude Code shows it to the person only; do not exit 2 for a message |
+| Codex | A hook is skipped silently until a person trusts it | Approve it once in an interactive session, or pass `--dangerously-bypass-hook-trust` to `codex exec` |
+| Kiro | A tool matcher becomes Kiro's tool tags, one hook per tag | Only `PostToolUse` takes a matcher; `Write`, `Edit` and `Delete` map to `write`, the shell tools to `shell` |
