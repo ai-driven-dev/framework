@@ -125,7 +125,7 @@ function hold(text) {
 }
 
 /** The texts held for a conversation, in the order held, which are held no more. The file is
- * renamed before it is read, so of several hooks running together exactly one finds it. */
+ * renamed before it is read, so a flat and a plugin install of the owner release it once. */
 function takeHeld(conversationId) {
   const file = heldFile(conversationId, false);
   if (file === null) return [];

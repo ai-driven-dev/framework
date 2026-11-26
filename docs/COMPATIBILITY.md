@@ -52,7 +52,7 @@ Sources: [Claude Code](https://code.claude.com/docs/en/hooks), [Codex](https://d
 | --- | --- |
 | A hook matcher takes only the tools Write, Edit and Bash, renamed to `agy`'s own | Any other tool name is dropped from the matcher |
 | A level 1 `PostToolUse` answer is not relayed to the model | Use level 2 to feed the model after a tool |
-| A level 2 `PostToolUse` answer reaches the model at its next call, one extra model call; probed on `gemini-4-hydrogen-low` and `-medium` only | `aidd-context` alone releases it, one release spawn per model call; a plugin installed without `aidd-context` holds answers nothing releases; how `agy` combines several `PreInvocation` answers is unverified |
+| A level 2 `PostToolUse` answer reaches the model at its next call; probed on `gemini-4-hydrogen-low` and `-medium` only, and on the plugin route with a probe plugin | `aidd-context` alone releases it, one release spawn per model call; a plugin installed without `aidd-context`, or any source other than the framework marketplace, holds answers nothing releases; how `agy` combines several `PreInvocation` answers is unverified |
 | A silent `PreToolUse` script answers `allow` | Print a refusal to block; silence never does |
 | A subagent's `tools` list keeps only tools with a name on the host | A Claude tool with no host name is dropped from its agent |
 

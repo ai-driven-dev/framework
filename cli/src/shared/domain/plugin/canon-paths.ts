@@ -11,9 +11,9 @@ export const HOST_ADAPTER_PATH = "hooks/lib/host.cjs";
 export const shipsHostAdapter = (hooks: readonly { readonly relativePath: string }[]): boolean =>
   hooks.some(({ relativePath }) => relativePath === HOST_ADAPTER_PATH);
 
-/** The one plugin whose hooks run the release of held answers on a host with no plugin-shared hooks
- * file: each plugin installs on its own, so a single owner is the only way to run it once. A
- * plugin installed without it holds answers nothing releases. */
+/** The one plugin whose hooks run the release of held answers, so it runs once per model call
+ * whatever the route. A source without it, such as a third-party marketplace, holds answers
+ * nothing releases. */
 export const RELEASE_OWNER_PLUGIN = "aidd-context";
 
 export const carriesRelease = (
