@@ -81,7 +81,7 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 850 KB: 834.1 KB, the kind rollout building every use case in composition and injecting it, so no free function reads a port; one raise for the remaining waves; 1.9% measured headroom.
 // 880 KB: 862.8 KB, the fix waves on the rebuilt target (host withdrawal, stale declarations, tool codecs, bounded pruning); the final size pass is closed, since tree-shaking saved only about 4 KB; 2.0% measured headroom.
 // 897 KB: 879.2 KB, Kiro and Kimi as target tools, Kiro's SessionStart hooks, the person-only hook channel, the session-start telemetry reminder and the cache refusing an unreadable directory (+16.4 KB over the 862.8 KB above); 2.0% measured headroom.
-// 918 KB: 899.8 KB, Antigravity's level 2 answers held and released at its next model call (+3.0 KB over next's 896.8 KB); 2.0% measured headroom.
+// 917 KB: 899.1 KB, Antigravity's plugin directories, taking back the hooks an earlier release merged into the project's file, and the build reporting an event the host never fires (+4.2 KB over next's 894.9 KB); 2.0% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

@@ -17,7 +17,7 @@ type FlatFiles = FileReader & FileWriter;
 export async function writeFlatHooks(
   fs: FlatFiles,
   logger: Logger,
-  { target, artifact, pluginName, hooksJson, hostAdapter }: FlatHooksStep
+  { target, artifact, pluginName, hooksJson }: FlatHooksStep
 ): Promise<number> {
   const file = artifact.skipHooksJson ? undefined : artifact.hooksFile;
   if (file === undefined || !("shared" in file.at)) return 0;
@@ -26,7 +26,6 @@ export async function writeFlatHooks(
   const { content, warnings } = mergeFlatHooks({ file, contract: target.contract }, existing, {
     json: hooksJson,
     plugin: pluginName,
-    hostAdapter,
   });
   for (const w of warnings) logger.warn(w);
   await fs.writeFile(destPath, content);

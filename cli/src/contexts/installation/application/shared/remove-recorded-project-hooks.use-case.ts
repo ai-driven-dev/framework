@@ -2,6 +2,7 @@ import { dirname, join } from "node:path";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.js";
+import { recordedHooksLocation } from "../../domain/project-hooks.model.js";
 import type { AssertProjectPathWithinRoot } from "../ownership/assert-project-path-within-root.use-case.js";
 import type {
   AssertProjectHooksUnchanged,
@@ -22,7 +23,7 @@ export class RemoveRecordedProjectHooks {
   async execute(request: RecordedProjectHooks): Promise<boolean> {
     const { fs, unchanged, withinRoot } = this.deps;
     const { pluginName, provenance, tool, projectRoot } = request;
-    const delivery = tool.projectHooksDelivery();
+    const delivery = recordedHooksLocation(tool);
     if (delivery === null) return false;
     const { format } = delivery;
     const { existing } = await unchanged.execute(request);

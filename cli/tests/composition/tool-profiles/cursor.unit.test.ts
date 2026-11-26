@@ -51,9 +51,7 @@ describe("cursor's hooks", () => {
     const format = cursor.projectHooksDelivery()?.format;
     if (format === undefined) throw new Error("no project hooks");
 
-    expect(
-      JSON.parse(format.merge(null, { json: shipped, plugin: "plugin-a" }).content)
-    ).toStrictEqual({
+    expect(JSON.parse(format.merge(null, shipped, "plugin-a").content)).toStrictEqual({
       version: 1,
       hooks: { postToolUse: [{ command: "node scripts/run.cjs" }] },
     });

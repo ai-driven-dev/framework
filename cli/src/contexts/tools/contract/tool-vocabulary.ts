@@ -1,4 +1,3 @@
-import type { ShippedHooks } from "../../../shared/domain/materialization/build-contract.js";
 import type { PluginSource } from "../../../shared/domain/plugin/source.js";
 
 /** A hook script as the tool runs it, given its path in the plugin and its shipped content. */
@@ -15,7 +14,8 @@ export type ProjectHookEntry = { command: string; [key: string]: unknown };
 export interface ProjectHooksFormat {
   merge(
     existingJson: string | null,
-    shipped: ShippedHooks
+    pluginHooksJson: string,
+    pluginName: string
   ): { content: string; warnings: readonly string[] };
   unmerge(existingJson: string, pluginName: string): string;
   /** The entries this plugin contributed, each under the event the file holds it in. */

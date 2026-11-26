@@ -66,6 +66,26 @@ Fork the repository, or branch from it if you have write access.
 | `make check-hosts` | Tables what each installed tool really loads of the plugins |
 | `make check` | Runs the pre-commit checks |
 
+### Reload flow
+
+`make reload` builds the checkout's CLI (running `scripts/dev-sync.sh` on an unbuilt checkout falls back to the published CLI, which may predate `--agents-only`), then runs from your home directory for each detected tool:
+
+```text
+setup --global --source local --path <checkout> --ide <tool> --plugins all --yes
+  add --agents-only
+→ Claude / Codex: refresh native plugin copies, repeat setup without --agents-only
+→ doctor --global --tool <tool>
+→ sync the managed Agents instruction section
+```
+
+The CLI owns installation and model generation; tiers, models and what `--agents-only` leaves alone are in [`docs/SUBAGENTS.md`](docs/SUBAGENTS.md#-models). A managed OpenCode installation uses its existing reload helper.
+
+Commands and model/plugin details appear as they run, followed by one result per tool: `OK`, `WARN` or `FAIL` (`DELEGATED` for managed OpenCode). Any warning (a `Warning:` line in the CLI output) or failure exits nonzero; fix the reported cause and rerun. `OK` covers the CLI installation and registration checks, not a live agent session; restart your tools to load the changes.
+
+A Codex build that refuses to upgrade a local marketplace makes the CLI print a `Warning:` line, so reload fails on every Codex run there; that refusal is unverified here and not worked around.
+
+Native copies are released only after setup succeeds. A later failure has no automatic rollback. Manually changed owned files remain protected and can block installation; reload reports the conflict instead of overwriting them.
+
 ## 3. The rules
 
 | # | Rule |

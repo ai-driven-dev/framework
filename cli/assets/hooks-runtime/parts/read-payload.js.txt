@@ -1,0 +1,7 @@
+function readPayload() {
+  try {
+    return JSON.parse(fs.readFileSync(0, "utf8")) ?? undefined;
+  } catch {
+    return undefined;
+  }
+}

@@ -5,7 +5,6 @@ import {
   parsePluginsFlag,
   parseSourceFlag,
   parseToolIds,
-  requireAgentHosts,
 } from "../../../../src/presentation/controllers/setup/setup-flags.controller.js";
 import { CapturingOutput, ExitRequested } from "../../../shared/testing/capturing-output.fake.js";
 import {
@@ -118,20 +117,5 @@ describe("reading the --plugins flag", () => {
       mode: "named",
       names: ["aidd-dev", "aidd-pm"],
     });
-  });
-});
-
-describe("requiring a host that runs the agents", () => {
-  it("asks for an --ide tool that runs the agents when none was given", () => {
-    expect(() => requireAgentHosts("openai", { hosts: [], runnable: ["claude", "codex"] })).toThrow(
-      "--provider needs --ide with a tool that runs the framework's agents: claude, codex."
-    );
-  });
-
-  it("lets a run with no provider, or a tool that runs the agents, through", () => {
-    expect(() => requireAgentHosts(undefined, { hosts: [], runnable: ["claude"] })).not.toThrow();
-    expect(() =>
-      requireAgentHosts("openai", { hosts: ["claude"], runnable: ["claude"] })
-    ).not.toThrow();
   });
 });

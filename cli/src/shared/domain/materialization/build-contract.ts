@@ -81,6 +81,12 @@ export type ArtifactPlacement =
       readonly loaderEntry?: FlatHooksLoaderEntry;
     };
 
+/** A plugin's hooks.json in a tool's own form, and what the conversion left out. */
+export type ConvertHooks = (
+  json: string,
+  plugin: string
+) => { content: string; warnings: readonly string[] };
+
 export type ArtifactContract =
   | {
       readonly supported: false;
@@ -102,6 +108,9 @@ export type ArtifactContract =
       /** Defaults to identity, a byte-copy. For an agent whose file is no markdown (Codex's
        * TOML), the whole conversion. */
       readonly transform?: (content: string, plugin: string, basename: string) => string;
+      /** A plugin's hooks.json as a tool that reads it in a form of its own keeps it, with what
+       * the conversion dropped. Its content is what `transform` gives. */
+      readonly convertHooks?: ConvertHooks;
       /** VS Code Copilot discovers a skill by its parent folder name, so flat mode rewrites
        * SKILL.md's `name` frontmatter to match. Meaningless outside a flat skill artifact. */
       readonly rewriteSkillName?: boolean;
@@ -200,8 +209,6 @@ export interface ShippedHooks {
   readonly json: string;
   readonly plugin: string;
   readonly locate?: (pluginPath: string) => string;
-  /** Whether the plugin ships the host adapter its hooks speak through, at `hooks/lib/host.cjs`. */
-  readonly hostAdapter?: boolean;
 }
 
 /** A config file a tool builds from every plugin at once. The build reads what it names and

@@ -252,31 +252,6 @@ describe("materializing a project's hooks", () => {
     });
   });
 
-  describe("on a tool that takes a PostToolUse answer only at a later event", () => {
-    const ANTIGRAVITY = {
-      tools: registeredTools(),
-      tool: registeredTools().aiProfile(TOOL.antigravity),
-    };
-    const ADAPTER = { relativePath: "hooks/lib/host.cjs", content: "module.exports = {};" };
-    const hooksOf = async (files: readonly PluginComponentFile[]) => {
-      const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-      await deliverProjectHooks(projectIntegrationOver(fs).materializer, {
-        dist: distWithHooks([hooksManifest("PostToolUse"), ...files]),
-        ...ANTIGRAVITY,
-        projectRoot: PROJECT_ROOT,
-      });
-      return JSON.parse(fs.getFile(join(PROJECT_ROOT, ".agents", "hooks.json")) ?? "null");
-    };
-
-    it("adds the handler that releases it for a plugin shipping the host adapter", async () => {
-      expect((await hooksOf([SCRIPT, ADAPTER]))[PLUGIN_NAME]).toHaveProperty("PreInvocation");
-    });
-
-    it("adds none for a plugin shipping no host adapter", async () => {
-      expect((await hooksOf([SCRIPT]))[PLUGIN_NAME]).not.toHaveProperty("PreInvocation");
-    });
-  });
-
   it("replaces the plugin's older matcher-less entries on reinstall, leaving another plugin's alone", async () => {
     const command = `node ./.cursor/hooks/${PLUGIN_NAME}/pre.js`;
     const foreign = { command: "node ./.cursor/hooks/other-plugin/check.js" };
@@ -367,58 +342,57 @@ describe("materializing a project's hooks", () => {
   });
 });
 
-describe("ProjectHooksMaterializer for a flat tool merging into .agents/hooks.json", () => {
-  const AGENTS_HOOKS = join(PROJECT_ROOT, ".agents", "hooks.json");
-  const USER_HOOKS = `${JSON.stringify({ lint: { Stop: [{ command: "./lint.sh" }] } }, null, 2)}\n`;
+describe("ProjectHooksMaterializer for a flat tool merging into .kiro/hooks/aidd.json", () => {
+  const KIRO_HOOKS = join(PROJECT_ROOT, ".kiro", "hooks", "aidd.json");
+  const USER_HOOK = {
+    name: "lint",
+    trigger: "Stop",
+    action: { type: "command", command: "./lint.sh" },
+  };
+  const USER_HOOKS = `${JSON.stringify({ version: "v1", hooks: [USER_HOOK] }, null, 2)}\n`;
 
   it("adds the plugin's key beside the user's, rewrites nothing on a second run, and removes only its own on clean", async () => {
     const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-    fs.setFile(AGENTS_HOOKS, USER_HOOKS);
+    fs.setFile(KIRO_HOOKS, USER_HOOKS);
     const materializer = projectIntegrationOver(fs).materializer;
     const dist = distWithHooks([hooksManifest("SessionStart"), SCRIPT]);
 
     const first = await deliverProjectHooks(materializer, {
       dist,
       tools: registeredTools(),
-      tool: registeredTools().aiProfile(TOOL.antigravity),
+      tool: registeredTools().aiProfile(TOOL.kiro),
       projectRoot: PROJECT_ROOT,
     });
-    const afterFirst = fs.getFile(AGENTS_HOOKS);
+    const afterFirst = fs.getFile(KIRO_HOOKS);
     const second = await deliverProjectHooks(materializer, {
       dist,
       tools: registeredTools(),
-      tool: registeredTools().aiProfile(TOOL.antigravity),
+      tool: registeredTools().aiProfile(TOOL.kiro),
       projectRoot: PROJECT_ROOT,
       previous: first.projectHooks,
     });
 
-    expect(JSON.parse(afterFirst ?? "")).toEqual({
-      lint: { Stop: [{ command: "./lint.sh" }] },
-      [PLUGIN_NAME]: {
-        SessionStart: [
-          {
-            type: "command",
-            command: expect.stringContaining(
-              Buffer.from(`node ./.agents/hooks/${PLUGIN_NAME}/pre.js`).toString("base64")
-            ),
-          },
-        ],
-      },
-    });
-    expect(fs.getFile(join(PROJECT_ROOT, ".agents/hooks", PLUGIN_NAME, "pre.js"))).toBe(
+    expect(JSON.parse(afterFirst ?? "").hooks).toEqual([
+      USER_HOOK,
+      expect.objectContaining({
+        name: `${PLUGIN_NAME}-SessionStart-pre.js`,
+        trigger: "SessionStart",
+      }),
+    ]);
+    expect(fs.getFile(join(PROJECT_ROOT, ".kiro/hooks", PLUGIN_NAME, "pre.js"))).toBe(
       SCRIPT.content
     );
-    expect(fs.getFile(AGENTS_HOOKS)).toBe(afterFirst);
+    expect(fs.getFile(KIRO_HOOKS)).toBe(afterFirst);
 
     await removeRecordedHooksOver(fs).execute({
       pluginName: PLUGIN_NAME,
       provenance: second.projectHooks,
-      tool: registeredTools().aiProfile(TOOL.antigravity),
+      tool: registeredTools().aiProfile(TOOL.kiro),
       projectRoot: PROJECT_ROOT,
     });
 
-    expect(fs.getFile(AGENTS_HOOKS)).toBe(USER_HOOKS);
-    expect(fs.getFile(join(PROJECT_ROOT, ".agents/hooks", PLUGIN_NAME, "pre.js"))).toBeUndefined();
+    expect(fs.getFile(KIRO_HOOKS)).toBe(USER_HOOKS);
+    expect(fs.getFile(join(PROJECT_ROOT, ".kiro/hooks", PLUGIN_NAME, "pre.js"))).toBeUndefined();
   });
 
   it("deletes the hooks file on clean when nothing but the plugin's key was in it", async () => {
@@ -427,33 +401,33 @@ describe("ProjectHooksMaterializer for a flat tool merging into .agents/hooks.js
     const { projectHooks } = await deliverProjectHooks(materializer, {
       dist: distWithHooks([hooksManifest("SessionStart"), SCRIPT]),
       tools: registeredTools(),
-      tool: registeredTools().aiProfile(TOOL.antigravity),
+      tool: registeredTools().aiProfile(TOOL.kiro),
       projectRoot: PROJECT_ROOT,
     });
 
     await removeRecordedHooksOver(fs).execute({
       pluginName: PLUGIN_NAME,
       provenance: projectHooks,
-      tool: registeredTools().aiProfile(TOOL.antigravity),
+      tool: registeredTools().aiProfile(TOOL.kiro),
       projectRoot: PROJECT_ROOT,
     });
 
-    expect(await fs.fileExists(AGENTS_HOOKS)).toBe(false);
+    expect(await fs.fileExists(KIRO_HOOKS)).toBe(false);
   });
 
   it("stops on an unparsable hooks file, naming it and leaving it as found", async () => {
     const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
-    fs.setFile(AGENTS_HOOKS, "{ not json");
+    fs.setFile(KIRO_HOOKS, "{ not json");
 
     await expect(
       deliverProjectHooks(projectIntegrationOver(fs).materializer, {
         dist: distWithHooks([hooksManifest("SessionStart"), SCRIPT]),
         tools: registeredTools(),
-        tool: registeredTools().aiProfile(TOOL.antigravity),
+        tool: registeredTools().aiProfile(TOOL.kiro),
         projectRoot: PROJECT_ROOT,
       })
-    ).rejects.toThrow(/^\.agents\/hooks\.json is not valid JSON/);
-    expect(fs.getFile(AGENTS_HOOKS)).toBe("{ not json");
+    ).rejects.toThrow(/^\.kiro\/hooks\/aidd\.json is not valid JSON/);
+    expect(fs.getFile(KIRO_HOOKS)).toBe("{ not json");
   });
 });
 

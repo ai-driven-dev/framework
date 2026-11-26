@@ -87,6 +87,15 @@ describe("what a native tool answers", () => {
     expect(answersOf(nativePlugins()).materializesFromBuiltTree()).toBe(false);
   });
 
+  it("materializes from the built tree at project scope when its layout declares it", () => {
+    const answers = answersOf(nativePlugins({ pluginsDir: ".x/plugins/", materializes: true }));
+
+    expect([nativeOf(answers).requiresUserScope(), answers.materializesFromBuiltTree()]).toEqual([
+      false,
+      true,
+    ]);
+  });
+
   it("carries a trust notice and leaves the hooks file to the plugin", () => {
     const answers = nativeOf(
       answersOf(nativePlugins({ hooks: { kind: "plugin-file", trustNotice: "trust it" } }))

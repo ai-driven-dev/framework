@@ -16,7 +16,6 @@ import { CommandsSection } from "../../../../../src/contexts/tools/domain/sectio
 import { McpConfigPart } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
 import type {
   ArtifactContract,
-  ShippedHooks,
   ToolBuildContract,
 } from "../../../../../src/shared/domain/materialization/build-contract.js";
 import { SOURCE_PLUGIN_ROOT_TOKEN } from "../../../../../src/shared/domain/materialization/plugin-root-path-rewrite.js";
@@ -226,7 +225,8 @@ function withHooksMergeForgetting(profile: AiTool): AiTool {
   const location = profile.projectHooksDelivery();
   if (location === null) throw new Error(`${profile.toolId} merges no project hooks`);
   const { format } = location;
-  const merge = (_existing: string | null, shipped: ShippedHooks) => format.merge(null, shipped);
+  const merge = (_existing: string | null, hooks: string, name: string) =>
+    format.merge(null, hooks, name);
   return {
     ...profile,
     projectHooksDelivery: () => ({ ...location, format: { ...format, merge } }),
