@@ -20,6 +20,7 @@ const { spawn, spawnSync } = require("node:child_process");
 const { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } = require("node:fs");
 const { homedir, tmpdir } = require("node:os");
 const { basename, join, resolve, sep } = require("node:path");
+const { installedPlugins, json } = require("./lib/host-plugins.cjs");
 const { pause, versionOf } = require("./lib/hook-sandbox.cjs");
 
 const MARKETPLACE = "aidd-framework";
@@ -65,14 +66,6 @@ function run(binary, args) {
 
 function installed(binary) {
   return versionOf(binary, cwd) !== null;
-}
-
-function json(text) {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
 }
 
 function fileHolds(path, text) {
@@ -165,10 +158,9 @@ function pluginsOf(found) {
 
 async function claude() {
   const configDir = process.env.CLAUDE_CONFIG_DIR || join(home, ".claude");
-  const listed = json(run("claude", ["plugin", "list", "--json"]) ?? "") ?? [];
-  const enabled = listed
-    .filter((p) => p.enabled && p.scope === "user" && p.id?.endsWith(`@${MARKETPLACE}`))
-    .map((p) => p.id.split("@")[0]);
+  const enabled = installedPlugins("claude", run("claude", ["plugin", "list", "--json"]))
+    .filter((p) => p.enabled && p.scope === "user" && p.marketplace === MARKETPLACE)
+    .map((p) => p.name);
   // `plugin details` prints Agents (0) for a manifest listing its agents by file; the session's
   // own init event names what it really loaded.
   const init = await firstLine(
@@ -206,9 +198,8 @@ function promptText(value) {
 
 async function codex() {
   const codexHome = process.env.CODEX_HOME || join(home, ".codex");
-  const listed = json(run("codex", ["plugin", "list", "--json"]) ?? "")?.installed ?? [];
-  const enabled = listed
-    .filter((p) => p.marketplaceName === MARKETPLACE && p.installed && p.enabled)
+  const enabled = installedPlugins("codex", run("codex", ["plugin", "list", "--json"]))
+    .filter((p) => p.marketplace === MARKETPLACE && p.enabled)
     .map((p) => p.name);
   const prompt = promptText(json(run("codex", ["debug", "prompt-input"]) ?? "") ?? []);
   const available = [...prompt.matchAll(/^- ([a-z0-9-]+):([^:\s]+)/gm)].map(
@@ -229,8 +220,7 @@ async function codex() {
 }
 
 async function copilot() {
-  const listed = json(run("copilot", ["plugin", "list", "--json"]) ?? "") ?? [];
-  const enabled = listed
+  const enabled = installedPlugins("copilot", run("copilot", ["plugin", "list", "--json"]))
     .filter((p) => p.marketplace === MARKETPLACE && p.enabled)
     .map((p) => p.name);
   const sources = json(run("copilot", ["instruction", "list", "--json"]) ?? "") ?? [];
