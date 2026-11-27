@@ -37,7 +37,11 @@ function setup(marketplaces: Marketplace[]) {
   }));
   return {
     resolve,
-    useCase: new ListFrameworkPlugins({ list: async () => marketplaces }, { execute: resolve }),
+    useCase: new ListFrameworkPlugins(
+      { list: async () => marketplaces },
+      { execute: resolve },
+      process.platform
+    ),
   };
 }
 

@@ -4,11 +4,12 @@
  */
 import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, realpathSync } from "node:fs";
-import { join, posix, relative, resolve, sep } from "node:path";
+import { join, posix, resolve } from "node:path";
 import {
   matchesGlob as scopeGlob,
   sourceFiles as srcFiles,
 } from "../../scripts/mutation-shards.mjs";
+import { posixRelative } from "../../src/shared/domain/paths.model.js";
 import { present } from "../shared/testing/present.builder.js";
 
 export const CLI_ROOT = resolve(import.meta.dirname, "..", "..");
@@ -36,12 +37,11 @@ export function biomeFindings(projectDir: string, launcher = BIOME): string[] {
     .filter((match): match is RegExpExecArray => match !== null)
     .map(
       (match) =>
-        `${relative(
+        `${posixRelative(
           realpathSync(projectDir),
-          realpathSync(resolve(projectDir, reportedFile(present(match[2]))))
-        )
-          .split(sep)
-          .join("/")}:${match[1]}`
+          realpathSync(resolve(projectDir, reportedFile(present(match[2])))),
+          process.platform
+        )}:${match[1]}`
     )
     .sort();
   // biome exits 0 when clean and 1 with diagnostics; anything else never linted.

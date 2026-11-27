@@ -1,8 +1,9 @@
 import { join } from "node:path";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
-import type {
-  PluginTranslationSkip,
-  ReadonlySkipList,
+import {
+  hooksSkip,
+  type ReadonlySkipList,
+  toolWarning,
 } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
 import { whenAbsent } from "../../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
@@ -91,7 +92,9 @@ export class ProjectHooksMaterializer {
     const scripts = await writeProjectHookScripts(this.fs, delivery);
     await removeObsoleteScripts(this.fs, delivery, scripts);
     return {
-      skipped: warnings.map((reason) => skipOf(dist.manifest.name, tool, reason)),
+      skipped: warnings.map((reason) =>
+        hooksSkip(dist.manifest.name, tool.toolId, toolWarning(tool.toolId, reason))
+      ),
       projectHooks: { entries, scripts },
     };
   }
@@ -131,17 +134,4 @@ export class ProjectHooksMaterializer {
   private async readExistingJson(path: string): Promise<string | null> {
     return whenAbsent(() => this.fs.readFile(path), null);
   }
-}
-
-function skipOf(
-  pluginName: string,
-  tool: ProjectHooksSection,
-  reason: string
-): PluginTranslationSkip {
-  return {
-    pluginName,
-    component: "hooks",
-    toolId: tool.toolId,
-    reason: `${tool.toolId}: ${reason}`,
-  };
 }

@@ -20,7 +20,13 @@ export interface ProjectPluginUpdate {
   readonly projectRoot: string;
   readonly cacheDir: string;
   readonly manifest: Manifest;
+  readonly machine: Manifest;
   readonly rebuild: boolean;
+}
+
+/** A project update, and the machine's manifest that tells which user directories it owns. */
+export interface ProjectPluginUpdateRequest extends UpdatePluginRequest {
+  readonly machine: Manifest;
 }
 
 /** What UpdateProjectPlugins is built from. */
@@ -39,13 +45,14 @@ export class UpdateProjectPlugins {
     private readonly tools: ToolCatalog
   ) {}
 
-  async execute(request: UpdatePluginRequest): Promise<PluginUpdateOutcome> {
+  async execute(request: ProjectPluginUpdateRequest): Promise<PluginUpdateOutcome> {
     const { pluginNames, toolIds, projectRoot } = request;
     const manifest = await requireManifest(this.deps.manifestRepo);
     const update = {
       projectRoot,
       cacheDir: join(projectRoot, PLUGIN_CACHE_SUBDIR),
       manifest,
+      machine: request.machine,
       rebuild: request.rebuild === true,
     };
     const updated: string[] = [];
@@ -84,7 +91,7 @@ export class UpdateProjectPlugins {
     tool: RuntimeConfigSection,
     update: ProjectPluginUpdate
   ): Promise<boolean> {
-    const { projectRoot, cacheDir, manifest, rebuild } = update;
+    const { projectRoot, cacheDir, manifest, machine, rebuild } = update;
     const { plugin } = recorded;
     const toolId = tool.toolId;
     if (plugin.scope === "user") throw new InvalidPluginScopeError(toolId, "project", "user");
@@ -99,6 +106,7 @@ export class UpdateProjectPlugins {
       toolId,
       projectRoot,
       manifest,
+      machine,
     });
     return true;
   }

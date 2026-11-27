@@ -16,7 +16,8 @@ export interface ResolvePluginSourceRequest {
 export class ResolvePluginSource {
   constructor(
     private readonly registry: MarketplaceRegistry,
-    private readonly resolveMarketplace: Pick<ResolveMarketplace, "execute">
+    private readonly resolveMarketplace: Pick<ResolveMarketplace, "execute">,
+    private readonly platform: string
   ) {}
 
   async execute(command: ResolvePluginSourceRequest): Promise<PluginSourceMatch[]> {
@@ -47,7 +48,10 @@ export class ResolvePluginSource {
         marketplaceName: marketplace.name,
         githubMarketplace: marketplace.source.kind === "github",
         entry,
-        source: resolvePluginSourceFromMarketplace(entry.source, marketplace, localPath),
+        source: resolvePluginSourceFromMarketplace(entry.source, marketplace, {
+          path: localPath,
+          platform: this.platform,
+        }),
       }));
   }
 }

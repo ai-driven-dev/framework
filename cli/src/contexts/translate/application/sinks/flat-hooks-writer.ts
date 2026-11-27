@@ -1,4 +1,4 @@
-import { join, relative } from "node:path";
+import { join } from "node:path";
 import { describeError } from "../../../../shared/domain/describe-error.js";
 import { hooksFilePath } from "../../../../shared/domain/materialization/artifact-path.js";
 import { tryParseJson } from "../../../../shared/domain/reading/json-file.js";
@@ -21,8 +21,9 @@ export async function writeFlatHooks(
 ): Promise<number> {
   const file = artifact.skipHooksJson ? undefined : artifact.hooksFile;
   if (file === undefined || !("shared" in file.at)) return 0;
-  const destPath = join(target.outDir, hooksFilePath(file, pluginName));
-  const existing = await readSharedHooksTarget(fs, target.outDir, destPath);
+  const shownPath = hooksFilePath(file, pluginName);
+  const destPath = join(target.outDir, shownPath);
+  const existing = await readSharedHooksTarget(fs, { destPath, shownPath });
   const { content, warnings } = mergeFlatHooks({ file, contract: target.contract }, existing, {
     json: hooksJson,
     plugin: pluginName,
@@ -35,18 +36,12 @@ export async function writeFlatHooks(
 
 async function readSharedHooksTarget(
   fs: FlatFiles,
-  outDir: string,
-  destPath: string
+  target: { destPath: string; shownPath: string }
 ): Promise<string | null> {
-  if (!(await fs.fileExists(destPath))) return null;
-  const content = await fs.readFile(destPath);
-  assertParsableJson(content, outDir, destPath);
-  return content;
-}
-
-function assertParsableJson(content: string, outDir: string, destPath: string): void {
+  if (!(await fs.fileExists(target.destPath))) return null;
+  const content = await fs.readFile(target.destPath);
   const parsed = tryParseJson(content);
-  if (parsed.ok) return;
-  const shown = relative(outDir, destPath).replace(/\\/g, "/");
-  throw new FlatMergeTargetNotJsonError(shown, describeError(parsed.error));
+  if (!parsed.ok)
+    throw new FlatMergeTargetNotJsonError(target.shownPath, describeError(parsed.error));
+  return content;
 }

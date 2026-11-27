@@ -70,7 +70,8 @@ export async function buildUseCase(
   const useCase = new InstallFromMarketplace({
     resolvePluginSource: new ResolvePluginSource(
       registry,
-      new ResolveMarketplace(fetchMarketplaceSource, catalogRepo)
+      new ResolveMarketplace(fetchMarketplaceSource, catalogRepo),
+      process.platform
     ),
     addPlugin: addPluginFor(deps, registry),
     prompter: options.prompter ?? new KeepPrompter(),

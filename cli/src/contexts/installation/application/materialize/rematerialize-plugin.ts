@@ -4,6 +4,7 @@ import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { PluginTranslationMode } from "../../../tools/contract/tool-vocabulary.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
+import { machineOwnsUserScopeDir } from "../plugin/add/foreign-user-scope-dir.js";
 import { deleteOldFiles } from "../plugin/files/delete-plugin-files.js";
 import type { PluginFilesystem } from "../plugin/files/write-plugin-files.js";
 import { scopeBaseOf } from "../plugin/plugin-target-resolution.js";
@@ -20,6 +21,7 @@ export interface PluginRematerialization {
   readonly plugin: RecordedPlugin;
   readonly projectRoot: string;
   readonly manifest: Manifest;
+  readonly machine: Manifest;
   readonly hooksGuard?: ProjectHooksGuard;
 }
 
@@ -39,7 +41,7 @@ export async function rematerializePlugin(
   rematerialization: PluginRematerialization,
   deps: RematerializationDeps
 ): Promise<number> {
-  const { tool, mode, projectRoot, manifest, hooksGuard = {} } = rematerialization;
+  const { tool, mode, projectRoot, manifest, machine, hooksGuard = {} } = rematerialization;
   const { plugin, provenance, marketplace } = rematerialization.plugin;
   const dist = rematerialization.plugin.asRecorded(rematerialization.dist);
   manifest.removePlugin(tool.toolId, plugin.name);
@@ -51,7 +53,7 @@ export async function rematerializePlugin(
     manifest,
     marketplace,
     previousMcpEntries: provenance.mcpEntries,
-    userScopeDirTaken: false,
+    userScopeDirTaken: machineOwnsUserScopeDir({ dist, machine }, tool),
     previousProjectHooks: provenance.projectHooks,
     hooksGuard,
   };

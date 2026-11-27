@@ -18,6 +18,7 @@ import type { AssetProvider } from "../../../../src/shared/ports/asset-provider.
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
 import type { Logger } from "../../../../src/shared/ports/logger.js";
+import { InMemoryManifestRepository } from "../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { registeredTools } from "../../../shared/testing/registered-tools.builder.js";
 import { FakePlatform } from "./fake-platform.fake.js";
 
@@ -54,17 +55,21 @@ interface RestoreAllPluginsParts {
   fs: FileReader & FileWriter;
   loadDistribution: LoadDistribution;
   builtDeps: BuiltMaterializationDeps;
+  userManifestRepo?: Pick<ManifestRepository, "load">;
 }
 
 /** A restore of every installed plugin, with the registered tools. */
 export function restoreAllPluginsOf(parts: RestoreAllPluginsParts): RestoreAllPlugins {
   const { fs, loadDistribution, builtDeps } = parts;
   return new RestoreAllPlugins(
-    new ApplyPluginFiles({
-      fs,
-      loadDistribution,
-      ...builtPlacementOf(fs, builtDeps),
-    }),
+    {
+      applyPluginFiles: new ApplyPluginFiles({
+        fs,
+        loadDistribution,
+        ...builtPlacementOf(fs, builtDeps),
+      }),
+      machineManifest: parts.userManifestRepo ?? new InMemoryManifestRepository(),
+    },
     registeredTools()
   );
 }

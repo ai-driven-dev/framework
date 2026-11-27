@@ -77,8 +77,18 @@ export function pathsOverlap(a: string, b: string): boolean {
  * read on Linux names the same file.
  */
 export function posixRelative(base: string, target: string, platform: string): string {
-  const impl = platform === "win32" ? win32 : posix;
+  const impl = pathRulesOf(platform);
   return impl.relative(base, target).split(impl.sep).join("/");
+}
+
+/** `path` as a person writes it from their home: `~/` and its "/"-joined segments below `home`. */
+export function homeNamed(home: string, path: string, platform: string): string {
+  return `~/${posixRelative(home, path, platform)}`;
+}
+
+/** How `platform` spells and joins paths, whichever platform this process runs on. */
+export function pathRulesOf(platform: string): typeof posix {
+  return platform === "win32" ? win32 : posix;
 }
 
 /** Whether a candidate path sits inside a boundary directory: both resolved by the caller. */

@@ -1,6 +1,7 @@
 /** A folder holds at most FOLDER_CAP source files of its own. */
 import { dirname, relative, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { posixRelative } from "../../src/shared/domain/paths.model.js";
 import { CLI_ROOT, SRC, sourceFiles } from "./source-graph.js";
 
 const FOLDER_CAP = 10;
@@ -31,7 +32,7 @@ describe("folder size", () => {
     const actual = overTheCap(folderSizes(sourceFiles()), FOLDER_CAP);
     const found = Object.fromEntries(
       [...actual]
-        .map(([dir, size]) => [relative(SRC, resolve(CLI_ROOT, dir)).split("\\").join("/"), size])
+        .map(([dir, size]) => [posixRelative(SRC, resolve(CLI_ROOT, dir), process.platform), size])
         .filter(([dir]) => !(dir in GROWS_BY_DESIGN))
     );
 

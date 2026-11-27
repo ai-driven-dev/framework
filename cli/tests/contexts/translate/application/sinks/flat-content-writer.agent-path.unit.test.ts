@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import "../../../../../src/composition/contexts/translate.js";
+import { posixRelative } from "../../../../../src/shared/domain/paths.model.js";
 import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
@@ -78,8 +79,7 @@ async function writePlugin(tool: AiToolId, fs: InMemoryFileAdapter): Promise<voi
 }
 
 function outRelative(fs: InMemoryFileAdapter): Set<string> {
-  const prefix = `${OUT.replace(/\\/g, "/")}/`;
-  return new Set(fs.listUnder(OUT).map((p) => p.replace(/\\/g, "/").slice(prefix.length)));
+  return new Set(fs.listUnder(OUT).map((p) => posixRelative(OUT, p, process.platform)));
 }
 
 function stringsNaming(value: unknown, needle: string): string[] {

@@ -5,9 +5,9 @@ import type {
   PluginComponentFile,
   PluginDistribution,
 } from "../../../../shared/domain/plugin/plugin-distribution.js";
-import type {
-  PluginTranslationSkip,
-  ReadonlySkipList,
+import {
+  hooksSkip,
+  type ReadonlySkipList,
 } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
 import { isProse } from "../plugin-paths.js";
 import { installedCommandPlan } from "../rules/command-plan.js";
@@ -61,7 +61,7 @@ export function flatInstallPlan(
     flatHookPaths: new Set(hooks.map((plan) => plan.path)),
     skipped: [
       ...hooksSkips(dist, { tool, plugins }),
-      ...bridgeWarnings.map((reason) => hooksSkip(dist, tool, reason)),
+      ...bridgeWarnings.map((reason) => hooksSkip(pluginName, tool.toolId, reason)),
     ],
   };
 }
@@ -135,17 +135,7 @@ function agentPlan(file: PluginComponentFile, at: FlatAt): ComponentPlan | null 
 function hooksSkips(dist: PluginDistribution, { tool, plugins }: FlatTarget): ReadonlySkipList {
   if (dist.components.hooks.length === 0) return [];
   const acceptance = plugins.hooksAcceptance();
-  return acceptance.accepts ? [] : [hooksSkip(dist, tool, acceptance.reason)];
-}
-
-function hooksSkip(dist: PluginDistribution, tool: TranslatedAiTool, reason: string) {
-  const entry: PluginTranslationSkip = {
-    pluginName: dist.manifest.name,
-    component: "hooks",
-    toolId: tool.toolId,
-    reason,
-  };
-  return entry;
+  return acceptance.accepts ? [] : [hooksSkip(dist.manifest.name, tool.toolId, acceptance.reason)];
 }
 
 /** A skill's prose is read as its flat build reads it: links relative to where it lands. */

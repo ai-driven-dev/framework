@@ -2,11 +2,14 @@ import type {
   PluginInstallNotice,
   ReadonlyNoticeList,
 } from "../../../../shared/domain/materialization/plugin-install-notice.js";
-import { basename } from "../../../../shared/domain/paths.model.js";
 import type {
   PluginComponentFile,
   PluginDistribution,
 } from "../../../../shared/domain/plugin/plugin-distribution.js";
+import {
+  hooksSkip,
+  type ReadonlySkipList,
+} from "../../../../shared/domain/plugin/plugin-translation-skip.js";
 import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 import { PLUGIN_HOOKS_RELATIVE } from "../canon-format.js";
 import { isProse, PLUGIN_HOOKS_DIR, parentDirOf, pathBelowHooks } from "../plugin-paths.js";
@@ -14,38 +17,61 @@ import { presenceOf } from "../plugin-presence.js";
 import type { ComponentPlan } from "../rules/component-pipeline.js";
 import { toolLinks } from "../rules/links.js";
 import type { TranslatedAiTool, TranslatedNativePlugin } from "../translate-profile.js";
+import { convertedHooksFile } from "./build-shared.js";
 
 interface HooksTarget {
   readonly tool: TranslatedAiTool;
   readonly plugins: TranslatedNativePlugin;
 }
 
-/** A file below `hooks/` as a native install keeps it: the manifest at the tool's own path, every
- * other file a script the host runs, beside it. */
-export function nativeHooksPlan(
+type HooksAt = HooksTarget & {
+  readonly pluginRoot: string;
+  readonly pluginName: string;
+  readonly carriesRelease: boolean;
+};
+
+/** The files below `hooks/` as a native install keeps them, and what converting the manifest left
+ * out, as the skips the install reports. */
+export function nativeHooksPlans(
+  files: readonly PluginComponentFile[],
+  at: HooksAt
+): { plans: ComponentPlan[]; skipped: ReadonlySkipList } {
+  if (!at.plugins.hooksAcceptance().accepts) return { plans: [], skipped: [] };
+  const below = files.filter((file) => file.relativePath.startsWith(`${PLUGIN_HOOKS_DIR}/`));
+  const scripts = below
+    .filter((file) => file.relativePath !== PLUGIN_HOOKS_RELATIVE)
+    .map((file) => scriptPlan(file, at));
+  const manifest = below.find((file) => file.relativePath === PLUGIN_HOOKS_RELATIVE);
+  if (manifest === undefined) return { plans: scripts, skipped: [] };
+  const { content, shape, warnings } = manifestConversion(manifest, at);
+  const { plugins, pluginRoot, pluginName, tool } = at;
+  const manifestFile: ComponentPlan = {
+    source: PLUGIN_HOOKS_RELATIVE,
+    path: `${pluginRoot}${plugins.hooksFilePath()}`,
+    content,
+    shape,
+    rootToken: plugins.rootToken(),
+  };
+  const skipped = warnings.map((reason) => hooksSkip(pluginName, tool.toolId, reason));
+  return { plans: [manifestFile, ...scripts], skipped };
+}
+
+// The manifest as the tool's marketplace build writes it, so both route the same bytes and the
+// same warnings to a tool that reads it in a form of its own.
+function manifestConversion(file: PluginComponentFile, at: HooksAt) {
+  const hooks = at.tool.buildContract("marketplace")?.artifacts.hooks;
+  return hooks?.supported
+    ? convertedHooksFile(hooks, file, { plugin: at.pluginName, carriesRelease: at.carriesRelease })
+    : { content: file.content, shape: undefined, warnings: [] };
+}
+
+// A script goes beside the manifest, and where the manifest sits at the plugin root it keeps its
+// own directory: a script at the root would leave the command naming `hooks/` pointing at nothing.
+function scriptPlan(
   file: PluginComponentFile,
-  at: HooksTarget & {
-    readonly pluginRoot: string;
-    readonly pluginName: string;
-    readonly carriesRelease: boolean;
-  }
-): ComponentPlan | null {
-  const { tool, plugins, pluginRoot } = at;
-  if (!plugins.hooksAcceptance().accepts) return null;
+  { tool, plugins, pluginRoot }: HooksAt
+): ComponentPlan {
   const { relativePath: source, content } = file;
-  if (source === PLUGIN_HOOKS_RELATIVE) {
-    const path = `${pluginRoot}${plugins.hooksFilePath()}`;
-    return {
-      source,
-      path,
-      content,
-      shape: hooksManifestShape(tool, at.pluginName, at.carriesRelease),
-      rootToken: plugins.rootToken(),
-    };
-  }
-  // The script goes beside the manifest, and where the manifest sits at the plugin root it keeps
-  // its own directory: a script at the root would leave the command naming `hooks/` pointing at
-  // nothing.
   const manifestDir = parentDirOf(plugins.hooksFilePath()) || PLUGIN_HOOKS_DIR;
   return {
     source,
@@ -54,24 +80,6 @@ export function nativeHooksPlan(
     links: isProse(source) ? toolLinks(tool) : undefined,
     script: (text) => plugins.hookScript(source, text),
   };
-}
-
-// The manifest as the tool's marketplace build writes it, so both route the same bytes to a tool
-// that reads it in a form of its own.
-function hooksManifestShape(
-  tool: TranslatedAiTool,
-  pluginName: string,
-  carriesRelease: boolean
-): ComponentPlan["shape"] | undefined {
-  const hooks = tool.buildContract("marketplace")?.artifacts.hooks;
-  if (!hooks?.supported) return undefined;
-  const { convertHooks, transform } = hooks;
-  if (convertHooks !== undefined) {
-    return (text) => convertHooks(text, pluginName, carriesRelease).content;
-  }
-  return transform === undefined
-    ? undefined
-    : (text) => transform(text, pluginName, basename(PLUGIN_HOOKS_RELATIVE));
 }
 
 /** The plugin's own manifest, at the place the tool reads one, synthesized as the tool's

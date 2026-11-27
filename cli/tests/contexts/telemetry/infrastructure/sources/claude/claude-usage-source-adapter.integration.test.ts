@@ -12,11 +12,12 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, relative, resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { TranscriptPosition } from "../../../../../../src/contexts/telemetry/domain/transcript-position.js";
 import { ClaudeUsageSourceAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-usage-source-adapter.js";
 import type { UsageSource } from "../../../../../../src/contexts/telemetry/ports/usage-source.js";
+import { posixRelative } from "../../../../../../src/shared/domain/paths.model.js";
 
 /** Read every file, whatever its age. */
 const EVERYTHING = Number.NEGATIVE_INFINITY;
@@ -66,7 +67,7 @@ describe("listing the transcripts under the projects root", () => {
   it("finds main, resumed, sub-agent and set-aside transcripts", async () => {
     await cp(FIXTURES, projects, { recursive: true });
     const found = (await adapter.list()).paths.map((path) =>
-      relative(projects, path).replaceAll("\\", "/")
+      posixRelative(projects, path, process.platform)
     );
     expect(found).toEqual([
       "proj-a/s-0.jsonl.superseded-1",

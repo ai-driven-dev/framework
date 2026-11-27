@@ -21,7 +21,6 @@ import {
   RemoveUserPlugin,
   type RemoveUserPluginRequest,
 } from "../../contexts/installation/application/removal/remove-user-plugin.use-case.js";
-import { UserScopePluginFiles } from "../../contexts/installation/application/removal/user-scope-plugin-files.js";
 import type {
   BoundPluginMaterializer,
   UserPluginMaterialization,
@@ -37,7 +36,7 @@ import { RemoveMachinePlugin } from "../../orchestration/plugin/remove-machine-p
 import { RemovePlugin } from "../../orchestration/plugin/remove-plugin.use-case.js";
 import { UpdateUserPlugin } from "../../orchestration/plugin/update-user-plugin.use-case.js";
 import { isStrictlyWithin } from "../../shared/domain/paths.model.js";
-import { type Installation, recordsOf } from "../contexts/installation.js";
+import { type Installation, recordsOf, userScopePluginFilesOf } from "../contexts/installation.js";
 import {
   lenientSourceReferences,
   machineOwnership,
@@ -101,7 +100,7 @@ function wireUserPluginRemoval(base: Base) {
     {
       userRepo: userManifestRepo,
       withdrawFromHost: claimedRefWithdrawal(withdrawFromHost),
-      userScopePluginFiles: new UserScopePluginFiles(fs, (plugin, tool, home) =>
+      userScopePluginFiles: userScopePluginFilesOf(fs, (plugin, tool, home) =>
         userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
       ),
     },
@@ -240,17 +239,27 @@ function pluginAddOf(base: Base, inst: Installation) {
   );
 }
 
-/** The plugin lifecycle: add, install, update and remove. */
-export function wirePlugin(base: Base, inst: Installation) {
-  const { tools, logger, prompter, manifestRepo, marketplaceRegistry } = base;
-  const { listMarketplaces, marketplaceTrustStore, resolveMarketplaceUseCase } = base;
-  const pluginAddUseCase = pluginAddOf(base, inst);
-  const pluginInstallFromMarketplaceUseCase = new InstallFromMarketplace({
-    resolvePluginSource: new ResolvePluginSource(marketplaceRegistry, resolveMarketplaceUseCase),
-    addPlugin: pluginAddUseCase,
+/** Installing a plugin a registered marketplace catalogues, from the source it resolves to. */
+function installFromMarketplaceOf(base: Base, addPlugin: AddPlugin): InstallFromMarketplace {
+  const { marketplaceRegistry, resolveMarketplaceUseCase, prompter, logger } = base;
+  return new InstallFromMarketplace({
+    resolvePluginSource: new ResolvePluginSource(
+      marketplaceRegistry,
+      resolveMarketplaceUseCase,
+      process.platform
+    ),
+    addPlugin,
     prompter,
     logger,
   });
+}
+
+/** The plugin lifecycle: add, install, update and remove. */
+export function wirePlugin(base: Base, inst: Installation) {
+  const { tools, prompter, manifestRepo, marketplaceRegistry } = base;
+  const { listMarketplaces, marketplaceTrustStore, resolveMarketplaceUseCase } = base;
+  const pluginAddUseCase = pluginAddOf(base, inst);
+  const pluginInstallFromMarketplaceUseCase = installFromMarketplaceOf(base, pluginAddUseCase);
   const pickPlugins = new PickPlugins({
     listMarketplaces,
     resolveMarketplace: resolveMarketplaceUseCase,

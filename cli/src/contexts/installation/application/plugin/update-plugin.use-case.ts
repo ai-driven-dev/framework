@@ -10,6 +10,7 @@ import type {
   UserPluginMaterialization,
 } from "../../ports/plugin/user-plugin-materialization.js";
 import type { InstallationCatalog } from "../../ports/tool-sections.js";
+import { loadMachineManifest } from "../shared/load-machine-manifest.js";
 import { resolvePluginToolIds, userPluginTargets } from "./plugin-target-resolution.js";
 import { assertSelectionResolves, nativeTargets, refreshNativeRefs } from "./update-native-refs.js";
 import type {
@@ -45,7 +46,8 @@ export class UpdatePlugin {
     }
     if (command.scope === "user")
       throw new Error("A user-scope plugin update needs the machine's update context.");
-    return this.deps.updateProject.execute(command);
+    const owner = await loadMachineManifest(this.deps.userManifest);
+    return this.deps.updateProject.execute({ ...command, machine: owner });
   }
 
   private async updateMachine(options: MachineCommand): Promise<string[]> {

@@ -3,9 +3,9 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { FileHash } from "../../../../src/shared/domain/file-hash.js";
-import { createTestEnv } from "../../../shared/testing/cli-sandbox.builder.js";
+import { copyFixtureTree, createTestEnv } from "../../../shared/testing/cli-sandbox.builder.js";
 import { runInProcess } from "../../../shared/testing/in-process-cli.builder.js";
-import { setupFromFixture } from "../../testing/fixture-setup.builder.js";
+import { FRAMEWORK_REAL, setupFromFixture } from "../../testing/fixture-setup.builder.js";
 import { readJson } from "../../testing/project-state.builder.js";
 
 const PLUGIN = "aidd-context";
@@ -18,12 +18,18 @@ const LINT_HOOK = { SessionStart: [{ type: "command", command: "echo lint" }] };
 
 type Hooks = Record<string, unknown>;
 
+let tempDir: string;
 let project: string;
 let home: string;
 let cleanup: () => Promise<void>;
 
 beforeEach(async () => {
-  ({ projectDir: project, fakeHome: home, cleanup } = await createTestEnv("antigravity-hooks"));
+  ({
+    tempDir,
+    projectDir: project,
+    fakeHome: home,
+    cleanup,
+  } = await createTestEnv("antigravity-hooks"));
 });
 
 afterEach(async () => {
@@ -185,5 +191,27 @@ describe("antigravity hooks an earlier release merged into the project", () => {
     expect(clean.exitCode, clean.stderr).toBe(0);
     expect(await readJson<Hooks>(userHooksFile())).toEqual({ lint: LINT_HOOK });
     expect(existsSync(join(project, RELEASED_SCRIPT))).toBe(false);
+  });
+});
+
+describe("antigravity setup of a hook on an event agy never fires", () => {
+  it("warns that the event is skipped, as the build does", async () => {
+    const framework = join(tempDir, "framework");
+    await copyFixtureTree(FRAMEWORK_REAL, framework);
+    const hooksJson = join(framework, "plugins", PLUGIN, "hooks", "hooks.json");
+    const shipped = await readJson<{ hooks: Hooks }>(hooksJson);
+    const prompt = [{ hooks: [{ type: "command", command: "echo prompt" }] }];
+    await writeFile(
+      hooksJson,
+      JSON.stringify({ hooks: { ...shipped.hooks, UserPromptSubmit: prompt } })
+    );
+
+    const setup = await aidd(setupFromFixture("antigravity", PLUGIN, [], framework));
+
+    expect(setup.exitCode, setup.stderr).toBe(0);
+    const warning = (setup.stdout + setup.stderr)
+      .split("\n")
+      .find((line) => line.includes(`Plugin "${PLUGIN}": hooks skipped for antigravity`));
+    expect(warning).toContain("antigravity: unmapped event 'UserPromptSubmit' skipped");
   });
 });

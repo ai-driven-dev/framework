@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { builtPlacementOf } from "../../../../../src/composition/orchestration/built-placement.js";
 import { ApplyPluginFiles } from "../../../../../src/contexts/installation/application/restore/apply-plugin-files.use-case.js";
+import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import {
   buildInstallationDeps,
@@ -53,6 +54,7 @@ async function installedSample(toolId = TOOL.claude) {
     projectRoot: PROJECT_ROOT,
     cacheDir: "/cache",
     manifest,
+    machine: Manifest.create(),
   };
   return { deps, apply, command };
 }

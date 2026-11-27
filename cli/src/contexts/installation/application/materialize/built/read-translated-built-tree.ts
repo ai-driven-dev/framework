@@ -100,7 +100,8 @@ async function readBuiltContent(
       ? await readBuiltFlatFiles(deps.fs, { builtDir, platform }, { name, tool, extraPaths })
       : await readBuiltUserPluginFiles(deps.fs, { builtDir, name, root, platform });
   const files = withoutDroppedFiles(builtRead, root, translated.dropsBuiltFile);
-  if (!takesHooks && previousProjectHooks === undefined) return { files, hooks: { skipped: [] } };
+  const { skipped } = translated;
+  if (!takesHooks && previousProjectHooks === undefined) return { files, hooks: { skipped } };
   const hooks = await deps.projectHooks.execute({
     dist,
     hooks: translated.projectHooks,
@@ -109,5 +110,5 @@ async function readBuiltContent(
     previous: previousProjectHooks,
     guard: hooksGuard,
   });
-  return { files, hooks };
+  return { files, hooks: { ...hooks, skipped: [...skipped, ...hooks.skipped] } };
 }

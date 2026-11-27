@@ -17,6 +17,12 @@ export interface PlannedUserPluginFileUpdate {
   readonly next: RecordedPlugin;
 }
 
+/** The machine's home directory, and the platform whose path rules spell the paths under it. */
+export interface UserHome {
+  readonly dir: () => string;
+  readonly platform: string;
+}
+
 /** The machine-scope file safety checks, supplied by the composition root so installation never reaches machine claims. */
 export interface UserScopeFileGuard {
   safeToDelete(
