@@ -34,8 +34,7 @@ function compareWinner(a: UsageRecord, b: UsageRecord): number {
   );
 }
 
-/** One item per `(tool, key)` of its record across everything given: a streamed call and a
- * resumed copy show the same call several times, and only one of them is the call. */
+/** One item per `(tool, key)`: a streamed call and a resumed copy repeat the same call. */
 export function foldUsageBy<T>(items: Iterable<T>, recordOf: (item: T) => UsageRecord): T[] {
   const winners = new Map<string, T>();
   for (const item of items) {

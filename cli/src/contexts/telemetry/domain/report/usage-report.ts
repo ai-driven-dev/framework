@@ -13,6 +13,7 @@ import {
 import type { StoredUsage } from "../stored-usage.js";
 import { compareText } from "../text-order.js";
 import { type Attribution, type AttributionFacts, attribute } from "./attribution.js";
+import { dayOf } from "./period.js";
 
 const ABSENT: AxisValue = { kind: "absent" };
 
@@ -76,7 +77,7 @@ export function axisValueOf({
     case "tool":
       return value(record.tool);
     case "day":
-      return value(new Date(record.at).toISOString().slice(0, 10));
+      return value(dayOf(record.at));
     case "repository":
       return value(record.repository_id);
     case "task":

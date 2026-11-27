@@ -3,10 +3,7 @@ const REMOTE_HEAD_TARGET = "refs/remotes/origin/";
 /** What a repository with no remote head is taken to start from. */
 const CONVENTIONAL_DEFAULTS: readonly string[] = ["main", "master"];
 
-/** The branch `HEAD` is on, read from `git symbolic-ref HEAD`, and what it is in its
- * repository. Only a working branch is ever bound to a task: the default branch is where every
- * task ends up, and a detached head names no branch at all. The default is where the remote's
- * own head points; a repository with none falls back to the conventional names. */
+/** Only a working branch is bound to a task; the default is origin's head, else main/master. */
 export type BranchHead =
   | { readonly role: "working" | "default"; readonly branch: string }
   | { readonly role: "detached"; readonly branch: null };

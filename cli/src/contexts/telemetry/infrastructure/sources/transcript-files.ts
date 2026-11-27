@@ -68,8 +68,7 @@ export async function eachLine(
   for (let at = from; ; ) {
     const block = Buffer.alloc(Math.max(0, Math.min(blockBytes, size - at)));
     const { bytesRead } = await handle.read(block, 0, block.length, at);
-    // The range is read, or the file is shorter than it was when stat'd: the caller sees that
-    // and discards this read.
+    // A file shorter than when stat'd ends here too; the caller discards that read.
     if (bytesRead === 0) return splitter.consumed;
     splitter.push(block.subarray(0, bytesRead));
     at += bytesRead;

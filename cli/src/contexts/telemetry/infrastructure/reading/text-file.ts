@@ -9,8 +9,7 @@ export function isAbsent(error: unknown): boolean {
   return isErrnoException(error) && ABSENT.has(error.code);
 }
 
-/** Whether a failure only says there is nothing at the path: something in the way that is no
- * directory is not nothing. */
+/** Only ENOENT is nothing at the path: a non-directory in the way is not nothing. */
 export function isMissing(error: unknown): boolean {
   return isErrnoException(error) && error.code === "ENOENT";
 }

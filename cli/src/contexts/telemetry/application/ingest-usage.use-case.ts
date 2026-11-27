@@ -45,8 +45,7 @@ export interface IngestOptions {
   readonly environment: Environment;
 }
 
-/** A transcript only grows, so where its last line ends follows from its size: a file read
- * again at the same size and identity moved nowhere. */
+/** A transcript only grows: one read again at the same size and identity moved nowhere. */
 function moved(before: TranscriptPosition | undefined, now: TranscriptPosition): boolean {
   return before === undefined || before.size !== now.size || before.identity !== now.identity;
 }

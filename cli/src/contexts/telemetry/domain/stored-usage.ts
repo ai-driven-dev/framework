@@ -1,7 +1,7 @@
 import { plainObjectIn } from "../../../shared/domain/reading/plain-object.js";
 import { USAGE_AGENTS, USAGE_TOOLS, type UsageRecord } from "../contract/usage-record.js";
 import { isCount, isFilledText, isListed, isNullableText } from "./read-back.js";
-import { shiftDay } from "./report/period.js";
+import { shiftDay, dayOf as utcDayOf } from "./report/period.js";
 import { compareText } from "./text-order.js";
 import { foldUsage } from "./usage-fold.js";
 
@@ -52,7 +52,7 @@ export function dayOf(at: string): string | null {
   const instant = Date.parse(at);
   if (Number.isNaN(instant)) return null;
   // An offset can carry the instant past year 9999 or before year 0, written `+YYYYYY`/`-YYYYYY`.
-  const day = new Date(instant).toISOString().slice(0, 10);
+  const day = utcDayOf(at);
   return day.startsWith("+") || day.startsWith("-") ? null : day;
 }
 
@@ -111,11 +111,7 @@ function daysOf(record: StoredUsage, was: StoredUsage | undefined): string[] {
   return found.filter((day): day is string => day !== null);
 }
 
-/** Records grouped by the day of their own time, each day in time order then key, so the
- * bytes of a partition depend on what it holds and never on the order it was found in. The
- * days come in order too: a day follows from its time. A record with no day (see `dayOf`) is
- * left out. Linear in the records, bar the sort: each time is parsed once, and each day's
- * array only ever grows by `push`. */
+/** Records by day in time then key order, so a partition's bytes never depend on read order. */
 export function partitionByDay(
   records: readonly StoredUsage[]
 ): ReadonlyMap<string, readonly StoredUsage[]> {

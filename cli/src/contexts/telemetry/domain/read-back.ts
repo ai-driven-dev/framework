@@ -21,8 +21,7 @@ export function isListed<T>(list: readonly T[], value: unknown): value is T {
   return list.some((member) => member === value);
 }
 
-/** No field but `fields`. A field the caller needs is checked by the caller, which refuses it
- * absent. */
+/** No field but `fields`; the caller refuses a field it needs that is absent. */
 export function hasOnly(object: Record<string, unknown>, fields: readonly string[]): boolean {
   return Object.keys(object).every((key) => fields.includes(key));
 }

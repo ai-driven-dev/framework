@@ -57,9 +57,7 @@ function declared(declaration: TaskDeclaration): SessionBinding {
   };
 }
 
-/** A session's own binding at an instant: what it declared, else what it carried. A carry
- * takes the carried session's binding as it stood when the carry was made, whatever was
- * declared there since. Work with no session id has neither. */
+/** A carry binds as the carried session stood when carried, whatever it declared since. */
 function sessionBinding({
   facts,
   sessionId,

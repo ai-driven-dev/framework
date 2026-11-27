@@ -74,8 +74,7 @@ export class LedgerLock {
     return () => this.release();
   }
 
-  /** One try at the lock: whether it was taken. A try that has to wait has waited. A lock
-   * released while looking is tried again at once: what is there now may be another's. */
+  /** One try; a lock released while looking is retried at once: it may now be another's. */
   private async attempt(deadline: number): Promise<boolean> {
     const late = this.options.now() >= deadline;
     const created = await this.tryCreate(late);
