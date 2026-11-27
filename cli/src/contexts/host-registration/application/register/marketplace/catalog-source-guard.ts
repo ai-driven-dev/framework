@@ -47,14 +47,7 @@ export async function guardAgainstConflict(
   const requestedSource = (await run.fs.realpathIfResolvable(builtDir)) ?? builtDir;
   const driftContext = driftContextOf(run, marketplace);
   const reader = marketplaceRegistryOf(run);
-  if (reader === undefined) {
-    const registered = proof.source?.source;
-    if (registered === undefined) return undefined;
-    return decideWithoutRegistry(run, requestedIdentity.name, {
-      sources: { registeredSource: registered, requestedSource },
-      driftContext,
-    });
-  }
+  if (reader === undefined) return decideWithoutRegistry(run, request, proof);
   const check = await run.catalogs.checkSource.execute(
     { tool: profile, reader },
     { requestedSource, requestedIdentity, driftContext }
@@ -90,25 +83,47 @@ function driftContextOf(
   };
 }
 
-/** Codex and Copilot refuse a re-add from another source (probed 0.172.0, 1.0.114), so an older build is moved. */
+/** Whether a host with no registry holds an older build of this marketplace, which this run moves to its own. */
+export async function movesOffOlderBuild(
+  run: RegistrationRun,
+  request: CatalogRequest,
+  proof: NativeCatalogProof
+): Promise<boolean> {
+  if (marketplaceRegistryOf(run) !== undefined) return false;
+  const drift = await registryLessDrift(run, request, proof);
+  return drift !== undefined && isOlderBuild(drift);
+}
+
+const isOlderBuild = (drift: MarketplaceSourceDrift): boolean => drift.kind === "version-ahead";
+
 async function decideWithoutRegistry(
   run: RegistrationRun,
-  name: string,
-  {
-    sources,
-    driftContext,
-  }: {
-    readonly sources: { readonly registeredSource: string; readonly requestedSource: string };
-    readonly driftContext: MarketplaceSourceDriftContext;
-  }
+  request: CatalogRequest,
+  proof: NativeCatalogProof
 ): Promise<"skip" | "repoint" | undefined> {
-  const drift = await resolvedDrift(run.fs, sources, driftContext);
+  const drift = await registryLessDrift(run, request, proof);
   if (drift === undefined) return undefined;
-  if (drift.kind === "version-ahead") return "repoint";
+  if (isOlderBuild(drift)) return "repoint";
   return decideOnDrift(
     run,
     drift,
-    `${run.toolId}'s marketplace '${name}' (${sources.registeredSource})`
+    `${run.toolId}'s marketplace '${request.identity.name}' (${proof.source?.source})`
+  );
+}
+
+/** Codex and Copilot refuse a re-add from another source (probed 0.172.0, 1.0.114), so an older build is moved. */
+async function registryLessDrift(
+  run: RegistrationRun,
+  { builtDir, marketplace }: CatalogRequest,
+  proof: NativeCatalogProof
+): Promise<MarketplaceSourceDrift | undefined> {
+  const registeredSource = proof.source?.source;
+  if (registeredSource === undefined) return undefined;
+  const requestedSource = (await run.fs.realpathIfResolvable(builtDir)) ?? builtDir;
+  return resolvedDrift(
+    run.fs,
+    { registeredSource, requestedSource },
+    driftContextOf(run, marketplace)
   );
 }
 

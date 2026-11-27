@@ -7,7 +7,7 @@ import type { ClaimsView } from "../../contract/claims-view.js";
 import { bestEffortNativeCall, skippedWarning } from "../../domain/confirmation.js";
 import { judgeRegistration } from "../../domain/policy/registration-policy.js";
 import { enableRefs } from "./enable-refs.js";
-import { nativeCatalogProof } from "./native-catalog-proof.js";
+import { nativeCatalogProof, withoutForeignRef } from "./native-catalog-proof.js";
 import type {
   HostRegistrationOutcome,
   RegisteredMarketplace,
@@ -110,10 +110,13 @@ async function upgradeProven(
   const stillProven: RegisteredMarketplace[] = [];
   for (const registration of settled.marketplaces) {
     const fresh = catalogClaims.find((claim) => claim.hostName === registration.hostName);
+    const added = addedHostNames.has(registration.hostName);
     const proof = await nativeCatalogProof(run, registration.hostName, fresh);
-    if (judgeRegistration({ intent: "register", ...proof }).outcome === "refuse") continue;
+    // Only a move off an older build adds over a foreign ref, and it put that ref back.
+    const judged = added ? withoutForeignRef(proof) : proof;
+    if (judgeRegistration({ intent: "register", ...judged }).outcome === "refuse") continue;
     stillProven.push(registration);
-    if (!addedHostNames.has(registration.hostName))
+    if (!added)
       bestEffortNativeCall(
         () => run.activator.upgradeMarketplaces(registration.hostName),
         skippedWarning(`upgrade marketplace '${registration.hostName}'`),

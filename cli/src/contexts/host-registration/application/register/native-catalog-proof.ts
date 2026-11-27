@@ -47,6 +47,14 @@ export async function nativeCatalogProof(
   return { ...base, hostReadable: true, ...(foreignRef === undefined ? {} : { foreignRef }) };
 }
 
+/** The proof without its foreign ref, for a write that puts back every ref the host lists. */
+export function withoutForeignRef({
+  foreignRef: _,
+  ...proof
+}: NativeCatalogProof): NativeCatalogProof {
+  return proof;
+}
+
 interface HeldRecords {
   readonly machine: Awaited<ReturnType<RegistrationRun["claims"]["machine"]>>;
   readonly persisted: Awaited<ReturnType<RegistrationRun["claims"]["persistedProject"]>>;

@@ -5,14 +5,23 @@ import type {
 } from "../../../domain/record/native-marketplace-source.js";
 import { marketplaceCatalogProbePath } from "../../../domain/source/catalog-probe-path.js";
 import type { MarketplaceCatalogIdentity } from "../../../domain/source/marketplace-source-conflict.js";
-import { nativeCatalogProof, proveAddedSource } from "../native-catalog-proof.js";
+import {
+  type NativeCatalogProof,
+  nativeCatalogProof,
+  proveAddedSource,
+  withoutForeignRef,
+} from "../native-catalog-proof.js";
 import type { RegisteredMarketplace } from "../registration-outcome.js";
 import {
   type RegistrationRun,
   type RegistrationSubject,
   warnRegistration,
 } from "../registration-run.js";
-import { type CatalogRequest, guardAgainstConflict } from "./catalog-source-guard.js";
+import {
+  type CatalogRequest,
+  guardAgainstConflict,
+  movesOffOlderBuild,
+} from "./catalog-source-guard.js";
 import { followsRequestedSource, untouchedReason } from "./marketplace-registration-guard.js";
 import { reclaimOrReport, replaceRegistration } from "./reclaim-dead-registration.js";
 
@@ -53,7 +62,7 @@ export async function registerMarketplace(
     hostName,
     target.catalogClaims.find((claim) => claim.hostName === hostName)
   );
-  const untouched = await untouchedReason(run, request, proof);
+  const untouched = await untouchedReason(run, request, await refusalProof(run, request, proof));
   if (untouched !== undefined) {
     warnRegistration(run, untouched);
     return undefined;
@@ -82,6 +91,16 @@ async function addedOrReclaimed(
   const refusal = run.activator.addMarketplace(builtDir, marketplace.scope);
   if (refusal === undefined) return true;
   return reclaimOrReport(run, { marketplace, hostName, builtDir }, refusal);
+}
+
+/** A move off an older build puts back every ref the host lists, so no foreign ref refuses it. */
+async function refusalProof(
+  run: RegistrationRun,
+  request: CatalogRequest,
+  proof: NativeCatalogProof
+): Promise<NativeCatalogProof> {
+  if (proof.foreignRef === undefined) return proof;
+  return (await movesOffOlderBuild(run, request, proof)) ? withoutForeignRef(proof) : proof;
 }
 
 async function builtIdentityOf(
