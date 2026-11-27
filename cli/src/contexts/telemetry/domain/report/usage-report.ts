@@ -91,23 +91,33 @@ export function axisValueOf({
   }
 }
 
-/** Where a row stands among the others: values first, then calls the axis has no value for,
- * then work with no task, by reason. */
-function rank(value: AxisValue): number {
-  if (value.kind === "value") return 0;
-  return value.kind === "absent" ? 1 : 2 + UNATTRIBUTED_REASONS.indexOf(value.reason);
+/** The row a value lands on: one per value, and what a filter is compared through. */
+export function rowKeyOf(value: AxisValue): string {
+  return JSON.stringify(value);
 }
 
-function textOf(value: AxisValue): string {
-  return value.kind === "value" ? value.value : "";
+type ValueRow = ReportRow & { readonly value: Extract<AxisValue, { kind: "value" }> };
+type OtherRow = ReportRow & { readonly value: Exclude<AxisValue, { kind: "value" }> };
+
+const isValueRow = (row: ReportRow): row is ValueRow => row.value.kind === "value";
+const isOtherRow = (row: ReportRow): row is OtherRow => row.value.kind !== "value";
+
+/** Calls the axis has no value for, then work with no task, by reason. */
+function rank({ value }: OtherRow): number {
+  return value.kind === "absent" ? 0 : 1 + UNATTRIBUTED_REASONS.indexOf(value.reason);
 }
 
-/** Only value rows tie on rank. Days read in order; every other axis reads largest first. */
-function compareRows(axis: ReportAxis, a: ReportRow, b: ReportRow): number {
-  const byRank = rank(a.value) - rank(b.value);
-  if (byRank !== 0) return byRank;
-  const byText = compareText(textOf(a.value), textOf(b.value));
+/** Days read in order; every other axis reads largest first. */
+function compareValueRows(axis: ReportAxis, a: ValueRow, b: ValueRow): number {
+  const byText = compareText(a.value.value, b.value.value);
   return axis === "day" ? byText : b.total.known - a.total.known || byText;
+}
+
+function ordered(axis: ReportAxis, rows: readonly ReportRow[]): ReportRow[] {
+  return [
+    ...rows.filter(isValueRow).sort((a, b) => compareValueRows(axis, a, b)),
+    ...rows.filter(isOtherRow).sort((a, b) => rank(a) - rank(b)),
+  ];
 }
 
 /** What the calls cost, split along one axis. Every axis is a partition of the same calls, so
@@ -127,9 +137,9 @@ export function buildReport({
   let totals = EMPTY_TALLY;
   for (const record of records) {
     const value = axisValueOf({ axis, record, attribution: attribute(record, facts), person });
-    const key = JSON.stringify(value);
+    const key = rowKeyOf(value);
     rows.set(key, { value, ...tally(rows.get(key) ?? EMPTY_TALLY, record) });
     totals = tally(totals, record);
   }
-  return { axis, rows: [...rows.values()].sort((a, b) => compareRows(axis, a, b)), totals };
+  return { axis, rows: ordered(axis, [...rows.values()]), totals };
 }
