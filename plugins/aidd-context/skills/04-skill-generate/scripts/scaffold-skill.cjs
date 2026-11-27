@@ -74,7 +74,10 @@ function readTarget(project, relative) {
       if (stat.isSymbolicLink()) throw new Error(`symlink on the way to ${relative}`);
       if (file === fullPath && (!stat.isFile() || stat.nlink !== 1)) throw new Error(`expected one regular file at ${relative}`);
     } catch (error) {
-      if (error.code === "ENOENT") return null;
+      if (error.code === "ENOENT") {
+        fs.accessSync(path.dirname(file), fs.constants.W_OK | fs.constants.X_OK);
+        return null;
+      }
       throw error;
     }
   }
@@ -114,11 +117,9 @@ function writeNative(file, project, preview) {
   if (!path.isAbsolute(project) || !fs.statSync(project).isDirectory()) throw new Error("project must be an absolute directory");
   const changes = nativeTargets(readInput(file)).map((target) => {
     const current = readTarget(project, target.path);
+    if (preview && current === null) return { ...target, operation: "create" };
     if (!Object.keys(target.options).length) return { ...target, operation: "unchanged" };
-    if (current === null) {
-      if (!preview) throw new Error(`${target.path}: scaffold the skill before applying native options`);
-      return { ...target, operation: "create" };
-    }
+    if (current === null) throw new Error(`${target.path}: scaffold the skill before applying native options`);
     const content = editNativeFields(current, target.options, target.path);
     if (current === content) return { ...target, operation: "unchanged" };
     fs.accessSync(path.join(project, target.path), fs.constants.W_OK);

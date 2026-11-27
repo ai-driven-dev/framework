@@ -195,6 +195,23 @@ describe("skill scaffold", () => {
     }
   });
 
+  it("refuses preview when a missing skill must be created under a read-only directory", { skip: process.platform === "win32" || process.geteuid?.() === 0 }, () => {
+    const kilo = path.join(root, ".kilo");
+    fs.mkdirSync(kilo, { mode: 0o555 });
+    try {
+      const result = native(root, {
+        targets: ["claude", "kilo"],
+        nativeOptions: { claude: { "disable-model-invocation": true } },
+      }, "--plan");
+      assert.equal(result.status, 1);
+      assert.match(result.error, /\.kilo/u);
+      assert.deepEqual(fs.readdirSync(root), [".kilo"]);
+      assert.deepEqual(fs.readdirSync(kilo), []);
+    } finally {
+      fs.chmodSync(kilo, 0o755);
+    }
+  });
+
   it("reads a plan from stdin without creating an intermediate plan file", () => {
     const result = spawnSync(process.execPath, [ENGINE, "-", target], { input: JSON.stringify(PLAN), encoding: "utf8" });
     assert.equal(result.status, 0, result.stderr);
