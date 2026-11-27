@@ -60,6 +60,25 @@ describe("the consent history", () => {
     for (const line of lines) expect(() => JSON.parse(line)).not.toThrow();
   });
 
+  it("rewrites nothing to append after a last line that is whole: a hook may be appending", async () => {
+    const storage = machinePrivateStorage();
+    const replaced: string[] = [];
+    const replace = storage.replace.bind(storage);
+    storage.replace = (path, content) => {
+      replaced.push(path);
+      return replace(path, content);
+    };
+    const counted = new ConsentHistoryAdapter(join(root, "ledger"), storage);
+    await counted.append({
+      kind: "open",
+      token: "t1",
+      clone: CLONE,
+      at: "2026-10-01T00:00:00.000Z",
+    });
+    await counted.append({ kind: "close", token: "t1", at: "2026-10-02T00:00:00.000Z" });
+    expect(replaced).toEqual([]);
+  });
+
   it("says a line that is not exactly an event damaged the file, and still reads the rest", async () => {
     await history().append({
       kind: "open",

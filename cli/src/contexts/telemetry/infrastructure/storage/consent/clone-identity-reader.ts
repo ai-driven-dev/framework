@@ -12,7 +12,7 @@ export type CloneIdentityReader = (path: string) => Promise<CloneIdentity | "uni
  * the real path, in `bigint` so that a Windows file index is not rounded. */
 export const readCloneIdentity: CloneIdentityReader = async (path) => {
   try {
-    return identityFromStat(path, await stat(path, { bigint: true })) ?? "unidentified";
+    return identityFromStat(path, await stat(path, { bigint: true }));
   } catch (error) {
     if (isAbsent(error)) return null;
     return "unidentified";

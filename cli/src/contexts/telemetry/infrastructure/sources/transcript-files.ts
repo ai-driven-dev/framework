@@ -29,7 +29,7 @@ function absentIsNothing(error: unknown): null {
 
 /** Device and inode name the file, not its path. Where the inode is not meaningful the birth
  * time stands in for it. */
-function identityOf(stats: Stats): string {
+export function identityOf(stats: Pick<Stats, "dev" | "ino" | "birthtimeMs">): string {
   return stats.ino === 0 ? `${stats.dev}:${stats.birthtimeMs}` : `${stats.dev}:${stats.ino}`;
 }
 
@@ -76,7 +76,7 @@ export async function eachLine(
 
 /** Why `path` could not be read, to be shown by name: the error code when it has one. */
 function unreadableBecause(path: string, error: unknown): string {
-  if (isErrnoException(error) && error.code !== undefined) return `${path}: ${error.code}`;
+  if (isErrnoException(error)) return `${path}: ${error.code}`;
   return `${path}: ${error instanceof Error ? error.message : String(error)}`;
 }
 

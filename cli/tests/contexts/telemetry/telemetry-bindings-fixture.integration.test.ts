@@ -209,8 +209,12 @@ describe("the shared fixture of task bindings", () => {
         ctimeNs: BigInt(stat.ctimeNs),
       };
       const found = identityFromStat("/p", facts);
-      const { path: _path, ...parts } = found ?? { path: "" };
-      expect(found === null ? null : parts).toEqual(expected.cloneIdentity?.[name]);
+      if (found === "unidentified") {
+        expect(expected.cloneIdentity?.[name]).toBeNull();
+        return;
+      }
+      const { path: _path, ...parts } = found;
+      expect(parts).toEqual(expected.cloneIdentity?.[name]);
     }
   );
 

@@ -42,9 +42,9 @@ export interface StatFacts {
   readonly birthtimeMs: bigint;
 }
 
-/** The identity of the directory at `path`, `null` when the platform gives it none. */
-export function identityFromStat(path: string, stat: StatFacts): CloneIdentity | null {
-  if (stat.ino === 0n) return null;
+/** The identity of the directory at `path`, `unidentified` when the platform gives it none. */
+export function identityFromStat(path: string, stat: StatFacts): CloneIdentity | "unidentified" {
+  if (stat.ino === 0n) return "unidentified";
   return {
     path,
     dev: String(stat.dev),
