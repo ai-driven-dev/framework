@@ -92,3 +92,9 @@ export function serializePluginSource(src: PluginSource): Record<string, unknown
       return { ...kind, path: src.path };
   }
 }
+
+/** One identity per source, whatever order its fields were written in. */
+export function pluginSourceIdentity(src: PluginSource): string {
+  const serialized = serializePluginSource(src);
+  return JSON.stringify(serialized, Object.keys(serialized).sort());
+}

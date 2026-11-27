@@ -20,9 +20,10 @@ export class RunSetup {
 
   async execute(flow: SetupFlow): Promise<SetupResult> {
     if (flow.scope === "user") return this.runMachineScope(flow);
-    const { context, isNew } = await this.prepare.execute(flow);
+    const { context, isNew, claimSource } = await this.prepare.execute(flow);
     const install = await this.installTools.execute({ flow, context });
     if (flow.registerDefaultMarketplace) await this.promptPlugins(flow);
+    await claimSource?.();
     const activation = await this.syncSettings.execute({ projectRoot: flow.projectRoot });
     return { kind: isNew ? "initialized" : "up-to-date", install, activation, context };
   }

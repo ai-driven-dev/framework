@@ -40,7 +40,7 @@ function greetDistribution(): PluginDistribution {
   });
 }
 
-async function replaceOnClaude(marketplace: string | undefined) {
+async function replaceOnClaude(marketplace: string | undefined, strict = false) {
   const deps = await buildInstallationDeps({ tools: registeredTools() });
   await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
   deps.fs.setFile(join(PROJECT_ROOT, STALE_FILE), "old");
@@ -50,7 +50,7 @@ async function replaceOnClaude(marketplace: string | undefined) {
     name: "sample-plugin",
     version: "0.0.1",
     source: SOURCE,
-    strict: false,
+    strict,
     scope: "project",
     marketplace,
   }).withFiles(new Map([[STALE_FILE, "old-hash"]]));
@@ -81,6 +81,12 @@ describe("replacing a plugin's files", () => {
       entry?.plugin.version,
       entry?.plugin.files.has(GREET_FILE),
     ]).toStrictEqual([false, true, "1.0.0", true]);
+  });
+
+  it("keeps the strictness the catalog gave the plugin, which its own manifest never carries", async () => {
+    const { entry } = await replaceOnClaude(undefined, true);
+
+    expect(entry?.plugin.strict).toBe(true);
   });
 
   it("registers a marketplace plugin again without writing any file", async () => {

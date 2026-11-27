@@ -7,6 +7,7 @@ import {
   ToolNotInstalledError,
 } from "../../../../src/contexts/installation/contract/installation.error.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
+import { RecordedPlugin } from "../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { FileHash } from "../../../../src/shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../src/shared/domain/installation-file.js";
 import { compareSemver } from "../../../../src/shared/domain/plugin/semver.js";
@@ -218,6 +219,75 @@ describe("reporting a project's status", () => {
       ).execute({ projectRoot: PROJECT_ROOT });
 
       expect(report.tools).toStrictEqual([inSyncTool(TOOL.claude)]);
+    });
+  });
+
+  describe("a plugin's project hooks", () => {
+    const SETTINGS = ".cursor/settings.json";
+    const HOOKS_FILE = ".cursor/hooks.json";
+    const SCRIPTS = {
+      ".cursor/hooks/aidd-context/lib/host.cjs": "e4e556a9c26eeaf69adbe495d488e9aa",
+      ".cursor/hooks/aidd-context/lib/markdown.cjs": "a62327ff537850a1d71a0f8261d47762",
+      ".cursor/hooks/aidd-context/memory.cjs": "4592ed656f141b7a786d8ee2935d4538",
+    };
+
+    function cursorManifest(withHooks: boolean): Manifest {
+      const manifest = Manifest.create();
+      tracking(manifest, TOOL.cursor, SETTINGS, CONTENT);
+      manifest.addPlugin(
+        TOOL.cursor,
+        RecordedPlugin.fromJSON({
+          name: "aidd-context",
+          source: {
+            kind: "git-subdir",
+            url: "https://github.com/ai-driven-dev/framework.git",
+            path: "plugins/aidd-context",
+            ref: "v5.14.0",
+          },
+          version: "2.11.0",
+          strict: true,
+          files: {},
+          scope: "user",
+          marketplace: "aidd-framework",
+          ...(withHooks && {
+            projectHooks: {
+              entries: [
+                {
+                  event: "sessionStart",
+                  command: "node ./.cursor/hooks/aidd-context/memory.cjs load",
+                  digest: "fa58cef07bb127e2fdf83bf433462395",
+                },
+              ],
+              scripts: SCRIPTS,
+            },
+          }),
+        })
+      );
+      return manifest;
+    }
+
+    async function cursorDrift(onDisk: Record<string, string>, withHooks = true) {
+      const report = await statusOver(
+        { [SETTINGS]: CONTENT, ...onDisk },
+        cursorManifest(withHooks)
+      ).execute({ projectRoot: PROJECT_ROOT });
+      return report.tools.flatMap((tool) => tool.drifted);
+    }
+
+    it("counts the hook scripts a plugin recorded as aidd's", async () => {
+      const onDisk = Object.fromEntries(Object.keys(SCRIPTS).map((path) => [path, "script"]));
+
+      expect(await cursorDrift(onDisk)).toStrictEqual([]);
+    });
+
+    it("counts the hooks file a plugin merged its entries into as aidd's", async () => {
+      expect(await cursorDrift({ [HOOKS_FILE]: "{}" })).toStrictEqual([]);
+    });
+
+    it("still calls a hooks file no plugin merged into added", async () => {
+      expect(await cursorDrift({ [HOOKS_FILE]: "{}" }, false)).toStrictEqual([
+        { relativePath: HOOKS_FILE, status: "added" },
+      ]);
     });
   });
 

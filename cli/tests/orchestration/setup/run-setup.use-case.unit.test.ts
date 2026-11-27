@@ -1,6 +1,7 @@
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { remoteFrameworkSource } from "../../../src/contexts/distribution/contract/framework-source.js";
+import { ProjectHooksEditedError } from "../../../src/contexts/installation/contract/installation.error.js";
 import { ProjectContext } from "../../../src/contexts/installation/contract/project-context.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.model.js";
@@ -259,6 +260,34 @@ describe("setup without TTY", () => {
       );
 
       expect(userSourceReferences.added).toEqual([]);
+    });
+
+    it("leaves it as it was when a plugin placement refuses", async () => {
+      const referencesPath = "/fake-home/.config/aidd/references.json";
+      const recordedByAnOlderVersion = JSON.stringify({ "5.8.0": [PROJECT_ROOT] }, null, 2);
+      const referencesFs = new InMemoryFileAdapter({ [referencesPath]: recordedByAnOlderVersion });
+      const userSourceReferences = new UserSourceReferencesAdapter(
+        referencesFs,
+        () => "/fake-home/.config/aidd"
+      );
+      const { useCase, pluginInstallFromMarketplace } = await buildUseCase(
+        undefined,
+        userSourceReferences
+      );
+      vi.mocked(pluginInstallFromMarketplace.execute).mockRejectedValue(
+        new ProjectHooksEditedError("project hooks were edited after install; detach refused.")
+      );
+
+      const attempt = useCase.execute(
+        remoteFlow({
+          aiTools: [SYNTHETIC_TOOL],
+          pluginMode: "named",
+          pluginNames: ["aidd-context"],
+        })
+      );
+
+      await expect(attempt).rejects.toThrow(ProjectHooksEditedError);
+      expect(await referencesFs.readFile(referencesPath)).toBe(recordedByAnOlderVersion);
     });
 
     // `references.json` is a help, not an authority: a corrupted copy must never block `setup`,

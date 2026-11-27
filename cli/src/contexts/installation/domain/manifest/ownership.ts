@@ -1,3 +1,4 @@
+import type { RecordedPlugin } from "../plugins/recorded-plugin.js";
 import type { ToolEntry } from "./tool-entry.js";
 
 export type Ownership =
@@ -10,15 +11,21 @@ export type Ownership =
  * aidd whole. A merge file is shared: aidd holds only the listed keys. Anything else is the user's.
  *
  * Limit: the file a plugin's MCP servers or project hook entries merge into has no recorded path,
- * so it is answered only through the tool file or merge file that also lists it. A hook script has
- * one, and is answered only when it is also a plugin file.
+ * so it is answered only through the tool file or merge file that also lists it.
  */
 export function ownerOf(entries: readonly ToolEntry[], relativePath: string): Ownership {
   for (const entry of entries) {
     if (entry.files.some((f) => f.relativePath === relativePath)) return { owner: "aidd" };
     const merged = entry.mergeFiles.find((m) => m.relativePath === relativePath);
     if (merged !== undefined) return { owner: "co-owned", keys: Object.keys(merged.entries) };
-    if (entry.plugins.some((p) => p.plugin.isFileTracked(relativePath))) return { owner: "aidd" };
+    if (entry.plugins.some((p) => ownsPath(p, relativePath))) return { owner: "aidd" };
   }
   return { owner: "user" };
+}
+
+function ownsPath(recorded: RecordedPlugin, relativePath: string): boolean {
+  return (
+    recorded.plugin.isFileTracked(relativePath) ||
+    recorded.provenance.projectHooks?.scripts.has(relativePath) === true
+  );
 }

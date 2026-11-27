@@ -18,7 +18,10 @@ import { InMemoryEnvironment } from "../../shared/testing/in-memory-environment.
 import { InMemoryFileAdapter } from "../../shared/testing/in-memory-file-adapter.fake.js";
 import { saying } from "../../shared/testing/saying.builder.js";
 import { KeepPrompter } from "../../shared/testing/scripted-prompter.fake.js";
-import { syntheticFlowTools } from "../../shared/testing/synthetic-tool-id.builder.js";
+import {
+  SYNTHETIC_TOOL,
+  syntheticFlowTools,
+} from "../../shared/testing/synthetic-tool-id.builder.js";
 import { askMarketplaceSource } from "../testing/ask-marketplace-source.builder.js";
 import { setupMarketplaceRegistrar } from "../testing/setup-marketplace-registrar.builder.js";
 
@@ -193,9 +196,25 @@ describe("registering a marketplace", () => {
         projectRoot: PROJECT_ROOT,
       });
 
-      await useCase.register(flow, localFrameworkSource("/framework-source"));
+      const claim = await useCase.register(flow, localFrameworkSource("/framework-source"));
+      await claim?.();
 
       expect(await userSourceReferences.listAllReferencingProjects()).toStrictEqual([PROJECT_ROOT]);
+    });
+
+    it("hands back no claim for a machine-scope setup", async () => {
+      const { useCase } = makeUseCase(new InMemoryEnvironment());
+      const flow = new SetupFlow({
+        ...syntheticFlowTools(),
+        supportsUserScopeActivation: () => true,
+        projectRoot: PROJECT_ROOT,
+        scope: "user",
+        aiTools: [SYNTHETIC_TOOL],
+      });
+
+      const claim = await useCase.register(flow, localFrameworkSource("/framework-source"));
+
+      expect(claim).toBeUndefined();
     });
 
     it("records no claim when the framework was registered at project scope", async () => {
@@ -213,7 +232,8 @@ describe("registering a marketplace", () => {
         projectRoot: PROJECT_ROOT,
       });
 
-      await useCase.register(flow, localFrameworkSource("/framework-source"));
+      const claim = await useCase.register(flow, localFrameworkSource("/framework-source"));
+      await claim?.();
 
       expect(await userSourceReferences.listAllReferencingProjects()).toStrictEqual([]);
     });

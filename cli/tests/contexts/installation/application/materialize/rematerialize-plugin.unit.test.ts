@@ -12,13 +12,18 @@ import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry
 
 const NO_COMPONENTS = { skills: [], commands: [], agents: [], rules: [], hooks: [], mcp: [] };
 
-function rematerialize() {
+function rematerialize(strict = false) {
   const tool = registeredTools().aiProfile(TOOL.claude);
   const plugin = RecordedPlugin.fromMetadata({
     name: "aidd-dev",
     version: "1.0.0",
-    source: { kind: "local", path: "/p" },
-    strict: false,
+    source: {
+      kind: "git-subdir",
+      url: "https://github.com/ai-driven-dev/framework.git",
+      path: "plugins/aidd-dev",
+      ref: "v5.14.0",
+    },
+    strict,
     scope: "project",
     marketplace: "aidd-framework",
   });
@@ -81,6 +86,14 @@ describe("rematerializing an installed plugin", () => {
     expect(
       manifest.getRecordedPlugins(TOOL.claude).map((p) => [p.plugin.name, p.marketplace])
     ).toStrictEqual([["aidd-dev", "aidd-framework"]]);
+  });
+
+  it("keeps the strictness the catalog gave the plugin, which its own manifest never carries", async () => {
+    const { count, manifest } = rematerialize(true);
+
+    await count;
+
+    expect(manifest.getPlugins(TOOL.claude).map((p) => p.strict)).toStrictEqual([true]);
   });
 
   it("reports zero for a placement that writes no files", async () => {

@@ -1,4 +1,4 @@
-import { readdir, readFile } from "node:fs/promises";
+import { access, readdir, readFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
@@ -43,10 +43,10 @@ describe("an opencode project set up again once the machine installed the same p
     expect(await tracked()).toEqual(await placed());
   });
 
-  it("removes every file it placed on clean", async () => {
+  it("removes every file it placed on clean, and the directory they leave empty", async () => {
     const clean = await run("clean", "--force");
 
     expect(clean.exitCode, clean.stderr).toBe(0);
-    expect(await placed()).toEqual([]);
+    await expect(access(join(test.projectDir, ".opencode"))).rejects.toThrow("ENOENT");
   });
 });

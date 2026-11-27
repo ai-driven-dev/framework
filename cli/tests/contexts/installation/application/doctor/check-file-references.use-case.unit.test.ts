@@ -155,6 +155,26 @@ describe("checking the references of tracked files", () => {
 
       expect(issues).toStrictEqual([]);
     });
+
+    it("leaves a skill template's sibling links to the copy that creates them", async () => {
+      const template = ".opencode/skills/aidd-dev/01-plan/assets/plan-template.md";
+      const issues = await issuesFor(
+        { [template]: "| 1 | {{phase-name}} | [`phase-1.md`](./phase-1.md) | none |" },
+        { trackedFiles: [{ relativePath: template, toolId: TOOL.opencode }] }
+      );
+
+      expect(issues).toStrictEqual([]);
+    });
+
+    it("still checks a skill asset that is not a template", async () => {
+      const asset = ".opencode/skills/aidd-dev/01-plan/assets/report.md";
+      const issues = await issuesFor(
+        { [asset]: "[phase](./phase-1.md)" },
+        { trackedFiles: [{ relativePath: asset, toolId: TOOL.opencode }] }
+      );
+
+      expect(issues).toStrictEqual([brokenIn(asset, "./phase-1.md")]);
+    });
   });
 
   describe("files of an installed plugin", () => {

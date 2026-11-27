@@ -2,7 +2,7 @@ import { mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { FileHash } from "../../../shared/domain/file-hash.js";
 import { AIDD_DIR } from "../../../shared/domain/layout/aidd-layout.js";
-import { type PluginSource, serializePluginSource } from "../../../shared/domain/plugin/source.js";
+import { type PluginSource, pluginSourceIdentity } from "../../../shared/domain/plugin/source.js";
 import type { PrivateStorage } from "../../../shared/ports/private-storage.js";
 import type { MarketplaceTrustStore } from "../ports/marketplace-trust-store.js";
 
@@ -32,10 +32,7 @@ export class MarketplaceTrustStoreAdapter implements MarketplaceTrustStore {
 
   // Identity hash, not a security token. Used only to compare sources.
   private key(source: PluginSource): string {
-    const serialized = serializePluginSource(source);
-    const sortedKeys = Object.keys(serialized).sort();
-    const canonical = JSON.stringify(serialized, sortedKeys);
-    return FileHash.of(canonical).value;
+    return FileHash.of(pluginSourceIdentity(source)).value;
   }
 
   private path(projectRoot: string): string {

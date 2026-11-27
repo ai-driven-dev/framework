@@ -1,4 +1,8 @@
-import { type PluginSource, serializePluginSource } from "../../../shared/domain/plugin/source.js";
+import {
+  type PluginSource,
+  pluginSourceIdentity,
+  serializePluginSource,
+} from "../../../shared/domain/plugin/source.js";
 import { parsePluginSource } from "../../../shared/domain/plugin/source-parsing.js";
 import { isScope, type Scope } from "../../../shared/domain/scope.js";
 import { InvalidMarketplaceNameError } from "../../../shared/domain/shared.error.js";
@@ -110,6 +114,10 @@ export class Marketplace {
       lastFetched: this.lastFetched,
       version,
     });
+  }
+
+  isSourcedFrom(source: PluginSource): boolean {
+    return pluginSourceIdentity(this.source) === pluginSourceIdentity(source);
   }
 
   isFramework(): boolean {

@@ -39,8 +39,9 @@ export async function rematerializePlugin(
   rematerialization: PluginRematerialization,
   deps: RematerializationDeps
 ): Promise<number> {
-  const { dist, tool, mode, projectRoot, manifest, hooksGuard = {} } = rematerialization;
+  const { tool, mode, projectRoot, manifest, hooksGuard = {} } = rematerialization;
   const { plugin, provenance, marketplace } = rematerialization.plugin;
+  const dist = rematerialization.plugin.asRecorded(rematerialization.dist);
   manifest.removePlugin(tool.toolId, plugin.name);
   const request = {
     dist,

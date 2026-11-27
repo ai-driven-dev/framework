@@ -60,7 +60,7 @@ export class ReplacePluginFiles {
     manifest.updatePlugin(
       tool.toolId,
       RecordedPlugin.fromDistribution({
-        dist,
+        dist: command.plugin.asRecorded(dist),
         source: plugin.source,
         files: newFiles,
         scope: plugin.scope,
