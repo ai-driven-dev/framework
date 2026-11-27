@@ -3,7 +3,6 @@ import type { LineNames, TranscriptPosition } from "../domain/transcript-positio
 import { foldUsage } from "../domain/usage-fold.js";
 import type { TranscriptRead, TranscriptRequest, UsageSource } from "../ports/usage-source.js";
 
-/** A line that gave no call, the directory and time it names, and its file. */
 /** A line that gives no call, written in a directory it names. */
 export interface DroppedLine extends LineNames {
   readonly line: string;

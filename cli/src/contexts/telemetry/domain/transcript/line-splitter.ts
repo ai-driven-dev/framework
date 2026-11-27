@@ -25,10 +25,7 @@ export class LineSplitter {
   push(read: Buffer): void {
     let start = 0;
     for (let end = read.indexOf(NEWLINE); end !== -1; end = read.indexOf(NEWLINE, start)) {
-      const line =
-        this.pieces.length === 0
-          ? read.toString("utf8", start, end)
-          : Buffer.concat([...this.pieces, read.subarray(start, end)]).toString("utf8");
+      const line = Buffer.concat([...this.pieces, read.subarray(start, end)]).toString("utf8");
       const counted = this.consumed >= this.countFrom;
       this.each(line.endsWith("\r") ? line.slice(0, -1) : line, counted);
       this.pieces = [];
@@ -36,7 +33,7 @@ export class LineSplitter {
       this.consumed = this.at + start;
     }
     // A copy: the caller may read into the same buffer again.
-    if (start < read.length) this.pieces.push(Buffer.from(read.subarray(start)));
+    this.pieces.push(Buffer.from(read.subarray(start)));
     this.at += read.length;
   }
 }

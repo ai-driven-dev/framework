@@ -1,6 +1,5 @@
-import { readdir, rm } from "node:fs/promises";
+import { rm } from "node:fs/promises";
 import { join } from "node:path";
-import { isErrnoException } from "../../../../../shared/domain/reading/json-file.js";
 import type { PrivateStorage } from "../../../../../shared/ports/private-storage.js";
 import {
   type DayPart,
@@ -16,7 +15,7 @@ import {
   type TranscriptPosition,
 } from "../../../domain/transcript-position.js";
 import type { LeftOutStore, LoadedLedger, UsageLedger } from "../../../ports/usage-ledger.js";
-import { readTextIfPresent } from "../../reading/text-file.js";
+import { namesIfPresent, readTextIfPresent } from "../../reading/text-file.js";
 import type { DirectoryLock } from "./directory-lock.js";
 
 const DAILY = /^\d{4}-\d{2}-\d{2}\.jsonl$/;
@@ -137,11 +136,6 @@ export class UsageLedgerAdapter implements UsageLedger {
   }
 
   private async partitions(): Promise<string[]> {
-    try {
-      return (await readdir(this.dir)).filter((name) => DAILY.test(name));
-    } catch (error) {
-      if (isErrnoException(error) && error.code === "ENOENT") return [];
-      throw error;
-    }
+    return (await namesIfPresent(this.dir)).filter((name) => DAILY.test(name));
   }
 }

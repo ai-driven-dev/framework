@@ -3,15 +3,6 @@ import { join } from "node:path";
 import type { ErasureEntry, MeasurementErasure } from "../../ports/forget/measurement-erasure.js";
 import { isAbsent } from "../reading/text-file.js";
 
-async function entriesOf(dir: string): Promise<string[]> {
-  try {
-    return await readdir(dir);
-  } catch (error) {
-    if (isAbsent(error)) return [];
-    throw error;
-  }
-}
-
 async function kindOf(path: string): Promise<"file" | "directory" | null> {
   try {
     const found = await stat(path);
@@ -30,12 +21,8 @@ async function isFile(path: string): Promise<boolean> {
 const LOCK_FILE = ".lock";
 
 async function filesUnder(dir: string): Promise<number> {
-  let count = 0;
-  for (const name of (await entriesOf(dir)).filter((entry) => entry !== LOCK_FILE)) {
-    const path = join(dir, name);
-    count += (await isFile(path)) ? 1 : await filesUnder(path);
-  }
-  return count;
+  const entries = await readdir(dir, { recursive: true, withFileTypes: true });
+  return entries.filter((entry) => entry.isFile() && entry.name !== LOCK_FILE).length;
 }
 
 async function directoryEntry(kind: "bindings" | "ledger", path: string): Promise<ErasureEntry[]> {
@@ -65,7 +52,7 @@ export class MeasurementErasureAdapter implements MeasurementErasure {
 
   async erase(): Promise<void> {
     for (const entry of await this.inventory()) {
-      await rm(entry.path, { recursive: true, force: true });
+      await rm(entry.path, { recursive: true });
     }
   }
 }

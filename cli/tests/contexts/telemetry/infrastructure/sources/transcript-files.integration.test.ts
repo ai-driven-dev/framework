@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, open, rm, truncate, writeFile } from "node:fs/promises";
+import { type FileHandle, mkdir, mkdtemp, open, rm, truncate, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -79,6 +79,18 @@ describe("reading lines from a file", () => {
     expect(lines).toEqual(["alpha", "beta"]);
     expect(end).toBe(11);
   });
+
+  it("reads no byte past the size it was told, from wherever the range starts", async () => {
+    const path = join(root, "t.jsonl");
+    await writeFile(path, "a\nb\nc\n");
+    const lines: string[] = [];
+    await withHandle(path, (handle) =>
+      eachLine(handle, { from: 2, countFrom: 2, size: 4, blockBytes: 64 }, (line) =>
+        lines.push(line)
+      )
+    );
+    expect(lines).toEqual(["b"]);
+  });
 });
 
 describe("naming a file", () => {
@@ -133,6 +145,23 @@ describe("reading a transcript", () => {
       restarted: false,
       position: { offset: 6, size: 6 },
     });
+  });
+
+  it("closes the file it opened", async () => {
+    const path = join(root, "t.jsonl");
+    await writeFile(path, "abcdef");
+    let opened: FileHandle | undefined;
+    await readTranscript(
+      { path, since: null, writtenFrom: Number.NEGATIVE_INFINITY },
+      {
+        ...reading,
+        lines: async (handle) => {
+          opened = handle;
+          return 3;
+        },
+      }
+    );
+    await expect(opened?.stat()).rejects.toMatchObject({ code: "EBADF" });
   });
 
   it("positions a read file where its lines end", async () => {

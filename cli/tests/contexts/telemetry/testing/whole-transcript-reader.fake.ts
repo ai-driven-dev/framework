@@ -1,8 +1,9 @@
-import { constants, type Stats } from "node:fs";
+import { constants } from "node:fs";
 import { open } from "node:fs/promises";
 import type { EachTranscriptLine } from "../../../../src/contexts/telemetry/domain/transcript/line-splitter.js";
 import { resumeOffset } from "../../../../src/contexts/telemetry/domain/transcript-position.js";
 import { ClaudeUsageSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-usage-source-adapter.js";
+import { identityOf } from "../../../../src/contexts/telemetry/infrastructure/sources/transcript-files.js";
 import type {
   TranscriptRead,
   TranscriptRequest,
@@ -47,8 +48,4 @@ export class WholeTranscriptReader extends ClaudeUsageSourceAdapter {
       await handle.close();
     }
   }
-}
-
-function identityOf(stats: Stats): string {
-  return stats.ino === 0 ? `${stats.dev}:${stats.birthtimeMs}` : `${stats.dev}:${stats.ino}`;
 }

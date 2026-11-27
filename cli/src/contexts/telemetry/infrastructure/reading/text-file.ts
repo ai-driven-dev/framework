@@ -1,4 +1,4 @@
-import { readFile, stat } from "node:fs/promises";
+import { readdir, readFile, stat } from "node:fs/promises";
 import { isErrnoException } from "../../../../shared/domain/reading/json-file.js";
 
 const ABSENT: ReadonlySet<string | undefined> = new Set(["ENOENT", "ENOTDIR"]);
@@ -7,6 +7,22 @@ const ABSENT: ReadonlySet<string | undefined> = new Set(["ENOENT", "ENOTDIR"]);
  * directory. */
 export function isAbsent(error: unknown): boolean {
   return isErrnoException(error) && ABSENT.has(error.code);
+}
+
+/** Whether a failure only says there is nothing at the path: something in the way that is no
+ * directory is not nothing. */
+export function isMissing(error: unknown): boolean {
+  return isErrnoException(error) && error.code === "ENOENT";
+}
+
+/** The names a directory holds, or none when there is no such directory. */
+export async function namesIfPresent(dir: string): Promise<string[]> {
+  try {
+    return await readdir(dir);
+  } catch (error) {
+    if (isMissing(error)) return [];
+    throw error;
+  }
 }
 
 /** A file's text, or `null` when there is no such file. Any other failure is thrown: a file
