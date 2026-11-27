@@ -96,6 +96,7 @@ export async function movesOffOlderBuild(
 
 const isOlderBuild = (drift: MarketplaceSourceDrift): boolean => drift.kind === "version-ahead";
 
+/** Codex and Copilot refuse a re-add from another source (probed 0.172.0, 1.0.114), so an older build is moved. */
 async function decideWithoutRegistry(
   run: RegistrationRun,
   request: CatalogRequest,
@@ -111,7 +112,6 @@ async function decideWithoutRegistry(
   );
 }
 
-/** Codex and Copilot refuse a re-add from another source (probed 0.172.0, 1.0.114), so an older build is moved. */
 async function registryLessDrift(
   run: RegistrationRun,
   { builtDir, marketplace }: CatalogRequest,
