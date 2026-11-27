@@ -1,7 +1,7 @@
 import { dirname, join, posix } from "node:path";
 import { FileHash } from "../../../../../shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../../shared/domain/installation-file.js";
-import type { PathContainment } from "../../../../../shared/domain/paths.model.js";
+import { type PathContainment, posixRelative } from "../../../../../shared/domain/paths.model.js";
 import type { PluginDistribution } from "../../../../../shared/domain/plugin/plugin-distribution.js";
 import { whenAbsent } from "../../../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../../../shared/ports/file-reader.js";
@@ -15,9 +15,9 @@ import type { PluginPlacement } from "../../../ports/tool-sections.js";
  */
 export async function readGlobalPluginFiles(
   fs: FileReader,
-  built: { builtDir: string; tool: PluginPlacement; dist: PluginDistribution }
+  built: { builtDir: string; tool: PluginPlacement; dist: PluginDistribution; platform: string }
 ): Promise<InstallationFile[]> {
-  const { builtDir, tool, dist } = built;
+  const { builtDir, tool, dist, platform } = built;
   const machine = tool.plugins()?.globalFiles() ?? null;
   if (machine === null) return [];
   const plugin = {
@@ -26,12 +26,7 @@ export async function readGlobalPluginFiles(
   };
   const files: InstallationFile[] = [];
   for (const abs of await fs.listFilesRecursive(builtDir)) {
-    const builtPath = posix.normalize(
-      abs
-        .slice(builtDir.length + 1)
-        .split("\\")
-        .join("/")
-    );
+    const builtPath = posixRelative(builtDir, abs, platform);
     const relativePath = machine.map(builtPath, plugin);
     if (relativePath === null) continue;
     const content = await fs.readFile(abs);

@@ -74,7 +74,8 @@ async function readBuiltFiles(
     mode: tool.frameworkBuildMode(),
   });
   if (tool.plugins()?.globalFiles() != null) {
-    const files = await readGlobalPluginFiles(deps.fs, { builtDir, tool, dist });
+    const { platform } = deps.builtDeps;
+    const files = await readGlobalPluginFiles(deps.fs, { builtDir, tool, dist, platform });
     return { files, componentPaths: new Map() };
   }
   const root = pluginRootIn(tool, plugin.name);

@@ -26,7 +26,7 @@ export interface ManifestFileContext {
   readonly scope: Scope;
 }
 
-// This CLI reads MANIFEST_VERSION, splits a v8 document into it before this guard, and refuses
+// This CLI reads MANIFEST_VERSION, converts a v8 document into it before this guard, and refuses
 // every other version, naming a fix for each side. Too new means this CLI is behind, so
 // `aidd update` is a real answer.
 //

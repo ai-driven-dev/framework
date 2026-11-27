@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { render } from "../../../../../src/presentation/errors/error-translator.presenter.js";
 import "../../../../../src/composition/contexts/translate.js";
+import { posixRelative } from "../../../../../src/shared/domain/paths.model.js";
 import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import { McpConfigError } from "../../../../../src/shared/domain/shared.error.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
@@ -76,12 +77,10 @@ async function build(tool: AiToolId, fs: InMemoryFileAdapter): Promise<void> {
 }
 
 function written(fs: InMemoryFileAdapter): Map<string, string> {
-  const prefix = `${OUT.replace(/\\/g, "/")}/`;
   return new Map(
-    fs.listUnder(OUT).map((path) => {
-      const rel = path.replace(/\\/g, "/").slice(prefix.length);
-      return [rel, fs.getFile(path) ?? ""];
-    })
+    fs
+      .listUnder(OUT)
+      .map((path) => [posixRelative(OUT, path, process.platform), fs.getFile(path) ?? ""])
   );
 }
 

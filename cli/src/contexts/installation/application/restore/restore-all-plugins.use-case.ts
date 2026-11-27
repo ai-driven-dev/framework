@@ -5,7 +5,9 @@ import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../domain/project-layout.js";
+import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { InstallationCatalog, NativeRegistrationReach } from "../../ports/tool-sections.js";
+import { loadMachineManifest } from "../shared/load-machine-manifest.js";
 import type { ApplyPluginFiles } from "./apply-plugin-files.use-case.js";
 
 interface RestoreAllPluginsRequest {
@@ -20,6 +22,7 @@ interface RestoreAllPluginsRequest {
 
 interface PluginRestoreScope {
   manifest: Manifest;
+  machine: Manifest;
   projectRoot: string;
   cacheDir: string;
   fileFilter: ((p: string) => boolean) | null;
@@ -37,9 +40,15 @@ export interface RestoreAllPluginsResult {
   nativeOnlyToolIds: AiToolId[];
 }
 
+/** What RestoreAllPlugins is built from. */
+export interface RestoreAllPluginsDeps {
+  readonly applyPluginFiles: Pick<ApplyPluginFiles, "execute">;
+  readonly machineManifest: Pick<ManifestRepository, "load">;
+}
+
 export class RestoreAllPlugins {
   constructor(
-    private readonly applyPluginFiles: ApplyPluginFiles,
+    private readonly deps: RestoreAllPluginsDeps,
     private readonly tools: InstallationCatalog
   ) {}
 
@@ -47,6 +56,7 @@ export class RestoreAllPlugins {
     const { projectRoot, manifest, fileFilter, pluginName, toolIds, force = false } = options;
     const scope: PluginRestoreScope = {
       manifest,
+      machine: await loadMachineManifest(this.deps.machineManifest),
       projectRoot,
       cacheDir: join(projectRoot, PLUGIN_CACHE_SUBDIR),
       fileFilter,
@@ -95,18 +105,19 @@ export class RestoreAllPlugins {
     toolConfig: AiToolProfile,
     scope: PluginRestoreScope
   ): Promise<{ totalFiles: number; pluginNames: string[] }> {
-    const { manifest, projectRoot, cacheDir, fileFilter, pluginName, force } = scope;
+    const { manifest, machine, projectRoot, cacheDir, fileFilter, pluginName, force } = scope;
     let totalFiles = 0;
     const pluginNames: string[] = [];
     const targets = this.targetPlugins(toolId, manifest, pluginName);
     for (const plugin of targets) {
-      const filesWritten = await this.applyPluginFiles.execute({
+      const filesWritten = await this.deps.applyPluginFiles.execute({
         toolId,
         plugin,
         tool: toolConfig,
         projectRoot,
         cacheDir,
         manifest,
+        machine,
         fileFilter,
         force,
       });

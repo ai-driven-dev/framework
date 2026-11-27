@@ -38,7 +38,15 @@ function rematerialize(strict = false) {
   });
   const fs = new InMemoryFileAdapter();
   const count = rematerializePlugin(
-    { dist, tool, mode: "marketplace", plugin, projectRoot: "/root", manifest },
+    {
+      dist,
+      tool,
+      mode: "marketplace",
+      plugin,
+      projectRoot: "/root",
+      manifest,
+      machine: Manifest.create(),
+    },
     { fs, ...builtPlacementOf(fs, fakeBuiltDeps()) }
   );
   return { count, manifest };
@@ -72,7 +80,15 @@ async function rematerializeOnCursor(): Promise<number> {
     components: NO_COMPONENTS,
   });
   return rematerializePlugin(
-    { dist, tool, mode: "built-tree", plugin, projectRoot: "/root", manifest },
+    {
+      dist,
+      tool,
+      mode: "built-tree",
+      plugin,
+      projectRoot: "/root",
+      manifest,
+      machine: Manifest.create(),
+    },
     { fs, ...builtPlacementOf(fs, { ...fakeBuiltDeps(), marketplaceRegistry: registry }) }
   );
 }

@@ -31,7 +31,6 @@ import {
   heldByMachineLock,
   registrationRecordStore,
   wireMachineClaims,
-  withRecordsBeside,
 } from "./contexts/machine-claims.js";
 import type { RegisteredCatalog } from "./contexts/tools.js";
 import { homeDirResolver, userConfigDir } from "./user-config-dir.js";
@@ -112,17 +111,15 @@ function wireStorage({ projectRoot, tools }: BaseOptions, logger: Logging) {
   const fs = new JsonFileMergerAdapter(new FileAdapter(logger));
   const resolveToolId = (raw: string) => tools.toolId(raw);
   const files = { atomicWriter: atomicWriteFile, resolveToolId };
-  const projectRecords = registrationRecordStore(() => join(projectRoot, AIDD_DIR), files);
-  const manifestRepo = withRecordsBeside(
-    new ManifestRepositoryAdapter(projectRoot, { ...files, records: projectRecords }),
-    projectRecords
-  );
-  const userRecords = registrationRecordStore(userConfigDir, files);
+  const manifestRepo = new ManifestRepositoryAdapter(projectRoot, {
+    ...files,
+    records: registrationRecordStore(() => join(projectRoot, AIDD_DIR), files),
+  });
   const userManifestRepo = heldByMachineLock(
-    withRecordsBeside(
-      new UserManifestRepositoryAdapter(userConfigDir, { ...files, records: userRecords }),
-      userRecords
-    )
+    new UserManifestRepositoryAdapter(userConfigDir, {
+      ...files,
+      records: registrationRecordStore(userConfigDir, files),
+    })
   );
   const serverPluginLedger = serverPluginLedgerFile(userConfigDir, files);
   return { fs, manifestRepo, userManifestRepo, serverPluginLedger };

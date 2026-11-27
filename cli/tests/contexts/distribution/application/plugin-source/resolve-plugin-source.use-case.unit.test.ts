@@ -50,7 +50,8 @@ describe("resolving where a plugin comes from", () => {
           { name: "p", source: PLUGIN_ON_GITHUB },
           { name: "q", source: PLUGIN_ON_GITHUB }
         ),
-      })
+      }),
+      process.platform
     );
 
     const matches = await resolve.execute({ pluginName: "p", projectRoot: PROJECT });
@@ -68,7 +69,8 @@ describe("resolving where a plugin comes from", () => {
       resolvingCatalogs({
         "/mkt/a": catalogOf({ name: "p", source: PLUGIN_ON_GITHUB }),
         "/mkt/b": catalogOf({ name: "p", source: PLUGIN_ON_GITHUB }),
-      })
+      }),
+      process.platform
     );
 
     const matches = await resolve.execute({
@@ -87,7 +89,8 @@ describe("resolving where a plugin comes from", () => {
       resolvingCatalogs({
         "/mkt/a": null,
         "/mkt/b": catalogOf({ name: "p", source: PLUGIN_ON_GITHUB }),
-      })
+      }),
+      process.platform
     );
 
     const matches = await resolve.execute({ pluginName: "p", projectRoot: PROJECT });
@@ -104,7 +107,8 @@ describe("resolving where a plugin comes from", () => {
           name: "p",
           source: { kind: "local", path: "./plugins/p" },
         }),
-      })
+      }),
+      process.platform
     );
 
     const [match] = await resolve.execute({ pluginName: "p", projectRoot: PROJECT });
@@ -122,7 +126,8 @@ describe("resolving where a plugin comes from", () => {
     const registry = await registryOf(localMarketplace("a"));
     const resolve = new ResolvePluginSource(
       registry,
-      resolvingCatalogs({ "/mkt/a": catalogOf({ name: "other", source: PLUGIN_ON_GITHUB }) })
+      resolvingCatalogs({ "/mkt/a": catalogOf({ name: "other", source: PLUGIN_ON_GITHUB }) }),
+      process.platform
     );
 
     await expect(resolve.execute({ pluginName: "p", projectRoot: PROJECT })).rejects.toBeInstanceOf(

@@ -13,6 +13,7 @@ import type {
   IdeToolProfile,
 } from "../../../contexts/tools/contract/tool-profile.js";
 import { selectTools } from "../../../contexts/tools/contract/tool-selection.model.js";
+import { homeNamed } from "../../../shared/domain/paths.model.js";
 import type { Output } from "../../terminal/output.model.js";
 
 export interface SetupCmdOptions {
@@ -102,8 +103,10 @@ export function globalSetupHelp(catalog: SetupCatalog): string {
   const native = global.filter((profile) => profile.nativeActivation() !== undefined);
   const served = global.filter((profile) => profile.pluginServer() !== undefined);
   const copying = global.filter((profile) => profile.plugins()?.copiesFilesGlobally());
-  const where = (profile: AiToolProfile) =>
-    profile.plugins()?.userPluginsBaseDir("~")?.replaceAll("\\", "/");
+  const where = (profile: AiToolProfile) => {
+    const dir = profile.plugins()?.userPluginsBaseDir("~");
+    return dir == null ? undefined : homeNamed("~", dir, process.platform);
+  };
   return [
     "",
     "Global:",

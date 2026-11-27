@@ -1,4 +1,7 @@
-import { recordsOf } from "../../../src/composition/contexts/installation.js";
+import {
+  recordsOf,
+  userScopePluginFilesOf,
+} from "../../../src/composition/contexts/installation.js";
 import { userScopeFilesSafeToDelete } from "../../../src/composition/contexts/machine-claims.js";
 import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { wireCleanClaims } from "../../../src/composition/orchestration/clean-claims.js";
@@ -24,7 +27,6 @@ import {
   PurgeMachineState,
   type PurgeMachineStateDeps,
 } from "../../../src/contexts/installation/application/removal/purge-machine-state.js";
-import { UserScopePluginFiles } from "../../../src/contexts/installation/application/removal/user-scope-plugin-files.js";
 import type { ScopeRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import { ResolvePurgeCandidate } from "../../../src/contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
@@ -79,7 +81,7 @@ export function userScopeCleanerDeps(parts: UserScopeCleanerParts): CleanUserSco
     claims: recordsOf(parts.repo),
     purgeMachineState: new PurgeMachineState({ fs, logger, guards }),
     homeDir,
-    userScopePluginFiles: new UserScopePluginFiles(fs, (plugin, tool, home) =>
+    userScopePluginFiles: userScopePluginFilesOf(fs, (plugin, tool, home) =>
       userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
     ),
   };

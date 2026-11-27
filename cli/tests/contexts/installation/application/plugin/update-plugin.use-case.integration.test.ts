@@ -17,6 +17,8 @@ import { seedFromDirectory } from "../../../../shared/testing/seed-from-director
 import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
 import { buildProjectPluginUpdate } from "../../testing/build-update-plugin.builder.js";
 import { fakeBuildSources, fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
+import { machineOwnedPluginRecordedByProject } from "../../testing/machine-owned-plugin-scenario.builder.js";
+import { HOME, USER_PLUGINS_DIR } from "../../testing/update-built-tree-scenario.builder.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const EXTRA_PLUGIN_FIXTURE = join(
@@ -291,6 +293,38 @@ describe("updating a plugin on disk", () => {
       });
 
       expect(fetcher.fetchOptions).toStrictEqual([{ forceRefresh: true }]);
+    });
+  });
+
+  describe("a plugin the machine owns at user scope", () => {
+    it("leaves the machine's copy alone when the project recorded the plugin at project scope", async () => {
+      const deps = await buildInstallationDeps({ tools: registeredTools() });
+      const { registry, machineCopy } = await machineOwnedPluginRecordedByProject(deps, {
+        projectRoot: PROJECT_ROOT,
+        userPluginsDir: USER_PLUGINS_DIR,
+      });
+      const builtDeps = fakeBuiltDeps({ marketplaceRegistry: registry, homedir: () => HOME });
+      const update = buildProjectPluginUpdate(
+        {
+          manifestRepo: deps.manifestRepo,
+          loadDistribution: loadDistributionOf(deps.pluginFetcher, deps.pluginDistributionReader),
+          replacePluginFiles: new ReplacePluginFiles(
+            { fs: deps.fs, ...builtPlacementOf(deps.fs, builtDeps) },
+            registeredTools()
+          ),
+        },
+        registeredTools(),
+        deps.userManifestRepo
+      );
+
+      await update.execute({
+        pluginNames: ["sample-plugin"],
+        toolIds: [TOOL.cursor],
+        projectRoot: PROJECT_ROOT,
+        rebuild: true,
+      });
+
+      expect(deps.fs.getFile(machineCopy)).toBe("machine bytes");
     });
   });
 

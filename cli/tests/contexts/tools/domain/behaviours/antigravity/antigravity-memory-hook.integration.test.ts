@@ -15,9 +15,10 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, relative } from "node:path";
+import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { antigravity } from "../../../../../../src/composition/tool-profiles/antigravity.js";
+import { posixRelative } from "../../../../../../src/shared/domain/paths.model.js";
 import { nativeOf } from "../../../../../shared/testing/native-plugin-answers.builder.js";
 import { present } from "../../../../../shared/testing/present.builder.js";
 import { REPOSITORY_ROOT } from "../../../../../shared/testing/repository-root.builder.js";
@@ -44,7 +45,7 @@ describe("the memory hook under Antigravity", () => {
   let root: string;
 
   function installScript(source: string): void {
-    const pluginPath = `hooks/${relative(PLUGIN_HOOKS, source).split("\\").join("/")}`;
+    const pluginPath = `hooks/${posixRelative(PLUGIN_HOOKS, source, process.platform)}`;
     if (pluginPath === "hooks/hooks.json") return;
     const dest = join(root, PLUGIN_DIR, pluginPath);
     mkdirSync(dirname(dest), { recursive: true });

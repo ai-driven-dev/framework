@@ -63,6 +63,7 @@ describe("a Codex project plugin that keeps its rules beside the registration", 
       toolId: TOOL.codex,
       projectRoot: ROOT,
       manifest,
+      machine: Manifest.create(),
     });
 
     expect(expectedAfter(fs, manifest)).toEqual(REFRESHED);
@@ -82,6 +83,7 @@ describe("a Codex project plugin that keeps its rules beside the registration", 
       projectRoot: ROOT,
       cacheDir: "/cache",
       manifest,
+      machine: Manifest.create(),
       fileFilter: null,
     });
 
