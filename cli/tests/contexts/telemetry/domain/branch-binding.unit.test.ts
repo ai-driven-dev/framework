@@ -142,6 +142,16 @@ describe("only a declaration the command made on the branch counts", () => {
     expect(parseBranchConfig(out)).toEqual([]);
   });
 
+  it("reads nothing from a branch whose task is listed twice, once with no value", () => {
+    const out = listing(
+      "branch.y.aiddtask",
+      entry("branch.y.aiddtask", "ours"),
+      entry("branch.y.aidddeclaredfor", "y"),
+      declaredAt("y")
+    );
+    expect(parseBranchConfig(out)).toEqual([]);
+  });
+
   it("still reads a declaration written before declarations were stamped", () => {
     const out = listing(entry("branch.x.aiddtask", "legacy"), declaredAt("x"));
     expect(parseBranchConfig(out)).toMatchObject([{ branch: "x", task: "legacy" }]);
