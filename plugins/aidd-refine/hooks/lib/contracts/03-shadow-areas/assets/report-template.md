@@ -1,40 +1,18 @@
 ---
-source: {{source path}}
-generated_at: {{generated at}}
-status: clean
+source: {{source file name}}
+status: {{clean or open}}
+open: {{open gap count}}
 ---
 
-# Shadow Areas Report
+# Shadow areas: {{source file name}}
 
-Source: `{{source path}}`
-Generated: `{{generated at}}`
+## {{category}}
 
-Total gaps: {{total}} | Blocker: {{blocker count}} | Major: {{major count}} | Minor: {{minor count}}
+- {{question}}
+  > {{quote}}
 
-## Warnings
+## Closed
 
-- {{warning}}
+- {{question}}
 
-## Gaps by Category
-
-### {{category}}
-
-[{{severity}}] {{probe}}
-> {{snippet}}
-
-#### Closed
-
-[{{severity}}] {{probe}}
-> {{snippet}}
-
-#### Still Open
-
-[{{severity}}] {{probe}}
-> {{snippet}}
-
-#### Newly Introduced
-
-[{{severity}}] {{probe}}
-> {{snippet}}
-
-<!-- Fill, then strip this comment. Repeat a category and its gaps as needed. Without a diff, write gaps right under the category and omit Closed, Still Open and Newly Introduced; with one, write gaps only inside them. Omit a snippet a gap does not have. -->
+> Fill every `{{...}}`, then delete this line. Repeat sections, gaps and quotes as needed. Omit empty sections. With no gap, the report ends at its title.

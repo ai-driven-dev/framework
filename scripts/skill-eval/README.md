@@ -40,7 +40,7 @@ output.
   "prompt": "Use the {{SKILL}} skill on ./prd.md ...",
   "expect": {
     "filesExist": ["prd-shadow-report.md"],
-    "fileContains": { "prd-shadow-report.md": ["## Gaps by Category"] },
+    "fileContains": { "prd-shadow-report.md": ["# Shadow areas: prd.md"] },
     "fileNotContains": { "report.md": ["..."] },
     "stdoutContains": ["..."],
     "stdoutNotContains": ["tier 1"],
@@ -62,12 +62,3 @@ as grader, for outcomes that cannot be matched literally.
   (claim-extraction quality, terseness) go to `--judge` and can flake.
 - `01-brainstorm` is interactive (multi-turn Q&A) and is not covered here; a
   single headless turn cannot exercise its loop.
-
-## Known findings
-
-The harness surfaced one limitation worth tracking:
-
-- **empty-source scanning varies.** Most runs produce exactly one blocker, but
-  the exact count/header drifts between runs. The case asserts deterministically
-  only that a report is written, and gates the "exactly one blocker" semantics
-  behind `--judge`.
