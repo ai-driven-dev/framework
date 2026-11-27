@@ -96,8 +96,8 @@ export class MalformedPluginScopeError extends AiddError {
   }
 }
 
-/** A v8 manifest whose split into v9 and its record files could not be written. Whatever was
- * written is written again from the v8 document, which stays until the split completes. */
+/** A v8 manifest whose first save, as v9 with its record files, could not be written. The v8
+ * document stays until that save completes. */
 export class ManifestMigrationError extends AiddError {
   readonly code = "manifest-migration-failed";
   constructor(

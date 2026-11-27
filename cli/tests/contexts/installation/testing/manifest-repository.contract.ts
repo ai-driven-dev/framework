@@ -236,92 +236,96 @@ export function describeManifestFileContract(
     });
 
     describe("a version 8 document", () => {
-      beforeEach(async () => {
-        await write(await v8Capture());
-      });
-
-      it("is split on its first load: a v9 manifest without the record, and the record beside it", async () => {
-        const loaded = await subject.repository.load();
-
-        const v8 = JSON.parse(await v8Capture());
-        const { nativeRegistrations, ...entry } = v8.tools.claude;
-        expect(loaded?.toJSON()).toStrictEqual({ version: 9, tools: { claude: entry } });
-        expect(await onDisk()).toStrictEqual({ version: 9, tools: { claude: entry } });
-        expect(await subject.repository.loadRecords()).toStrictEqual(
-          new Map([[TOOL.claude, nativeRegistrations]])
+      let v8: string;
+      const besideIt = async () =>
+        (await readdir(dir())).filter(
+          (name) => slashed(join(dir(), name)) !== slashed(subject.manifestPath)
         );
+      const counting = (writes: string[]) => async (path: string, content: string) => {
+        writes.push(slashed(path));
+        await atomicWriteFile(path, content);
+      };
+
+      beforeEach(async () => {
+        v8 = await v8Capture();
+        await write(v8);
       });
 
-      it("moves a user plugin's dependents into the claims, the saved manifest no longer carrying them", async () => {
-        const v8 = JSON.parse(await v8Capture());
-        const entry = v8.tools.claude;
+      it("is read as v9 without the record, the record as its own, and nothing written", async () => {
+        const loaded = await subject.repository.load();
+        const records = await subject.repository.loadRecords();
+
+        const { nativeRegistrations, ...entry } = JSON.parse(v8).tools.claude;
+        expect(loaded?.toJSON()).toStrictEqual({ version: 9, tools: { claude: entry } });
+        expect(records).toStrictEqual(new Map([[TOOL.claude, nativeRegistrations]]));
+        expect(await readFile(subject.manifestPath, "utf-8")).toBe(v8);
+        expect(await besideIt()).toStrictEqual([]);
+      });
+
+      it("moves a user plugin's dependents into the claims, the manifest no longer carrying them", async () => {
+        const document = JSON.parse(v8);
+        const entry = document.tools.claude;
         entry.plugins.push({
           ...entry.plugins[0],
           name: "aidd-vcs",
           scope: "user",
           dependents: ["/project-a", "/project-b"],
         });
-        await write(JSON.stringify(v8));
+        await write(JSON.stringify(document));
 
         const loaded = await subject.repository.load();
 
         const pluginClaim = { plugin: "aidd-vcs", dependents: ["/project-a", "/project-b"] };
         const record = (await subject.repository.loadRecords()).get(TOOL.claude);
         expect(record?.pluginClaims).toStrictEqual([
-          ...v8.tools.claude.nativeRegistrations.pluginClaims,
+          ...entry.nativeRegistrations.pluginClaims,
           pluginClaim,
         ]);
-        const saved = (await onDisk()).tools.claude.plugins;
-        expect(saved.map((plugin: object) => "dependents" in plugin)).toStrictEqual([false, false]);
         expect(JSON.stringify(loaded?.toJSON())).not.toContain("dependents");
       });
 
-      it("is split by a first read of the records alone", async () => {
+      it("is written as v9 by its first save, each file once, the records before the manifest", async () => {
+        const writes: string[] = [];
+        const repository = subject.reopen(counting(writes));
+
+        await repository.save((await repository.load()) ?? aManifest().build());
+        await repository.save((await repository.load()) ?? aManifest().build());
+
+        expect(writes.at(-1)).toBe(slashed(subject.manifestPath));
+        expect(writes.filter((path) => path === slashed(subject.manifestPath))).toHaveLength(2);
+        expect(new Set(writes).size).toBe(writes.length - 1);
+        expect((await onDisk()).version).toBe(9);
         expect((await subject.repository.loadRecords()).get(TOOL.claude)).toStrictEqual(
           await v8Record()
         );
-        expect((await onDisk()).version).toBe(9);
       });
 
-      it("is split before records are saved over it, so neither the manifest nor the save is lost", async () => {
-        await subject.repository.saveRecords(records);
+      it("is written as v9 by a first save of the records, the manifest after them", async () => {
+        const writes: string[] = [];
 
+        await subject.reopen(counting(writes)).saveRecords(records);
+
+        expect(writes.at(-1)).toBe(slashed(subject.manifestPath));
         expect((await subject.repository.load())?.getInstalledToolIds()).toStrictEqual([
           TOOL.claude,
         ]);
+        expect((await onDisk()).version).toBe(9);
         expect(await subject.repository.loadRecords()).toStrictEqual(records);
       });
 
-      it("writes the records before the manifest", async () => {
-        const writes: string[] = [];
-
-        await subject
-          .reopen(async (path, content) => {
-            writes.push(slashed(path));
-            await atomicWriteFile(path, content);
-          })
-          .load();
-
-        expect(writes.at(-1)).toBe(slashed(subject.manifestPath));
-        expect(writes.length).toBeGreaterThan(1);
-      });
-
-      it("stays as it came when its split cannot be written, and the split runs again", async () => {
-        const before = await readFile(subject.manifestPath, "utf-8");
+      it("stays as it came when its first save cannot be written, the files beside it ignored", async () => {
         const failing = subject.reopen(async (path, content) => {
           if (slashed(path) === slashed(subject.manifestPath)) throw new Error("disk full");
           await atomicWriteFile(path, content);
         });
 
-        await expect(failing.load()).rejects.toThrow(ManifestMigrationError);
-        await expect(failing.save(aManifest().build())).rejects.toThrow(ManifestMigrationError);
-        expect(await readFile(subject.manifestPath, "utf-8")).toBe(before);
-
-        await subject.repository.load();
-        expect((await onDisk()).version).toBe(9);
+        await expect(failing.saveRecords(records)).rejects.toThrow(ManifestMigrationError);
         expect((await subject.repository.loadRecords()).get(TOOL.claude)).toStrictEqual(
           await v8Record()
         );
+        await expect(failing.save(aManifest().build())).rejects.toThrow(ManifestMigrationError);
+
+        expect(await readFile(subject.manifestPath, "utf-8")).toBe(v8);
       });
     });
 
