@@ -85,6 +85,12 @@ describe("the global fold keeps one record per key", () => {
     expect(foldUsage([low, high]).map((r) => r.at)).toEqual(["earlier"]);
   });
 
+  it("orders a time that parses and one that does not by their text", () => {
+    const parsed = record({ at: "2026-10-01T00:00:00.000Z", session_id: "s-2" });
+    const unparsed = record({ at: "n/a", session_id: "s-1" });
+    expect(foldUsage([unparsed, parsed]).map((r) => r.at)).toEqual(["2026-10-01T00:00:00.000Z"]);
+  });
+
   it("falls to the session id when two unparseable times are the same text", () => {
     const high = record({ at: "n/a", session_id: "s-2" });
     const low = record({ at: "n/a", session_id: "s-1" });

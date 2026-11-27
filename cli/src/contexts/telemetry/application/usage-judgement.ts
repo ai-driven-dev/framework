@@ -75,7 +75,6 @@ async function judgeDropped(
   dropped: ReadUsageResult["dropped"]
 ): Promise<void> {
   for (const { line, cwd, at, path } of dropped) {
-    if (cwd === null) continue;
     const when = at !== null && dayOf(at) !== null ? at : resolver.now;
     const outcome = await resolver.resolve(cwd, when);
     holdIfUnreadable(verdicts, outcome, path);

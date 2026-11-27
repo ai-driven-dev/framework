@@ -4,9 +4,11 @@ import { foldUsage } from "../domain/usage-fold.js";
 import type { TranscriptRead, TranscriptRequest, UsageSource } from "../ports/usage-source.js";
 
 /** A line that gave no call, the directory and time it names, and its file. */
+/** A line that gives no call, written in a directory it names. */
 export interface DroppedLine extends LineNames {
   readonly line: string;
   readonly path: string;
+  readonly cwd: string;
 }
 
 export interface ReadUsageResult {
@@ -74,9 +76,7 @@ function emptyGathering(): Gathered {
 function take(gathered: Gathered, path: string, file: FileReading): void {
   const { records, lines, reasons, read } = file;
   const { modifiedAt } = read;
-  if (modifiedAt !== null && (gathered.oldest === null || modifiedAt < gathered.oldest)) {
-    gathered.oldest = modifiedAt;
-  }
+  if (modifiedAt !== null) gathered.oldest = Math.min(gathered.oldest ?? modifiedAt, modifiedAt);
   if (read.skipped) gathered.skipped.add(path);
   if (read.unreadable !== undefined) gathered.unreadable.push(read.unreadable);
   // Changed under the read: what it handed over may be spliced from two versions, so none
@@ -136,7 +136,8 @@ export class ReadUsage {
       if (!counted) return;
       records.push(...outcome.records);
       // Only a line that gives no call names anything.
-      if (outcome.named?.cwd) lines.push({ line, path, ...outcome.named });
+      const { named } = outcome;
+      if (named?.cwd) lines.push({ line, path, cwd: named.cwd, at: named.at });
       reasons.push(...outcome.unrecognised.map((reason) => `${path}: ${reason}`));
     });
     reasons.push(...(read.unrecognised ?? []).map((reason) => `${path}: ${reason}`));

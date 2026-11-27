@@ -120,6 +120,15 @@ describe("reading usage from transcripts", () => {
     expect([...reading.skipped]).toEqual(["/t/a"]);
   });
 
+  it("reports the oldest write whatever order the files come in", async () => {
+    const reading = await read({
+      "/t/a": { lines: [], modifiedAt: Date.parse("2026-10-05T00:00:00.000Z") },
+      "/t/b": { lines: [], modifiedAt: Date.parse("2026-10-02T00:00:00.000Z") },
+      "/t/c": { lines: [] },
+    });
+    expect(reading.oldestTranscriptAt).toBe("2026-10-02T00:00:00.000Z");
+  });
+
   it("has no oldest write when no file says when it was written", async () => {
     expect((await read({ "/t/a": { lines: [] } })).oldestTranscriptAt).toBeNull();
   });
