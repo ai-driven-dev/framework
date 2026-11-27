@@ -11,7 +11,7 @@ import {
 } from "../../../../../../src/shared/domain/layout/aidd-layout.js";
 import { FakeHostActions } from "../../../../../shared/testing/fake-host-actions.fake.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
-import { catalogAt, DIR, OWN, setup } from "../../../testing/registration-run.builder.js";
+import { catalogAt, DIR, enabled, OWN, setup } from "../../../testing/registration-run.builder.js";
 
 const target = {
   marketplace: { name: "aidd", scope: "project" as const },
@@ -61,13 +61,22 @@ describe("registering on a host that refuses a re-add from another source", () =
 
   function codexHoldingRecorded(
     registered: string,
-    installed: readonly string[] | "unlistable" = [],
-    host = (options: ConstructorParameters<typeof FakeHostActions>[0]) =>
-      new FakeHostActions(options)
+    {
+      installed = [],
+      host = (options) => new FakeHostActions(options),
+      plugins,
+    }: {
+      readonly installed?: readonly string[] | "unlistable";
+      readonly host?: (
+        options: ConstructorParameters<typeof FakeHostActions>[0]
+      ) => FakeHostActions;
+      readonly plugins?: ReturnType<typeof enabled>;
+    } = {}
   ) {
     return setup({
       tool: TOOL.codex,
       activator: host({ available: true, conflictOnAdd: true, installed }),
+      ...(plugins === undefined ? {} : { plugins }),
       userCacheRoot: USER_ROOT,
       sources: new Map([[NAME, listed(registered)]]),
       claims: {
@@ -115,21 +124,34 @@ describe("registering on a host that refuses a re-add from another source", () =
         return super.enablePlugin(...args);
       }
     }
-    const { run } = codexHoldingRecorded(
-      build("1.0.0"),
-      ["demo@aidd", "extra@aidd"],
-      (options) => new OrderedHost(options)
-    );
+    const { run } = codexHoldingRecorded(build("1.0.0"), {
+      installed: ["demo@aidd", "extra@aidd"],
+      host: (options) => new OrderedHost(options),
+    });
     await registerMarketplace(run, codexTarget);
     expect(order).toEqual(["remove", "add", "enable demo@aidd", "enable extra@aidd"]);
   });
 
   it("never moves a registration whose installed plugins the host cannot list", async () => {
-    const { run, activator, warnings } = codexHoldingRecorded(build("1.0.0"), "unlistable");
+    const { run, activator, warnings } = codexHoldingRecorded(build("1.0.0"), {
+      installed: "unlistable",
+    });
     expect(await registerMarketplace(run, codexTarget)).toBeUndefined();
     expect(activator.removedMarketplaces).toEqual([]);
     expect(warnings).toEqual([
       `Native plugin activation — marketplace '${NAME}' not moved to this build: the plugins installed from it could not be listed.`,
+    ]);
+  });
+
+  it("never moves an older build that holds a plugin no project claims, and says why", async () => {
+    const { run, activator, warnings } = codexHoldingRecorded(build("1.0.0"), {
+      installed: ["hand@aidd"],
+      plugins: enabled("hand@aidd"),
+    });
+    expect(await registerMarketplace(run, codexTarget)).toBeUndefined();
+    expect(activator.removedMarketplaces).toEqual([]);
+    expect(warnings).toEqual([
+      `codex: catalogue '${NAME}' carries foreign host ref 'hand@aidd'; registration left untouched.`,
     ]);
   });
 
