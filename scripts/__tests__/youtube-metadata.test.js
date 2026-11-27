@@ -96,3 +96,9 @@ test("youtubeProblems accepts one programme line per scene, so a scene showing s
   };
   assert.deepEqual(youtubeProblems(grouped), []);
 });
+
+test("the contributors are counted whichever template thanks them", () => {
+  const waved = { ...plan, scenes: [{ template: "contributor-wave", logins: ["alice", "bob"] }] };
+
+  assert.match(youtubeMetadata(waved, context).description, /Version livrée par 2 contributeurs/);
+});

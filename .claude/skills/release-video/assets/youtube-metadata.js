@@ -19,7 +19,7 @@ function titleOf(plan, version) {
 }
 
 function youtubeMetadata(plan, { version, tag, repo }) {
-  const logins = plan.scenes.find((scene) => scene.template === "contributors")?.logins ?? [];
+  const logins = plan.scenes.find((scene) => scene.logins)?.logins ?? [];
   const contributors = logins.length;
   const lines = [
     `Les nouveautés du framework AI-Driven Dev ${version}, démontrées de bout en bout.`,

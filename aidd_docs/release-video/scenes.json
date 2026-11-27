@@ -2,700 +2,817 @@
   "intro": {},
   "scenes": [
     {
-      "template": "two-panels",
-      "pill": "Antigravity",
-      "title": "AIDD supports",
-      "accent": "Antigravity CLI.",
-      "surfaces": [
-        "aidd translate",
-        "aidd-context:04-skill-generate",
-        "aidd-context:11-explore",
-        "aidd-context:05-rule-generate",
-        "aidd-context:08-hook-generate"
-      ],
-      "note": "Example run.",
+      "template": "panel-sequence",
+      "pill": "CLI",
+      "title": "CLI refactored",
+      "surfaces": [],
+      "captions": [],
       "panels": [
         {
-          "label": "Terminal · ~/acme-app",
-          "flex": 1,
-          "rows": [
+          "kind": "layers",
+          "items": [
             {
-              "text": "$ aidd setup --ide antigravity",
-              "tone": "dim"
+              "label": "presentation",
+              "detail": "commands, output"
             },
             {
-              "table": {
-                "head": [
-                  "Installed in",
-                  "Holds"
-                ],
-                "rows": [
-                  [
-                    ".agents/skills/",
-                    {
-                      "checking": {
-                        "status": "48 skills"
-                      },
-                      "pending": "installing…"
-                    }
-                  ],
-                  [
-                    ".agents/agents/",
-                    {
-                      "checking": {
-                        "status": "4 agents"
-                      },
-                      "pending": "installing…"
-                    }
-                  ],
-                  [
-                    ".agents/hooks.json",
-                    {
-                      "checking": {
-                        "status": "hooks"
-                      },
-                      "pending": "installing…"
-                    }
-                  ]
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "label": "Antigravity CLI · ~/acme-app",
-          "flex": 1,
-          "rows": [
-            {
-              "text": "$ agy",
-              "tone": "dim"
+              "label": "orchestration",
+              "detail": "flows"
             },
             {
-              "prompt": "plan the login page"
+              "label": "contexts",
+              "detail": "the business"
             },
             {
-              "text": "Using skill aidd-dev:01-plan",
-              "tone": "blu"
-            },
-            {
-              "text": "Plan written: 3 phases",
-              "tone": "grn"
+              "label": "shared",
+              "detail": "kernel"
             }
           ],
-          "afterWork": true
-        }
-      ]
-    },
-    {
-      "template": "terminal-demo",
-      "pill": "Agents",
-      "title": "4 new",
-      "accent": "agents.",
-      "surfaces": [
-        "aidd-context:06-agent-generate",
-        "aidd-dev:10-batch",
-        "aidd-orchestrator:01-sdlc",
-        "aidd-dev:01-plan",
-        "aidd-dev:02-implement"
-      ],
-      "window": {
-        "label": "Claude Code · ~/acme-app",
-        "rows": [
-          {
-            "prompt": "/aidd-orchestrator:01-sdlc add a login page"
-          }
-        ]
-      },
-      "flow": [
-        {
-          "n": "1",
-          "title": "explorer",
-          "sub": "maps the code",
-          "icon": "search",
-          "log": [
-            "src/",
-            "└ auth/",
-            "  └ session.ts"
-          ]
+          "label": "Clean architecture"
         },
         {
-          "n": "2",
-          "title": "executor",
-          "sub": "builds and tests",
-          "icon": "build",
-          "runs": [
+          "kind": "grid",
+          "items": [
             {
-              "log": [
-                "+ login.tsx",
-                "+ login.test.ts",
-                "✓ tests pass"
-              ]
+              "label": "installation"
             },
             {
-              "log": [
-                "+ error message",
-                "✓ tests pass"
-              ]
-            }
-          ]
-        },
-        {
-          "n": "3",
-          "title": "validator",
-          "sub": "checks the goal",
-          "icon": "check",
-          "runs": [
-            {
-              "log": [
-                "goal: login page",
-                "✗ no error shown"
-              ],
-              "fail": true
+              "label": "tools"
             },
             {
-              "log": [
-                "goal: login page",
-                "✓ error shown",
-                "✓ goal met"
-              ]
+              "label": "translate"
+            },
+            {
+              "label": "telemetry"
+            },
+            {
+              "label": "distribution"
+            },
+            {
+              "label": "update"
+            },
+            {
+              "label": "auth"
+            },
+            {
+              "label": "host-registration"
+            },
+            {
+              "label": "machine-claims"
+            },
+            {
+              "label": "recipes"
             }
-          ]
+          ],
+          "label": "10 bounded contexts"
         },
         {
-          "n": "4",
-          "title": "reviewer",
-          "sub": "reviews the diff",
-          "icon": "review",
-          "log": [
-            "reads the diff",
-            "0 critical",
-            "✓ approve"
-          ]
+          "kind": "levels",
+          "items": [
+            {
+              "label": "unit",
+              "detail": "a rule, in memory"
+            },
+            {
+              "label": "integration",
+              "detail": "an adapter, real folder"
+            },
+            {
+              "label": "contract",
+              "detail": "a port, fake and real"
+            },
+            {
+              "label": "e2e",
+              "detail": "the built binary"
+            },
+            {
+              "label": "golden",
+              "detail": "output vs snapshot"
+            }
+          ],
+          "label": "Test strategy"
         }
       ],
-      "note": "Example run."
+      "layout": "row",
+      "hold": 5
     },
     {
-      "template": "terminal-demo",
-      "pill": "Connections",
-      "title": "Check your",
-      "accent": "AI access.",
+      "template": "logo-row",
+      "pill": "Tools",
+      "title": "Now in 9 AI tools.",
       "surfaces": [
-        "aidd-context:13-access-check",
+        "aidd translate",
+        "aidd plugin-change",
         "aidd-context:00-onboard",
-        "aidd-context:12-cook"
+        "aidd-context:04-skill-generate",
+        "aidd-context:05-rule-generate",
+        "aidd-context:06-agent-generate",
+        "aidd-context:07-command-generate",
+        "aidd-context:08-hook-generate",
+        "aidd-context:11-explore"
       ],
-      "window": {
-        "label": "Claude Code · ~/acme-app",
-        "rows": [
-          {
-            "prompt": "/aidd-context:13-access-check"
-          },
-          {
-            "table": {
-              "head": [
-                "Tool",
-                "Status",
-                "Next step"
-              ],
-              "rows": [
-                [
-                  "GitHub",
-                  {
-                    "checking": {
-                      "status": "Target read"
-                    }
-                  },
-                  {
-                    "result": {
-                      "dim": "none"
-                    }
-                  }
-                ],
-                [
-                  "Jira",
-                  {
-                    "checking": {
-                      "tone": "pnk",
-                      "text": "Read failed"
-                    }
-                  },
-                  {
-                    "result": "sign in to the Jira server"
-                  }
-                ],
-                [
-                  "Postgres",
-                  {
-                    "checking": {
-                      "tone": "amb",
-                      "text": "Not configured"
-                    }
-                  },
-                  {
-                    "result": "name the database in memory"
-                  }
-                ]
-              ]
-            }
-          }
-        ]
-      },
-      "note": "Example run.",
-      "lead": "See which services your AI really reaches, and how to fix each one."
-    },
-    {
-      "template": "terminal-demo",
-      "pill": "Quality",
-      "title": "Assert, rewritten:",
-      "accent": "judges, never fixes.",
-      "surfaces": [
-        "aidd-dev:03-assert"
+      "captions": [
+        "Kiro and Kimi join the seven."
       ],
-      "window": {
-        "label": "Claude Code · ~/acme-app",
-        "rows": [
-          {
-            "prompt": "/aidd-dev:03-assert"
-          },
-          {
-            "table": {
-              "head": [
-                "Check",
-                "Result"
-              ],
-              "rows": [
-                [
-                  "pnpm lint",
-                  {
-                    "checking": {
-                      "tone": "grn",
-                      "text": "✓ exit 0"
-                    },
-                    "pending": "running…"
-                  }
-                ],
-                [
-                  "pnpm test",
-                  {
-                    "checking": {
-                      "tone": "pnk",
-                      "text": "✗ exit 1 · expected 200, got 401"
-                    },
-                    "pending": "running…"
-                  }
-                ]
-              ]
-            }
-          },
-          {
-            "verdict": "FAIL",
-            "tone": "pnk",
-            "detail": "code untouched",
-            "afterWork": true
-          }
-        ]
-      },
-      "note": "Example run.",
-      "lead": "Runs your checks, gives the verdict, never edits code."
-    },
-    {
-      "template": "terminal-demo",
-      "pill": "Quality",
-      "title": "Review, rewritten:",
-      "accent": "every finding proven.",
-      "surfaces": [
-        "aidd-dev:05-review",
-        "aidd-refine:05-review-conversation"
-      ],
-      "window": {
-        "label": "Claude Code · ~/acme-app",
-        "rows": [
-          {
-            "prompt": "/aidd-dev:05-review"
-          },
-          {
-            "table": {
-              "head": [
-                "Claim",
-                "Proof"
-              ],
-              "rows": [
-                [
-                  "assumes tokens expire",
-                  {
-                    "checking": {
-                      "tone": "pnk",
-                      "text": "✗ false · session.ts:17"
-                    },
-                    "pending": "proving…"
-                  }
-                ],
-                [
-                  "token never expires",
-                  {
-                    "checking": {
-                      "tone": "pnk",
-                      "text": "critical · login.ts:42"
-                    },
-                    "pending": "proving…"
-                  }
-                ],
-                [
-                  "rate limiting",
-                  {
-                    "checking": {
-                      "tone": "dim",
-                      "text": "not provable from this diff"
-                    },
-                    "pending": "proving…"
-                  }
-                ]
-              ]
-            }
-          },
-          {
-            "verdict": "CHANGES REQUESTED",
-            "tone": "amb",
-            "detail": "1 critical finding",
-            "afterWork": true
-          }
-        ]
-      },
-      "note": "Example run.",
-      "lead": "Checks what the diff assumes, proves each finding, explains its verdict."
-    },
-    {
-      "template": "terminal-demo",
-      "pill": "Memory",
-      "title": "Memory, rewritten:",
-      "accent": "one message.",
-      "surfaces": [
-        "aidd-context:02-project-memory"
-      ],
-      "window": {
-        "label": "Claude Code · ~/acme-app",
-        "rows": [
-          {
-            "prompt": "/aidd-context:02-project-memory"
-          },
-          {
-            "table": {
-              "rows": [
-                [
-                  "changed files",
-                  {
-                    "checking": {
-                      "tone": "grn",
-                      "text": "✓ 12 since the last memory update"
-                    },
-                    "pending": "reading…"
-                  }
-                ],
-                [
-                  "memory review",
-                  {
-                    "checking": {
-                      "tone": "amb",
-                      "text": "✓ 1 stale line, 1 question"
-                    },
-                    "pending": "reviewing…"
-                  }
-                ]
-              ]
-            }
-          },
-          {
-            "text": "1. testing.md",
-            "afterWork": true
-          },
-          {
-            "del": "Run the tests: pnpm test",
-            "afterWork": true
-          },
-          {
-            "add": "Run the tests: pnpm test:changed",
-            "afterWork": true
-          },
-          {
-            "text": "Q1. Does the CI run the e2e suite?",
-            "tone": "amb",
-            "afterWork": true
-          },
-          {
-            "prompt": "ok · Q1: no",
-            "afterWork": true
-          },
-          {
-            "text": "✓ testing.md written",
-            "tone": "grn",
-            "afterWork": true
-          }
-        ]
-      },
-      "note": "Example run."
-    },
-    {
-      "template": "terminal-demo",
-      "pill": "Install",
-      "title": "One install,",
-      "accent": "every project.",
-      "surfaces": [
-        "aidd setup",
-        "aidd sync",
-        "aidd doctor",
-        "aidd clean"
-      ],
-      "window": {
-        "label": "Terminal · ~",
-        "rows": [
-          {
-            "text": "$ aidd setup --global --ide claude,codex,copilot,cursor,kilo,opencode --plugins recommended",
-            "tone": "dim"
-          },
-          {
-            "table": {
-              "head": [
-                "Tool",
-                "Installed"
-              ],
-              "rows": [
-                [
-                  "Claude Code",
-                  {
-                    "checking": {
-                      "tone": "grn",
-                      "text": "✓ enabled"
-                    },
-                    "pending": "installing…"
-                  }
-                ],
-                [
-                  "Codex",
-                  {
-                    "checking": {
-                      "tone": "grn",
-                      "text": "✓ enabled"
-                    },
-                    "pending": "installing…"
-                  }
-                ],
-                [
-                  "Copilot",
-                  {
-                    "checking": {
-                      "tone": "grn",
-                      "text": "✓ enabled"
-                    },
-                    "pending": "installing…"
-                  }
-                ],
-                [
-                  "Cursor",
-                  {
-                    "checking": {
-                      "tone": "grn",
-                      "text": "✓ enabled"
-                    },
-                    "pending": "installing…"
-                  }
-                ],
-                [
-                  "Kilo",
-                  {
-                    "checking": {
-                      "tone": "grn",
-                      "text": "✓ enabled"
-                    },
-                    "pending": "installing…"
-                  }
-                ],
-                [
-                  "OpenCode",
-                  {
-                    "checking": {
-                      "tone": "grn",
-                      "text": "✓ enabled"
-                    },
-                    "pending": "installing…"
-                  }
-                ]
-              ],
-              "together": true
-            }
-          }
-        ]
-      },
-      "note": "Example run."
-    },
-    {
-      "template": "contributors",
-      "pill": "Team",
-      "title": "Shipped by 6 contributors.",
-      "logins": [
-        "alexsoyes",
-        "blafourcade",
-        "dkp-consult",
-        "tkman59",
-        "waewoo",
-        "Yoann53"
+      "tools": [
+        {
+          "name": "Claude Code",
+          "logo": "claudecode-color"
+        },
+        {
+          "name": "Cursor",
+          "logo": "cursor"
+        },
+        {
+          "name": "GitHub Copilot",
+          "logo": "githubcopilot"
+        },
+        {
+          "name": "OpenCode",
+          "logo": "opencode"
+        },
+        {
+          "name": "Kilo Code",
+          "logo": "kilocode"
+        },
+        {
+          "name": "Codex",
+          "logo": "codex-color"
+        },
+        {
+          "name": "Antigravity CLI",
+          "logo": "antigravity-color"
+        },
+        {
+          "name": "Kiro",
+          "logo": "kiro-color",
+          "new": true
+        },
+        {
+          "name": "Kimi Code CLI",
+          "logo": "kimi",
+          "new": true
+        }
       ]
+    },
+    {
+      "template": "gate",
+      "pill": "Hooks",
+      "title": "Checks run while your AI works.",
+      "surfaces": [
+        "aidd-context:02-project-memory",
+        "aidd-dev:01-plan",
+        "aidd-dev:02-implement",
+        "aidd-dev:03-assert",
+        "aidd-dev:04-audit",
+        "aidd-dev:05-review"
+      ],
+      "captions": [
+        "Blocked before a bad write.",
+        "Told what it missed.",
+        "Sent back until it is right."
+      ],
+      "actor": "AI",
+      "gate": "Hook",
+      "target": "Your project",
+      "outcomes": [
+        {
+          "kind": "block",
+          "label": "Blocked",
+          "action": "Edit spec.md",
+          "detail": "spec.md is locked",
+          "file": "spec.md"
+        },
+        {
+          "kind": "inform",
+          "label": "Noted",
+          "action": "Write button.css",
+          "detail": "a colour outside the tokens",
+          "note": "Use the tokens",
+          "file": "button.css"
+        },
+        {
+          "kind": "require",
+          "label": "Fix required",
+          "action": "Write plan.md",
+          "detail": "section \"Impact\" missing",
+          "fixed": "plan.md ✓",
+          "file": "plan.md"
+        }
+      ],
+      "note": "Example run.",
+      "files": [
+        "spec.md",
+        "button.css",
+        "plan.md"
+      ]
+    },
+    {
+      "template": "model-switch",
+      "pill": "Models",
+      "title": "Pick your agents' models.",
+      "surfaces": [
+        "aidd setup-flags"
+      ],
+      "captions": [
+        "On Mistral.",
+        "On OpenAI.",
+        "On Anthropic."
+      ],
+      "terminal": "Terminal · ~/acme-app",
+      "cards": [
+        {
+          "role": "reviewer",
+          "faces": [
+            {
+              "model": "no model"
+            },
+            {
+              "model": "mistral-large-4",
+              "logo": "mistral-color"
+            },
+            {
+              "model": "gpt-6.1-sol",
+              "logo": "openai"
+            },
+            {
+              "model": "claude-opus-5-5",
+              "logo": "anthropic"
+            }
+          ]
+        },
+        {
+          "role": "explorer",
+          "faces": [
+            {
+              "model": "no model"
+            },
+            {
+              "model": "mistral-small-latest",
+              "logo": "mistral-color"
+            },
+            {
+              "model": "gpt-6-luna",
+              "logo": "openai"
+            },
+            {
+              "model": "claude-haiku-5-5",
+              "logo": "anthropic"
+            }
+          ]
+        },
+        {
+          "role": "executor",
+          "faces": [
+            {
+              "model": "no model"
+            },
+            {
+              "model": "mistral-small-latest",
+              "logo": "mistral-color"
+            },
+            {
+              "model": "gpt-6-luna",
+              "logo": "openai"
+            },
+            {
+              "model": "claude-haiku-5-5",
+              "logo": "anthropic"
+            }
+          ]
+        },
+        {
+          "role": "validator",
+          "faces": [
+            {
+              "model": "no model"
+            },
+            {
+              "model": "mistral-small-latest",
+              "logo": "mistral-color"
+            },
+            {
+              "model": "gpt-6-luna",
+              "logo": "openai"
+            },
+            {
+              "model": "claude-haiku-5-5",
+              "logo": "anthropic"
+            }
+          ]
+        }
+      ],
+      "runs": [
+        {
+          "command": "aidd setup --provider mistral",
+          "flip": true,
+          "lines": [
+            {
+              "text": "Models on mistral, for every project on this machine:"
+            },
+            {
+              "text": "  opencode reviewer: mistral/mistral-large-4 (high)"
+            },
+            {
+              "text": "  opencode explorer, executor, validator: mistral/mistral-small-latest (high)"
+            }
+          ]
+        },
+        {
+          "command": "aidd setup --provider openai",
+          "flip": true,
+          "lines": [
+            {
+              "text": "Models on openai, for every project on this machine:"
+            },
+            {
+              "text": "  opencode reviewer: openai/gpt-6.1-sol (high)"
+            },
+            {
+              "text": "  opencode explorer, executor, validator: openai/gpt-6-luna (medium)"
+            }
+          ]
+        },
+        {
+          "command": "aidd setup --provider anthropic",
+          "flip": true,
+          "lines": [
+            {
+              "text": "Models on anthropic, for every project on this machine:"
+            },
+            {
+              "text": "  opencode reviewer: anthropic/claude-opus-5-5 (high)"
+            },
+            {
+              "text": "  opencode explorer, executor, validator: anthropic/claude-haiku-5-5 (medium)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "template": "doc-lock",
+      "pill": "Spec",
+      "title": "Approved specs stay as approved.",
+      "surfaces": [],
+      "captions": [
+        "A short spec, four sections.",
+        "Approved, it locks.",
+        "The AI's edit is refused."
+      ],
+      "file": "spec.md",
+      "status": [
+        "status: draft",
+        "status: locked"
+      ],
+      "sections": [
+        {
+          "heading": "Target",
+          "text": "A visitor's theme stays after a reload."
+        },
+        {
+          "heading": "Hard constraints",
+          "text": "No flash of the wrong theme."
+        },
+        {
+          "heading": "Non-goals",
+          "text": "No per-page theme."
+        },
+        {
+          "heading": "Done-when",
+          "text": "Reloading keeps the chosen theme."
+        }
+      ],
+      "attempt": {
+        "action": "Edit spec.md",
+        "refusal": "aidd_docs/tasks/dark-mode/spec.md is locked: only the person who approves it sets its status back to draft. Write nothing to it."
+      },
+      "note": "Example run.",
+      "badge": "Rebuilt lean"
+    },
+    {
+      "template": "challenge-report",
+      "pill": "Challenge",
+      "title": "Every spec challenged, with proof.",
+      "badge": "Rebuilt lean",
+      "surfaces": [
+        "aidd-refine:02-challenge"
+      ],
+      "captions": [
+        "The spec, line by line.",
+        "Each finding, with its proof."
+      ],
+      "spec": {
+        "file": "spec.md",
+        "lines": [
+          {
+            "text": "## Target"
+          },
+          {
+            "text": "A visitor's theme stays after a reload.",
+            "finding": {
+              "tone": "red",
+              "label": "Deal breaker",
+              "text": "Breaks when storage is blocked",
+              "evidence": "src/theme.ts:14 throws"
+            }
+          },
+          {
+            "text": "## Hard constraints"
+          },
+          {
+            "text": "The first visit opens light.",
+            "finding": {
+              "tone": "amb",
+              "label": "To decide",
+              "text": "Follow a dark system instead?",
+              "evidence": "spec.md, Target"
+            }
+          },
+          {
+            "text": "A toggle in the header and in settings.",
+            "finding": {
+              "tone": "blu",
+              "label": "Suggestion",
+              "text": "One toggle is enough",
+              "evidence": "Header.tsx, Settings.tsx"
+            }
+          },
+          {
+            "text": "## Done-when"
+          },
+          {
+            "text": "Reloading keeps the chosen theme.",
+            "finding": {
+              "tone": "grn",
+              "label": "Holds",
+              "text": "Survives a reload",
+              "evidence": "e2e theme.spec.ts passes"
+            }
+          }
+        ]
+      },
+      "note": "Example run."
+    },
+    {
+      "template": "scan-questions",
+      "pill": "Shadow areas",
+      "title": "Find what your story leaves unclear.",
+      "surfaces": [],
+      "captions": [
+        "Unclear meaning, highlighted.",
+        "Each becomes a plain question.",
+        "Answered, the story is clear."
+      ],
+      "file": "story.md",
+      "story": [
+        [
+          "As a visitor, I switch the site to dark mode."
+        ],
+        [
+          "The switch responds ",
+          {
+            "text": "quickly",
+            "fixed": "within 0.1 s",
+            "gap": 3
+          },
+          "."
+        ],
+        [
+          "My choice ",
+          {
+            "text": "is kept",
+            "fixed": "is kept, or I see a warning",
+            "gap": 1
+          },
+          " for ",
+          {
+            "text": "30 days",
+            "fixed": "30 days, then resets",
+            "gap": 2
+          },
+          "."
+        ],
+        [
+          "The theme ",
+          {
+            "text": "is synced",
+            "fixed": "is synced by my account",
+            "gap": 0
+          },
+          " across my devices."
+        ]
+      ],
+      "gaps": [
+        {
+          "category": "missing actor",
+          "question": "Who keeps the theme in sync across devices?",
+          "quote": "The theme is synced across my devices."
+        },
+        {
+          "category": "missing failure mode",
+          "question": "What if the choice can't be saved?",
+          "quote": "My choice is kept for 30 days."
+        },
+        {
+          "category": "missing edge case",
+          "question": "What should day 31 show?",
+          "quote": "kept for 30 days"
+        },
+        {
+          "category": "ambiguous term",
+          "question": "How fast is quickly?",
+          "quote": "The switch responds quickly."
+        }
+      ],
+      "status": [
+        "Open questions: 4",
+        "All answered ✓"
+      ],
+      "note": "Example run.",
+      "badge": "Rebuilt lean"
+    },
+    {
+      "template": "github-pr",
+      "pill": "Review",
+      "surfaces": [
+        "aidd-vcs:06-answer-comments"
+      ],
+      "captions": [
+        "Replies with proof",
+        "Settled threads closed",
+        "Only your decisions left"
+      ],
+      "prompt": "/aidd-vcs:06-answer-comments 128",
+      "pr": {
+        "repo": "acme/acme-app",
+        "number": 128,
+        "title": "Add a dark mode toggle",
+        "author": "alice",
+        "branch": "feat/dark-mode",
+        "base": "next",
+        "checks": [
+          {
+            "name": "ci / test",
+            "state": "pass"
+          },
+          {
+            "name": "ci / lint",
+            "state": "pass"
+          }
+        ]
+      },
+      "threads": [
+        {
+          "file": "src/theme/tokens.ts",
+          "line": 12,
+          "author": "bob",
+          "comment": "Use the tokens here?",
+          "reply": "Moved to the theme tokens. (3f9c2a1b7)",
+          "kind": "done",
+          "resolve": true
+        },
+        {
+          "file": "src/theme/store.ts",
+          "line": 4,
+          "author": "carol",
+          "comment": "Why not a cookie?",
+          "reply": "Only the browser reads it. (src/main.tsx:7)",
+          "kind": "answer",
+          "resolve": true
+        },
+        {
+          "file": "src/components/Toggle.tsx",
+          "line": 1,
+          "author": "bob",
+          "comment": "Clearer name?",
+          "reply": "Renamed to ThemeToggle. (8b1e04c2d)",
+          "kind": "done",
+          "resolve": true
+        },
+        {
+          "file": "src/components/ThemeToggle.tsx",
+          "line": 30,
+          "author": "carol",
+          "comment": "First visit: light or system?",
+          "reply": "Follow the system theme on a first visit?",
+          "kind": "user-call"
+        },
+        {
+          "file": "e2e/theme.spec.ts",
+          "line": 8,
+          "author": "dan",
+          "comment": "Test the reload?",
+          "reply": "Added the reload test. (c47d2e9f0)",
+          "kind": "done",
+          "resolve": true
+        },
+        {
+          "file": "src/components/ThemeToggle.tsx",
+          "line": 22,
+          "author": "dan",
+          "comment": "Accessible name?",
+          "reply": "Add an aria-label to the toggle.",
+          "kind": "todo"
+        }
+      ],
+      "summary": {
+        "kicker": "Your review, summed up by AI",
+        "title": "Review comments",
+        "lines": [
+          "Done: 3 (3f9c2a1b7, 8b1e04c2d, c47d2e9f0). Answered: 1. Decided: 0."
+        ],
+        "sections": [
+          {
+            "heading": "User call",
+            "items": [
+              "Follow the system theme on a first visit?"
+            ]
+          },
+          {
+            "heading": "To do",
+            "list": "bullets",
+            "items": [
+              "Add an aria-label to the toggle."
+            ]
+          },
+          {
+            "heading": "Learnings",
+            "list": "bullets",
+            "items": [
+              "Read colors from the theme tokens, never hard-code them."
+            ]
+          }
+        ]
+      },
+      "note": "Example run.",
+      "title": "Every review comment handled.",
+      "hold": 3
+    },
+    {
+      "template": "chain-cards",
+      "pill": "AIDD UI · Beta",
+      "title": "From brand to reviewed screens.",
+      "surfaces": [
+        "aidd-ui:01-journeys",
+        "aidd-ui:02-brand",
+        "aidd-ui:03-foundations",
+        "aidd-ui:04-components",
+        "aidd-ui:05-screens",
+        "aidd-ui:06-review"
+      ],
+      "captions": [
+        "Each step builds on the last.",
+        "Reviewed, then published."
+      ],
+      "steps": [
+        {
+          "label": "Journeys",
+          "skill": "aidd-ui:01-journeys",
+          "keywords": [
+            "persona",
+            "steps",
+            "wireframe"
+          ],
+          "visual": "wireframe"
+        },
+        {
+          "label": "Brand",
+          "skill": "aidd-ui:02-brand",
+          "keywords": [
+            "tone",
+            "references",
+            "direction"
+          ],
+          "visual": "direction"
+        },
+        {
+          "label": "Foundations",
+          "skill": "aidd-ui:03-foundations",
+          "keywords": [
+            "tokens",
+            "colours",
+            "type scale",
+            "spacing"
+          ],
+          "visual": "swatches"
+        },
+        {
+          "label": "Components",
+          "skill": "aidd-ui:04-components",
+          "keywords": [
+            "button",
+            "card",
+            "states"
+          ],
+          "visual": "components"
+        },
+        {
+          "label": "Screens",
+          "skill": "aidd-ui:05-screens",
+          "keywords": [
+            "variants",
+            "contrast",
+            "touch targets"
+          ],
+          "visual": "screens"
+        },
+        {
+          "label": "Review",
+          "skill": "aidd-ui:06-review",
+          "keywords": [
+            "OK / Revise",
+            "publish"
+          ],
+          "visual": "verdict",
+          "caption": 1
+        }
+      ]
+    },
+    {
+      "template": "contributor-wave",
+      "pill": "Thanks",
+      "surfaces": [],
+      "logins": [
+        "blafourcade",
+        "alexsoyes",
+        "waewoo",
+        "tkman59",
+        "BlandineRdl",
+        "cellou59",
+        "dkp-consult",
+        "Prunil62",
+        "rbarlo"
+      ],
+      "title": "Thank you."
     }
   ],
   "skipped": [
     {
-      "surface": "aidd-ui:01-journeys",
-      "reason": "alpha plugin, off the recommended install: a normal install never shows it."
-    },
-    {
-      "surface": "aidd-ui:02-brand",
-      "reason": "alpha plugin, off the recommended install: a normal install never shows it."
-    },
-    {
-      "surface": "aidd-ui:03-foundations",
-      "reason": "alpha plugin, off the recommended install: a normal install never shows it."
-    },
-    {
-      "surface": "aidd-ui:04-components",
-      "reason": "alpha plugin, off the recommended install: a normal install never shows it."
-    },
-    {
-      "surface": "aidd-context:10-learn",
-      "reason": "only its sync step left, now done by the memory refresh: nothing new to see."
-    },
-    {
-      "surface": "aidd-dev:09-for-sure",
-      "reason": "one comment in its plan template renamed: nothing a user notices."
-    },
-    {
       "surface": "aidd-qa:01-acceptance-qa",
-      "reason": "keeps one browser tab per scenario: fewer tabs, no new output to show."
+      "reason": "Left out of the 5.15 video by the maintainer; in the release notes."
     },
     {
-      "surface": "aidd-refine:04-fact-check",
-      "reason": "already shipped; only a test example path changed."
+      "surface": "aidd-refine:01-brainstorm",
+      "reason": "Left out of the 5.15 video by the maintainer; in the release notes."
     },
     {
-      "surface": "aidd-context:01-bootstrap",
-      "reason": "only says where the readme and install guide live: nothing new to see."
-    },
-    {
-      "surface": "aidd-vcs:05-resolve-conflict",
-      "reason": "renamed to match its folder: same behavior."
+      "surface": "aidd-pm:02-user-stories",
+      "reason": "A check on the written stories with nothing new to see; in the release notes."
     }
   ],
   "youtube": {
     "themes": [
-      "Antigravity",
-      "Agents",
-      "Connexions",
-      "Qualité"
+      "Architecture",
+      "Outils",
+      "Qualité",
+      "Design"
     ],
     "programme": [
       {
-        "surface": "aidd translate",
-        "theme": "Antigravity",
-        "text": "générer le framework pour Antigravity CLI."
-      },
-      {
-        "surface": "aidd-context:04-skill-generate",
-        "theme": "Antigravity",
-        "text": "créer des skills qui tournent aussi dans Antigravity CLI."
-      },
-      {
-        "surface": "aidd-context:05-rule-generate",
-        "theme": "Antigravity",
-        "text": "écrire des règles que lit aussi Antigravity CLI."
-      },
-      {
-        "surface": "aidd-context:11-explore",
-        "theme": "Antigravity",
-        "text": "explorer un projet configuré pour Antigravity CLI."
-      },
-      {
-        "surface": "aidd-context:08-hook-generate",
-        "theme": "Antigravity",
-        "text": "créer des automatisations, Antigravity compris, en choisissant ce qu’elles doivent faire."
+        "surface": "aidd",
+        "theme": "Architecture",
+        "text": "Reconstruire la CLI en 10 contextes bornés, sur une architecture propre."
       },
       {
         "surface": "aidd setup",
-        "theme": "Antigravity",
-        "text": "installer le framework une seule fois pour tous les projets de la machine."
+        "theme": "Outils",
+        "text": "Installer AIDD dans 9 outils d'IA, Kiro et Kimi compris."
       },
       {
-        "surface": "aidd sync",
-        "theme": "Antigravity",
-        "text": "rafraîchir cette installation globale depuis la source du framework."
-      },
-      {
-        "surface": "aidd doctor",
-        "theme": "Antigravity",
-        "text": "vérifier que l'installation globale est saine."
-      },
-      {
-        "surface": "aidd clean",
-        "theme": "Antigravity",
-        "text": "retirer l'installation globale sans toucher à vos propres fichiers."
-      },
-      {
-        "surface": "aidd-context:06-agent-generate",
-        "theme": "Agents",
-        "text": "créer des agents pour tous vos outils, Antigravity compris."
-      },
-      {
-        "surface": "aidd-dev:10-batch",
-        "theme": "Agents",
-        "text": "confier chaque tâche à l'agent d'implémentation que votre outil propose."
-      },
-      {
-        "surface": "aidd-dev:01-plan",
-        "theme": "Agents",
-        "text": "vérifier les opérations de fichiers du plan sur toutes ses phases."
-      },
-      {
-        "surface": "aidd-dev:02-implement",
-        "theme": "Agents",
-        "text": "implémenter sans jamais committer un fichier que vous aviez déjà modifié."
-      },
-      {
-        "surface": "aidd-orchestrator:01-sdlc",
-        "theme": "Agents",
-        "text": "faire vérifier chaque changement par trois agents distincts avant la pull request."
-      },
-      {
-        "surface": "aidd-context:13-access-check",
-        "theme": "Connexions",
-        "text": "voir quels services votre IA atteint vraiment, avec une correction par échec."
-      },
-      {
-        "surface": "aidd-context:00-onboard",
-        "theme": "Connexions",
-        "text": "terminer l'onboarding par la vérification des accès."
-      },
-      {
-        "surface": "aidd-context:12-cook",
-        "theme": "Connexions",
-        "text": "comparer CLI, MCP, API et SDK pour connecter vos services."
-      },
-      {
-        "surface": "aidd-dev:03-assert",
+        "surface": "aidd setup",
         "theme": "Qualité",
-        "text": "juger le travail sur vos vérifications, sans jamais toucher au code."
+        "text": "Bloquer, informer ou exiger : les hooks font corriger l'IA d'elle-même."
       },
       {
-        "surface": "aidd-dev:05-review",
+        "surface": "aidd setup --provider",
+        "theme": "Outils",
+        "text": "Choisir les modèles de vos agents : Mistral, OpenAI ou Anthropic."
+      },
+      {
+        "surface": "aidd-pm:04-spec",
         "theme": "Qualité",
-        "text": "rendre un verdict où chaque problème est prouvé par une ligne de code."
+        "text": "Écrire une spec courte, verrouillée dès qu'elle est approuvée."
       },
       {
-        "surface": "aidd-refine:05-review-conversation",
+        "surface": "aidd-refine:02-challenge",
         "theme": "Qualité",
-        "text": "comprendre pourquoi une session a déraillé et accepter les corrections proposées."
+        "text": "Attaquer un travail et obtenir un rapport où chaque point a sa preuve."
       },
       {
-        "surface": "aidd-context:02-project-memory",
-        "theme": "Connexions",
-        "text": "rafraîchir la mémoire depuis ce qui a changé, en validant chaque ligne."
+        "surface": "aidd-refine:03-shadow-areas",
+        "theme": "Qualité",
+        "text": "Trouver ce qu'une story laisse dans l'ombre, question par question."
+      },
+      {
+        "surface": "aidd-vcs:06-answer-comments",
+        "theme": "Qualité",
+        "text": "Répondre à chaque commentaire de revue et garder pour vous les seules décisions."
+      },
+      {
+        "surface": "aidd-ui:06-review",
+        "theme": "Design",
+        "text": "Passer de la marque aux écrans, puis tout revoir dans la vitrine, en bêta."
       }
     ]
   }
