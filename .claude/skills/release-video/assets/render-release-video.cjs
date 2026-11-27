@@ -297,8 +297,8 @@ td { padding: 14px 14px; border-bottom: 2px solid #15153f; vertical-align: top; 
 .sq-q::before { content: ""; position: absolute; left: -40px; top: 50%; width: 40px; height: 2px; background: #ffd37a; }
 .sq-cat { font-size: 18px; font-weight: 700; color: #ffd37a; text-transform: uppercase; letter-spacing: 0.06em; } .sq-q p { font-size: 28px; font-weight: 700; margin-top: 2px; }
 .sq-q[data-s="closed"] { border-color: #2f7a60; } .sq-q[data-s="closed"]::before { background: #5ee6a8; } .sq-q[data-s="closed"] p { color: #a6abe0; } .sq-q[data-s="closed"] p::after { content: "  ✓"; color: #5ee6a8; }
-.gh-hero { width: 1400px !important; padding: 40px 48px !important; } .gh-hero .gh-sbody h4 { font-size: 56px !important; } .gh-hero .gh-sbody p { font-size: 40px !important; } .gh-hero .gh-sbody h5 { font-size: 40px !important; }
-.gh-hero .gh-sbody ol, .gh-hero .gh-sbody ul { font-size: 38px !important; }
+.gh-hero { width: 1560px !important; top: 50% !important; padding: 26px 40px !important; } .gh-hero .gh-sbody h4 { font-size: 42px !important; padding: 0 0 8px !important; } .gh-hero .gh-sbody p { font-size: 30px !important; padding: 0 0 8px !important; }
+.gh-hero .gh-sbody h5 { font-size: 30px !important; padding: 6px 0 2px !important; } .gh-hero .gh-sbody ol, .gh-hero .gh-sbody ul { font-size: 28px !important; padding-bottom: 4px !important; } .gh-hero-k { font-size: 28px !important; }
 .ms-slot { width: 70px; height: 70px; border-radius: 16px; border: 3px dashed #3b4c99; display: block; }
 .ms-card[data-s="0"] .ms-face b { color: #5b60a0; }
 .cr { display: flex; flex-direction: column; gap: 14px; } .cr-file { font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 26px; color: #8a8fc0; }
@@ -464,7 +464,7 @@ const hasThen = (s) => windowsOf(s).some((w) => w.afterWork);
  * and its animation all read the one list. */
 const BEAT_FROM = 0.63;
 /** Every beat of a product scene is spread by this much, so each screen is read before the next. */
-const PACE = 1.3;
+const PACE = 1.1;
 const MAX_CAPTIONS = 3;
 const MAX_THREADS = 6;
 const beat = (at, act, sel, sound, value) => ({ at: round2(at), act, sel, sound, ...(value === undefined ? {} : { value }) });
@@ -538,7 +538,7 @@ const githubPr = {
     if (settled.length) {
       out.push(caption(at, 1, "tick"));
       settled.forEach((i) => out.push(beat(at, "set", `[data-thread='${i}']`, "tick", "resolved")));
-      at += 2.0;
+      at += 2.2;
     }
     if (s.summary) out.push(beat(at, "in", ".gh-hero", "pop"), caption(at, 2, "pop"));
     return out.filter((x) => x.act !== "cap" || x.value < githubPr.captions(s).length);
@@ -1247,9 +1247,11 @@ const laterRowsAt = (s, t) => round2(laterAt(s, t) + (hasThen(s) ? 0.6 : 0));
 
 /** A scene holds for a reading beat once its last item, row, note, run or later row is on screen. */
 const READ = 2.5;
+/** A product scene says less per beat than a terminal scene, so it holds a little less once it is all on screen. */
+const READ_BEATS = 2;
 function sceneDuration(s) {
   if (!scene[s.template]) throw new Error(`Unknown template: ${s.template}`);
-  if (hasBeats(s)) return half(Math.max(...sceneBeats(s, 0).map((b) => b.at)) + READ + (s.hold ?? 0) + (s.lead ? 0.5 : 0));
+  if (hasBeats(s)) return half(Math.max(...sceneBeats(s, 0).map((b) => b.at)) + READ_BEATS + (s.hold ?? 0) + (s.lead ? 0.5 : 0));
   const items = itemsIn(scene[s.template].body(s));
   const rows = rowElements(s);
   const shown = Math.max(
@@ -1850,11 +1852,13 @@ function posterArgs({ video, poster, out, bitrate }) {
     "-loop", "1", "-framerate", "30", "-t", "0.0334", "-i", poster,
     "-i", video,
     "-filter_complex",
-    "[0:v]scale=1920:1080,setsar=1,fps=30,format=yuv420p[p];[1:v]setsar=1,fps=30,format=yuv420p[v];[p][v]concat=n=2:v=1:a=0[vo];[1:a]adelay=34|34[ao]",
+    "[0:v]scale=1920:1080:out_color_matrix=bt709:out_range=tv,setsar=1,fps=30,format=yuv420p[p];[1:v]setsar=1,fps=30,format=yuv420p[v];[p][v]concat=n=2:v=1:a=0[vo];[1:a]adelay=34|34[ao]",
     "-map", "[vo]", "-map", "[ao]",
     "-c:v", "libx264", "-profile:v", "high", "-b:v", `${kbps}k`, "-maxrate", `${Math.round(kbps * 1.25)}k`, "-bufsize", `${kbps * 2}k`, "-preset", "slow",
-    // The poster is one frame: at the video's mean bitrate x264 starves it, and a chat preview shows it blocky.
-    "-x264-params", "zones=0,0,q=12",
+    // At the video's mean bitrate x264 starves the poster and the intro's fade, and the opening looks blocky: the first
+    // second and a half gets a quality of its own.
+    "-x264-params", "zones=0,45,q=12",
+    "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709",
     "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart",
     out,
   ];

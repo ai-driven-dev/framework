@@ -69,6 +69,13 @@ test("the thumbnail is its own still composition showing the whole version and t
   assert.match(html, /data-duration="1"/);
 });
 
+test("a product scene ends 2 seconds after its last beat, a little faster than a terminal scene", () => {
+  const { html } = shownBy(gate);
+  const last = Math.max(...beatsOf(html).map((x) => x.at)) - 5;
+
+  assert.equal(sceneDuration(gate), Math.ceil((last + 2) * 2) / 2);
+});
+
 test("the video opens on the thumbnail for one frame, so a chat shows it as the preview, and keeps its bitrate", () => {
   const args = posterArgs({ video: "v.mp4", poster: "t.png", out: "o.mp4", bitrate: 866446 });
   const joined = args.join(" ");
@@ -576,10 +583,18 @@ test("a row that follows the work appears once the work is done, with its click"
 });
 
 
-test("the poster frame is encoded at a high quality of its own, the rest at the video's bitrate", () => {
+test("the opening second and a half is encoded at a high quality of its own, the rest at the video's bitrate", () => {
   const args = posterArgs({ video: "v.mp4", poster: "t.png", out: "o.mp4", bitrate: 866446 });
 
-  assert.equal(args[args.indexOf("-x264-params") + 1], "zones=0,0,q=12");
+  assert.equal(args[args.indexOf("-x264-params") + 1], "zones=0,45,q=12");
+});
+
+test("the poster is converted with the video's own colour matrix, and the output says which", () => {
+  const args = posterArgs({ video: "v.mp4", poster: "t.png", out: "o.mp4", bitrate: 866446 });
+  const joined = args.join(" ");
+
+  assert.match(joined, /\[0:v\]scale=1920:1080:out_color_matrix=bt709:out_range=tv,/);
+  assert.match(joined, /-colorspace bt709 -color_primaries bt709 -color_trc bt709/);
 });
 
 const pr = {
@@ -778,7 +793,7 @@ for (const s of surfaces) {
 
     assert.ok(beats.length > 2, "no beat");
     assert.deepEqual([...new Set(sounded)], [...new Set(beats.map((x) => x.at))]);
-    assert.equal(sceneDuration(s), Math.ceil((Math.max(...beats.map((x) => x.at)) - 5 + 2.5 + (s.lead ? 0.5 : 0)) * 2) / 2);
+    assert.equal(sceneDuration(s), Math.ceil((Math.max(...beats.map((x) => x.at)) - 5 + 2 + (s.lead ? 0.5 : 0)) * 2) / 2);
   });
 
   test(`nothing on a ${s.template} scene moves or leaves the layout: elements fade or scale in place`, () => {
