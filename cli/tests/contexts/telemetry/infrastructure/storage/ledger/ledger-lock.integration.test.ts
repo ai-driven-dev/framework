@@ -7,7 +7,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("node:fs/promises", async (importOriginal) => {
   const actual = await importOriginal<typeof import("node:fs/promises")>();
-  return { ...actual, readFile: vi.fn(actual.readFile), writeFile: vi.fn(actual.writeFile) };
+  return {
+    ...actual,
+    readFile: vi.fn(actual.readFile),
+    stat: vi.fn(actual.stat),
+    writeFile: vi.fn(actual.writeFile),
+  };
 });
 
 import { LedgerLock } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/ledger-lock.js";
@@ -277,6 +282,24 @@ describe("the ledger lock's waiting", () => {
     expect((await holder()).pid).toBe(process.pid);
     expect(time.sleeps).toEqual([]);
     await release();
+  });
+
+  it("never clears the lock another process took after the one it looked at was released", async () => {
+    const time = fakeTime();
+    const created_at = new Date(time.options.now()).toISOString();
+    await writeFile(path, JSON.stringify({ pid: 4242, created_at }));
+    const actual = await vi.importActual<typeof import("node:fs/promises")>("node:fs/promises");
+    vi.mocked(readFile).mockImplementationOnce(async (...args) => {
+      await rm(path);
+      return actual.readFile(...args);
+    });
+    vi.mocked(stat).mockImplementationOnce(async (...args) => {
+      const gone = await actual.stat(...args).catch((error: unknown) => error);
+      await actual.writeFile(path, JSON.stringify({ pid: 777, created_at }));
+      throw gone;
+    });
+    const lock = new LedgerLock(path, { ...time.options, isAlive: () => true, waitMs: 0 });
+    await expect(lock.acquire()).rejects.toThrow(/locked by process 777/);
   });
 
   it("takes a dead owner's lock that another process cleared first", async () => {

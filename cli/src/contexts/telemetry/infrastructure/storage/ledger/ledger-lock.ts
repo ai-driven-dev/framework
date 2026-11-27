@@ -75,14 +75,15 @@ export class LedgerLock {
   }
 
   /** One try at the lock: whether it was taken. A try that has to wait has waited. A lock
-   * released while looking is cleared as a stale one is, and tried again at once. */
+   * released while looking is tried again at once: what is there now may be another's. */
   private async attempt(deadline: number): Promise<boolean> {
     const late = this.options.now() >= deadline;
     const created = await this.tryCreate(late);
     if (created === "removing") return this.waited();
     if (created) return true;
     const holder = await this.holder();
-    if (holder === null || this.isStale(holder)) {
+    if (holder === null) return false;
+    if (this.isStale(holder)) {
       await this.clear();
       return false;
     }

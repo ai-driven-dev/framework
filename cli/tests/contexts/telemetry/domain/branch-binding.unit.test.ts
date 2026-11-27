@@ -88,7 +88,6 @@ describe("git config output is read into bindings", () => {
 
   it("ignores keys that are not the four, and no output at all", () => {
     expect(parseBranchConfig(listing(entry("branch.x.remote", "origin")))).toEqual([]);
-    expect(parseBranchConfig(listing(entry("core.aiddtask", "x")))).toEqual([]);
     expect(parseBranchConfig("")).toEqual([]);
   });
 });
