@@ -4,13 +4,12 @@ const SCHEME = /^[a-z][a-z0-9+.-]*:\/\//i;
 /** `[user@]host:path`. A one-letter host is a Windows drive, not a host. */
 const SCP_LIKE = /^(?:[^@/\s]+@)?([^:/\s]{2,}):(?!\/\/)(.+)/;
 
-/** A remote's host and path as written, credentials and port dropped. `scp` says the host is
- * the text before the colon, as typed; otherwise it is `URL`'s, which folds only the case of
+/** A remote's host and path as written, credentials and port dropped. An scp-like host is the
+ * text before the colon, as typed; otherwise it is `URL`'s, which folds only the case of
  * special schemes (`https`, not `ssh` or `git`). */
 export interface RemoteAddress {
   readonly host: string;
   readonly path: string;
-  readonly scp: boolean;
 }
 
 export function addressOf(url: string): RemoteAddress | null {
@@ -23,12 +22,10 @@ export function addressOf(url: string): RemoteAddress | null {
     } catch {
       return null;
     }
-    return parsed.hostname === ""
-      ? null
-      : { host: parsed.hostname, path: parsed.pathname, scp: false };
+    return parsed.hostname === "" ? null : { host: parsed.hostname, path: parsed.pathname };
   }
-  const [, host, path] = SCP_LIKE.exec(text) ?? [];
-  return host === undefined || path === undefined ? null : { host, path, scp: true };
+  const match = SCP_LIKE.exec(text);
+  return match === null ? null : { host: match[1], path: match[2] };
 }
 
 /** `owner/repo`, leading slashes, `.git` and trailing slashes dropped; `null` with no owner. */

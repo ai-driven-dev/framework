@@ -50,14 +50,14 @@ describe("printing a declared task", () => {
       "Branch left untouched: main is the default branch.",
       "Nothing was bound: no session and no working branch.",
     ]);
-    expect(
-      linesOf((o) =>
-        printDeclareResult(
-          o,
-          declared({ branch: { status: "untouched", reason: "detached", branch: null } })
-        )
+    const withSession = linesOf((o) =>
+      printDeclareResult(
+        o,
+        declared({ branch: { status: "untouched", reason: "detached", branch: null } })
       )
-    ).toContain("Branch left untouched: HEAD is detached.");
+    );
+    expect(withSession).toContain("Branch left untouched: HEAD is detached.");
+    expect(withSession).not.toContain("Nothing was bound: no session and no working branch.");
   });
 
   it("explains each refusal", () => {
