@@ -83,6 +83,7 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 897 KB: 879.2 KB, Kiro and Kimi as target tools, Kiro's SessionStart hooks, the person-only hook channel, the session-start telemetry reminder and the cache refusing an unreadable directory (+16.4 KB over the 862.8 KB above); 2.0% measured headroom.
 // 917 KB: 899.1 KB, Antigravity's plugin directories, taking back the hooks an earlier release merged into the project's file, and the build reporting an event the host never fires (+4.2 KB over next's 894.9 KB); 2.0% measured headroom.
 // 941 KB: 922.6 KB, Kimi's plugins through its local server and the plugin rules listed in AGENTS.md for Codex and Kimi (+9.0 KB over the 913.6 KB above); 2.0% measured headroom.
+// 960 KB: 941.1 KB, the Kimi and Copilot hook channels, Antigravity level-two relay, the 5.8.0 upgrade fixes and Cursor's stop hooks on sessionEnd again (+18.5 KB over the 922.6 KB above); 2.0% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 
