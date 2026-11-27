@@ -74,7 +74,7 @@ Any row with `"afterWork": true` appears once the scene's work is done, such as 
 | intro highlights | optional; 5, of 5 words each, drawn one per line in large type: clear sentences, not labels |
 | scene lead | 14 words, when there is one |
 | intro | 5 seconds, 6.5 with highlights |
-| scene with beats | `github-pr`, `ide-window`, `tool-grid`, `architecture-blocks`: until its last beat, plus 2 seconds; a step or an answer stays long enough to read its words |
+| scene with beats | `github-pr`, `ide-window`, `tool-grid`, `architecture-blocks`: until its last beat, plus 1.6 seconds; a step or an answer stays long enough to read its words |
 | scene | until its last row, note, run or later row is on screen, plus 2.5 seconds to read, plus 0.5 with a lead, rounded up to a half second; a flow step run takes 1.6, a checked row 0.75, rows checked together 1.5 for the group |
 | outro | 4 seconds |
 | refused words | tokens, envelope, axis, transcript, payload, hook; `telemetry` stays; the demo window is not read, it shows real commands and flags |

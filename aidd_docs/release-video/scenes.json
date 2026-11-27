@@ -94,7 +94,8 @@
         }
       ],
       "layout": "row",
-      "hold": 5
+      "hold": 3,
+      "lead": "Rebuilt for reliability: clean architecture, 10 bounded contexts, a test strategy."
     },
     {
       "template": "logo-row",
@@ -652,7 +653,7 @@
     {
       "template": "chain-cards",
       "pill": "AIDD UI · Beta",
-      "title": "From brand to reviewed screens.",
+      "title": "Create your design system.",
       "surfaces": [
         "aidd-ui:01-journeys",
         "aidd-ui:02-brand",
@@ -734,12 +735,12 @@
       "pill": "Thanks",
       "surfaces": [],
       "logins": [
-        "blafourcade",
-        "alexsoyes",
         "waewoo",
         "tkman59",
         "BlandineRdl",
+        "blafourcade",
         "cellou59",
+        "alexsoyes",
         "dkp-consult",
         "Prunil62",
         "rbarlo"

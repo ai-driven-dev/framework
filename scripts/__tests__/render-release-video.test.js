@@ -69,11 +69,11 @@ test("the thumbnail is its own still composition showing the whole version and t
   assert.match(html, /data-duration="1"/);
 });
 
-test("a product scene ends 2 seconds after its last beat, a little faster than a terminal scene", () => {
+test("a product scene ends 1.6 seconds after its last beat, a little faster than a terminal scene", () => {
   const { html } = shownBy(gate);
   const last = Math.max(...beatsOf(html).map((x) => x.at)) - 5;
 
-  assert.equal(sceneDuration(gate), Math.ceil((last + 2) * 2) / 2);
+  assert.equal(sceneDuration(gate), Math.ceil((last + 1.6) * 2) / 2);
 });
 
 test("the video opens on the thumbnail for one frame, so a chat shows it as the preview, and keeps its bitrate", () => {
@@ -793,7 +793,7 @@ for (const s of surfaces) {
 
     assert.ok(beats.length > 2, "no beat");
     assert.deepEqual([...new Set(sounded)], [...new Set(beats.map((x) => x.at))]);
-    assert.equal(sceneDuration(s), Math.ceil((Math.max(...beats.map((x) => x.at)) - 5 + 2 + (s.lead ? 0.5 : 0)) * 2) / 2);
+    assert.equal(sceneDuration(s), Math.ceil((Math.max(...beats.map((x) => x.at)) - 5 + 1.6 + (s.lead ? 0.5 : 0)) * 2) / 2);
   });
 
   test(`nothing on a ${s.template} scene moves or leaves the layout: elements fade or scale in place`, () => {
@@ -977,7 +977,7 @@ test("a badge sits beside the fixed title, and the pill lines up with it", () =>
 test("each beat leaves its subtitle on screen long enough to read", () => {
   for (const s of [pr, gate]) {
     const caps = beatsOf(shownBy(s).html).filter((x) => x.act === "cap").map((x) => x.at);
-    caps.slice(1).forEach((t, i) => assert.ok(t - caps[i] >= 2.4, `${s.template}: ${t - caps[i]} s between subtitles`));
+    caps.slice(1).forEach((t, i) => assert.ok(t - caps[i] >= 2, `${s.template}: ${t - caps[i]} s between subtitles`));
   }
 });
 
@@ -1192,4 +1192,10 @@ test("a design card appears only when its step is reached, with no placeholder b
   const lit = at(beats, "set", "data-card").filter((x) => x.value === '"on"').map((x) => x.at);
 
   assert.deepEqual(shown, lit);
+});
+
+test("each design card comes about a second after the last", () => {
+  const lit = at(beatsOf(shownBy(chain).html), "set", "data-card").filter((x) => x.value === '"on"').map((x) => x.at);
+
+  lit.slice(1).forEach((t, i) => assert.ok(t - lit[i] <= 1.25, `${t - lit[i]} s between cards`));
 });

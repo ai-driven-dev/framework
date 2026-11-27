@@ -464,7 +464,7 @@ const hasThen = (s) => windowsOf(s).some((w) => w.afterWork);
  * and its animation all read the one list. */
 const BEAT_FROM = 0.63;
 /** Every beat of a product scene is spread by this much, so each screen is read before the next. */
-const PACE = 1.1;
+const PACE = 1;
 const MAX_CAPTIONS = 3;
 const MAX_THREADS = 6;
 const beat = (at, act, sel, sound, value) => ({ at: round2(at), act, sel, sound, ...(value === undefined ? {} : { value }) });
@@ -1031,7 +1031,7 @@ const chainCards = {
       if (k) out.push(beat(t, "set", `[data-card='${k - 1}']`, "tick", "done"));
       out.push(beat(t, "in", `[data-card='${k}']`, "pop"), beat(t, "set", `[data-card='${k}']`, "pop", "on"));
       if (st.caption) out.push(caption(t, st.caption, "pop"));
-      t += 1.5;
+      t += 1.2;
     });
     return out;
   },
@@ -1248,7 +1248,7 @@ const laterRowsAt = (s, t) => round2(laterAt(s, t) + (hasThen(s) ? 0.6 : 0));
 /** A scene holds for a reading beat once its last item, row, note, run or later row is on screen. */
 const READ = 2.5;
 /** A product scene says less per beat than a terminal scene, so it holds a little less once it is all on screen. */
-const READ_BEATS = 2;
+const READ_BEATS = 1.6;
 function sceneDuration(s) {
   if (!scene[s.template]) throw new Error(`Unknown template: ${s.template}`);
   if (hasBeats(s)) return half(Math.max(...sceneBeats(s, 0).map((b) => b.at)) + READ_BEATS + (s.hold ?? 0) + (s.lead ? 0.5 : 0));
