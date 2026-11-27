@@ -6,15 +6,16 @@ import {
 import {
   CANONICAL_HOOK_EVENTS,
   type CanonicalHookEvent,
+  type HookEventMap,
   type HookEventRoute,
   type HooksBrand,
   type HooksDescriptor,
   type HooksRuntime,
 } from "./descriptor.js";
 
-/** An event as its tool declares it: the native event it fires on, through the tool's hooks
- * file; or the whole route. */
-export type HookEventDeclaration = string | HookEventRoute;
+/** An event as its tool declares it: the native event or events it fires on, through the tool's
+ * hooks file; or the whole route. */
+export type HookEventDeclaration = string | readonly string[] | HookEventRoute;
 
 /** A descriptor as its tool writes it. What it leaves out is what most tools share: every
  * canonical event fired under its own name, and an event it never names still reaching the hook.
@@ -32,7 +33,8 @@ export interface HooksDeclaration
 type Refuse = (invariant: HooksInvariant, detail: string) => never;
 
 function routeOf(declared: HookEventDeclaration): HookEventRoute {
-  return typeof declared === "string" ? { native: declared, relay: "native" } : declared;
+  if (typeof declared === "string") return { natives: [declared], relay: "native" };
+  return "relay" in declared ? declared : { natives: declared, relay: "native" };
 }
 
 function canonicalEvents(
@@ -75,7 +77,7 @@ type DeclaredHooks<D extends HooksDeclaration> = Omit<
   "events" | "undeclaredEvents" | "rootToken"
 > & {
   readonly events: ReadonlyMap<CanonicalHookEvent, HookEventRoute>;
-  readonly eventMap: Readonly<Record<string, string>>;
+  readonly eventMap: HookEventMap;
   readonly undeclaredEvents: HooksDescriptor["undeclaredEvents"];
   readonly rootToken: string | undefined;
   readonly runtime: HooksRuntime;
@@ -138,7 +140,7 @@ export function declareHooks<const D extends HooksDeclaration>(
     runtime: stamped(toolId, adapter, refuse),
     events,
     undeclaredEvents,
-    eventMap: Object.fromEntries([...events].map(([event, route]) => [event, route.native])),
+    eventMap: Object.fromEntries([...events].map(([event, route]) => [event, route.natives])),
     rootToken,
   };
   return declared_ as typeof declared_ & HooksBrand;
@@ -150,5 +152,5 @@ export function ownNameEvents(
   without: { readonly except?: readonly CanonicalHookEvent[] } = {}
 ): Record<string, HookEventRoute> {
   const names = CANONICAL_HOOK_EVENTS.filter((name) => !without.except?.includes(name));
-  return Object.fromEntries(names.map((name) => [name, { native: name, relay: "native" }]));
+  return Object.fromEntries(names.map((name) => [name, { natives: [name], relay: "native" }]));
 }

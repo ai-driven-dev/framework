@@ -56,7 +56,7 @@ is `/tmp`. Nothing else is altered.
 ## Established
 
 SessionStart, Stop, and PostToolUse for a file write and a shell command on Claude Code, Codex,
-Copilot, OpenCode and Kilo; Cursor's `sessionStart`, `postToolUse` and `stop`. PreToolUse on Claude Code, Codex, Copilot, Antigravity and Kiro: a write to a locked spec refused, a file created, a file edited, a shell call, in each host's own session; Cursor's is not captured (no quota left). Codex's
+Copilot, OpenCode and Kilo; Cursor's `sessionStart`, `postToolUse`, `stop` and a headless run's `sessionEnd`. PreToolUse on Claude Code, Codex, Copilot, Antigravity and Kiro: a write to a locked spec refused, a file created, a file edited, a shell call, in each host's own session; Cursor's is not captured (no quota left). Codex's
 `transcript_path` carries a value. Copilot's file write arrives as `Edit` with a `*** Begin Patch`
 string. Copilot's camelCase `preToolUse`, from a `.github/hooks/*.json` file the hook generator wrote, in `copilot-camel-preToolUse.json`, since a case-insensitive disk cannot hold it beside `copilot-PreToolUse.json`: `toolName` is `bash`, and `toolArgs` an object holding `command`. Claude Code's `Edit` and its `PowerShell` tool, enabled by
 `CLAUDE_CODE_USE_POWERSHELL_TOOL=1`. Cursor's edit, sent as a `Write` carrying the whole file, and

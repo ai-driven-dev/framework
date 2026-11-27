@@ -9,7 +9,7 @@ import { genericFlatHooksScriptPath } from "../../../../../shared/domain/materia
 import { hookEventsOf } from "../../../../../shared/domain/reading/hook-events.js";
 import { asPlainObject } from "../../../../../shared/domain/reading/plain-object.js";
 import type { ProjectHooksFormat } from "../../../contract/tool-vocabulary.js";
-import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
+import type { FlatHooksRoute, HookEventMap, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { hostToolNamesMatching, matcherNamesNoToolWarning } from "../../formats/host-tool-names.js";
 import { pluginScriptDir, pluginScriptPath } from "../../hooks/hooks-merge.js";
 import { routeEvents } from "../../hooks/hooks-route.js";
@@ -23,7 +23,7 @@ import {
 
 export type KiroHooks = HooksRouting & {
   readonly flat: FlatHooksRoute;
-  readonly eventMap: Readonly<Record<string, string>>;
+  readonly eventMap: HookEventMap;
   readonly toolNames: ReadonlyMap<string, string>;
 };
 

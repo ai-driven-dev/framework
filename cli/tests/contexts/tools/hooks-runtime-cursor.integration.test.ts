@@ -97,6 +97,20 @@ describe("reading Cursor hook payloads", () => {
     ]);
   });
 
+  it("reads sessionEnd, which a headless run sends without a stop, as the turn end", () => {
+    const { event } = read("cursor", sample("cursor-sessionEnd.json", 0).payload);
+
+    expect([event?.event, event?.stopActive, event?.cwd]).toStrictEqual(["Stop", false, CWD]);
+  });
+
+  it("answers nothing at sessionEnd: the host reads no output from it", () => {
+    const { adapter } = read("cursor", sample("cursor-sessionEnd.json", 0).payload);
+    adapter.continueTurn("again");
+    adapter.answer({ level: 1, text: "again" });
+
+    expect(printed).toStrictEqual([]);
+  });
+
   it("informs after a write through its additional context", () => {
     const { adapter } = read("cursor", sample("cursor-postToolUse.json", 0).payload);
     adapter.answer({ level: 1, text: "fix it" });

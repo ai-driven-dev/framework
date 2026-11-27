@@ -3,6 +3,7 @@ import { rewritePluginRootInJson } from "../../../../shared/domain/materializati
 import { HOST_ADAPTER_PATH } from "../../../../shared/domain/plugin/canon-paths.js";
 import type { ProjectHookEntry } from "../../contract/tool-vocabulary.js";
 import { toBase64 } from "../formats/base64.js";
+import type { HookEventMap } from "../formats/hooks/descriptor.js";
 import { hostToolNamesMatching, matcherNamesNoToolWarning } from "../formats/host-tool-names.js";
 import { pluginScriptPath, SCRIPTS } from "./hooks-merge.js";
 import { routeEvents } from "./hooks-route.js";
@@ -38,7 +39,7 @@ export interface WrappedCommandHooksTarget {
   readonly releasesPostToolAnswersAt?: string;
   readonly descriptor: {
     readonly flat: { readonly scriptsDir: string };
-    readonly eventMap: Readonly<Record<string, string>>;
+    readonly eventMap: HookEventMap;
     /** The host's name of each tool a plugin's matcher names, by the name the plugin gives it. */
     readonly toolNames: ReadonlyMap<string, string>;
   };

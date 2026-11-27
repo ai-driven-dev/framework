@@ -246,7 +246,14 @@ describe("a flat entry", () => {
 });
 
 describe("the tool's events", () => {
-  const target: HooksMergeTarget = { ...CURSOR_LIKE, eventMap: { Stop: "first" } };
+  const target: HooksMergeTarget = { ...CURSOR_LIKE, eventMap: { Stop: ["stop", "sessionEnd"] } };
+
+  it("fan one source event out to every event the tool fires for it", () => {
+    expect(merged(null, shipped("Stop", { hooks: [{ command: "a" }] }), target)).toStrictEqual({
+      version: 1,
+      hooks: { stop: [{ command: "a" }], sessionEnd: [{ command: "a" }] },
+    });
+  });
 
   it("skip and report an event the tool does not fire", () => {
     expect(

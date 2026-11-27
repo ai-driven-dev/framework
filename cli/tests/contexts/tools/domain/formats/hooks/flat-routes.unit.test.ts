@@ -60,7 +60,7 @@ describe("a flat build's hooks artifact", () => {
       flatHooksArtifact(
         routed({
           file: FLAT_FILE,
-          eventMap: { Start: "start" },
+          eventMap: { Start: ["start"] },
           undeclaredEvents: "skipped",
           flat: { scriptsDir: ".tool/hooks/", sharedFile: ".tool/hooks.json" },
         }),
@@ -177,7 +177,7 @@ describe("a flat build's hooks artifact", () => {
       flatHooksArtifact(
         routed({
           flat: { scriptsDir: ".tool/hooks/", loaderEntry: LOADER },
-          eventMap: { Start: "start", Stop: "stop" },
+          eventMap: { Start: ["start"], Stop: ["stop"] },
         }),
         { tool: TOOL.cursor, bridge }
       )

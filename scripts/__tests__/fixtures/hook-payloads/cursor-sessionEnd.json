@@ -1,0 +1,27 @@
+{
+  "host": "cursor",
+  "event": "sessionEnd",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "conversation_id": "00000000-0000-4000-8000-000000000000",
+        "generation_id": "00000000-0000-4000-8000-000000000000",
+        "model": "default",
+        "reason": "error",
+        "duration_ms": 3291,
+        "is_background_agent": false,
+        "final_status": "error",
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "sessionEnd",
+        "cursor_version": "2026.11.17-f532c45",
+        "workspace_roots": [
+          "/Users/user/project"
+        ],
+        "user_email": "user@example.com",
+        "transcript_path": null
+      },
+      "hookAnswer": null
+    }
+  ]
+}
