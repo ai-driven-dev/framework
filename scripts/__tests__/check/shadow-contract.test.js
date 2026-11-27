@@ -104,6 +104,7 @@ describe("shadow contract", () => {
     refusedOnlyBy(REPORT.replace("## Closed\n", "## Closed\n\nSee the checkout page.\n"), "SHADOW-03");
     refusedOnlyBy(REPORT.replace("Who confirms the order?", "Who confirms? When?"), "SHADOW-03");
     refusedOnlyBy(REPORT.replace("Who confirms the order?", "The confirmer is unknown."), "SHADOW-03");
+    refusedOnlyBy(REPORT.replace("Who confirms the order?", "Does \"Pay?\" confirm? Who sees it?"), "SHADOW-03");
   });
 
   it("SHADOW-04 refuses an invented quote, a gap without quote, a one-sided contradiction, and a source not next to the report", () => {
@@ -117,6 +118,12 @@ describe("shadow contract", () => {
 
   it("SHADOW-05 refuses the same question twice", () => {
     refusedOnlyBy(REPORT.replace("  > respond quickly", "  > respond quickly\n- quel délai maximum signifie « quickly » au submit du panier ?\n  > the cart is submitted").replace("open: 3", "open: 4"), "SHADOW-05");
+  });
+
+  it("accepts a question that quotes a label ending with ?", () => {
+    for (const label of ['"Forgot password?"', "“Forgot password?”", "« Mot de passe oublié ? »"]) {
+      assert.deepEqual(check(REPORT.replace("Who confirms the order?", `Where does the ${label} link lead?`)), { code: 0, out: "", err: "" });
+    }
   });
 
   it("accepts a split question on one passage, and inline code in questions and quotes", () => {
