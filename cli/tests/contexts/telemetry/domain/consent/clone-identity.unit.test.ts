@@ -26,12 +26,13 @@ describe("the identity of a clone from what stat reports", () => {
   });
 
   it("keeps a file index that a number could not hold", () => {
-    const found = identityFromStat("/a/.git", { ...STAT, ino: 9_007_199_254_740_993n });
-    expect(found?.ino).toBe("9007199254740993");
+    expect(identityFromStat("/a/.git", { ...STAT, ino: 9_007_199_254_740_993n })).toMatchObject({
+      ino: "9007199254740993",
+    });
   });
 
   it("is none where the platform reports no inode: nothing can be told to belong to it", () => {
-    expect(identityFromStat("/a/.git", { ...STAT, ino: 0n })).toBeNull();
+    expect(identityFromStat("/a/.git", { ...STAT, ino: 0n })).toBe("unidentified");
   });
 
   it.each([

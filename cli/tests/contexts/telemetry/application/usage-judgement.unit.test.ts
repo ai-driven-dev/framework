@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ReadUsageResult } from "../../../../src/contexts/telemetry/application/read-usage.use-case.js";
 import { startResolutionRun } from "../../../../src/contexts/telemetry/application/resolution-run.js";
 import { judgeReading } from "../../../../src/contexts/telemetry/application/usage-judgement.js";
+import type { UsageRecord } from "../../../../src/contexts/telemetry/contract/usage-record.js";
 import { ConsentLog } from "../../../../src/contexts/telemetry/domain/consent/consent-log.js";
 import { RememberedResolutions } from "../../../../src/contexts/telemetry/domain/remembered-resolutions.js";
 import { tokenOf } from "../testing/clone.builder.js";
@@ -34,12 +35,11 @@ function runWith(directory: ReturnType<typeof repository> | undefined) {
 }
 
 function reading(
-  records: ReadUsageResult["records"],
+  records: readonly UsageRecord[],
   dropped: ReadUsageResult["dropped"] = []
 ): ReadUsageResult {
   return {
-    records,
-    fileOf: new Map(records.map((record) => [record, "/t/1.jsonl"])),
+    calls: records.map((record) => ({ record, path: "/t/1.jsonl" })),
     dropped,
     positions: new Map(),
     unrecognised: [],

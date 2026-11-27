@@ -1,23 +1,28 @@
 import type { UsageRecord } from "../contract/usage-record.js";
 import type { LineNames, TranscriptPosition } from "../domain/transcript-position.js";
-import { foldUsage } from "../domain/usage-fold.js";
+import { foldUsageBy } from "../domain/usage-fold.js";
 import type { TranscriptRead, TranscriptRequest, UsageSource } from "../ports/usage-source.js";
 
-/** A line that gave no call, the directory and time it names, and its file. */
+/** A line that gives no call, written in a directory it names. */
 export interface DroppedLine extends LineNames {
   readonly line: string;
+  readonly path: string;
+  readonly cwd: string;
+}
+
+/** A billed call and the file it was read from. */
+export interface ReadCall {
+  readonly record: UsageRecord;
   readonly path: string;
 }
 
 export interface ReadUsageResult {
-  /** One record per billed call, folded across every file read. */
-  readonly records: readonly UsageRecord[];
+  /** One per billed call, folded across every file read. */
+  readonly calls: readonly ReadCall[];
   /** Where each of this tool's files now stands, to hand back next time. */
   readonly positions: ReadonlyMap<string, TranscriptPosition>;
   /** Shapes seen and not recognised, each prefixed with its file. */
   readonly unrecognised: readonly string[];
-  /** The file each record was read from. */
-  readonly fileOf: ReadonlyMap<UsageRecord, string>;
   /** The lines that gave no call and name a directory: what a reading drops and can tie to a
    * clone. */
   readonly dropped: readonly DroppedLine[];
@@ -48,11 +53,10 @@ interface FileReading {
 
 /** What the files of one tool gave so far. */
 interface Gathered {
-  readonly candidates: UsageRecord[];
+  readonly candidates: ReadCall[];
   readonly skipped: Set<string>;
   readonly unrecognised: string[];
   readonly dropped: DroppedLine[];
-  readonly fileOf: Map<UsageRecord, string>;
   readonly positions: Map<string, TranscriptPosition>;
   readonly unreadable: string[];
   oldest: number | null;
@@ -64,7 +68,6 @@ function emptyGathering(): Gathered {
     skipped: new Set(),
     unrecognised: [],
     dropped: [],
-    fileOf: new Map(),
     positions: new Map(),
     unreadable: [],
     oldest: null,
@@ -74,19 +77,14 @@ function emptyGathering(): Gathered {
 function take(gathered: Gathered, path: string, file: FileReading): void {
   const { records, lines, reasons, read } = file;
   const { modifiedAt } = read;
-  if (modifiedAt !== null && (gathered.oldest === null || modifiedAt < gathered.oldest)) {
-    gathered.oldest = modifiedAt;
-  }
+  if (modifiedAt !== null) gathered.oldest = Math.min(gathered.oldest ?? modifiedAt, modifiedAt);
   if (read.skipped) gathered.skipped.add(path);
   if (read.unreadable !== undefined) gathered.unreadable.push(read.unreadable);
   // Changed under the read: what it handed over may be spliced from two versions, so none
   // of it counts and the file keeps its position, to be read again.
   if (read.position === null) return;
   gathered.positions.set(path, read.position);
-  for (const record of records) {
-    gathered.candidates.push(record);
-    gathered.fileOf.set(record, path);
-  }
+  gathered.candidates.push(...records.map((record) => ({ record, path })));
   gathered.dropped.push(...lines);
   gathered.unrecognised.push(...reasons);
 }
@@ -94,11 +92,10 @@ function take(gathered: Gathered, path: string, file: FileReading): void {
 function readingOf(gathered: Gathered): ReadUsageResult {
   const { oldest } = gathered;
   return {
-    records: foldUsage(gathered.candidates),
+    calls: foldUsageBy(gathered.candidates, (call) => call.record),
     positions: gathered.positions,
     unrecognised: gathered.unrecognised,
     dropped: gathered.dropped,
-    fileOf: gathered.fileOf,
     oldestTranscriptAt: oldest === null ? null : new Date(oldest).toISOString(),
     skipped: gathered.skipped,
     unreadable: gathered.unreadable,
@@ -136,7 +133,8 @@ export class ReadUsage {
       if (!counted) return;
       records.push(...outcome.records);
       // Only a line that gives no call names anything.
-      if (outcome.named?.cwd) lines.push({ line, path, ...outcome.named });
+      const { named } = outcome;
+      if (named?.cwd) lines.push({ line, path, cwd: named.cwd, at: named.at });
       reasons.push(...outcome.unrecognised.map((reason) => `${path}: ${reason}`));
     });
     reasons.push(...(read.unrecognised ?? []).map((reason) => `${path}: ${reason}`));

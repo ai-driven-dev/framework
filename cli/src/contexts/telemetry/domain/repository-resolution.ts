@@ -1,6 +1,6 @@
-import { tryParseJson } from "../../../shared/domain/reading/json-file.js";
-import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
+import { asPlainObject, plainObjectIn } from "../../../shared/domain/reading/plain-object.js";
 import { type CloneIdentity, cloneKey, parseCloneIdentity } from "./consent/clone-identity.js";
+import { isFilledText, isInstant } from "./read-back.js";
 import { compareText } from "./text-order.js";
 
 /** What a working directory was found to be, the first time it was seen alive in a clone. A
@@ -67,16 +67,14 @@ function resolutionKeyOf(resolution: RepositoryResolution): string {
   return resolutionKey(resolution.dir, resolution.clone);
 }
 
-const filled = (value: unknown): value is string => typeof value === "string" && value !== "";
-
 function parseResolution(value: unknown): RepositoryResolution | null {
   const object = asPlainObject(value);
   if (object === null) return null;
   const clone = parseCloneIdentity(object.clone);
   if (clone === null) return null;
   const { dir, repository_id: repositoryId, root, seen_at: seenAt } = object;
-  if (!filled(dir) || !filled(repositoryId) || typeof root !== "string") return null;
-  if (typeof seenAt !== "string" || Number.isNaN(Date.parse(seenAt))) return null;
+  if (!isFilledText(dir) || !isFilledText(repositoryId) || typeof root !== "string") return null;
+  if (!isInstant(seenAt)) return null;
   return { dir, repository_id: repositoryId, root, clone, seen_at: seenAt };
 }
 
@@ -88,8 +86,7 @@ const FORMAT = 2;
 /** A file that is missing or unreadable is no resolutions. */
 export function parseResolutions(text: string | null): Map<string, RepositoryResolution> {
   const resolutions = new Map<string, RepositoryResolution>();
-  const parsed = tryParseJson(text ?? "");
-  const object = parsed.ok ? asPlainObject(parsed.value) : null;
+  const object = plainObjectIn(text);
   if (object === null || object.version !== FORMAT || !Array.isArray(object.directories)) {
     return resolutions;
   }

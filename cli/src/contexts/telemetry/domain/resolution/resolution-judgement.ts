@@ -11,8 +11,12 @@ export type DirectoryOutcome =
       readonly stored: RepositoryResolution;
       /** Resolved from the directory as it stands, not from what was remembered of it. */
       readonly live: boolean;
+      readonly mayConsent?: never;
     }
-  | { readonly skipped: Exclude<NotStoredReason, "unreadable-consent"> }
+  | {
+      readonly skipped: Exclude<NotStoredReason, "unreadable-consent">;
+      readonly mayConsent?: never;
+    }
   | {
       readonly skipped: "unreadable-consent";
       /** A clone remembered at the directory consented at the call's time: what the directory
@@ -89,8 +93,11 @@ export function directoryFrom(
     clone: located.clone,
     at: seen.at(),
   });
-  const others = learned.ownersOf(dir).filter((owner) => !sameClone(owner.clone, current.clone));
-  return { directory: { owners: [current, ...others], current }, remembered: learned };
+  // `learned` holds `current` too: a twin owner answers as the same clone.
+  return {
+    directory: { owners: [current, ...learned.ownersOf(dir)], current },
+    remembered: learned,
+  };
 }
 
 /** A call made in `cwd` at `at`. `closed` says whether the clone's own key, as it stands, names

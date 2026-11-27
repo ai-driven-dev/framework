@@ -1,6 +1,7 @@
 import { rm, writeFile } from "node:fs/promises";
-import { isErrnoException, tryParseJson } from "../../../../../shared/domain/reading/json-file.js";
-import { asPlainObject } from "../../../../../shared/domain/reading/plain-object.js";
+import { isErrnoException } from "../../../../../shared/domain/reading/json-file.js";
+import { plainObjectIn } from "../../../../../shared/domain/reading/plain-object.js";
+import { isCount, isInstant } from "../../../domain/read-back.js";
 import { modifiedAtIfPresent, readTextIfPresent } from "../../reading/text-file.js";
 
 export interface LockOptions {
@@ -45,14 +46,11 @@ interface Holder {
   readonly createdAt: number;
 }
 
-function holderIn(text: string): Holder | null {
-  const parsed = tryParseJson(text);
-  const lock = parsed.ok ? asPlainObject(parsed.value) : null;
-  const createdAt = Date.parse(String(lock?.created_at));
+function holderIn(text: string | null): Holder | null {
+  const lock = plainObjectIn(text);
   const pid = lock?.pid;
-  return typeof pid === "number" && Number.isInteger(pid) && !Number.isNaN(createdAt)
-    ? { pid, createdAt }
-    : null;
+  const createdAt = lock?.created_at;
+  return isCount(pid) && isInstant(createdAt) ? { pid, createdAt: Date.parse(createdAt) } : null;
 }
 
 /** A lock file holding the pid and creation time of its owner, created exclusively. The owner
@@ -71,28 +69,35 @@ export class LedgerLock {
 
   /** Resolves with the function that releases the lock. */
   async acquire(): Promise<() => Promise<void>> {
-    const { now, sleep, pollMs } = this.options;
-    const deadline = now() + this.options.waitMs;
-    for (;;) {
-      const step = await this.attempt(deadline);
-      if (step === "taken") return () => this.release();
-      if (step === "wait") await sleep(pollMs);
-    }
+    const deadline = this.options.now() + this.options.waitMs;
+    while (!(await this.attempt(deadline)));
+    return () => this.release();
   }
 
-  /** One try at the lock: taken, to wait before the next try, or to try again at once. */
-  private async attempt(deadline: number): Promise<"taken" | "wait" | "again"> {
-    const created = await this.tryCreate(this.options.now() >= deadline);
-    if (created === "taken") return "taken";
-    if (created === "removing") return "wait";
+  /** One try; a lock released while looking is retried at once: it may now be another's. */
+  private async attempt(deadline: number): Promise<boolean> {
+    const late = this.options.now() >= deadline;
+    const created = await this.tryCreate(late);
+    if (created === "removing") return this.waited();
+    if (created) return true;
     const holder = await this.holder();
-    if (holder === null) return "again";
+    if (holder === null) return false;
     if (this.isStale(holder)) {
-      await rm(this.path, { force: true });
-      return "again";
+      await this.clear();
+      return false;
     }
-    if (this.options.now() >= deadline) throw this.lockedBy(holder);
-    return "wait";
+    if (late) throw this.lockedBy(holder);
+    return this.waited();
+  }
+
+  private async waited(): Promise<false> {
+    await this.options.sleep(this.options.pollMs);
+    return false;
+  }
+
+  /** Another process may have cleared it first. */
+  private clear(): Promise<void> {
+    return rm(this.path, { force: true });
   }
 
   private lockedBy(holder: Holder): Error {
@@ -102,16 +107,17 @@ export class LedgerLock {
     );
   }
 
-  private async tryCreate(pastDeadline: boolean): Promise<"taken" | "held" | "removing"> {
+  /** Whether the lock was taken, or `removing` while Windows still deletes the last one. */
+  private async tryCreate(pastDeadline: boolean): Promise<boolean | "removing"> {
     const created = new Date(this.options.now()).toISOString();
     try {
       await writeFile(this.path, JSON.stringify({ pid: this.options.pid, created_at: created }), {
         flag: "wx",
         mode: 0o600,
       });
-      return "taken";
+      return true;
     } catch (error) {
-      if (isErrnoException(error) && error.code === "EEXIST") return "held";
+      if (isErrnoException(error) && error.code === "EEXIST") return false;
       // Windows refuses a file another handle is still deleting, until that handle closes.
       if (isErrnoException(error) && error.code === "EPERM" && !pastDeadline) return "removing";
       throw error;
@@ -121,9 +127,7 @@ export class LedgerLock {
   /** Who holds the lock, or `null` when it was released while looking. A lock whose content
    * cannot be read is judged by its file's age. */
   private async holder(): Promise<Holder | null> {
-    const text = await readTextIfPresent(this.path);
-    if (text === null) return null;
-    const written = holderIn(text);
+    const written = holderIn(await readTextIfPresent(this.path));
     if (written !== null) return written;
     const modifiedAt = await modifiedAtIfPresent(this.path);
     return modifiedAt === null ? null : { pid: null, createdAt: modifiedAt };
@@ -137,6 +141,6 @@ export class LedgerLock {
   /** Only the lock this process took: one cleared as stale and retaken by another is theirs. */
   private async release(): Promise<void> {
     const holder = await this.holder();
-    if (holder?.pid === this.options.pid) await rm(this.path, { force: true });
+    if (holder?.pid === this.options.pid) await this.clear();
   }
 }

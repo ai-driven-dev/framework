@@ -42,7 +42,7 @@ type Skipped = Extract<DirectoryOutcome, { skipped: NotStoredReason }>;
  * made. */
 interface JudgedCall {
   readonly record: UsageRecord;
-  readonly path: string | undefined;
+  readonly path: string;
   readonly outcome: DirectoryOutcome;
 }
 
@@ -60,9 +60,9 @@ export async function judgeReading(
     live: new Map(),
   };
   await judgeDropped(resolver, verdicts, reading.dropped);
-  for (const record of reading.records) {
+  for (const { record, path } of reading.calls) {
     const outcome = await outcomeOf(resolver, record);
-    await judgeCall(resolver, verdicts, { record, path: reading.fileOf.get(record), outcome });
+    await judgeCall(resolver, verdicts, { record, path, outcome });
   }
   return verdicts;
 }
@@ -75,8 +75,8 @@ async function judgeDropped(
   dropped: ReadUsageResult["dropped"]
 ): Promise<void> {
   for (const { line, cwd, at, path } of dropped) {
-    if (cwd === null) continue;
-    const when = at !== null && dayOf(at) !== null ? at : resolver.now;
+    const named = at ?? resolver.now;
+    const when = dayOf(named) === null ? resolver.now : named;
     const outcome = await resolver.resolve(cwd, when);
     holdIfUnreadable(verdicts, outcome, path);
     if ("stored" in outcome) verdicts.leftOut.push({ reason: "unrecognised", of: line });
@@ -114,14 +114,8 @@ async function judgeSkipped(
   }
 }
 
-function holdIfUnreadable(
-  verdicts: Verdicts,
-  outcome: DirectoryOutcome,
-  path: string | undefined
-): void {
-  if ("skipped" in outcome && outcome.skipped === "unreadable-consent" && outcome.mayConsent) {
-    verdicts.held.add(path ?? "");
-  }
+function holdIfUnreadable(verdicts: Verdicts, outcome: DirectoryOutcome, path: string): void {
+  if (outcome.mayConsent) verdicts.held.add(path);
 }
 
 /** A call with no time has no day to be kept in, and one with no directory has no repository to

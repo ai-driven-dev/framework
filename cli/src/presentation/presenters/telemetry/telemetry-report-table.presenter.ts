@@ -73,8 +73,10 @@ export function table(axis: ReportAxis, rows: readonly ReportRow[], totals: Tall
     // The total axis is one row that already is the total.
     ...(axis === "total" ? [] : [["Total", ...cellsOf(totals)]]),
   ];
-  const widths =
-    body[0]?.map((_, column) => Math.max(...body.map((line) => (line[column] ?? "").length))) ?? [];
+  const widths = body.reduce<number[]>(
+    (widest, line) => line.map((text, column) => Math.max(widest[column] ?? 0, text.length)),
+    []
+  );
   return body.map((line) =>
     line
       .map((text, column) =>
@@ -85,5 +87,5 @@ export function table(axis: ReportAxis, rows: readonly ReportRow[], totals: Tall
 }
 
 function titleOf(axis: ReportAxis): string {
-  return axis === "total" ? "Period" : axis[0]?.toUpperCase() + axis.slice(1);
+  return axis === "total" ? "Period" : axis.charAt(0).toUpperCase() + axis.slice(1);
 }

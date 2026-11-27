@@ -1,4 +1,4 @@
-import { branchRoleOf, currentBranchOf } from "../../domain/declaration/branch-role.js";
+import { branchHeadOf } from "../../domain/declaration/branch-role.js";
 import type { TaskDeclaration } from "../../domain/declaration/task-declaration.js";
 import type { BranchBindingStore } from "../../ports/branch-binding-store.js";
 import type { SnapshotBindings } from "../snapshot-bindings.use-case.js";
@@ -31,9 +31,8 @@ export class DeclareOnBranch {
     declaration,
   }: DeclareOnBranchRequest): Promise<DeclareOnBranchResult> {
     const heads = await this.store.heads(root);
-    const role = branchRoleOf(heads.head, heads.originHead);
-    const branch = currentBranchOf(heads.head);
-    if (role !== "working" || branch === null) {
+    const { role, branch } = branchHeadOf(heads.head, heads.originHead);
+    if (role !== "working") {
       return {
         status: "untouched",
         reason: role === "detached" ? "detached" : "default-branch",

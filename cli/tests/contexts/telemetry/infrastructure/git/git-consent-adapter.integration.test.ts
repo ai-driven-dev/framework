@@ -63,8 +63,8 @@ describe("a clone's consent in its git config", () => {
   });
 
   it("drops only the final newline of a value", async () => {
-    await consent.set(repo, "a b");
-    expect(await consent.read(repo)).toEqual({ kind: "value", value: "a b" });
+    await consent.set(repo, "a\nb");
+    expect(await consent.read(repo)).toEqual({ kind: "value", value: "a\nb" });
   });
 
   it("fails to set a value where git cannot write", async () => {

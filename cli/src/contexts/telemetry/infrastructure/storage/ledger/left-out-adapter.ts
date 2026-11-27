@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { join } from "node:path";
 import type { PrivateStorage } from "../../../../../shared/ports/private-storage.js";
 import type { LeftOutReason } from "../../../contract/repository-resolution.js";
+import { linesIn } from "../../../domain/read-back.js";
 import { compareText } from "../../../domain/text-order.js";
 import type { LeftOutEntry, LeftOutStore } from "../../../ports/usage-ledger.js";
 import { readTextIfPresent } from "../../reading/text-file.js";
@@ -33,8 +34,9 @@ export class LeftOutAdapter implements LeftOutStore {
   }
 
   async counts(): Promise<Readonly<Record<LeftOutReason, number>>> {
-    const text = `\n${(await readTextIfPresent(this.path)) ?? ""}`;
-    const count = (reason: LeftOutReason) => text.split(`\n${reason} `).length - 1;
+    const lines = linesIn(await readTextIfPresent(this.path));
+    const count = (reason: LeftOutReason) =>
+      lines.filter((line) => line.startsWith(`${reason} `)).length;
     return {
       undated: count("undated"),
       unrecognised: count("unrecognised"),

@@ -1,4 +1,5 @@
-import { type Json, text } from "./line-values.js";
+import { text } from "../read-back.js";
+import type { Json } from "./line-values.js";
 
 /** What the lines of a file before a call say about it: the file's first `session_meta` and
  * its latest `turn_context`. */

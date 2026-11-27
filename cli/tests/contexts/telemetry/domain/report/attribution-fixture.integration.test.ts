@@ -5,7 +5,7 @@ import {
   parseBranchConfig,
   snapshotKey,
 } from "../../../../../src/contexts/telemetry/domain/branch-binding.js";
-import { branchRoleOf } from "../../../../../src/contexts/telemetry/domain/declaration/branch-role.js";
+import { branchHeadOf } from "../../../../../src/contexts/telemetry/domain/declaration/branch-role.js";
 import {
   parseSessionCarry,
   parseSessionDeclaration,
@@ -51,7 +51,7 @@ function branchOutput(config: Config): string {
 
 function reportAnswer(input: Case) {
   const config = input.gitConfig === null ? null : cases.gitConfig[input.gitConfig];
-  const working = branchRoleOf(input.head, input.originHead) === "working";
+  const working = branchHeadOf(input.head, input.originHead).role === "working";
   const binding =
     config !== null && config !== undefined && working
       ? (parseBranchConfig(branchOutput(config))[0] ?? null)

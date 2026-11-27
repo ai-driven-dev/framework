@@ -1,4 +1,5 @@
 import {
+  ABSENT_AXES,
   FILTER_AXES,
   FILTER_FLAGS,
   type FilterFlag,
@@ -9,7 +10,7 @@ import type { AxisValue, ReportAxis } from "../../contract/usage-report.js";
 import type { StoredUsage } from "../stored-usage.js";
 import { compareText } from "../text-order.js";
 import type { Attribution } from "./attribution.js";
-import { axisValueOf } from "./usage-report.js";
+import { axisValueOf, rowKeyOf } from "./usage-report.js";
 
 /** What each flag given asks the call's axis to be, as a row of that axis holds it, in the
  * order the flags are printed. An unattributed call is unattributed on task and ticket alike,
@@ -30,7 +31,7 @@ export function selectorsOf(filters: ReportFilters): (readonly [ReportAxis, Sele
 /** The axes a flag selects on. Work with no task has neither task nor ticket, so
  * `--unattributed` selects on both. */
 function axesOf(filters: ReportFilters, flag: FilterFlag): readonly ReportAxis[] {
-  if (flag === "absent") return filters.absent === null ? [] : [filters.absent];
+  if (flag === "absent") return ABSENT_AXES.filter((axis) => axis === filters.absent);
   if (filters[flag] === null) return [];
   return flag === "unattributed" ? ["task", "ticket"] : [flag];
 }
@@ -48,16 +49,9 @@ export function conflictsOf(filters: ReportFilters): (readonly [FilterFlag, Filt
 }
 
 function selects(selector: Selector, value: AxisValue): boolean {
-  switch (selector.kind) {
-    case "value":
-      return value.kind === "value" && value.value === selector.value;
-    case "absent":
-      return value.kind === "absent";
-    case "unattributed":
-      return value.kind === "unattributed" && value.reason === selector.reason;
-    case "unattributed-any":
-      return value.kind === "unattributed";
-  }
+  return selector.kind === "unattributed-any"
+    ? value.kind === "unattributed"
+    : rowKeyOf(selector) === rowKeyOf(value);
 }
 
 /** Whether every flag given keeps the call: its axis is, by the function that builds the rows,

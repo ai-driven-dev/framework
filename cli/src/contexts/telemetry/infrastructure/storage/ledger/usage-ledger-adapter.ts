@@ -1,6 +1,5 @@
-import { readdir, rm } from "node:fs/promises";
+import { rm } from "node:fs/promises";
 import { join } from "node:path";
-import { isErrnoException } from "../../../../../shared/domain/reading/json-file.js";
 import type { PrivateStorage } from "../../../../../shared/ports/private-storage.js";
 import {
   type DayPart,
@@ -16,7 +15,7 @@ import {
   type TranscriptPosition,
 } from "../../../domain/transcript-position.js";
 import type { LeftOutStore, LoadedLedger, UsageLedger } from "../../../ports/usage-ledger.js";
-import { readTextIfPresent } from "../../reading/text-file.js";
+import { namesIfPresent, readTextIfPresent } from "../../reading/text-file.js";
 import type { DirectoryLock } from "./directory-lock.js";
 
 const DAILY = /^\d{4}-\d{2}-\d{2}\.jsonl$/;
@@ -77,8 +76,7 @@ export class UsageLedgerAdapter implements UsageLedger {
     for (const name of names) {
       const partition = partitionOf(name);
       if (holds !== undefined && !holds(partition)) continue;
-      const text = (await readTextIfPresent(join(this.dir, name))) ?? "";
-      parts.push({ partition, ...readDay(text) });
+      parts.push({ partition, ...readDay(await readTextIfPresent(join(this.dir, name))) });
     }
     return mergeDays(parts);
   }
@@ -90,8 +88,7 @@ export class UsageLedgerAdapter implements UsageLedger {
     const days = partitionByDay(records);
     const emptied: string[] = [];
     // Every write comes before any removal, so the order of the writes is free.
-    for (const day of new Set([...days.keys(), ...kept.keys(), ...held.keys()])) {
-      if (!named(day)) continue;
+    for (const day of new Set([...[...days.keys()].filter(named), ...held.keys()])) {
       const content = dayContent(days.get(day) ?? [], kept.get(day) ?? []);
       const emptiedPath = await this.writeDay(day, content, held.get(day));
       if (emptiedPath !== null) emptied.push(emptiedPath);
@@ -133,18 +130,12 @@ export class UsageLedgerAdapter implements UsageLedger {
       if (!named(day)) continue;
       const text = await readTextIfPresent(join(this.dir, name));
       held.set(day, text);
-      const lines = keptLines(text);
-      if (lines.size > 0) kept.set(day, lines);
+      kept.set(day, keptLines(text));
     }
     return { held, kept };
   }
 
   private async partitions(): Promise<string[]> {
-    try {
-      return (await readdir(this.dir)).filter((name) => DAILY.test(name));
-    } catch (error) {
-      if (isErrnoException(error) && error.code === "ENOENT") return [];
-      throw error;
-    }
+    return (await namesIfPresent(this.dir)).filter((name) => DAILY.test(name));
   }
 }

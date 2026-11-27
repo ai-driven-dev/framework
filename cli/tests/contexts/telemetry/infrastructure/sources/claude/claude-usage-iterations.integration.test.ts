@@ -54,8 +54,10 @@ describe("the cache writes of a message", () => {
     expect(cacheWrites({}, iterations, [])).toEqual({ total: 7, oneHour: 3 });
   });
 
-  it("are unknown when one part lacks the count", () => {
+  it("are unknown when one part lacks the count, which is said", () => {
     const iterations = [{ type: "message", cache_creation_input_tokens: 3 }, { type: "message" }];
-    expect(cacheWrites({}, iterations, [])).toEqual({ total: null, oneHour: null });
+    const notes: string[] = [];
+    expect(cacheWrites({}, iterations, notes)).toEqual({ total: null, oneHour: null });
+    expect(notes).toEqual(["usage.cache_creation_input_tokens is missing or not a count"]);
   });
 });

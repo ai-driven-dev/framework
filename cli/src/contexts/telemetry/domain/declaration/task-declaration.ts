@@ -1,5 +1,5 @@
-import { tryParseJson } from "../../../../shared/domain/reading/json-file.js";
-import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
+import { plainObjectIn } from "../../../../shared/domain/reading/plain-object.js";
+import { hasOnly, isFilledText, isInstant, isListed, isNullableText } from "../read-back.js";
 
 /** The declarers a stored line may name. `hook-intercept` is read from old data: no hook writes
  * it anymore. */
@@ -86,44 +86,18 @@ export const SESSION_DECLARATION_FIELDS = [
 ] as const;
 export const SESSION_CARRY_FIELDS = ["session_id", "from", "at"] as const;
 
-function hasExactly(object: Record<string, unknown>, fields: readonly string[]): boolean {
-  const keys = Object.keys(object);
-  return keys.length === fields.length && fields.every((field) => keys.includes(field));
-}
-
-function isNonEmptyText(value: unknown): value is string {
-  return typeof value === "string" && value !== "";
-}
-
-function isInstant(value: unknown): value is string {
-  return typeof value === "string" && !Number.isNaN(Date.parse(value));
-}
-
-function isNullableText(value: unknown): value is string | null {
-  return value === null || typeof value === "string";
-}
-
-function isDeclaredBy(value: unknown): value is DeclaredBy {
-  return DECLARED_BY.some((by) => by === value);
-}
-
-function plainObjectOf(line: string): Record<string, unknown> | null {
-  const parsed = tryParseJson(line);
-  return parsed.ok ? asPlainObject(parsed.value) : null;
-}
-
 /** A `sessions.jsonl` line read back, or `null` when it is not exactly one. */
 export function parseSessionDeclaration(line: string): SessionDeclaration | null {
-  const object = plainObjectOf(line);
-  if (object === null || !hasExactly(object, SESSION_DECLARATION_FIELDS)) return null;
+  const object = plainObjectIn(line);
+  if (object === null || !hasOnly(object, SESSION_DECLARATION_FIELDS)) return null;
   const { session_id, task, ticket, none, declared_at, by } = object;
   if (
-    !isNonEmptyText(session_id) ||
+    !isFilledText(session_id) ||
     !isNullableText(task) ||
     !isNullableText(ticket) ||
     typeof none !== "boolean" ||
     !isInstant(declared_at) ||
-    !isDeclaredBy(by)
+    !isListed(DECLARED_BY, by)
   ) {
     return null;
   }
@@ -132,9 +106,9 @@ export function parseSessionDeclaration(line: string): SessionDeclaration | null
 
 /** A `carries.jsonl` line read back, or `null` when it is not exactly one. */
 export function parseSessionCarry(line: string): SessionCarry | null {
-  const object = plainObjectOf(line);
-  if (object === null || !hasExactly(object, SESSION_CARRY_FIELDS)) return null;
+  const object = plainObjectIn(line);
+  if (object === null || !hasOnly(object, SESSION_CARRY_FIELDS)) return null;
   const { session_id, from, at } = object;
-  if (!isNonEmptyText(session_id) || !isNonEmptyText(from) || !isInstant(at)) return null;
+  if (!isFilledText(session_id) || !isFilledText(from) || !isInstant(at)) return null;
   return { session_id, from, at };
 }

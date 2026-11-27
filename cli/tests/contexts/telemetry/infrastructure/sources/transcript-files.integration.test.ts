@@ -1,9 +1,10 @@
-import { mkdir, mkdtemp, open, rm, truncate, writeFile } from "node:fs/promises";
+import { type FileHandle, mkdir, mkdtemp, open, rm, truncate, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   eachLine,
+  identityOf,
   lastLineEnd,
   listTranscripts,
   NOWHERE,
@@ -59,6 +60,13 @@ describe("reading lines from a file", () => {
     expect(await withHandle(path, (handle) => lastLineEnd(handle, 17))).toBe(0);
   });
 
+  it("ends the last line before the size it was told, whatever was written past it", async () => {
+    const path = join(root, "t.jsonl");
+    const text = `a\n${"x".repeat(70_000)}\n`;
+    await writeFile(path, text);
+    expect(await withHandle(path, (handle) => lastLineEnd(handle, text.length - 1))).toBe(2);
+  });
+
   it("reads a range in small blocks, leaving an unterminated line unread", async () => {
     const path = join(root, "t.jsonl");
     await writeFile(path, "alpha\nbeta\ngamma");
@@ -70,6 +78,25 @@ describe("reading lines from a file", () => {
     );
     expect(lines).toEqual(["alpha", "beta"]);
     expect(end).toBe(11);
+  });
+
+  it("reads no byte past the size it was told, from wherever the range starts", async () => {
+    const path = join(root, "t.jsonl");
+    await writeFile(path, "a\nb\nc\n");
+    const lines: string[] = [];
+    await withHandle(path, (handle) =>
+      eachLine(handle, { from: 2, countFrom: 2, size: 4, blockBytes: 64 }, (line) =>
+        lines.push(line)
+      )
+    );
+    expect(lines).toEqual(["b"]);
+  });
+});
+
+describe("naming a file", () => {
+  it("names it by device and inode, or by birth time where the inode means nothing", () => {
+    expect(identityOf({ dev: 3, ino: 7, birthtimeMs: 5 })).toBe("3:7");
+    expect(identityOf({ dev: 3, ino: 0, birthtimeMs: 5 })).toBe("3:5");
   });
 });
 
@@ -120,6 +147,23 @@ describe("reading a transcript", () => {
     });
   });
 
+  it("closes the file it opened", async () => {
+    const path = join(root, "t.jsonl");
+    await writeFile(path, "abcdef");
+    let opened: FileHandle | undefined;
+    await readTranscript(
+      { path, since: null, writtenFrom: Number.NEGATIVE_INFINITY },
+      {
+        ...reading,
+        lines: async (handle) => {
+          opened = handle;
+          return 3;
+        },
+      }
+    );
+    await expect(opened?.stat()).rejects.toMatchObject({ code: "EBADF" });
+  });
+
   it("positions a read file where its lines end", async () => {
     const path = join(root, "t.jsonl");
     await writeFile(path, "abcdef");
@@ -155,5 +199,18 @@ describe("reading a transcript", () => {
     expect(
       (await withModifiedAt(join(root, "gone.jsonl"), Promise.resolve(lines))).modifiedAt
     ).toBeNull();
+  });
+
+  it("names a file it could not read, and leaves it where it stood", async () => {
+    const failed = Promise.reject(Object.assign(new Error("denied"), { code: "EACCES" }));
+    const other = Promise.reject(new Error("no code"));
+    expect(await withModifiedAt("/t/a.jsonl", failed)).toEqual({
+      position: null,
+      restarted: false,
+      skipped: false,
+      modifiedAt: null,
+      unreadable: "/t/a.jsonl: EACCES",
+    });
+    expect((await withModifiedAt("/t/b.jsonl", other)).unreadable).toBe("/t/b.jsonl: no code");
   });
 });

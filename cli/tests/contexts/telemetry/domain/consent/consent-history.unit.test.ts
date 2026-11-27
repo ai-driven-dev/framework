@@ -138,4 +138,10 @@ describe("the file as a whole", () => {
     expect(records.damaged).toBe(true);
     expect(records.events.map((event) => event.token)).toEqual(["t1", "t2"]);
   });
+
+  it("is damaged by an event whose token is not text", () => {
+    expect(parseConsentRecords('{"token":5,"close":"2026-10-01T00:00:00.000Z"}\n').damaged).toBe(
+      true
+    );
+  });
 });

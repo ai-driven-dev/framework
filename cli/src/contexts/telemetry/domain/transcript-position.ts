@@ -1,5 +1,5 @@
-import { tryParseJson } from "../../../shared/domain/reading/json-file.js";
-import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
+import { asPlainObject, plainObjectIn } from "../../../shared/domain/reading/plain-object.js";
+import { isCount } from "./read-back.js";
 import { compareText } from "./text-order.js";
 
 /** What a transcript line that is no usage line names of where and when it was written, so it
@@ -41,25 +41,14 @@ function isPosition(value: unknown): value is TranscriptPosition {
   const object = asPlainObject(value);
   if (object === null) return false;
   const { offset, size, identity } = object;
-  return (
-    typeof offset === "number" &&
-    Number.isInteger(offset) &&
-    offset >= 0 &&
-    typeof size === "number" &&
-    Number.isInteger(size) &&
-    size >= 0 &&
-    typeof identity === "string"
-  );
+  return isCount(offset) && isCount(size) && typeof identity === "string";
 }
 
 /** Where each transcript was read up to. Text that cannot be read is no positions at all,
  * which only means every transcript is read whole: the ledger takes a call once. */
 export function parsePositions(text: string | null): Map<string, TranscriptPosition> {
   const positions = new Map<string, TranscriptPosition>();
-  const parsed = tryParseJson(text ?? "");
-  for (const [path, position] of Object.entries(
-    parsed.ok ? (asPlainObject(parsed.value) ?? {}) : {}
-  )) {
+  for (const [path, position] of Object.entries(plainObjectIn(text) ?? {})) {
     if (isPosition(position)) positions.set(path, position);
   }
   return positions;

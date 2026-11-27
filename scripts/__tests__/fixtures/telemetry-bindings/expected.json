@@ -407,6 +407,10 @@
       "damaged": true,
       "intervals": []
     },
+    "clone-with-a-fractional-birth-time-damages": {
+      "damaged": true,
+      "intervals": []
+    },
     "close-with-an-unreadable-time-damages": {
       "damaged": true,
       "intervals": [

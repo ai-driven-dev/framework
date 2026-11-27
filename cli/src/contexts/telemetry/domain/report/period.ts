@@ -5,18 +5,23 @@ const DAY_MS = 86_400_000;
 /** The UTC day `days` after a `YYYY-MM-DD` day, as `toISOString` writes its first ten
  * characters: a day past four-digit years comes out in a shape no `YYYY-MM-DD` test accepts. */
 export function shiftDay(day: string, days: number): string {
-  return new Date(Date.parse(`${day}T00:00:00.000Z`) + days * DAY_MS).toISOString().slice(0, 10);
+  return utcDay(shifted(day, days));
+}
+
+function utcDay(at: Date): string {
+  return at.toISOString().slice(0, 10);
+}
+
+/** The instant `days` after a `YYYY-MM-DD` day: an invalid date past what a date can hold. */
+function shifted(day: string, days: number): Date {
+  return new Date(Date.parse(`${day}T00:00:00.000Z`) + days * DAY_MS);
 }
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
-/** More days than lie between 0000-01-01 and 9999-12-31: a shift past it never names a
- * four-digit day, and one far enough past it leaves what a date can hold. */
-const MAX_SHIFT = 3_652_425;
-
 /** The UTC day of an instant, `YYYY-MM-DD`. */
 export function dayOf(at: string): string {
-  return new Date(at).toISOString().slice(0, 10);
+  return utcDay(new Date(at));
 }
 
 export function inPeriod(at: string, period: Period): boolean {
@@ -27,9 +32,10 @@ export function inPeriod(at: string, period: Period): boolean {
 /** The day `days` after a `YYYY-MM-DD` day, or `null` past what four digits can name, the
  * end of what a date can hold included. */
 function shift(day: string, days: number): string | null {
-  if (Math.abs(days) > MAX_SHIFT) return null;
-  const shifted = shiftDay(day, days);
-  return DAY.test(shifted) ? shifted : null;
+  const at = shifted(day, days);
+  if (Number.isNaN(at.getTime())) return null;
+  const text = utcDay(at);
+  return DAY.test(text) ? text : null;
 }
 
 /** The days whose partitions can hold a call of the period, as a test on a `YYYY-MM-DD` day:
@@ -84,6 +90,7 @@ function calendarRange(asked: AskedPeriod): PeriodOutcome {
     }
   }
   const { from = null, to = null } = asked;
+  // A limit: `null > day` is false as well, so the null checks only narrow for the compiler.
   if (from !== null && to !== null && from > to) {
     return { ok: false, message: "--from is after --to." };
   }

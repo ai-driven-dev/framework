@@ -15,7 +15,7 @@ import type {
   TranscriptRead,
   TranscriptRequest,
 } from "../../ports/usage-source.js";
-import { modifiedAtIfPresent } from "../reading/text-file.js";
+import { isMissing, modifiedAtIfPresent } from "../reading/text-file.js";
 
 const NEWLINE = 0x0a;
 /** How far back from its end a skipped file is searched for its last complete line. */
@@ -24,24 +24,25 @@ const TAIL_BYTES = 1 << 16;
 export const NOWHERE: TranscriptPosition = { offset: 0, size: 0, identity: "" };
 
 function absentIsNothing(error: unknown): null {
-  if (isErrnoException(error) && error.code === "ENOENT") return null;
+  if (isMissing(error)) return null;
   throw error;
 }
 
 /** Device and inode name the file, not its path. Where the inode is not meaningful the birth
  * time stands in for it. */
-function identityOf(stats: Stats): string {
+export function identityOf(stats: Pick<Stats, "dev" | "ino" | "birthtimeMs">): string {
   return stats.ino === 0 ? `${stats.dev}:${stats.birthtimeMs}` : `${stats.dev}:${stats.ino}`;
 }
 
 /** The end of the file's last complete line, searched back from its end a block at a time. */
 export async function lastLineEnd(handle: FileHandle, size: number): Promise<number> {
-  for (let end = size; end > 0; end -= TAIL_BYTES) {
+  for (let end = size; end > 0; ) {
     const from = Math.max(0, end - TAIL_BYTES);
     const block = Buffer.alloc(end - from);
     const { bytesRead } = await handle.read(block, 0, block.length, from);
     const last = block.subarray(0, bytesRead).lastIndexOf(NEWLINE);
     if (last !== -1) return from + last + 1;
+    end = from;
   }
   return 0;
 }
@@ -63,36 +64,33 @@ export async function eachLine(
   each: EachTranscriptLine
 ): Promise<number> {
   const { from, countFrom, size, blockBytes } = range;
-  const block = Buffer.alloc(Math.min(blockBytes, Math.max(0, size - from)));
   const splitter = new LineSplitter(from, countFrom, each);
-  for (let at = from; at < size; ) {
-    const { bytesRead } = await handle.read(block, 0, Math.min(block.length, size - at), at);
-    // Shorter than it was when stat'd: the caller sees it and discards this read.
-    if (bytesRead === 0) break;
+  for (let at = from; ; ) {
+    const block = Buffer.alloc(Math.max(0, Math.min(blockBytes, size - at)));
+    const { bytesRead } = await handle.read(block, 0, block.length, at);
+    // A file shorter than when stat'd ends here too; the caller discards that read.
+    if (bytesRead === 0) return splitter.consumed;
     splitter.push(block.subarray(0, bytesRead));
     at += bytesRead;
   }
-  return splitter.consumed;
 }
 
 /** Why `path` could not be read, to be shown by name: the error code when it has one. */
 function unreadableBecause(path: string, error: unknown): string {
-  if (isErrnoException(error) && error.code !== undefined) return `${path}: ${error.code}`;
+  if (isErrnoException(error)) return `${path}: ${error.code}`;
   return `${path}: ${errorMessage(error)}`;
 }
 
-/** One directory unlisted is one subtree unread: the rest of the tree is still walked. */
 /** What a walk gathers: `TranscriptListing`, still being filled. */
 interface Found {
   readonly paths: string[];
   readonly unreadable: string[];
 }
 
+/** One directory unlisted is one subtree unread: the rest of the tree is still walked. */
 async function walk(dir: string, name: RegExp, found: Found): Promise<void> {
   const entries = await readdir(dir, { withFileTypes: true }).catch((error: unknown) => {
-    if (!isErrnoException(error) || error.code !== "ENOENT") {
-      found.unreadable.push(unreadableBecause(dir, error));
-    }
+    if (!isMissing(error)) found.unreadable.push(unreadableBecause(dir, error));
     return null;
   });
   if (entries === null) return;
