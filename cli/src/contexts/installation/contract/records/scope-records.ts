@@ -17,10 +17,8 @@ export type ToolRecord = Readonly<Record<string, unknown>>;
 /** Each tool's record in one scope. A tool without one is absent. */
 export type ToolRecords = Map<ToolId, ToolRecord>;
 
-/** One scope's records, handed over in the request by the caller that owns where they live:
- * installation rewrites them in step with the manifest and never reaches them itself. A v8
- * manifest is split before either call touches them, so its records are never read or written
- * over. Saving none removes what was kept. */
+/** One scope's records, kept where the caller that owns them says: installation rewrites them in
+ * step with the manifest and never reads their format. Saving none removes what was kept. */
 export interface ScopeRecords {
   loadRecords(): Promise<ToolRecords>;
   saveRecords(records: ToolRecords): Promise<void>;

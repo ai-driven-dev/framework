@@ -9,7 +9,7 @@ import { resolveRegisteredToolId } from "../../../shared/testing/registered-tool
 export function manifestFileDeps(
   recordDir: () => string,
   atomicWriter: AtomicWrite = atomicWriteFile
-): ManifestFileDeps & { readonly records: ReturnType<typeof registrationRecordStore> } {
+): ManifestFileDeps {
   const files = { atomicWriter, resolveToolId: resolveRegisteredToolId };
   return { ...files, records: registrationRecordStore(recordDir, files) };
 }

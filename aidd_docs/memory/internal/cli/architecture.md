@@ -34,7 +34,7 @@ flowchart LR
 | A module is shared only with callers in two contexts | one caller means the code belongs to it; `cli/tests/architecture/earned-sharing.arch.test.ts` |
 | The host record's shape lives in `host-registration/domain/`; the manifest stores it opaque | only host registration knows what the record means |
 | Owned files are regenerated, co-owned files are merged | `MergeStrategy` in `cli/src/shared/domain/merge.ts` |
-| The manifest reads v9, and v8 only to split it once | no migration chain: [`decisions/manifest-reads-v9-and-splits-v8.md`](decisions/manifest-reads-v9-and-splits-v8.md) |
+| The manifest reads v9, and v8 as v9 until its first save | no migration chain: [`decisions/manifest-reads-v9-and-splits-v8.md`](decisions/manifest-reads-v9-and-splits-v8.md) |
 | A build leaves `{{TOOLS}}` unresolved on copilot, an install resolves it to `.github/` | a build is location-independent; only an install knows the tool directory it writes into |
 | An install writes the plugin manifest the build synthesizes | `synthesizeManifest` is a per-tool member of the build contract, shared by most tools through `synthesizeSharedManifest`; Codex builds its own and the others declare none, so a manifest never names a component or a field the files do not match |
 | A tool that reads guidance only from AGENTS.md lists a plugin's rules there | `agents-rules-index.ts` owns one marked block beside the team's text, written by the Kimi install, both Codex routes (a project install lists `.codex/instructions/`, a machine-scope install lists `~/.codex/instructions/` in `~/.codex/AGENTS.md`) and both flat builds, refusing a block whose markers do not pair |
