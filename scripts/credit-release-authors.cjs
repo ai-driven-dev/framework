@@ -5,8 +5,7 @@
  * authors of the pull requests its own pull request supersedes. Also drops a merge commit's
  * duplicate line (see credit()).
  *
- * release-please's `include-commit-authors` is a no-op (googleapis/release-please#2761), and #2892
- * credits the commit author only, so co-authors and superseded pull requests stay this script's.
+ * release-please's `include-commit-authors` is a no-op (googleapis/release-please#2761).
  */
 
 const { execFileSync } = require("node:child_process");
