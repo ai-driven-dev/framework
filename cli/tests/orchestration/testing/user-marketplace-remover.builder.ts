@@ -1,6 +1,7 @@
 import {
   recordsOf,
   type registrationRecordRules,
+  userScopePluginFilesOf,
 } from "../../../src/composition/contexts/installation.js";
 import type { RegisteredCatalog } from "../../../src/composition/contexts/tools.js";
 import { quietUserScopeFilesSafeToDelete } from "../../../src/composition/orchestration/marketplace.js";
@@ -9,7 +10,6 @@ import { FindUserMarketplace } from "../../../src/contexts/distribution/applicat
 import { RemoveMarketplace } from "../../../src/contexts/distribution/application/remove/remove-marketplace.use-case.js";
 import type { MarketplaceRegistry } from "../../../src/contexts/distribution/ports/marketplace-registry.js";
 import { PurgeMarketplacePlugins } from "../../../src/contexts/installation/application/marketplace/purge-marketplace-plugins.use-case.js";
-import { UserScopePluginFiles } from "../../../src/contexts/installation/application/removal/user-scope-plugin-files.js";
 import type { ScopeRecords } from "../../../src/contexts/installation/contract/records/scope-records.js";
 import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
 import type { MarketplaceRemovalHost } from "../../../src/orchestration/marketplace/remove/purge-user-marketplace.use-case.js";
@@ -34,7 +34,7 @@ export function userMarketplaceRemover(
       purge: new PurgeMarketplacePlugins(
         {
           repo,
-          userScopePluginFiles: new UserScopePluginFiles(fs, quietUserScopeFilesSafeToDelete(fs)),
+          userScopePluginFiles: userScopePluginFilesOf(fs, quietUserScopeFilesSafeToDelete(fs)),
         },
         tools
       ),

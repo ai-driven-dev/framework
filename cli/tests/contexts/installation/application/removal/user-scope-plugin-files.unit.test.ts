@@ -21,10 +21,13 @@ describe("proving a user-scope plugin's files", () => {
   it("answers what the proof answers for this plugin, tool and home", async () => {
     const proof = new Map([["skills/x.md", "digest"]]);
     const seen: unknown[] = [];
-    const files = new UserScopePluginFiles(new InMemoryFileAdapter(), async (...args) => {
-      seen.push(args);
-      return proof;
-    });
+    const files = new UserScopePluginFiles(
+      { fs: new InMemoryFileAdapter(), platform: process.platform },
+      async (...args) => {
+        seen.push(args);
+        return proof;
+      }
+    );
 
     await expect(files.proven(plugin, tool, HOME)).resolves.toBe(proof);
     expect(seen).toEqual([[plugin, tool, HOME]]);
@@ -37,11 +40,14 @@ describe("deleting a user-scope plugin's files", () => {
     const target = join(tool.plugins()?.userPluginsBaseDir(homedir()) ?? "", "skills", "x.md");
     fs.setFile(target, "x");
 
-    await new UserScopePluginFiles(fs, async () => new Map()).remove(
-      new Map([["skills/x.md", "digest"]]),
-      tool,
-      { projectRoot: "/project", home: homedir(), plugin: plugin.name }
-    );
+    await new UserScopePluginFiles(
+      { fs, platform: process.platform },
+      async () => new Map()
+    ).remove(new Map([["skills/x.md", "digest"]]), tool, {
+      projectRoot: "/project",
+      home: homedir(),
+      plugin: plugin.name,
+    });
 
     expect(fs.has(target)).toBe(false);
   });
@@ -57,11 +63,14 @@ describe("deleting the files of a user-scope plugin whose tool lists its rules i
     const fs = new InMemoryFileAdapter({ [join(base, "AGENTS.md")]: listing }, [base]);
     fs.setFile(join(base, "instructions/aidd-context-1-x.md"), "x");
 
-    await new UserScopePluginFiles(fs, async () => new Map()).remove(
-      new Map([["instructions/aidd-context-1-x.md", "digest"]]),
-      codex,
-      { projectRoot: "/project", home: homedir(), plugin: plugin.name }
-    );
+    await new UserScopePluginFiles(
+      { fs, platform: process.platform },
+      async () => new Map()
+    ).remove(new Map([["instructions/aidd-context-1-x.md", "digest"]]), codex, {
+      projectRoot: "/project",
+      home: homedir(),
+      plugin: plugin.name,
+    });
 
     expect([
       fs.has(join(base, "instructions/aidd-context-1-x.md")),

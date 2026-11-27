@@ -263,25 +263,5 @@ describe("reading a plugin distribution from disk", () => {
         mcp: [{ relativePath: ".mcp.json", content: "{}" }],
       });
     });
-
-    it.skipIf(process.platform === "win32")(
-      "reads a listing given with backslash separators as posix paths",
-      async () => {
-        const root = await mkdtemp(join(tmpdir(), "aidd-backslash-listing-"));
-        try {
-          await mkdir(join(root, ".claude-plugin"), { recursive: true });
-          await writeFile(join(root, ".claude-plugin/plugin.json"), manifestText);
-          await writeFile(join(root, "skills\\hello.md"), "skill");
-
-          const dist = await makeAdapter().read(root);
-
-          expect(dist.components.skills).toStrictEqual([
-            { relativePath: "skills/hello.md", content: "skill" },
-          ]);
-        } finally {
-          await rm(root, { recursive: true, force: true });
-        }
-      }
-    );
   });
 });

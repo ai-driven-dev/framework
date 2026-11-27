@@ -7,7 +7,10 @@ import type { FileWriter } from "../../../../../shared/ports/file-writer.js";
 // biome-ignore lint/plugin: hands the profile to the plugin translation pipeline; it narrows when installation declares its own profile input
 import type { AiToolProfile } from "../../../../tools/contract/tool-profile.js";
 import type { InstalledPlugin } from "../../../domain/plugins/installed-plugin.js";
-import type { UserScopeFileGuard } from "../../../ports/plugin/user-plugin-materialization.js";
+import type {
+  UserHome,
+  UserScopeFileGuard,
+} from "../../../ports/plugin/user-plugin-materialization.js";
 import { assertUserRulesListable } from "../../materialize/listed-rules/list-user-rules.js";
 import { scopeBaseOf } from "../plugin-target-resolution.js";
 import { assertGlobalFilesWritable } from "./global-plugin-files.js";
@@ -16,6 +19,7 @@ import { assertGlobalFilesWritable } from "./global-plugin-files.js";
 export interface UserWriteProof {
   readonly fs: FileReader & FileWriter;
   readonly guard: UserScopeFileGuard;
+  readonly userHome: Pick<UserHome, "platform">;
 }
 
 /** The files one machine-scope plugin update is about to write. */
@@ -44,7 +48,8 @@ export async function assertUserPluginWritable(
       homedir: home,
       isWithinUserScope,
     });
-    await assertUserRulesListable(proof.fs, { tool, baseDir, home, plugin: plugin.name, files });
+    const reach = { fs: proof.fs, platform: proof.userHome.platform };
+    await assertUserRulesListable(reach, { tool, baseDir, home, plugin: plugin.name, files });
     return;
   }
   const baseDir = scopeBaseOf(tool, { scope: "user", projectRoot: "", homedir: () => home });

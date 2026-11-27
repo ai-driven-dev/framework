@@ -64,7 +64,7 @@ export class DiskSink implements PluginTreeSink {
   ): Promise<PluginWritten> {
     await this.validateSourceManifest(pluginSrc);
     const plugin = { name: pluginName, src: pluginSrc };
-    const canon = await readPluginCanon(this.deps.fs, plugin, this.deps.canonFormat);
+    const canon = await readPluginCanon(this.deps.fs, plugin, this.deps.canon);
     const manifest = t.mode === "flat" ? 0 : await this.writeManifest(t, canon, pluginSrc);
     const { files, hooks, mcp, warnings } = translate(canon, {
       kind: "build",

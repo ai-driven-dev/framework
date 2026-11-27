@@ -80,7 +80,7 @@ export function pluginMaterializerOf(deps: {
   return new PluginMaterializer({
     fs,
     guard,
-    homedir: builtDeps.homedir,
+    userHome: { dir: builtDeps.homedir, platform: builtDeps.platform },
     fetchLatest: latestDistributionOf(deps.loadDistribution, deps.globalCacheDir),
     rebuild: userPluginRebuildOf({ fs, builtDeps }),
   });

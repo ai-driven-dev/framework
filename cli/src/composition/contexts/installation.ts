@@ -47,6 +47,7 @@ import { UnlistProjectRules } from "../../contexts/installation/application/remo
 import { WriteProjectMcpRewrite } from "../../contexts/installation/application/removal/project/write-project-mcp-rewrite.use-case.js";
 import { RemoveProjectHooks } from "../../contexts/installation/application/removal/remove-project-hooks.use-case.js";
 import { RemoveProjectIntegration } from "../../contexts/installation/application/removal/remove-project-integration.use-case.js";
+import { UserScopePluginFiles } from "../../contexts/installation/application/removal/user-scope-plugin-files.js";
 import { AssertProjectHooksRemovable } from "../../contexts/installation/application/shared/assert-project-hooks-removable.use-case.js";
 import { AssertProjectHooksUnchanged } from "../../contexts/installation/application/shared/assert-project-hooks-unchanged.use-case.js";
 import { DetectPluginDrift } from "../../contexts/installation/application/shared/detect-plugin-drift.use-case.js";
@@ -60,6 +61,7 @@ import type { ProjectSetupState } from "../../contexts/installation/contract/pro
 import { AgentModelStoreAdapter } from "../../contexts/installation/infrastructure/agent-model-store-adapter.js";
 import type { AgentModelStore } from "../../contexts/installation/ports/agent-model-store.js";
 import type { ManifestRepository } from "../../contexts/installation/ports/manifest-repository.js";
+import type { UserScopePluginFileRemoval } from "../../contexts/installation/ports/user-scope/user-scope-plugin-files.js";
 import { recordClaimRules } from "../../contexts/machine-claims/application/record/record-claim-rules.js";
 import type { RecordClaimRules } from "../../contexts/machine-claims/contract/record-claim-rules.js";
 import type {
@@ -172,6 +174,14 @@ function projectHooksOf(fs: FileReader & FileWriter) {
 /** The project hooks materializer alone, for what places files and removes nothing. */
 export function projectHooksMaterializerOf(fs: FileReader & FileWriter): ProjectHooksMaterializer {
   return projectHooksOf(fs).materializer;
+}
+
+/** A user-scope plugin's files under the machine's home, deleted only where `proven` allows. */
+export function userScopePluginFilesOf(
+  fs: FileReader & FileWriter,
+  proven: UserScopePluginFileRemoval["proven"]
+): UserScopePluginFiles {
+  return new UserScopePluginFiles({ fs, platform: process.platform }, proven);
 }
 
 /** Takes a plugin's enabling entry out of a shared settings file, with the host-registration rules

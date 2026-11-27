@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   basename,
   dedupePathSegments,
+  homeNamed,
   isStrictlyWithin,
   isWithin,
   pathContainsOrEquals,
@@ -114,6 +115,12 @@ describe("spelling a relative path with forward slashes", () => {
 
   it("answers an empty string for the base itself", () => {
     expect(posixRelative("C:\\proj", "C:\\proj", "win32")).toBe("");
+  });
+});
+
+describe("naming a path from the home", () => {
+  it("names a directory below a Windows home the way a person writes it", () => {
+    expect(homeNamed("C:\\Users\\u", "C:\\Users\\u\\.codex", "win32")).toBe("~/.codex");
   });
 });
 

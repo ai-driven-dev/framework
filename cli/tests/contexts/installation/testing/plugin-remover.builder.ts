@@ -1,6 +1,7 @@
 import {
   recordsOf,
   type registrationRecordRules,
+  userScopePluginFilesOf,
 } from "../../../../src/composition/contexts/installation.js";
 import {
   lenientSourceReferences,
@@ -19,7 +20,6 @@ import { hostPortsOver } from "../../../../src/contexts/host-registration/applic
 import { WithdrawFromHost } from "../../../../src/contexts/host-registration/application/withdraw/withdraw-from-host.use-case.js";
 import { RemovePlugin as RemoveProjectPluginFiles } from "../../../../src/contexts/installation/application/removal/remove-plugin.use-case.js";
 import { RemoveUserPlugin } from "../../../../src/contexts/installation/application/removal/remove-user-plugin.use-case.js";
-import { UserScopePluginFiles } from "../../../../src/contexts/installation/application/removal/user-scope-plugin-files.js";
 import type { ScopeRecords } from "../../../../src/contexts/installation/contract/records/scope-records.js";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
 import type { InstallationMarketplaceRegistry } from "../../../../src/contexts/installation/ports/marketplace-sources.js";
@@ -115,7 +115,7 @@ export function userPluginRemover(
     {
       userRepo: parts.userManifestRepo,
       withdrawFromHost: claimedRefWithdrawal(withdrawing({ ...parts, logger }, fs)),
-      userScopePluginFiles: new UserScopePluginFiles(fs, (plugin, tool, home) =>
+      userScopePluginFiles: userScopePluginFilesOf(fs, (plugin, tool, home) =>
         userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
       ),
     },

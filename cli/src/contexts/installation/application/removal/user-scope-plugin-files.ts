@@ -5,14 +5,14 @@ import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { PluginPlacement } from "../../ports/tool-sections.js";
 import type { UserScopePluginFileRemoval } from "../../ports/user-scope/user-scope-plugin-files.js";
-import { syncUserRules } from "../materialize/listed-rules/list-user-rules.js";
+import { syncUserRules, type UserRulesReach } from "../materialize/listed-rules/list-user-rules.js";
 import { deletePluginFilesForTool } from "../plugin/files/delete-plugin-files.js";
 
 /** The files a user-scope plugin keeps under the OS home: which of them are safe to delete, and
  * their deletion. Nothing is deleted that `proven` did not first return. */
 export class UserScopePluginFiles implements UserScopePluginFileRemoval {
   constructor(
-    private readonly fs: FileReader & FileWriter,
+    private readonly reach: UserRulesReach<FileReader & FileWriter>,
     private readonly prove: UserScopePluginFileRemoval["proven"]
   ) {}
 
@@ -34,10 +34,10 @@ export class UserScopePluginFiles implements UserScopePluginFileRemoval {
   ): Promise<void> {
     await deletePluginFilesForTool(
       { files, scope: "user", tool, projectRoot, ownerScope: "user", homedir: () => home },
-      this.fs
+      this.reach.fs
     );
     const baseDir = tool.plugins()?.userPluginsBaseDir(home);
     if (baseDir == null) return;
-    await syncUserRules(this.fs, { tool, baseDir, home, plugin, files: [] });
+    await syncUserRules(this.reach, { tool, baseDir, home, plugin, files: [] });
   }
 }

@@ -18,7 +18,6 @@ import { RemoveProjectFiles } from "../../contexts/installation/application/remo
 import { RemoveToolFiles } from "../../contexts/installation/application/removal/project/remove-tool-files.use-case.js";
 import type { MachineStateGuards } from "../../contexts/installation/application/removal/purge-machine-state.js";
 import { PurgeMachineState } from "../../contexts/installation/application/removal/purge-machine-state.js";
-import { UserScopePluginFiles } from "../../contexts/installation/application/removal/user-scope-plugin-files.js";
 import { UninstallTools } from "../../contexts/installation/application/uninstall-tools.use-case.js";
 import { detachProjectClaims } from "../../contexts/machine-claims/application/removal/detach-project-claims.js";
 import { ResolvePurgeCandidate } from "../../contexts/machine-claims/application/resolve-purge-candidate.use-case.js";
@@ -35,7 +34,7 @@ import { PreviewProjectClean } from "../../orchestration/clean/preview-project-c
 import { RemoveProjectInOrder } from "../../orchestration/clean/remove-project-in-order.use-case.js";
 import { RemoveUserScope } from "../../orchestration/clean/remove-user-scope.use-case.js";
 import { UninstallProjectTools } from "../../orchestration/clean/uninstall-project-tools.use-case.js";
-import { type Installation, recordsOf } from "../contexts/installation.js";
+import { type Installation, recordsOf, userScopePluginFilesOf } from "../contexts/installation.js";
 import { machineOwnership, userScopeFilesSafeToDelete } from "../contexts/machine-claims.js";
 import type { Base } from "../shared.js";
 import { userConfigDir } from "../user-config-dir.js";
@@ -59,7 +58,7 @@ function wireCleanUserScope(
     claims: recordsOf(userManifestRepo),
     purgeMachineState: new PurgeMachineState({ fs, logger, guards }),
     homeDir: base.homedir,
-    userScopePluginFiles: new UserScopePluginFiles(fs, (plugin, tool, home) =>
+    userScopePluginFiles: userScopePluginFilesOf(fs, (plugin, tool, home) =>
       userScopeFilesSafeToDelete({ fs, logger, home }, plugin, tool)
     ),
   };

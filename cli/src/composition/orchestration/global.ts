@@ -152,7 +152,11 @@ function wireRestore(base: Base, installation: Installation, reportStatus: Repor
 function wireMachineScope({ base, marketplace, plugin }: GlobalParts) {
   const { logger, currentVersion, userManifestRepo, tools } = base;
   const installGlobalPlugins = new InstallGlobalPlugins(
-    new ListFrameworkPlugins(base.marketplaceRegistry, base.resolveMarketplaceUseCase),
+    new ListFrameworkPlugins(
+      base.marketplaceRegistry,
+      base.resolveMarketplaceUseCase,
+      process.platform
+    ),
     new InstallUserPlugins(
       { repo: userManifestRepo, materializer: plugin.userPluginFileUpdater, logger },
       tools

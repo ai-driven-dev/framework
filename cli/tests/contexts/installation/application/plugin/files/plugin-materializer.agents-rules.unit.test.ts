@@ -72,7 +72,7 @@ describe("planning a machine-scope plugin's files for a tool listing its rules i
     const materializer = new PluginMaterializer({
       fs,
       guard: userScopeFileGuard,
-      homedir: () => HOME,
+      userHome: { dir: () => HOME, platform: process.platform },
       fetchLatest: async () =>
         new PluginDistribution({
           manifest: { name: parsePluginName("aidd-craft"), version: "2.0.0" },
