@@ -38,7 +38,10 @@ export async function foreignUserScopeDir(lookup: {
 
 /** Whether the plugin's user-scope directory belongs to the machine's install of it. A tool that
  * installs per project has no such directory to share. */
-export function machineOwnsUserScopeDir(command: PlacePluginRequest, tool: AiToolProfile): boolean {
+export function machineOwnsUserScopeDir(
+  command: Pick<PlacePluginRequest, "dist" | "machine">,
+  tool: AiToolProfile
+): boolean {
   if (resolveScopeForInstall(tool) !== "user") return false;
   const pluginName = command.dist.manifest.name;
   return command.machine.getPlugins(tool.toolId).some((p) => p.name === pluginName);

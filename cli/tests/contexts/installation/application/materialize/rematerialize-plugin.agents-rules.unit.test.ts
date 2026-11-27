@@ -50,6 +50,7 @@ describe("registering a marketplace plugin again", () => {
         plugin: recorded,
         projectRoot: "/project",
         manifest,
+        machine: Manifest.create(),
       },
       { fs, ...builtPlacementOf(fs, fakeBuiltDeps()) }
     );

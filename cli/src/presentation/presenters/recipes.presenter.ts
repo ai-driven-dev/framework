@@ -1,5 +1,6 @@
 import path from "node:path";
 import type { ValidateRecipesResult } from "../../contexts/recipes/application/validate-recipes.use-case.js";
+import { posixRelative } from "../../shared/domain/paths.model.js";
 import { RecipeValidationFailedError } from "../presentation.error.js";
 
 function escapeCell(value: string | number): string {
@@ -9,7 +10,7 @@ function escapeCell(value: string | number): string {
 export function renderRecipeValidation(result: ValidateRecipesResult, projectRoot: string): string {
   if (result.findings.length === 0) return `PASS: ${result.fileCount} recipe(s) validated.`;
   const rows = result.findings.map((finding) => {
-    const relative = path.relative(projectRoot, finding.file).replaceAll(path.sep, "/");
+    const relative = posixRelative(projectRoot, finding.file, process.platform);
     const file =
       relative && !relative.startsWith("../") ? relative : finding.file.replaceAll(path.sep, "/");
     return `| ${[file, finding.line, finding.rule, finding.fix].map(escapeCell).join(" | ")} |`;

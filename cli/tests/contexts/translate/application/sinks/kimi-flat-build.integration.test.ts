@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createFrameworkBuildUseCase } from "../../../../../src/composition/contexts/translate.js";
+import { posixRelative } from "../../../../../src/shared/domain/paths.model.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/shared/infrastructure/asset-loader.js";
 import { FileAdapter } from "../../../../../src/shared/infrastructure/file-adapter.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
@@ -52,11 +53,7 @@ async function files(): Promise<string[]> {
   const entries = await readdir(out, { recursive: true, withFileTypes: true });
   return entries
     .filter((entry) => entry.isFile())
-    .map((entry) =>
-      join(entry.parentPath, entry.name)
-        .slice(out.length + 1)
-        .replaceAll("\\", "/")
-    )
+    .map((entry) => posixRelative(out, join(entry.parentPath, entry.name), process.platform))
     .sort();
 }
 

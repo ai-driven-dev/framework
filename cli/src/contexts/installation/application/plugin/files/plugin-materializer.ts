@@ -13,6 +13,7 @@ import { PLUGIN_CACHE_SUBDIR } from "../../../domain/project-layout.js";
 import type { LoadDistribution } from "../../../ports/plugin/load-plugin-distribution.js";
 import type {
   PlannedUserPluginFileUpdate,
+  UserHome,
   UserPluginMaterialization,
   UserPluginUpdateRequest,
   UserScopeFileGuard,
@@ -46,7 +47,7 @@ export function latestDistributionOf(
 export interface PluginMaterializerDeps {
   readonly fs: FileReader & FileWriter;
   readonly guard: UserScopeFileGuard;
-  readonly homedir: () => string;
+  readonly userHome: UserHome;
   readonly fetchLatest: FetchLatestDistribution;
   readonly rebuild: RebuildUserPluginFiles;
 }
@@ -77,7 +78,7 @@ export class PluginMaterializer implements UserPluginMaterialization {
       marketplace,
       projectRoot,
     });
-    const home = this.deps.homedir();
+    const home = this.deps.userHome.dir();
     const baseDir = scopeBaseOf(tool, { scope: "user", projectRoot, homedir: () => home });
     const { present, oldSafe } = await this.recordedSafeFiles(plugin, tool, {
       logger,
@@ -125,7 +126,8 @@ export class PluginMaterializer implements UserPluginMaterialization {
       isWithinUserScope: request.isWithinUserScope,
     });
     await writePluginFiles([...files], baseDir, this.deps.fs);
-    await syncUserRules(this.deps.fs, { tool, baseDir, home, plugin: plugin.name, files });
+    const reach = { fs: this.deps.fs, platform: this.deps.userHome.platform };
+    await syncUserRules(reach, { tool, baseDir, home, plugin: plugin.name, files });
     const newPaths = new Set(files.map((file) => file.relativePath));
     await deleteOldFiles(
       new Map([...plan.oldSafe].filter(([path]) => !newPaths.has(path))),

@@ -12,11 +12,10 @@ const AGENTS = `${BASE}/AGENTS.md`;
 const GLOB = "- `~/.codex/instructions/aidd-craft-*.md`";
 const RULES = ["instructions/aidd-craft-1-naming.md", "agents/aidd-craft-planner.toml"];
 
-function listing(files: readonly string[]) {
+function listing(files: readonly string[], at = { home: HOME, baseDir: BASE }) {
   return {
     tool: registeredTools().aiProfile(TOOL.codex),
-    baseDir: BASE,
-    home: HOME,
+    ...at,
     plugin: "aidd-craft",
     files: files.map((relativePath) => ({ relativePath })),
   };
@@ -26,7 +25,7 @@ describe("listing the rules a machine-scope plugin holds", () => {
   it("lists them in the user's AGENTS.md by their path from the home, after the person's own text", async () => {
     const fs = new InMemoryFileAdapter({ [AGENTS]: "# Mine\n" }, [BASE]);
 
-    await syncUserRules(fs, listing(RULES));
+    await syncUserRules({ fs, platform: "linux" }, listing(RULES));
 
     expect(fs.getFile(AGENTS)).toMatch(/^# Mine\n\n<!-- aidd_plugin_rules:start -->/);
     expect(fs.getFile(AGENTS)).toContain(GLOB);
@@ -34,9 +33,9 @@ describe("listing the rules a machine-scope plugin holds", () => {
 
   it("takes the listing out once the plugin holds no rule, the file going when nothing else was in it", async () => {
     const fs = new InMemoryFileAdapter({}, [BASE]);
-    await syncUserRules(fs, listing(RULES));
+    await syncUserRules({ fs, platform: "linux" }, listing(RULES));
 
-    await syncUserRules(fs, listing(["agents/aidd-craft-planner.toml"]));
+    await syncUserRules({ fs, platform: "linux" }, listing(["agents/aidd-craft-planner.toml"]));
 
     expect(fs.has(AGENTS)).toBe(false);
   });
@@ -44,7 +43,7 @@ describe("listing the rules a machine-scope plugin holds", () => {
   it("leaves a plugin that holds none, in a file it never listed, alone", async () => {
     const fs = new InMemoryFileAdapter({}, [BASE]);
 
-    await syncUserRules(fs, listing(["agents/aidd-craft-planner.toml"]));
+    await syncUserRules({ fs, platform: "linux" }, listing(["agents/aidd-craft-planner.toml"]));
 
     expect(fs.has(AGENTS)).toBe(false);
   });
@@ -53,7 +52,18 @@ describe("listing the rules a machine-scope plugin holds", () => {
     const broken = "<!-- aidd_plugin_rules:start -->\nhand edit\n";
     const fs = new InMemoryFileAdapter({ [AGENTS]: broken }, [BASE]);
 
-    await expect(assertUserRulesListable(fs, listing(RULES))).rejects.toThrow(/repair/);
+    await expect(
+      assertUserRulesListable({ fs, platform: "linux" }, listing(RULES))
+    ).rejects.toThrow(/repair/);
     expect(fs.getFile(AGENTS)).toBe(broken);
+  });
+
+  it("names them from a Windows home with forward slashes", async () => {
+    const at = { home: "C:\\Users\\u", baseDir: "C:\\Users\\u\\.codex" };
+    const fs = new InMemoryFileAdapter({}, ["C:/Users/u/.codex"]);
+
+    await syncUserRules({ fs, platform: "win32" }, listing(RULES, at));
+
+    expect(fs.getFile("C:/Users/u/.codex/AGENTS.md")).toContain(GLOB);
   });
 });

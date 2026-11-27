@@ -11,14 +11,15 @@ import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.j
 import { InMemoryManifestRepository } from "../../../shared/testing/in-memory-manifest-repository.fake.js";
 import { FakeUserPluginMaterialization } from "./fake-user-plugin-materialization.fake.js";
 
-/** An update of a project's plugins; the machine half is never reached. */
+/** An update of a project's plugins; the machine's manifest is only read. */
 export function buildProjectPluginUpdate(
   deps: UpdateProjectPluginsDeps,
-  tools: RegisteredCatalog
+  tools: RegisteredCatalog,
+  userManifest: UpdatePluginDeps["userManifest"] = new InMemoryManifestRepository()
 ): UpdatePlugin {
   return new UpdatePlugin(
     {
-      userManifest: new InMemoryManifestRepository(),
+      userManifest,
       updateProject: new UpdateProjectPlugins(deps, tools),
       materializer: new FakeUserPluginMaterialization(),
       logger: new CapturingLogger(),

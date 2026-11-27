@@ -1,6 +1,6 @@
 import { mkdir, mkdtemp, readdir, readFile, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { basename, join, relative, sep } from "node:path";
+import { basename, join } from "node:path";
 import { afterAll, afterEach, beforeAll, describe, it, vi } from "vitest";
 import { containerFactory } from "../../../src/composition/container.js";
 import { createFrameworkBuildUseCase } from "../../../src/composition/contexts/translate.js";
@@ -17,6 +17,7 @@ import type { HooksDescriptor } from "../../../src/contexts/tools/domain/formats
 import { defineAiTool } from "../../../src/contexts/tools/domain/profile/define-tool.js";
 import { SmolTomlCodec } from "../../../src/contexts/tools/infrastructure/smol-toml-codec.adapter.js";
 import { render } from "../../../src/presentation/errors/error-translator.presenter.js";
+import { posixRelative } from "../../../src/shared/domain/paths.model.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { expectGolden } from "../../golden/testing/expect-golden.builder.js";
 import { catalogOf } from "../../shared/testing/catalog-of.builder.js";
@@ -196,7 +197,7 @@ async function sourceHookScripts(): Promise<Map<string, string>> {
   for (const plugin of PLUGINS) {
     const dir = join(REPOSITORY_ROOT, "plugins", plugin, "hooks");
     for (const file of await walk(dir)) {
-      const key = `${plugin}/${relative(dir, file).split(sep).join("/")}`;
+      const key = `${plugin}/${posixRelative(dir, file, process.platform)}`;
       scripts.set(key, await readFile(file, "utf8"));
     }
   }
@@ -293,10 +294,10 @@ async function describeHookFiles(ws: Workspace, bases: readonly string[]): Promi
   const sources = { scripts: await sourceHookScripts(), adapters: await hostAdapters() };
   const sections: string[] = [];
   for (const base of bases) {
-    const label = relative(ws.root, base).split(sep).join("/");
+    const label = posixRelative(ws.root, base, process.platform);
     const found = (await walk(base)).map((file) => ({
       file,
-      rel: relative(base, file).split(sep).join("/"),
+      rel: posixRelative(base, file, process.platform),
     }));
     const hookFiles = found.sort(byRelativePath).filter(({ rel }) => isHookFile(rel));
     for (const { file, rel } of hookFiles) {
@@ -324,7 +325,7 @@ function recordedPluginLines(
     .sort();
   const projectHooks = JSON.stringify(recorded.provenance.projectHooks ?? null, null, 2);
   const dependents = dependentsRecorded(registrations, plugin.name).map(
-    (dependent) => `<root>/${relative(ws.root, dependent).split(sep).join("/")}`
+    (dependent) => `<root>/${posixRelative(ws.root, dependent, process.platform)}`
   );
   return [
     `${header.scope} ${header.toolId} ${plugin.name} scope=${plugin.scope}: ${hookFiles.length} hook files`,

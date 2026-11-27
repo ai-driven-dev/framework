@@ -16,13 +16,14 @@ export function aDiskSink(
   validator: JsonSchemaValidator,
   assetProvider: AssetProvider,
   logger: Logger,
-  schemaProvider: SchemaProvider = openSchemas
+  schemaProvider: SchemaProvider = openSchemas,
+  platform: string = process.platform
 ): DiskSink {
   return new DiskSink({
     fs,
     schemaCheck: new SchemaChecker(validator, schemaProvider),
     logger,
     flat: new FlatWriter(fs, assetProvider, logger),
-    canonFormat: TOOL.claude,
+    canon: { format: TOOL.claude, platform },
   });
 }

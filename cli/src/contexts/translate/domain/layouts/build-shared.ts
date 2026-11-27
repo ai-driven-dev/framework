@@ -13,6 +13,7 @@ import {
   PLUGIN_HOOKS_RELATIVE,
   PLUGIN_SKILL_ENTRY_FILE,
 } from "../canon-format.js";
+import type { ComponentPlan } from "../rules/component-pipeline.js";
 
 export const isEntry = (relativePath: string): boolean =>
   basename(relativePath) === PLUGIN_SKILL_ENTRY_FILE;
@@ -39,4 +40,22 @@ export function hooksPath(
   return relativePath === PLUGIN_HOOKS_RELATIVE
     ? artifactPath(artifact, plugin, relativePath)
     : relativePath;
+}
+
+/** A file below `hooks/` as the tool's marketplace build writes it: the manifest through the
+ * tool's conversion, with what that conversion warns of, any other JSON file reshaped. */
+export function convertedHooksFile(
+  artifact: SupportedArtifact,
+  { relativePath, content }: PluginComponentFile,
+  { plugin, carriesRelease }: { readonly plugin: string; readonly carriesRelease: boolean }
+): Pick<ComponentPlan, "content" | "shape"> & { readonly warnings: readonly string[] } {
+  const { convertHooks, transform } = artifact;
+  if (relativePath === PLUGIN_HOOKS_RELATIVE && convertHooks !== undefined) {
+    return convertHooks(content, plugin, carriesRelease);
+  }
+  const shape =
+    transform !== undefined && relativePath.endsWith(".json")
+      ? (text: string) => transform(text, plugin, basename(relativePath))
+      : undefined;
+  return { content, shape, warnings: [] };
 }

@@ -17,9 +17,10 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, relative } from "node:path";
+import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { kiro } from "../../../../../../src/composition/tool-profiles/kiro.js";
+import { posixRelative } from "../../../../../../src/shared/domain/paths.model.js";
 import { REPOSITORY_ROOT } from "../../../../../shared/testing/repository-root.builder.js";
 import { sample } from "../../../testing/hooks-runtime-host.builder.js";
 import { flatOf } from "../../../testing/plugin-mode.builder.js";
@@ -47,7 +48,7 @@ describe("the memory hook under Kiro", () => {
     format: NonNullable<ReturnType<typeof kiro.projectHooksDelivery>>["format"],
     source: string
   ): void {
-    const pluginPath = `hooks/${relative(PLUGIN_HOOKS, source).split("\\").join("/")}`;
+    const pluginPath = `hooks/${posixRelative(PLUGIN_HOOKS, source, process.platform)}`;
     if (pluginPath === "hooks/hooks.json") return;
     const dest = join(base, format.scriptPath(PLUGIN, pluginPath));
     mkdirSync(dirname(dest), { recursive: true });

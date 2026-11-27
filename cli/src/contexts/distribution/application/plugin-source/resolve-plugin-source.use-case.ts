@@ -16,7 +16,8 @@ export interface ResolvePluginSourceRequest {
 export class ResolvePluginSource {
   constructor(
     private readonly registry: MarketplaceRegistry,
-    private readonly resolveMarketplace: Pick<ResolveMarketplace, "execute">
+    private readonly resolveMarketplace: Pick<ResolveMarketplace, "execute">,
+    private readonly platform: string
   ) {}
 
   async execute(command: ResolvePluginSourceRequest): Promise<PluginSourceMatch[]> {
@@ -43,6 +44,8 @@ export class ResolvePluginSource {
     if (!catalog) return [];
     return catalog.plugins
       .filter((entry) => entry.name === command.pluginName)
-      .map((entry) => pluginSourceMatch(marketplace, localPath, entry));
+      .map((entry) =>
+        pluginSourceMatch(marketplace, { path: localPath, platform: this.platform }, entry)
+      );
   }
 }

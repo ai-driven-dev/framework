@@ -26,7 +26,7 @@ export function installPlan(
   const { tool, manifestPaths } = target;
   const plugins = tool.plugins();
   if (plugins?.kind === "native") {
-    return { ...none, skipped: [], ...nativeInstallPlan(dist, { tool, plugins, manifestPaths }) };
+    return { ...none, ...nativeInstallPlan(dist, { tool, plugins, manifestPaths }) };
   }
   if (plugins?.kind === "flat") {
     return {

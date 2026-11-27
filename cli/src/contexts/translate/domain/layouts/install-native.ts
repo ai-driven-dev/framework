@@ -5,7 +5,8 @@ import type {
   PluginComponentFile,
   PluginDistribution,
 } from "../../../../shared/domain/plugin/plugin-distribution.js";
-import { isComponentFile, isProse, PLUGIN_HOOKS_DIR } from "../plugin-paths.js";
+import type { ReadonlySkipList } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
+import { isComponentFile, isProse } from "../plugin-paths.js";
 import { namedByPlugin } from "../rules/agent-markdown.js";
 import type { ComponentPlan } from "../rules/component-pipeline.js";
 import { chainLinks, relativeLinks, toolLinks } from "../rules/links.js";
@@ -13,7 +14,7 @@ import type { TranslatedAiTool, TranslatedNativePlugin } from "../translate-prof
 import { flatRulePlan } from "./build-flat-rules.js";
 import { marketplaceAgentPlan } from "./build-layout.js";
 import { isEntry } from "./build-shared.js";
-import { hooksTrustNotices, manifestPlan, nativeHooksPlan } from "./install-native-hooks.js";
+import { hooksTrustNotices, manifestPlan, nativeHooksPlans } from "./install-native-hooks.js";
 
 interface NativeTarget {
   readonly tool: TranslatedAiTool;
@@ -27,6 +28,7 @@ export function nativeInstallPlan(
 ): {
   plans: ComponentPlan[];
   componentPaths: ReadonlyMap<string, string>;
+  skipped: ReadonlySkipList;
   notices: ReadonlyNoticeList;
 } {
   const { tool, plugins, manifestPaths } = target;
@@ -38,25 +40,24 @@ export function nativeInstallPlan(
     pluginName: dist.manifest.name,
     carriesRelease: carriesRelease(dist.manifest.name, dist.components.hooks),
   };
-  const plans = dist.files.flatMap((file) => nativeFilePlan(file, at) ?? []);
+  const { plans: hookPlans, skipped } = nativeHooksPlans(dist.files, at);
+  const plans = [...dist.files.flatMap((file) => nativeFilePlan(file, at) ?? []), ...hookPlans];
   const manifest = manifestPlan(dist, { tool, plugins, pluginRoot, manifestPaths });
   if (manifest !== null) plans.push(manifest);
   const componentPaths = new Map(
     plans.filter((plan) => isComponentFile(plan.source)).map((plan) => [plan.path, plan.source])
   );
-  return { plans, componentPaths, notices: hooksTrustNotices(dist, { tool, plugins }) };
+  return { plans, componentPaths, skipped, notices: hooksTrustNotices(dist, { tool, plugins }) };
 }
 
 interface NativeAt extends NativeTarget {
   readonly pluginRoot: string;
   readonly pluginName: string;
-  readonly carriesRelease: boolean;
 }
 
 function nativeFilePlan(file: PluginComponentFile, at: NativeAt): ComponentPlan | null {
   const { source, top } = { source: file.relativePath, top: file.relativePath.split("/")[0] };
   if (source === ".mcp.json") return mcpPlan(file, at);
-  if (top === PLUGIN_HOOKS_DIR) return nativeHooksPlan(file, at);
   if (top === "rules") return stagedRulePlan(file, at) ?? markdownPlan(file, top, at);
   if (top === "commands" || top === "agents") return markdownPlan(file, top, at);
   return top === "skills" ? skillPlan(file, at) : null;

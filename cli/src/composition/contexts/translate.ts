@@ -45,7 +45,7 @@ export function createFrameworkBuildUseCase(
     ),
     logger: deps.logger,
     flat: new FlatWriter(deps.fs, deps.assetProvider, deps.logger),
-    canonFormat,
+    canon: { format: canonFormat, platform: process.platform },
   });
   return new BuildNativeTree({
     fs: deps.fs,

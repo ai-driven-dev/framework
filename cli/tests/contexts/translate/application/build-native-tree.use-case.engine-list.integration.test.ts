@@ -7,6 +7,7 @@ import type { OutputFile } from "../../../../src/contexts/translate/domain/outpu
 import { BundledSchemaProviderAdapter } from "../../../../src/contexts/translate/infrastructure/schema-provider.js";
 import { AjvSchemaValidatorAdapter } from "../../../../src/contexts/translate/infrastructure/schema-validator.js";
 import type { ToolBuildContract } from "../../../../src/shared/domain/materialization/build-contract.js";
+import { posixRelative } from "../../../../src/shared/domain/paths.model.js";
 import { BundledAssetProviderAdapter } from "../../../../src/shared/infrastructure/asset-loader.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -98,10 +99,9 @@ describe("the engine's file list against what a build writes", () => {
       if (contract === null) throw new Error(`no ${mode} contract for ${target}`);
       const built = await build(seeded, target, mode);
       const listed = new Set(listedBy(seeded, contract, mode).map((file) => file.relativePath));
-      const prefix = `${OUT}/`;
       const unlisted = built
         .listUnder(OUT)
-        .map((path) => path.replaceAll("\\", "/").slice(prefix.length))
+        .map((path) => posixRelative(OUT, path, process.platform))
         .filter((path) => !listed.has(path))
         .sort();
 

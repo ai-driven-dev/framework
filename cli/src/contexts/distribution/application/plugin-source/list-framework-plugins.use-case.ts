@@ -14,7 +14,8 @@ export interface ListFrameworkPluginsRequest {
 export class ListFrameworkPlugins {
   constructor(
     private readonly registry: Pick<MarketplaceRegistry, "list">,
-    private readonly resolveMarketplace: Pick<ResolveMarketplace, "execute">
+    private readonly resolveMarketplace: Pick<ResolveMarketplace, "execute">,
+    private readonly platform: string
   ) {}
 
   async execute(command: ListFrameworkPluginsRequest): Promise<PluginSourceMatch[]> {
@@ -31,7 +32,7 @@ export class ListFrameworkPlugins {
       projectRoot: command.projectRoot,
     });
     return (catalog?.plugins ?? []).map((entry) =>
-      pluginSourceMatch(marketplace, localPath, entry)
+      pluginSourceMatch(marketplace, { path: localPath, platform: this.platform }, entry)
     );
   }
 }

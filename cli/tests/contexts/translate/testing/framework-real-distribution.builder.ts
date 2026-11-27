@@ -1,4 +1,5 @@
 import { join, resolve } from "node:path";
+import { posixRelative } from "../../../../src/shared/domain/paths.model.js";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { parsePluginName } from "../../../../src/shared/domain/plugin/plugin-name.js";
 import type { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
@@ -28,7 +29,7 @@ export function distributionOf(
 ): PluginDistribution {
   const root = join(FRAMEWORK_SOURCE, "plugins", name);
   const files = tree.listUnder(root).map((path) => ({
-    relativePath: path.slice(root.length + 1).replaceAll("\\", "/"),
+    relativePath: posixRelative(root, path, process.platform),
     content: fileAt(tree, path),
   }));
   for (const f of files)

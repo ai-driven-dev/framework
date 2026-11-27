@@ -101,6 +101,22 @@ function wireToolLifecycle({ base, installation, marketplace, plugin }: GlobalPa
   return { installAiToolWithPlugins, installIdeTool, setupToolsUseCase, updateTools };
 }
 
+/** Restoring every plugin a project recorded, leaving a user directory the machine owns as found. */
+function restoreAllPluginsOf(base: Base, installation: Installation): RestoreAllPlugins {
+  const { fs, tools } = base;
+  return new RestoreAllPlugins(
+    {
+      applyPluginFiles: new ApplyPluginFiles({
+        fs,
+        loadDistribution: base.loadDistribution,
+        ...builtPlacementOf(fs, installation.builtMaterializationDeps),
+      }),
+      machineManifest: base.userManifestRepo,
+    },
+    tools
+  );
+}
+
 /** Restoring a project from its manifest, one tool or all of them. */
 function wireRestore(base: Base, installation: Installation, reportStatus: ReportStatus) {
   const { fs, prompter, logger, manifestRepo, currentVersion, platform, tools } = base;
@@ -118,14 +134,7 @@ function wireRestore(base: Base, installation: Installation, reportStatus: Repor
     },
     tools
   );
-  const restoreAllPlugins = new RestoreAllPlugins(
-    new ApplyPluginFiles({
-      fs,
-      loadDistribution: base.loadDistribution,
-      ...builtPlacementOf(fs, installation.builtMaterializationDeps),
-    }),
-    tools
-  );
+  const restoreAllPlugins = restoreAllPluginsOf(base, installation);
   const restoreUseCase = new Restore(
     { fs, manifestRepo, restoreToolFiles, restoreAllPlugins },
     tools
@@ -143,7 +152,11 @@ function wireRestore(base: Base, installation: Installation, reportStatus: Repor
 function wireMachineScope({ base, marketplace, plugin }: GlobalParts) {
   const { logger, currentVersion, userManifestRepo, tools } = base;
   const installGlobalPlugins = new InstallGlobalPlugins(
-    new ListFrameworkPlugins(base.marketplaceRegistry, base.resolveMarketplaceUseCase),
+    new ListFrameworkPlugins(
+      base.marketplaceRegistry,
+      base.resolveMarketplaceUseCase,
+      process.platform
+    ),
     new InstallUserPlugins(
       { repo: userManifestRepo, materializer: plugin.userPluginFileUpdater, logger },
       tools
