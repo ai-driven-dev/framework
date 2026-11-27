@@ -108,6 +108,9 @@ export interface EnabledPluginsSection {
 
 export type ProjectPluginIntegration = PluginPlacement & ProjectHooksSection & FlatMcpSection;
 
+export type ReportedTool = ToolFootprint &
+  ({ readonly kind: "ide" } | ({ readonly kind: "ai" } & ProjectHooksSection));
+
 export type RestoredIdeTool = { readonly kind: "ide" } & ConfigWritesSection;
 
 export type RestoredAiTool = { readonly kind: "ai" } & ConfigWritesSection & ConfigFilesSection;

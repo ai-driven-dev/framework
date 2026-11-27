@@ -3,8 +3,9 @@ import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import { ToolNotInstalledError } from "../contract/installation.error.js";
 import type { Manifest } from "../domain/manifest.js";
+import { recordedHooksLocation } from "../domain/project-hooks.model.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
-import type { ToolFootprint } from "../ports/tool-sections.js";
+import type { ReportedTool } from "../ports/tool-sections.js";
 import type { DetectPluginDrift } from "./shared/detect-plugin-drift.use-case.js";
 import { requireManifest } from "./shared/require-manifest.js";
 import {
@@ -106,8 +107,17 @@ export class ReportStatus implements StatusQuery {
     return tools;
   }
 
+  /** The hooks file a plugin of the tool merged its entries into, which is no user addition. */
+  private mergedHooksFile(tool: ReportedTool, manifest: Manifest): string | undefined {
+    if (tool.kind !== "ai") return undefined;
+    const merged = manifest
+      .getRecordedPlugins(tool.toolId)
+      .some((p) => (p.provenance.projectHooks?.entries.length ?? 0) > 0);
+    return merged ? recordedHooksLocation(tool)?.relativePath : undefined;
+  }
+
   private async checkOneTool(
-    tool: ToolFootprint,
+    tool: ReportedTool,
     manifest: Manifest,
     projectRoot: string
   ): Promise<ToolStatus> {
@@ -116,12 +126,14 @@ export class ReportStatus implements StatusQuery {
     const trackedFiles = manifest.getToolFiles(toolId);
     const mergeFiles = manifest.getMergeFiles(toolId);
     const { fs } = this.deps;
+    const hooksFile = this.mergedHooksFile(tool, manifest);
     const drifted = [
       ...(await trackedFileDrift(fs, trackedFiles, projectRoot)),
       ...(await mergeFileDrift(fs, mergeFiles, projectRoot)),
       ...(await addedFileDrift(fs, {
         directory: tool.directory,
-        isTracked: (relativePath) => manifest.isFileTracked(relativePath),
+        isTracked: (relativePath) =>
+          relativePath === hooksFile || manifest.isFileTracked(relativePath),
         projectRoot,
         machineLocal: tool.machineLocalFiles(),
       })),
