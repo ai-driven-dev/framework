@@ -816,6 +816,20 @@
         }
       ]
     },
+    "clone-with-a-fractional-birth-time-damages": {
+      "lines": [
+        {
+          "token": "t1",
+          "clone": {
+            "path": "/work/a/.git",
+            "dev": "16777231",
+            "ino": "8",
+            "birthtimeMs": 1760000000000.5
+          },
+          "open": "2026-10-09T09:00:00.000Z"
+        }
+      ]
+    },
     "close-with-an-unreadable-time-damages": {
       "lines": [
         {

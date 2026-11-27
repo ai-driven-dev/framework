@@ -50,7 +50,7 @@ function parseClone(value) {
   if (!isObject(value)) return null;
   const { path: clonePath, dev, ino, birthtimeMs } = value;
   if (!nonEmpty(clonePath) || !nonEmpty(dev) || !nonEmpty(ino) || ino === "0") return null;
-  if (typeof birthtimeMs !== "number" || !Number.isFinite(birthtimeMs) || birthtimeMs < 0) return null;
+  if (!Number.isInteger(birthtimeMs) || birthtimeMs < 0) return null;
   return { path: clonePath, identity: { dev, ino, birthtimeMs } };
 }
 
