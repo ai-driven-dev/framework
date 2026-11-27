@@ -27,11 +27,19 @@ export async function foreignUserScopeDir(lookup: {
   readonly homedir: () => string;
 }): Promise<string | undefined> {
   const { fs, command, tool, homedir } = lookup;
-  const { projectRoot, machine } = command;
+  const { projectRoot } = command;
   const pluginName = command.dist.manifest.name;
   if (resolveScopeForInstall(tool) !== "user") return undefined;
-  if (machine.getPlugins(tool.toolId).some((p) => p.name === pluginName)) return undefined;
+  if (machineOwnsUserScopeDir(command, tool)) return undefined;
   const dir = join(scopeBaseOf(tool, { scope: "user", projectRoot, homedir }), pluginName);
   const present = await fs.listFilesRecursive(dir);
   return present.length > 0 ? dir : undefined;
+}
+
+/** Whether the plugin's user-scope directory belongs to the machine's install of it. A tool that
+ * installs per project has no such directory to share. */
+export function machineOwnsUserScopeDir(command: PlacePluginRequest, tool: AiToolProfile): boolean {
+  if (resolveScopeForInstall(tool) !== "user") return false;
+  const pluginName = command.dist.manifest.name;
+  return command.machine.getPlugins(tool.toolId).some((p) => p.name === pluginName);
 }
