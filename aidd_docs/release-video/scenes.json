@@ -803,47 +803,47 @@
       {
         "surface": "aidd setup",
         "theme": "Outils",
-        "text": "Installer AIDD dans 9 outils d'IA, Kiro et Kimi compris."
+        "text": "Utiliser AIDD dans 9 outils d'IA, Kiro et Kimi compris."
       },
       {
-        "surface": "aidd setup",
+        "surface": "hooks des plugins AIDD",
         "theme": "Contrôle",
-        "text": "Bloquer, informer ou exiger : les hooks font corriger l'IA d'elle-même."
+        "text": "Laisser des contrôles automatiques bloquer, signaler et faire corriger l'IA pendant qu'elle travaille."
       },
       {
         "surface": "aidd setup --provider",
         "theme": "Modèles",
-        "text": "Choisir les modèles de la session principale et des sous-agents : Mistral, OpenAI ou Anthropic."
+        "text": "Choisir chez quel fournisseur tournent la session principale et les sous-agents."
       },
       {
         "surface": "aidd-pm:04-spec",
         "theme": "Contrôle",
-        "text": "Écrire une spec courte, verrouillée dès qu'elle est approuvée."
+        "text": "Garder une spec courte, verrouillée dès qu'elle est approuvée."
       },
       {
         "surface": "aidd-refine:02-challenge",
         "theme": "Contrôle",
-        "text": "Mettre une spec à l'épreuve, ligne par ligne, chaque constat avec sa preuve."
+        "text": "Mettre une spec à l'épreuve, chaque constat avec sa preuve."
       },
       {
         "surface": "aidd-refine:03-shadow-areas",
         "theme": "Contrôle",
-        "text": "Trouver ce qu'une story laisse dans l'ombre, question par question."
+        "text": "Voir ce qu'une story laisse flou, sous forme de questions simples."
       },
       {
         "surface": "aidd-vcs:06-answer-comments",
         "theme": "Contrôle",
-        "text": "Répondre à chaque commentaire de revue et garder pour vous les seules décisions."
+        "text": "Faire répondre l'IA à chaque commentaire de revue et ne garder que vos décisions."
       },
       {
-        "surface": "aidd-ui:06-review",
+        "surface": "aidd-ui:01-journeys → 06-review",
         "theme": "Design",
         "text": "Créer votre design system, de la marque aux écrans revus, en bêta."
       },
       {
-        "surface": "aidd",
+        "surface": "CLI aidd",
         "theme": "Outils",
-        "text": "Reconstruire la CLI sur une architecture propre, en 10 contextes bornés, avec sa stratégie de test."
+        "text": "Profiter d'une CLI reconstruite pour la fiabilité, testée à chaque niveau."
       }
     ]
   }

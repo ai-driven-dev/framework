@@ -87,6 +87,22 @@ test("the video opens on the thumbnail for one frame, so a chat shows it as the 
   assert.equal(args[args.indexOf("-maxrate") + 1], "1083k");
 });
 
+test("a long video is encoded at the bitrate that keeps it under the Discord upload cap, sound included", () => {
+  const args = posterArgs({ video: "v.mp4", poster: "t.png", out: "o.mp4", bitrate: 1140000, duration: 102 });
+  const kbps = Number(args[args.indexOf("-b:v") + 1].replace("k", ""));
+  const audio = Number(args[args.indexOf("-b:a") + 1].replace("k", ""));
+  const maxrate = Number(args[args.indexOf("-maxrate") + 1].replace("k", ""));
+
+  assert.ok(((kbps + audio) * 1000 * 102) / 8 <= 9 * 1024 * 1024, `${kbps}k video and ${audio}k sound for 102 s`);
+  assert.ok(maxrate <= kbps * 1.25);
+});
+
+test("a short video keeps its own bitrate when it already fits", () => {
+  const args = posterArgs({ video: "v.mp4", poster: "t.png", out: "o.mp4", bitrate: 866446, duration: 30 });
+
+  assert.equal(args[args.indexOf("-b:v") + 1], "866k");
+});
+
 test("a scene's note appears after its last row, not with its window", () => {
   const html = buildHtml(plan, { version: "5.13" });
   const noteAt = Number(/enter\("#s1 \.fin", ([\d.]+)/.exec(html)?.[1]);

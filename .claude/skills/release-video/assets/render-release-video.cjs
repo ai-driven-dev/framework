@@ -1815,7 +1815,7 @@ async function main() {
   const bitrate = Number(probe.stdout.trim());
   if (!bitrate) throw new Error("The bitrate of the video could not be read");
   const posted = out.replace(/\.mp4$/, ".poster.mp4");
-  const withPoster = spawnSync("ffmpeg", posterArgs({ video: out, poster: thumbnail, out: posted, bitrate }), { stdio: "inherit" });
+  const withPoster = spawnSync("ffmpeg", posterArgs({ video: out, poster: thumbnail, out: posted, bitrate, duration: totalDuration(plan) }), { stdio: "inherit" });
   if (withPoster.status !== 0) throw new Error(`The thumbnail could not be put first (${withPoster.status})`);
   fs.renameSync(posted, out);
 }
@@ -1845,11 +1845,16 @@ window.__timelines["main"] = gsap.timeline({ paused: true });
 `;
 }
 
+/** Discord refuses a bot upload over 10 MiB on a guild without boosts: the video stays under 9 MiB, sound included. */
+const SIZE_BUDGET_BYTES = 9 * 1024 * 1024;
+const AUDIO_KBPS = 128;
+
 /** The video opens on its thumbnail for one frame: a chat shows a video's first frame as its preview, and the
- * intro starts on the bare background. The video is encoded again at its own bitrate, and its sound is delayed
- * by that frame. */
-function posterArgs({ video, poster, out, bitrate }) {
-  const kbps = Math.round(bitrate / 1000);
+ * intro starts on the bare background. The video is encoded again at its own bitrate, lowered when that would take
+ * it over the size budget, and its sound is delayed by that frame. */
+function posterArgs({ video, poster, out, bitrate, duration }) {
+  const budget = duration ? Math.floor((SIZE_BUDGET_BYTES * 8) / duration / 1000) - AUDIO_KBPS : Infinity;
+  const kbps = Math.min(Math.round(bitrate / 1000), budget);
   return [
     "-y", "-v", "error",
     "-loop", "1", "-framerate", "30", "-t", "0.0334", "-i", poster,
@@ -1862,7 +1867,7 @@ function posterArgs({ video, poster, out, bitrate }) {
     // second and a half gets a quality of its own.
     "-x264-params", "zones=0,45,q=12",
     "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709",
-    "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart",
+    "-c:a", "aac", "-b:a", `${AUDIO_KBPS}k`, "-movflags", "+faststart",
     out,
   ];
 }

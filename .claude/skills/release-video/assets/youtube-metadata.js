@@ -10,8 +10,6 @@ const path = require("node:path");
 const PLAN = path.resolve(__dirname, "../../../../aidd_docs/release-video/scenes.json");
 const MAX_TITLE = 100;
 
-const slash = (surface) => (surface.includes(":") ? `/${surface}` : surface);
-
 function titleOf(plan, version) {
   const { themes } = plan.youtube;
   const list = themes.length > 1 ? `${themes.slice(0, -1).join(", ")} et ${themes.at(-1)}` : themes[0];
@@ -25,10 +23,10 @@ function youtubeMetadata(plan, { version, tag, repo }) {
     `Les nouveautés du framework AI-Driven Dev ${version}, démontrées de bout en bout.`,
     "",
     "Au programme :",
-    ...plan.youtube.programme.map(({ surface, text }) => `- ${slash(surface)} : ${text}`),
+    ...plan.youtube.programme.map(({ text }) => `- ${text}`),
     "",
   ];
-  if (contributors) lines.push(`Version livrée par ${contributors} contributeurs (crédits dans les notes de version).`, "");
+  if (contributors) lines.push(`Version livrée par ${contributors} contributeurs, merci à eux.`, "");
   lines.push(`Notes de version : https://github.com/${repo}/releases/tag/${tag}`, `Code source : https://github.com/${repo}`);
   const { themes, programme } = plan.youtube;
   return { title: titleOf(plan, version), description: lines.join("\n"), themes, programme, contributors: logins };
