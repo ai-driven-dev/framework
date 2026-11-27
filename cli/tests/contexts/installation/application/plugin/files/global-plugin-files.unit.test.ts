@@ -42,6 +42,7 @@ describe("reading a plugin's global files", () => {
   it("reads the plugin's skills and the agents its source ships, keyed under the user directory", async () => {
     const files = await readGlobalPluginFiles(tree, {
       builtDir: BUILT,
+      platform: process.platform,
       tool: registeredTools().aiProfile(TOOL.opencode),
       dist: distribution("aidd-dev", [
         "agents/reviewer.md",
@@ -59,6 +60,7 @@ describe("reading a plugin's global files", () => {
   it("reads nothing for a plugin whose source ships no agent and no skill in the tree", async () => {
     const files = await readGlobalPluginFiles(tree, {
       builtDir: BUILT,
+      platform: process.platform,
       tool: registeredTools().aiProfile(TOOL.opencode),
       dist: distribution("aidd-qa", []),
     });
@@ -83,6 +85,7 @@ describe("reading a plugin's global files", () => {
   it("reads nothing for a tool that copies no global file", async () => {
     const files = await readGlobalPluginFiles(tree, {
       builtDir: BUILT,
+      platform: process.platform,
       tool: registeredTools().aiProfile(TOOL.claude),
       dist: distribution("aidd-dev", ["agents/reviewer.md"]),
     });

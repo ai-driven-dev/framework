@@ -1,6 +1,6 @@
 import { constants } from "node:fs";
 import { access, mkdir, readdir, readFile, realpath, rm, rmdir, stat } from "node:fs/promises";
-import { dirname, join, relative, sep } from "node:path";
+import { dirname, join } from "node:path";
 import { FileHash } from "../domain/file-hash.js";
 import { whenAbsent } from "../domain/reading/json-file.js";
 import type { FileReader } from "../ports/file-reader.js";
@@ -67,26 +67,26 @@ export class FileAdapter implements FileReader, FileWriter {
 
   async listDirectory(path: string): Promise<string[]> {
     const results: string[] = [];
-    await this.collectFiles(path, path, results);
+    await this.collectFiles({ dir: path, named: "" }, results);
     return results;
   }
 
   private async collectFiles(
-    baseDir: string,
-    currentDir: string,
+    current: { dir: string; named: string },
     results: string[]
   ): Promise<void> {
-    const entries = await readdir(currentDir, { withFileTypes: true });
+    const entries = await readdir(current.dir, { withFileTypes: true });
     for (const entry of entries) {
-      const fullPath = join(currentDir, entry.name);
+      const fullPath = join(current.dir, entry.name);
+      const named = `${current.named}${entry.name}`;
       if (entry.isSymbolicLink()) {
         this.logger?.warn(`Skipping symlink: ${fullPath}`);
         continue;
       }
       if (entry.isDirectory()) {
-        await this.collectFiles(baseDir, fullPath, results);
+        await this.collectFiles({ dir: fullPath, named: `${named}/` }, results);
       } else {
-        results.push(relative(baseDir, fullPath).split(sep).join("/"));
+        results.push(named);
       }
     }
   }

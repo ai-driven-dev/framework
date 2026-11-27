@@ -1,20 +1,13 @@
-import { describe, expect, it, vi } from "vitest";
-
-// Simulates node:path's relative() as it behaves on Windows: real POSIX-computed segments,
-// but "\"-joined. The suite runs on POSIX, the only way to prove the output is "/"-joined.
-vi.mock("node:path", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("node:path")>();
-  return {
-    ...actual,
-    relative: (from: string, to: string) => actual.relative(from, to).split(actual.sep).join("\\"),
-  };
-});
-
+import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import { resolvePluginSourceFromMarketplace } from "../../../../src/contexts/distribution/domain/plugin-source-resolver.js";
 import type { PluginSource } from "../../../../src/shared/domain/plugin/source.js";
 
-const MARKETPLACE_LOCAL_PATH = "/home/user/.aidd/cache/marketplaces/aidd-framework";
+const CHECKOUT = { path: "/home/user/.aidd/cache/marketplaces/aidd-framework", platform: "linux" };
+const WINDOWS_CHECKOUT = {
+  path: "C:\\Users\\user\\.aidd\\cache\\marketplaces\\aidd-framework",
+  platform: "win32",
+};
 
 function makeGithubMarketplace(repo: string, ref?: string): Marketplace {
   return Marketplace.fromJSON({
@@ -49,11 +42,7 @@ describe("resolving a plugin source from its marketplace", () => {
       const entrySource: PluginSource = { kind: "local", path: "./plugins/aidd-context" };
       const marketplace = makeGithubMarketplace("ai-driven-dev/framework", "v4.1.0-beta.14");
 
-      const result = resolvePluginSourceFromMarketplace(
-        entrySource,
-        marketplace,
-        MARKETPLACE_LOCAL_PATH
-      );
+      const result = resolvePluginSourceFromMarketplace(entrySource, marketplace, CHECKOUT);
 
       expect(result).toEqual({
         kind: "git-subdir",
@@ -67,11 +56,7 @@ describe("resolving a plugin source from its marketplace", () => {
       const entrySource: PluginSource = { kind: "local", path: "./sub/dir" };
       const marketplace = makeGithubMarketplace("org/repo", "main");
 
-      const result = resolvePluginSourceFromMarketplace(
-        entrySource,
-        marketplace,
-        MARKETPLACE_LOCAL_PATH
-      );
+      const result = resolvePluginSourceFromMarketplace(entrySource, marketplace, CHECKOUT);
 
       expect(result.kind).toBe("git-subdir");
       if (result.kind === "git-subdir") {
@@ -83,11 +68,7 @@ describe("resolving a plugin source from its marketplace", () => {
       const entrySource: PluginSource = { kind: "local", path: "plugins/foo" };
       const marketplace = makeGithubMarketplace("org/repo");
 
-      const result = resolvePluginSourceFromMarketplace(
-        entrySource,
-        marketplace,
-        MARKETPLACE_LOCAL_PATH
-      );
+      const result = resolvePluginSourceFromMarketplace(entrySource, marketplace, CHECKOUT);
 
       expect(result.kind).toBe("git-subdir");
       if (result.kind === "git-subdir") {
@@ -99,11 +80,7 @@ describe("resolving a plugin source from its marketplace", () => {
       const entrySource: PluginSource = { kind: "local", path: "./plugins/myplugin" };
       const marketplace = makeGithubMarketplace("org/repo");
 
-      const result = resolvePluginSourceFromMarketplace(
-        entrySource,
-        marketplace,
-        MARKETPLACE_LOCAL_PATH
-      );
+      const result = resolvePluginSourceFromMarketplace(entrySource, marketplace, CHECKOUT);
 
       expect(result.kind).toBe("git-subdir");
       if (result.kind === "git-subdir") {
@@ -114,35 +91,40 @@ describe("resolving a plugin source from its marketplace", () => {
 
   describe("github marketplace + local entry source (absolute path pre-resolved by catalog adapter)", () => {
     it("transforms absolute path under marketplace local dir to git-subdir", () => {
-      const absPath = `${MARKETPLACE_LOCAL_PATH}/plugins/aidd-context`;
+      const absPath = `${CHECKOUT.path}/plugins/aidd-context`;
       const entrySource: PluginSource = { kind: "local", path: absPath };
       const marketplace = makeGithubMarketplace("ai-driven-dev/framework", "v4.1.0-beta.14");
 
-      const result = resolvePluginSourceFromMarketplace(
-        entrySource,
-        marketplace,
-        MARKETPLACE_LOCAL_PATH
-      );
+      const result = resolvePluginSourceFromMarketplace(entrySource, marketplace, CHECKOUT);
 
       expect(result).toEqual({
         kind: "git-subdir",
         url: "https://github.com/ai-driven-dev/framework.git",
-        // The resolver must always hand git sparse-checkout a "/"-separated path, even where
-        // node:path's relative() would have returned "\"-joined segments on Windows.
+        path: "plugins/aidd-context",
+        ref: "v4.1.0-beta.14",
+      });
+    });
+
+    it("hands git a forward-slash path for a plugin a Windows checkout holds", () => {
+      const absPath = `${WINDOWS_CHECKOUT.path}\\plugins\\aidd-context`;
+      const entrySource: PluginSource = { kind: "local", path: absPath };
+      const marketplace = makeGithubMarketplace("ai-driven-dev/framework", "v4.1.0-beta.14");
+
+      const result = resolvePluginSourceFromMarketplace(entrySource, marketplace, WINDOWS_CHECKOUT);
+
+      expect(result).toEqual({
+        kind: "git-subdir",
+        url: "https://github.com/ai-driven-dev/framework.git",
         path: "plugins/aidd-context",
         ref: "v4.1.0-beta.14",
       });
     });
 
     it("returns source unchanged when the absolute path is the marketplace dir itself", () => {
-      const entrySource: PluginSource = { kind: "local", path: MARKETPLACE_LOCAL_PATH };
+      const entrySource: PluginSource = { kind: "local", path: CHECKOUT.path };
       const marketplace = makeGithubMarketplace("org/repo", "main");
 
-      const result = resolvePluginSourceFromMarketplace(
-        entrySource,
-        marketplace,
-        MARKETPLACE_LOCAL_PATH
-      );
+      const result = resolvePluginSourceFromMarketplace(entrySource, marketplace, CHECKOUT);
 
       expect(result).toBe(entrySource);
     });
@@ -151,11 +133,7 @@ describe("resolving a plugin source from its marketplace", () => {
       const entrySource: PluginSource = { kind: "local", path: "./" };
       const marketplace = makeGithubMarketplace("org/repo", "main");
 
-      const result = resolvePluginSourceFromMarketplace(
-        entrySource,
-        marketplace,
-        MARKETPLACE_LOCAL_PATH
-      );
+      const result = resolvePluginSourceFromMarketplace(entrySource, marketplace, CHECKOUT);
 
       expect(result).toBe(entrySource);
     });
@@ -164,11 +142,7 @@ describe("resolving a plugin source from its marketplace", () => {
       const entrySource: PluginSource = { kind: "local", path: "/some/other/absolute/path" };
       const marketplace = makeGithubMarketplace("org/repo", "main");
 
-      const result = resolvePluginSourceFromMarketplace(
-        entrySource,
-        marketplace,
-        MARKETPLACE_LOCAL_PATH
-      );
+      const result = resolvePluginSourceFromMarketplace(entrySource, marketplace, CHECKOUT);
 
       expect(result).toBe(entrySource);
     });
@@ -179,11 +153,7 @@ describe("resolving a plugin source from its marketplace", () => {
       const entrySource: PluginSource = { kind: "github", repo: "org/plugin-repo" };
       const marketplace = makeGithubMarketplace("org/marketplace");
 
-      const result = resolvePluginSourceFromMarketplace(
-        entrySource,
-        marketplace,
-        MARKETPLACE_LOCAL_PATH
-      );
+      const result = resolvePluginSourceFromMarketplace(entrySource, marketplace, CHECKOUT);
 
       expect(result).toBe(entrySource);
     });
@@ -196,11 +166,7 @@ describe("resolving a plugin source from its marketplace", () => {
       };
       const marketplace = makeGithubMarketplace("org/marketplace");
 
-      const result = resolvePluginSourceFromMarketplace(
-        entrySource,
-        marketplace,
-        MARKETPLACE_LOCAL_PATH
-      );
+      const result = resolvePluginSourceFromMarketplace(entrySource, marketplace, CHECKOUT);
 
       expect(result).toBe(entrySource);
     });
@@ -211,11 +177,7 @@ describe("resolving a plugin source from its marketplace", () => {
       const entrySource: PluginSource = { kind: "local", path: "./plugins/aidd-context" };
       const marketplace = makeLocalMarketplace();
 
-      const result = resolvePluginSourceFromMarketplace(
-        entrySource,
-        marketplace,
-        MARKETPLACE_LOCAL_PATH
-      );
+      const result = resolvePluginSourceFromMarketplace(entrySource, marketplace, CHECKOUT);
 
       expect(result).toBe(entrySource);
     });
@@ -226,11 +188,7 @@ describe("resolving a plugin source from its marketplace", () => {
       const entrySource: PluginSource = { kind: "local", path: "./plugins/aidd-context" };
       const marketplace = makeUrlMarketplace();
 
-      const result = resolvePluginSourceFromMarketplace(
-        entrySource,
-        marketplace,
-        MARKETPLACE_LOCAL_PATH
-      );
+      const result = resolvePluginSourceFromMarketplace(entrySource, marketplace, CHECKOUT);
 
       expect(result).toBe(entrySource);
     });

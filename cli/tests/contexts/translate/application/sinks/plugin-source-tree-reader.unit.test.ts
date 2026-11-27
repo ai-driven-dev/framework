@@ -8,8 +8,11 @@ import { WindowsListingFileAdapter } from "../../../../shared/testing/windows-li
 const PLUGIN_SRC = "/src/plugins/aidd-test";
 const PLUGIN = { name: parsePluginName("aidd-test"), src: PLUGIN_SRC };
 
-function canonOf(files: Record<string, string>, fs = new InMemoryFileAdapter(files)) {
-  return readPluginCanon(fs, PLUGIN, TOOL.claude);
+function canonOf(
+  files: Record<string, string>,
+  listing = { fs: new InMemoryFileAdapter(files), platform: process.platform }
+) {
+  return readPluginCanon(listing.fs, PLUGIN, { format: TOOL.claude, platform: listing.platform });
 }
 
 describe("reading a plugin's source tree", () => {
@@ -45,7 +48,7 @@ describe("reading a plugin's source tree", () => {
 
   it("names a file a Windows listing separates with backslashes with forward slashes", async () => {
     const fs = new WindowsListingFileAdapter({ [`${PLUGIN_SRC}/agents/sub/deep.md`]: "# Deep" });
-    const canon = await canonOf({}, fs);
+    const canon = await canonOf({}, { fs, platform: "win32" });
     expect(canon.components.agents.map((file) => file.relativePath)).toEqual([
       "agents/sub/deep.md",
     ]);

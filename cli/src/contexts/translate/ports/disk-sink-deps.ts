@@ -12,8 +12,14 @@ export interface DiskSinkDeps {
   readonly schemaCheck: SchemaCheck;
   readonly logger: Logger;
   readonly flat: FlatPluginWriter;
-  /** The tool whose layout the framework's source plugins are written in. */
-  readonly canonFormat: AiToolId;
+  readonly canon: CanonSource;
+}
+
+/** The tool whose layout the framework's source plugins are written in, and the platform whose
+ * path rules spell their listing. */
+export interface CanonSource {
+  readonly format: AiToolId;
+  readonly platform: string;
 }
 
 /** One plugin of a build: its name and the folder of its source. */

@@ -13,6 +13,7 @@ import { buildAddPlugin } from "../../testing/build-add-plugin.builder.js";
 import { restoreAllPluginsOf } from "../../testing/build-restore.builder.js";
 import { fakeBuildSources, fakeBuiltDeps } from "../../testing/fake-build-sources.fake.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.fake.js";
+import { machineOwnedPluginRecordedByProject } from "../../testing/machine-owned-plugin-scenario.builder.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";
@@ -182,5 +183,21 @@ describe("RestoreAllPlugins - built-tree materialization", () => {
       .filter((p) => p.plugin.name === "sample-plugin");
     expect(after).toHaveLength(1);
     expect(after[0].marketplace).toBe("aidd-framework");
+  });
+
+  it("leaves the machine's copy alone when the project recorded the plugin at project scope", async () => {
+    const deps = await buildInstallationDeps({ tools: registeredTools() });
+    const { registry, machineCopy } = await machineOwnedPluginRecordedByProject(deps, {
+      projectRoot: PROJECT_ROOT,
+      userPluginsDir: USER_PLUGINS_DIR,
+    });
+
+    await makeRestoreUseCase(deps, registry).execute({
+      projectRoot: PROJECT_ROOT,
+      manifest: await loadedProjectManifest(deps),
+      fileFilter: null,
+    });
+
+    expect(deps.fs.getFile(machineCopy)).toBe("machine bytes");
   });
 });

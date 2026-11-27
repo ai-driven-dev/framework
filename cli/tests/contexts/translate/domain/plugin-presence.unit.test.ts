@@ -9,7 +9,10 @@ const PLUGIN_SRC = "/src/plugins/aidd-test";
 const PLUGIN = { name: parsePluginName("aidd-test"), src: PLUGIN_SRC };
 
 function canonOf(files: Record<string, string>) {
-  return readPluginCanon(new InMemoryFileAdapter(files), PLUGIN, TOOL.claude);
+  return readPluginCanon(new InMemoryFileAdapter(files), PLUGIN, {
+    format: TOOL.claude,
+    platform: process.platform,
+  });
 }
 
 describe("telling what a plugin ships", () => {

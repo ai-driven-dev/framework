@@ -73,21 +73,16 @@ export class PluginDistributionReaderAdapter implements PluginDistributionReader
   ): Promise<PluginComponentFile[]> {
     const allPaths = await this.fs.listDirectory(pluginRoot);
     const files: PluginComponentFile[] = [];
-    for (const rawPath of allPaths) {
-      const relativePath = toPosix(rawPath);
+    for (const relativePath of allPaths) {
       if (relativePath === README_FILENAME) continue;
       if (!isComponentFile(relativePath)) continue;
-      const content = await this.fs.readFile(join(pluginRoot, rawPath));
+      const content = await this.fs.readFile(join(pluginRoot, relativePath));
       files.push({ relativePath, content });
     }
     const manifestContent = await this.fs.readFile(manifestPath);
     files.push({ relativePath: manifestRelativePath, content: manifestContent });
     return files;
   }
-}
-
-function toPosix(p: string): string {
-  return p.split("\\").join("/");
 }
 
 /** The component group each top-level plugin directory feeds. */

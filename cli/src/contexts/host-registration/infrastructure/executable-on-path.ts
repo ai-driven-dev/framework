@@ -1,5 +1,5 @@
 import { accessSync, constants } from "node:fs";
-import { posix, win32 } from "node:path";
+import { pathRulesOf } from "../../../shared/domain/paths.model.js";
 
 /** How long a host's own CLI or server may take to answer: `plugin add` and `install` may fetch and
  * cache a marketplace snapshot from a git remote. */
@@ -37,9 +37,7 @@ export function resolveExecutableOnPath(
   binary: string,
   lookup: ExecutableLookup
 ): string | undefined {
-  // The platform described by the lookup decides how PATH splits and paths join, never
-  // the one this process happens to run on: that is what lets a test describe Windows.
-  const impl = lookup.platform === "win32" ? win32 : posix;
+  const impl = pathRulesOf(lookup.platform);
   const dirs = (lookup.pathEnv ?? "").split(impl.delimiter).filter((dir) => dir !== "");
   const names = candidateExecutableNames(binary, lookup.platform, lookup.pathExt);
   for (const dir of dirs) {

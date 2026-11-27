@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { readdirSync, readFileSync, statSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Instrumenter } from "@stryker-mutator/instrumenter";
 
@@ -9,14 +9,14 @@ const CLI_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 /** Every `.ts` file under `src/`, relative to `cli/` with `/`, sorted: what a scope is cut from. */
 export function sourceFiles() {
   const out = [];
-  const walk = (dir) => {
+  const walk = (dir, named) => {
     for (const entry of readdirSync(dir)) {
       const full = join(dir, entry);
-      if (statSync(full).isDirectory()) walk(full);
-      else if (entry.endsWith(".ts")) out.push(relative(CLI_ROOT, full).replaceAll("\\", "/"));
+      if (statSync(full).isDirectory()) walk(full, `${named}/${entry}`);
+      else if (entry.endsWith(".ts")) out.push(`${named}/${entry}`);
     }
   };
-  walk(join(CLI_ROOT, "src"));
+  walk(join(CLI_ROOT, "src"), "src");
   return out.sort();
 }
 

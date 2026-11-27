@@ -14,7 +14,6 @@ import { ListPluginSources } from "../../contexts/installation/application/marke
 import { PurgeMarketplacePlugins } from "../../contexts/installation/application/marketplace/purge-marketplace-plugins.use-case.js";
 import { RemovePluginsFromMarketplace } from "../../contexts/installation/application/marketplace/remove-plugins-from-marketplace.use-case.js";
 import { RemoveProjectPlugin } from "../../contexts/installation/application/removal/remove-project-plugin.js";
-import { UserScopePluginFiles } from "../../contexts/installation/application/removal/user-scope-plugin-files.js";
 import { removalClaims } from "../../contexts/machine-claims/application/removal/removal-claims.js";
 import type { RecordSourceReference } from "../../contexts/machine-claims/application/shared-source/record-source-reference.use-case.js";
 import { projectCleanFactsOf } from "../../orchestration/clean/clean-claims.js";
@@ -32,7 +31,7 @@ import { WithdrawProjectMarketplaceFromHost } from "../../orchestration/marketpl
 import { AskMarketplaceSource } from "../../orchestration/setup/ask-marketplace-source.use-case.js";
 import { ResolveSetupSource } from "../../orchestration/setup/resolve-setup-source.use-case.js";
 import type { RegisterFrameworkSource } from "../../orchestration/setup/setup-flow.js";
-import { type Installation, recordsOf } from "../contexts/installation.js";
+import { type Installation, recordsOf, userScopePluginFilesOf } from "../contexts/installation.js";
 import { machineOwnership, userScopeFilesSafeToDelete } from "../contexts/machine-claims.js";
 import type { Base } from "../shared.js";
 import { wireCleanMachine, wireProjectCleanPlan } from "./clean.js";
@@ -88,7 +87,7 @@ function wireUserMarketplaceRemoval(base: Base) {
       purge: new PurgeMarketplacePlugins(
         {
           repo: userManifestRepo,
-          userScopePluginFiles: new UserScopePluginFiles(fs, quietUserScopeFilesSafeToDelete(fs)),
+          userScopePluginFiles: userScopePluginFilesOf(fs, quietUserScopeFilesSafeToDelete(fs)),
         },
         tools
       ),

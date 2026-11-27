@@ -12,6 +12,7 @@ import type {
   ToolBuildContract,
 } from "../../../../../src/shared/domain/materialization/build-contract.js";
 import { flatArtifactLayout } from "../../../../../src/shared/domain/materialization/flat-paths.js";
+import { posixRelative } from "../../../../../src/shared/domain/paths.model.js";
 import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import { buildContractOf } from "../../../../shared/testing/build-contract-of.builder.js";
@@ -20,6 +21,7 @@ import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-a
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 import { WindowsListingFileAdapter } from "../../../../shared/testing/windows-listing-file-adapter.fake.js";
 import { aDiskSink } from "../../testing/disk-sink.builder.js";
+import { openSchemas } from "../../testing/schema-provider.builder.js";
 
 // resolve(), not the bare literal: on Windows a leading "/" is drive-relative.
 const OUT = resolve("/tmp/aidd-edges-out");
@@ -100,7 +102,8 @@ async function write(
   validator: JsonSchemaValidator = { validate() {} },
   logger = new CapturingLogger()
 ): Promise<number> {
-  const sink = aDiskSink(fs, validator, ASSETS, logger);
+  const platform = fs instanceof WindowsListingFileAdapter ? "win32" : process.platform;
+  const sink = aDiskSink(fs, validator, ASSETS, logger, openSchemas, platform);
   if (target.mode === "flat") fs.setFile(`${target.outDir}/.keep`, "");
   await sink.prepare(target);
   const { files, declaredMcp } = await sink.writePlugin(target, PLUGIN, PLUGIN_SRC);
@@ -109,10 +112,9 @@ async function write(
 }
 
 function writtenPaths(fs: InMemoryFileAdapter): string[] {
-  const prefix = `${OUT.replace(/\\/g, "/")}/`;
   return fs
     .listUnder(OUT)
-    .map((path) => path.replace(/\\/g, "/").slice(prefix.length))
+    .map((path) => posixRelative(OUT, path, process.platform))
     .filter((path) => path !== ".keep")
     .sort();
 }
@@ -293,12 +295,12 @@ describe("a source path a Windows host reports with backslashes", () => {
 
   it("names a shared hooks file that is not JSON by its forward-slash path", async () => {
     const fs = seeded({ [`${PLUGIN_SRC}/hooks/hooks.json`]: "{}" });
-    fs.setFile(`${OUT}/cfg\\hooks.json`, "not json");
+    fs.setFile(`${OUT}/cfg/hooks.json`, "not json");
     const contract = contractOf({
       hooks: {
         ...COPY_HOOKS,
         hooksFile: {
-          at: { shared: "cfg\\hooks.json" },
+          at: { shared: "cfg/hooks.json" },
           merge: () => ({ content: "{}", warnings: [] }),
         },
       },

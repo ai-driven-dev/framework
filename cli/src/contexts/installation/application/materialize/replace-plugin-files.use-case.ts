@@ -19,6 +19,7 @@ export interface ReplacePluginFilesRequest {
   readonly toolId: AiToolId;
   readonly projectRoot: string;
   readonly manifest: Manifest;
+  readonly machine: Manifest;
 }
 
 /** What ReplacePluginFiles is built from. */
@@ -35,7 +36,7 @@ export class ReplacePluginFiles {
   ) {}
 
   async execute(command: ReplacePluginFilesRequest): Promise<void> {
-    const { dist, toolId, projectRoot, manifest } = command;
+    const { dist, toolId, projectRoot, manifest, machine } = command;
     const { plugin } = command.plugin;
     const tool = this.tools.aiProfile(toolId);
     const baseDir = scopeBaseOf(tool, {
@@ -49,7 +50,7 @@ export class ReplacePluginFiles {
     }
     if (mode !== null) {
       await rematerializePlugin(
-        { dist, tool, mode, plugin: command.plugin, projectRoot, manifest },
+        { dist, tool, mode, plugin: command.plugin, projectRoot, manifest, machine },
         this.deps
       );
       return;

@@ -38,7 +38,10 @@ describe("before writing a user plugin's files", () => {
     const fs = new InMemoryFileAdapter();
 
     await expect(
-      assertUserPluginWritable({ fs, guard: userScopeFileGuard }, write(plugin()))
+      assertUserPluginWritable(
+        { fs, guard: userScopeFileGuard, userHome: { platform: process.platform } },
+        write(plugin())
+      )
     ).resolves.toBeUndefined();
   });
 
@@ -46,7 +49,10 @@ describe("before writing a user plugin's files", () => {
     const fs = new InMemoryFileAdapter({ [join(BASE, FILE.relativePath)]: "user content" });
 
     await expect(
-      assertUserPluginWritable({ fs, guard: userScopeFileGuard }, write(plugin()))
+      assertUserPluginWritable(
+        { fs, guard: userScopeFileGuard, userHome: { platform: process.platform } },
+        write(plugin())
+      )
     ).rejects.toThrow("has untracked existing file");
   });
 
@@ -55,7 +61,10 @@ describe("before writing a user plugin's files", () => {
     const owned = plugin().withFiles(new Map([[FILE.relativePath, FileHash.of("old").value]]));
 
     await expect(
-      assertUserPluginWritable({ fs, guard: userScopeFileGuard }, write(owned))
+      assertUserPluginWritable(
+        { fs, guard: userScopeFileGuard, userHome: { platform: process.platform } },
+        write(owned)
+      )
     ).resolves.toBeUndefined();
   });
 });

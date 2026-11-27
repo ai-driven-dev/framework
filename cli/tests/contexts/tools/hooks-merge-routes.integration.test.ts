@@ -80,7 +80,7 @@ async function flatMerge(
     schemaCheck: { validate() {} },
     logger,
     flat: new FlatWriter(fs, unused, logger),
-    canonFormat: TOOL.claude,
+    canon: { format: TOOL.claude, platform: process.platform },
   });
   await sink.writePlugin(
     { contract, mode: "flat", force: true, sourceDir: "/source", outDir: OUT },
