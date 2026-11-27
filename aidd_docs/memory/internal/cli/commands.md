@@ -29,7 +29,7 @@ Read them live with `aidd --help`; `cli/tests/golden/help-surface.golden.test.ts
 ### Targeted user-scope `plugin update`
 
 - A file-copied plugin (Cursor) is rematerialized from the built tree; a native ref goes to the host's CLI through `RefreshHostPlugin`, gated by `refreshesOnePlugin`.
-- Only Copilot declares `updateVerb` (`tool-profiles/copilot.ts`); Claude and Codex declare `upgradeVerb` alone, so they refuse and point to `marketplace refresh` or `framework update`.
+- Only Copilot declares `updateVerb` (`tool-profiles/copilot.ts`); Claude and Codex declare none, so they refuse and point to `marketplace refresh` or `framework update`.
 
 ## Distribution
 
