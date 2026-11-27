@@ -50,7 +50,10 @@ export const FILTER_FLAGS = Object.keys(NO_FILTERS).filter(isFilterFlag);
 /** Every flag, in the envelope's order, `null` unless `given` names it; nothing else. */
 export function filtersOf(given: Partial<ReportFilters>): ReportFilters {
   const filters = { ...NO_FILTERS };
-  for (const flag of FILTER_FLAGS) Object.assign(filters, { [flag]: given[flag] ?? null });
+  for (const flag of FILTER_FLAGS) {
+    const value = given[flag];
+    if (value !== undefined) Object.assign(filters, { [flag]: value });
+  }
   return filters;
 }
 
