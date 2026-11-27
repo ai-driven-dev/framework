@@ -61,11 +61,13 @@ describe("registering on a host that refuses a re-add from another source", () =
 
   function codexHoldingRecorded(
     registered: string,
-    installed: readonly string[] | "unlistable" = []
+    installed: readonly string[] | "unlistable" = [],
+    host = (options: ConstructorParameters<typeof FakeHostActions>[0]) =>
+      new FakeHostActions(options)
   ) {
     return setup({
       tool: TOOL.codex,
-      activator: new FakeHostActions({ available: true, conflictOnAdd: true, installed }),
+      activator: host({ available: true, conflictOnAdd: true, installed }),
       userCacheRoot: USER_ROOT,
       sources: new Map([[NAME, listed(registered)]]),
       claims: {
@@ -98,9 +100,28 @@ describe("registering on a host that refuses a re-add from another source", () =
   });
 
   it("puts back on this build every plugin the host listed from it before the move", async () => {
-    const { run, activator } = codexHoldingRecorded(build("1.0.0"), ["demo@aidd", "extra@aidd"]);
+    const order: string[] = [];
+    class OrderedHost extends FakeHostActions {
+      override removeMarketplace(...args: Parameters<FakeHostActions["removeMarketplace"]>) {
+        order.push("remove");
+        return super.removeMarketplace(...args);
+      }
+      override addMarketplace(...args: Parameters<FakeHostActions["addMarketplace"]>) {
+        order.push("add");
+        return super.addMarketplace(...args);
+      }
+      override enablePlugin(...args: Parameters<FakeHostActions["enablePlugin"]>) {
+        order.push(`enable ${args[0]}`);
+        return super.enablePlugin(...args);
+      }
+    }
+    const { run } = codexHoldingRecorded(
+      build("1.0.0"),
+      ["demo@aidd", "extra@aidd"],
+      (options) => new OrderedHost(options)
+    );
     await registerMarketplace(run, codexTarget);
-    expect(activator.enabledPlugins).toEqual(["demo@aidd", "extra@aidd"]);
+    expect(order).toEqual(["remove", "add", "enable demo@aidd", "enable extra@aidd"]);
   });
 
   it("never moves a registration whose installed plugins the host cannot list", async () => {
