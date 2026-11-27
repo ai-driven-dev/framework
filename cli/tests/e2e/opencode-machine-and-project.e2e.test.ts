@@ -1,7 +1,8 @@
 import { access, readdir, readFile } from "node:fs/promises";
-import { join, relative } from "node:path";
+import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
+import { posixRelative } from "../../src/shared/domain/paths.model.js";
 import { createTestEnv, FRAMEWORK_PATH, runCli } from "../shared/testing/cli-sandbox.builder.js";
 import { resolveRegisteredToolId, TOOL } from "../shared/testing/registered-tools.builder.js";
 
@@ -16,7 +17,9 @@ describe("an opencode project set up again once the machine installed the same p
     const entries = await readdir(dir, { recursive: true, withFileTypes: true });
     return entries
       .filter((entry) => entry.isFile())
-      .map((entry) => relative(test.projectDir, join(entry.parentPath, entry.name)))
+      .map((entry) =>
+        posixRelative(test.projectDir, join(entry.parentPath, entry.name), process.platform)
+      )
       .sort();
   };
   const tracked = async (): Promise<string[]> => {
