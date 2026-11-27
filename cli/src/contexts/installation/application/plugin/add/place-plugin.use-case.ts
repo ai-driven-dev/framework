@@ -20,7 +20,7 @@ import { placementModeOf } from "../../materialize/plugin-placement.js";
 import { hashOutputFiles } from "../../shared/hash-output-files.js";
 import { type PluginFilesystem, replacePluginFiles } from "../files/write-plugin-files.js";
 import { resolveScopeForInstall } from "../plugin-target-resolution.js";
-import type { FindForeignUserScopeDir } from "./foreign-user-scope-dir.js";
+import { type FindForeignUserScopeDir, machineOwnsUserScopeDir } from "./foreign-user-scope-dir.js";
 import { reportInstallNotices, reportSkipWarnings } from "./report-placement.js";
 
 /** A distribution to place for each tool, and what the project already holds of it. */
@@ -80,7 +80,7 @@ export class PlacePlugin {
   ) {}
 
   async execute(command: PlacePluginRequest): Promise<void> {
-    const { dist, toolIds, projectRoot, manifest, machine } = command;
+    const { toolIds, projectRoot, manifest } = command;
     const allSkipped: ReadonlySkipList[] = [];
     const allNotices: ReadonlyNoticeList[] = [];
     for (const toolId of toolIds) {
@@ -95,9 +95,7 @@ export class PlacePlugin {
       const { skipped, notices } = await this.deps.placeForTool({
         command,
         tool,
-        userScopeDirTaken:
-          foreignDir !== undefined ||
-          machine.getPlugins(toolId).some((p) => p.name === dist.manifest.name),
+        userScopeDirTaken: foreignDir !== undefined || machineOwnsUserScopeDir(command, tool),
       });
       allSkipped.push(skipped);
       allNotices.push(notices);

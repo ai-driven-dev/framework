@@ -159,9 +159,35 @@ describe("adding a plugin for Cursor", () => {
         ).toBe(0);
       });
 
+      it("project replace supersedes its own recorded hooks and preserves shared files", async () => {
+        const deps = await cursorDeps();
+        await addForCursor(deps, deps.logger);
+        const hooksBefore = deps.fs.getFile(join(PROJECT_ROOT, ".cursor/hooks.json"));
+        deps.fs.setFile(`/built/cursor/plugins/${CURSOR_SKILL}`, "# Demo skill v2");
+
+        await addForCursor(deps, deps.logger, true);
+
+        expect(deps.fs.getFile(cursorSkillAt())).toBe("# Demo skill");
+        expect(deps.fs.getFile(join(PROJECT_ROOT, ".cursor/hooks.json"))).toBe(hooksBefore);
+        expect(pluginNames(deps, cursor)).toEqual(["sample-plugin"]);
+        expect(
+          dependentsRecorded(
+            (await deps.userManifestRepo.loadRecords()).get(cursor),
+            "sample-plugin"
+          )
+        ).toEqual([PROJECT_ROOT]);
+      });
+
       it("project replace refuses legacy hooks without an install digest and preserves shared files", async () => {
         const deps = await cursorDeps();
         await addForCursor(deps, deps.logger);
+        const manifest = await deps.manifestRepo.load();
+        const recorded = manifest?.getRecordedPlugins(cursor)[0];
+        if (manifest === null || manifest === undefined || recorded === undefined)
+          throw new Error("the first add recorded no cursor plugin");
+        manifest.withoutPlugin(cursor, "sample-plugin");
+        manifest.addPlugin(cursor, recorded.withProjectHooks(undefined));
+        await deps.manifestRepo.save(manifest);
         const hooksBefore = deps.fs.getFile(join(PROJECT_ROOT, ".cursor/hooks.json"));
         const savesBefore = deps.manifestRepo.saveCount;
         const machineSavesBefore = deps.userManifestRepo.saveCount;
@@ -175,13 +201,6 @@ describe("adding a plugin for Cursor", () => {
         expect(deps.fs.getFile(join(PROJECT_ROOT, ".cursor/hooks.json"))).toBe(hooksBefore);
         expect(deps.manifestRepo.saveCount).toBe(savesBefore);
         expect(deps.userManifestRepo.saveCount).toBe(machineSavesBefore);
-        expect(pluginNames(deps, cursor)).toEqual(["sample-plugin"]);
-        expect(
-          dependentsRecorded(
-            (await deps.userManifestRepo.loadRecords()).get(cursor),
-            "sample-plugin"
-          )
-        ).toEqual([PROJECT_ROOT]);
       });
 
       it("attaches project B to A's canonical Cursor file without rewriting A's bytes", async () => {

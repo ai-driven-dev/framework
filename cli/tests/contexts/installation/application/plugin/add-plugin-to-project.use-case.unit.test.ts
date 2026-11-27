@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { PlacePluginRequest } from "../../../../../src/contexts/installation/application/plugin/add/place-plugin.use-case.js";
 import type { AddPluginRequest } from "../../../../../src/contexts/installation/application/plugin/add/plugin-add.js";
+import type { ResolveAddedPluginSourceResult } from "../../../../../src/contexts/installation/application/plugin/add/resolve-added-plugin-source.use-case.js";
 import { AddPluginToProject } from "../../../../../src/contexts/installation/application/plugin/add-plugin-to-project.use-case.js";
 import {
   DuplicatePluginError,
@@ -11,7 +12,7 @@ import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
 import { VersionMismatchError } from "../../../../../src/shared/domain/shared.error.js";
-import { InMemoryFileAdapter } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
+import { fsAt } from "../../../../shared/testing/in-memory-file-adapter.fake.js";
 import { projectIntegrationOver } from "../../../../shared/testing/project-integration.builder.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.builder.js";
 
@@ -31,28 +32,30 @@ function manifestWithClaude(): Manifest {
   return manifest;
 }
 
-function addToProject() {
+const SAMPLE_ENTRY = {
+  name: "sample-plugin",
+  version: "1.0.0",
+  source: SOURCE,
+  strict: false,
+  scope: "project" as const,
+};
+
+const LOCAL_SOURCE: ResolveAddedPluginSourceResult = {
+  isGithubMarketplace: false,
+  distribution: DISTRIBUTION,
+};
+
+function addToProject(resolved: ResolveAddedPluginSourceResult = LOCAL_SOURCE) {
   const placed: PlacePluginRequest[] = [];
   const addition = new AddPluginToProject(
     {
-      assertIntegration: projectIntegrationOver(new InMemoryFileAdapter()).assertIntegration,
-      source: {
-        execute: async () => ({ isGithubMarketplace: false, distribution: DISTRIBUTION }),
-      },
+      assertIntegration: projectIntegrationOver(fsAt(PROJECT_ROOT)).assertIntegration,
+      source: { execute: async () => resolved },
       place: {
         execute: async (command) => {
           placed.push(command);
           for (const toolId of command.toolIds) {
-            command.manifest.addPlugin(
-              toolId,
-              RecordedPlugin.fromMetadata({
-                name: "sample-plugin",
-                version: "1.0.0",
-                source: SOURCE,
-                strict: false,
-                scope: "project",
-              })
-            );
+            command.manifest.addPlugin(toolId, RecordedPlugin.fromMetadata(SAMPLE_ENTRY));
           }
         },
       },
@@ -105,6 +108,41 @@ describe("AddPluginToProject when a plugin is added", () => {
       VersionMismatchError
     );
     expect(placed).toHaveLength(0);
+  });
+
+  it("hands a github marketplace re-add the hooks and files its earlier install recorded", async () => {
+    const { addition, targets, placed } = addToProject({
+      isGithubMarketplace: true,
+      flat: [TOOL.cursor],
+      native: [],
+      distribution: DISTRIBUTION,
+      version: "1.0.0",
+    });
+    const projectHooks = { entries: [], scripts: new Map<string, string>() };
+    const files = new Map([[".cursor/hooks/sample-plugin/run.cjs", "a".repeat(32)]]);
+    targets.manifest.addTool(TOOL.cursor, "1.0.0", []);
+    targets.manifest.addPlugin(
+      TOOL.cursor,
+      RecordedPlugin.fromJSON({
+        ...RecordedPlugin.fromMetadata(SAMPLE_ENTRY).toJSON(),
+        files: Object.fromEntries(files),
+      }).withProjectHooks(projectHooks)
+    );
+    const metadata = { name: "sample-plugin", version: "1.0.0", strict: false };
+
+    await addition.execute(
+      {
+        ...ADD,
+        toolIds: [TOOL.cursor],
+        githubMarketplace: true,
+        replace: true,
+        pluginMetadata: metadata,
+      },
+      { ...targets, toolIds: [TOOL.cursor] }
+    );
+
+    expect(placed.at(-1)?.previousProjectHooks.get(TOOL.cursor)).toStrictEqual(projectHooks);
+    expect(placed.at(-1)?.previousFiles.get(TOOL.cursor)).toStrictEqual(files);
   });
 
   it("refuses a github marketplace add that carries no plugin metadata", async () => {
