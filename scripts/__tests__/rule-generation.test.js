@@ -90,7 +90,7 @@ test("protected rule fields and targets without metadata refuse before writing",
   const f = fixture(t);
   for (const [targets, options] of [
     ["copilot", { copilot: { applyTo: "**" } }],
-    ["copilot", { copilot: { excludeAgent: ["code-review"] } }],
+    ["copilot", { copilot: [] }],
     ["cursor", { copilot: { excludeAgent: "code-review" } }],
     ["codex", { codex: { description: "Scope" } }],
     ["kimi", { kimi: { description: "Scope" } }],

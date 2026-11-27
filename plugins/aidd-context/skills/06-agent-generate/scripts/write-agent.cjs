@@ -143,18 +143,6 @@ const isSingleLine = (value) => typeof value === "string" && !LINE_BREAK.test(va
 const isFilled = (value) => typeof value === "string" && value.trim() !== "";
 const isStringList = (value) => Array.isArray(value) && value.every((item) => typeof item === "string");
 const isObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
-const isBoolean = (value) => typeof value === "boolean";
-const permissionAction = (value) => ["allow", "ask", "deny"].includes(value);
-const isKiloPermission = (value) => isObject(value) && Object.values(value).every((action) =>
-  permissionAction(action) || (isObject(action) && Object.values(action).every(permissionAction)));
-const nativeChecks = {
-  antigravity: { commandExecutionPolicy: (value) => ["off", "auto", "eager", "sandbox"].includes(value) },
-  codex: { features: (value) => isObject(value) && Object.values(value).every(isBoolean) },
-  cursor: { readonly: isBoolean },
-  kilo: { temperature: (value) => typeof value === "number" && value >= 0 && value <= 1, permission: isKiloPermission },
-  kimi: { disallowedTools: isStringList, override: isBoolean },
-};
-
 function serializable(value, toml) {
   if (value === null) return !toml;
   if (typeof value === "number") return Number.isFinite(value);
@@ -174,8 +162,7 @@ function validateNativeOptions(agent, tools) {
     for (const [key, value] of Object.entries(options)) {
       if (!NATIVE_KEY.test(key) || key === "constructor" || key === "prototype") refuse(`${tool}: invalid native field ${JSON.stringify(key)}.`);
       if (reserved.includes(key)) refuse(`${tool}: native field ${key} is managed by the writer.`);
-      const check = Object.hasOwn(nativeChecks[tool] ?? {}, key) ? nativeChecks[tool][key] : undefined;
-      if (!serializable(value, host.toml) || (check && !check(value))) refuse(`${tool}: native field ${key} has an unsupported value.`);
+      if (!serializable(value, host.toml)) refuse(`${tool}: native field ${key} has an unsupported value.`);
     }
   }
 }

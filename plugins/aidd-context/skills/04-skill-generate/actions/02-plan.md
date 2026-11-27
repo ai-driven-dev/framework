@@ -18,14 +18,10 @@ The request and its source: the confirmed frame, or the existing skill.
 6. Fill one row per action in `| # | Slug | Title | Input -> output | Rules | Cases in | Next, on condition | Check step |`.
    - Single action: list its fields and its file path instead.
    - Other file: give its path, kind and change.
-7. Take each target from the confirmed frame.
-   - Existing skill: take each root of [tool-write.md](../references/tool-write.md) that holds it.
-8. For each target, ask the user one question per frontmatter field the plan needs beyond `name` and `description`, read from its official source.
-9. For confirmed project targets with requested options, preview native frontmatter per [tool-write.md](../references/tool-write.md).
-   - Refusal: report the path and revise the targets or options before any write.
-10. Present the table and native frontmatter preview, then end the turn and wait for the user's own answer.
-11. Read [write](03-write.md).
+7. Plan the target writes per [tool-write.md](../references/tool-write.md).
+8. Present the plan, then end the turn and wait for the user's own answer.
+9. Read [write](03-write.md).
 
 ## Output
 
-A confirmed table with each target and its frontmatter, the content to keep, the changes, the facts dropped or added, and the approved native options.
+The approved plan with its targets and writes.

@@ -65,8 +65,7 @@ test("refuses invalid or unsupported native command options before writing any t
     [{ copilot: { tools: [] } }, /copilot.*selected/u],
     [{ cursor: { mode: "fast" } }, /cursor.*native/u],
     [{ kilo: { model: "foo" } }, /kilo.*model/u],
-    [{ kilo: { subtask: "false" } }, /kilo.*subtask/u],
-    [{ kilo: { variant: ["high"] } }, /kilo.*variant/u],
+    [{ kilo: [] }, /kilo.*object/u],
     [{ kilo: { template: "duplicate instructions" } }, /kilo.*template/u],
   ]) {
     const result = run({ ...command, nativeOptions }, "claude,cursor,kilo");

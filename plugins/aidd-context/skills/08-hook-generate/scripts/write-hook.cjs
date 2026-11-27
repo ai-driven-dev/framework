@@ -27,6 +27,10 @@ const CONFIG_VERSION = 1;
 const SCRIPTS_FOLDER = "hooks";
 const NOTHING_OWNED = JSON.stringify([]);
 const COMMAND_FIELDS = ["event", "matcher", "runner", "extension", "script", "timeout"];
+const MANAGED_FIELDS = new Set([
+  ...COMMAND_FIELDS, "name", "trigger", "action", "type", "command", "args", "shell",
+  "bash", "cwd", "timeoutSec", "hooks", "version", "plugin", "__proto__", "constructor", "prototype",
+]);
 
 class Refusal extends Error {}
 class UsageError extends Error {}
@@ -310,15 +314,13 @@ const TOOLS = Object.keys(HOSTS);
 
 // What writing needs beyond the facts. `locate` turns the script's path from the project root into
 // what the host's command line resolves.
-const boolean = (value) => typeof value === "boolean";
-const stringMap = (value) => isObject(value) && Object.values(value).every((item) => typeof item === "string");
 const WRITERS = {
-  claude: { format: GROUPED, locate: (script) => `"$CLAUDE_PROJECT_DIR"/${script}`, native: { statusMessage: isFilled, async: boolean } },
-  codex: { format: GROUPED, locate: (script) => `"$(git rev-parse --show-toplevel)/${script}"`, native: { statusMessage: isFilled, async: boolean } },
-  cursor: { format: FLAT, locate: (script) => `"$CURSOR_PROJECT_DIR"/${script}`, native: { failClosed: boolean } },
-  copilot: { format: COPILOT, locate: (script) => script, native: { env: stringMap } },
+  claude: { format: GROUPED, locate: (script) => `"$CLAUDE_PROJECT_DIR"/${script}` },
+  codex: { format: GROUPED, locate: (script) => `"$(git rev-parse --show-toplevel)/${script}"` },
+  cursor: { format: FLAT, locate: (script) => `"$CURSOR_PROJECT_DIR"/${script}` },
+  copilot: { format: COPILOT, locate: (script) => script },
   antigravity: { format: KEYED, locate: (script) => path.posix.relative(".agents", script) },
-  kiro: { format: KIRO, locate: (script) => script, native: { description: isFilled, enabled: boolean } },
+  kiro: { format: KIRO, locate: (script) => script },
 };
 
 const configPath = (tool, name) => (HOSTS[tool].config ?? HOSTS[tool].plugin).path.replace(NAMES, name);
@@ -408,6 +410,11 @@ function validatePluginHost(tool, target) {
   if (!isFilled(target.plugin)) refuse(`${tool}: plugin must be the non-empty plugin text.`);
 }
 
+function serializable(value) {
+  if (typeof value === "number") return Number.isFinite(value);
+  return !value || typeof value !== "object" || Object.values(value).every(serializable);
+}
+
 function validateNativeOptions(hook) {
   if (hook.nativeOptions === undefined) return;
   if (!isObject(hook.nativeOptions)) refuse("nativeOptions must be an object keyed by selected host.");
@@ -416,10 +423,9 @@ function validateNativeOptions(hook) {
     if (!isObject(options)) refuse(`${tool}: native options must be an object.`);
     const entries = Object.entries(options);
     if (entries.length && HOSTS[tool].plugin) refuse(`${tool}: write native options in the plugin module.`);
-    const allowed = WRITERS[tool]?.native ?? {};
     for (const [field, value] of entries) {
-      if (!Object.hasOwn(allowed, field)) refuse(`${tool}: unsupported native hook option ${field}.`);
-      if (!allowed[field](value)) refuse(`${tool}: invalid value for native hook option ${field}.`);
+      if (MANAGED_FIELDS.has(field)) refuse(`${tool}: native hook option ${field} is managed by the writer.`);
+      if (!/^[a-z][a-z0-9_-]*$/iu.test(field) || !serializable(value)) refuse(`${tool}: invalid native hook option ${JSON.stringify(field)}.`);
     }
   }
 }

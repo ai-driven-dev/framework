@@ -13,7 +13,7 @@ node "$validator" "$project_root/aidd_docs/rules/$category/$slug.md"
 - `$host_ids`: the confirmed IDs from `hosts.md`, comma-separated.
 - `$request_json`: a temporary file outside the project holding `category`, `slug`, a one-line `description`, a `body` starting with `# <title>`, and optional `paths`, an array of globs.
 
-`nativeOptions` maps selected host IDs to their documented rule front matter, for example `{"copilot":{"excludeAgent":"code-review"}}`. [GitHub Copilot custom instructions](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions)
+Read the selected host's official documentation for requested rule options and pass the documented keys and types in `nativeOptions` under that host ID, for example `{"copilot":{"excludeAgent":"code-review"}}`. [GitHub Copilot custom instructions](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions)
 
 The source keeps an existing host's options until that host receives a replacement map or an empty map to clear them.
 
@@ -31,6 +31,8 @@ Options cannot replace fields managed by the writer or be applied to a host with
 | `--force` | Overwrites each copy the plan lists in `conflicts`; without it, the writer refuses. |
 
 The result is JSON: `files` lists each path and its operation, `conflicts` each copy the writer did not produce, `error` a `{code, message}`. Exit 0 means done; any other exit comes with `error`.
+
+When the preview asks to choose among config files, ask which listed file to update. Rerun with the matching selection flag and keep that flag when applying the approved plan.
 
 The JSONC editor uses the parser bundled with the skill, so an installed copy runs with Node alone.
 

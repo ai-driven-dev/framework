@@ -83,14 +83,6 @@ function readCommand(file) {
 const isSingleLine = (value) => typeof value === "string" && !LINE_BREAK.test(value);
 const isFilled = (value) => typeof value === "string" && value.trim() !== "";
 const isObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
-const isBoolean = (value) => typeof value === "boolean";
-const nativeChecks = {
-  claude: { context: (value) => value === "fork" },
-  copilot: { tools: (value) => Array.isArray(value) && value.every(isSingleLine) },
-  kilo: { variant: (value) => isSingleLine(value) && isFilled(value), subtask: isBoolean },
-  opencode: { subagent: isBoolean, subtask: isBoolean },
-};
-
 function serializable(value) {
   if (typeof value === "number") return Number.isFinite(value);
   if (Array.isArray(value)) return value.every(serializable);
@@ -109,8 +101,7 @@ function validateNativeOptions(command, tools) {
     for (const [key, value] of Object.entries(options)) {
       if (!NATIVE_KEY.test(key) || key === "constructor" || key === "prototype") refuse(`${tool}: invalid native field ${JSON.stringify(key)}.`);
       if (IDENTITY_KEYS.includes(key) || keys.includes(key)) refuse(`${tool}: native field ${key} is managed by the writer.`);
-      const check = Object.hasOwn(nativeChecks[tool] ?? {}, key) ? nativeChecks[tool][key] : undefined;
-      if (!serializable(value) || (check && !check(value))) refuse(`${tool}: native field ${key} has an unsupported value.`);
+      if (!serializable(value)) refuse(`${tool}: native field ${key} has an unsupported value.`);
     }
   }
 }

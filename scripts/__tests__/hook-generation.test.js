@@ -64,7 +64,7 @@ test("writes typed native options only to each owned handler", (t) => {
   const request = {
     ...hook,
     nativeOptions: {
-      claude: { statusMessage: "Checking files" },
+      claude: { statusMessage: "Checking files", onFailure: "block" },
       codex: { statusMessage: "Reviewing the call" },
       cursor: { failClosed: true },
       copilot: { env: { AIDD_CHECK_MODE: "project" } },
@@ -82,6 +82,7 @@ test("writes typed native options only to each owned handler", (t) => {
   assert.equal(run(request).status, 0);
   assert.deepEqual(JSON.parse(read(CLAUDE)).hooks.PreToolUse[0].hooks, [unrelated]);
   assert.equal(JSON.parse(read(CLAUDE)).hooks.PreToolUse[1].hooks[0].statusMessage, "Checking files");
+  assert.equal(JSON.parse(read(CLAUDE)).hooks.PreToolUse[1].hooks[0].onFailure, "block");
   assert.equal(JSON.parse(read(CODEX)).hooks.PreToolUse[0].hooks[0].statusMessage, "Reviewing the call");
   assert.equal(JSON.parse(read(CURSOR)).hooks.preToolUse[0].failClosed, true);
   assert.deepEqual(JSON.parse(read(COPILOT)).hooks.preToolUse[0].env, { AIDD_CHECK_MODE: "project" });
@@ -92,11 +93,11 @@ test("writes typed native options only to each owned handler", (t) => {
   assert.equal(read(CLAUDE), initial);
 });
 
-test("refuses native hook options with an unsupported target, type, or managed field before writing", (t) => {
+test("refuses a malformed or conflicting native hook request before writing", (t) => {
   const { run, exists } = fixture(t);
   const cases = [
-    [{ antigravity: { statusMessage: "Checking" } }, /antigravity.*statusMessage/u],
-    [{ cursor: { failClosed: "yes" } }, /cursor.*failClosed/u],
+    [{ antigravity: { args: ["alternate.cjs"] } }, /antigravity.*args/u],
+    [{ cursor: [] }, /cursor.*object/u],
     [{ codex: { command: "node alternate.cjs" } }, /codex.*command/u],
     [{ kilo: { async: true } }, /kilo.*selected/u],
   ];

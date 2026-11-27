@@ -23,16 +23,9 @@ node "$writer" --project "$project_root" --remove "$name"
 | `timeout` | seconds before the host stops the script, 30 when absent |
 | `plugin` | a plugin host's full module text, in place of every field above |
 
-Pass native options in a top-level `nativeOptions` object keyed by selected host, for example `{ "cursor": { "failClosed": true } }`.
-
-| Host | Native command hook options |
-| --- | --- |
-| Claude Code and Codex | `statusMessage` (string), `async` (boolean) |
-| Cursor | `failClosed` (boolean) |
-| GitHub Copilot | `env` (object of strings) |
-| Kiro | `description` (string), `enabled` (boolean) |
-
-Use the handler form and event in the host's documentation from `--describe`; for OpenCode and Kilo use the existing plugin module input.
+Use the official handler documentation surfaced by `--describe` to pass requested native option keys and types in `nativeOptions` under the selected host ID, for example `{ "cursor": { "failClosed": true } }`.
+Pass only fields that apply at the generated handler's level, keeping the writer's event, matcher and command execution fields under its control.
+For module hooks, put the options in the module source supplied as `plugin`.
 
 | Option | Effect |
 | --- | --- |

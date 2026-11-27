@@ -21,7 +21,7 @@ Where a skill tree is written, per host.
 
 Emit `name` and `description`, the two fields of the [Agent Skills](https://agentskills.io/specification) standard every host reads.
 
-Use the host's official documentation for each requested native field, preserving its value type and including only approved fields.
+Read the target's official documentation for requested native fields and pass the documented keys and types as JSON. Ask only when a required choice is missing.
 
 For project targets, pipe JSON containing `name`, the selected host IDs in `targets`, and `nativeOptions` keyed by host ID to the scaffold script.
 
@@ -40,8 +40,16 @@ node "$scaffold" --native - "$project_root"
 
 `$scaffold` is the absolute path to `scripts/scaffold-skill.cjs` in this skill and `$project_root` is the project directory.
 
-- Preview shows the selected paths and options and writes nothing.
-- Run the approved request again without `--plan` after writing the portable tree in each target.
 - The script updates only requested frontmatter fields in existing project skill files and refuses changes to `name` or `description`.
 - For a shared path, the selected hosts must request identical options, with absent options counting as empty.
 - Treat the canonical plugin source according to its plugin format.
+
+## Plan and apply
+
+Use the confirmed targets. For an existing skill, locate the roots that already hold it.
+
+With requested native options, run the preview and include its paths and options in the plan. On refusal, report the writer's reason and resolve it before writing.
+
+After approval, rerun that preview before writing. If any `SKILL.md` or action file is missing, pipe the portable plan to `node "$scaffold" - "$skill_folder"`. Fill the files per [skill-tree.md](skill-tree.md) and [skill-authoring.md](skill-authoring.md).
+
+Copy the portable tree to each distinct target root, keeping existing target-specific frontmatter. Once the selected project targets have their `SKILL.md`, pass the approved native request again without `--plan`.

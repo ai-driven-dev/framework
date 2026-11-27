@@ -83,8 +83,7 @@ test("refuses invalid native agent options before writing any target", (t) => {
   for (const [nativeOptions, message] of [
     [{ cursor: { readonly: true } }, /cursor.*selected/u],
     [{ kilo: { variant: "low" } }, /kilo.*variant/u],
-    [{ kilo: { temperature: "0.25" } }, /kilo.*temperature/u],
-    [{ kilo: { permission: { edit: "invalid" } } }, /kilo.*permission/u],
+    [{ kilo: [] }, /kilo.*object/u],
     [{ kilo: { "x\nmode": "primary" } }, /kilo.*mode/su],
     [{ kilo: { prompt: "duplicate instructions" } }, /kilo.*prompt/u],
     [{ codex: { features: { shell_tool: null } } }, /codex.*features/u],

@@ -167,9 +167,6 @@ function validateNativeOptions(options, targets) {
     for (const [field, value] of Object.entries(fields)) {
       if (!isNativeKey(field) || !isFiniteJson(value)) refuse(`Invalid native rule field ${tool}.${field}.`);
       if (HOSTS[tool].managedFields.includes(field)) refuse(`${tool}.${field} is managed by the rule writer.`);
-      if (tool === "copilot" && field === "excludeAgent" && !["code-review", "cloud-agent"].includes(value)) {
-        refuse("copilot.excludeAgent must be code-review or cloud-agent.");
-      }
     }
   }
 }
