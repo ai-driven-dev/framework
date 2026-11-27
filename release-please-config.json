@@ -15,6 +15,7 @@
   ],
   "packages": {
     ".": {
+      "release-as": "5.15.0",
       "draft": true,
       "force-tag-creation": true,
       "extra-files": [
@@ -27,6 +28,7 @@
       "exclude-paths": [".release-please-manifest.json"]
     },
     "plugins/aidd-context": {
+      "release-as": "2.13.0",
       "package-name": "aidd-context",
       "extra-files": [
         {
@@ -37,6 +39,7 @@
       ]
     },
     "plugins/aidd-dev": {
+      "release-as": "2.10.0",
       "package-name": "aidd-dev",
       "extra-files": [
         {
@@ -57,6 +60,7 @@
       ]
     },
     "plugins/aidd-pm": {
+      "release-as": "2.8.0",
       "package-name": "aidd-pm",
       "extra-files": [
         {
@@ -77,6 +81,7 @@
       ]
     },
     "plugins/aidd-refine": {
+      "release-as": "3.4.0",
       "package-name": "aidd-refine",
       "extra-files": [
         {
@@ -118,6 +123,7 @@
       ]
     },
     "cli": {
+      "release-as": "5.9.0",
       "release-type": "node",
       "package-name": "@ai-driven-dev/cli"
     }
