@@ -1,6 +1,7 @@
 import type { Scope } from "../../../../shared/domain/scope.js";
 import { bestEffortNativeCall, skippedWarning } from "../../domain/confirmation.js";
 import { type EnableReadings, judgeRegistration } from "../../domain/policy/registration-policy.js";
+import { refOnAnyHost } from "../../domain/record/host-ref.js";
 import { pluginRefsOf } from "../../domain/record/registration-record.js";
 import type { RegisteredMarketplace } from "./registration-outcome.js";
 import { type RegistrationRun, warnRegistration } from "./registration-run.js";
@@ -12,21 +13,29 @@ export interface EnableRequest {
   readonly refsToEnable: (hostNameByAlias: ReadonlyMap<string, string>) => string[];
 }
 
+/** The marketplaces this run proved, and the host names among them moved off an older build. */
+export interface ProvenMarketplaces {
+  readonly proven: readonly RegisteredMarketplace[];
+  readonly repointedHostNames: ReadonlySet<string>;
+}
+
 export async function enableRefs(
   run: RegistrationRun,
   request: EnableRequest,
-  proven: readonly RegisteredMarketplace[]
+  { proven, repointedHostNames }: ProvenMarketplaces
 ): Promise<string[]> {
   const hostNameByAlias = new Map(proven.map((m) => [m.alias, m.hostName]));
   const { toEnable, alreadyOwned } = await sortRefs(run, request.refsToEnable(hostNameByAlias));
   const enabledRefs = [...alreadyOwned];
-  for (const ref of toEnable) {
+  // Added again: Codex keeps a moved marketplace's refs on the old cached build (probed 0.172.0).
+  const stale = alreadyOwned.filter((ref) => refOnAnyHost(ref, repointedHostNames));
+  for (const ref of [...toEnable, ...stale]) {
     const call = bestEffortNativeCall(
       () => run.activator.enablePlugin(ref, request.scope),
       skippedWarning(`enable plugin '${ref}'`),
       (message) => warnRegistration(run, message)
     );
-    if (call.confirmed) enabledRefs.push(ref);
+    if (call.confirmed && !enabledRefs.includes(ref)) enabledRefs.push(ref);
   }
   return enabledRefs;
 }

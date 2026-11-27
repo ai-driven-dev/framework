@@ -88,9 +88,10 @@ describe("registering on a host that refuses a re-add from another source", () =
       hostName: NAME,
       provenance: listed(thisBuild),
       addedThisRun: true,
+      repointed: true,
     });
     expect(activator.removedMarketplaces).toEqual([NAME]);
-    expect(activator.forcedRemovals).toEqual([false]);
+    expect(activator.forcedRemovals).toEqual([true]);
     expect(activator.addedMarketplaces).toEqual([thisBuild]);
   });
 

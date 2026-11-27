@@ -90,7 +90,7 @@ function driftContextOf(
   };
 }
 
-/** A host with no registry refuses a re-add from another source, so an older build is moved. */
+/** Codex and Copilot refuse a re-add from another source (probed 0.172.0, 1.0.114), so an older build is moved. */
 async function decideWithoutRegistry(
   run: RegistrationRun,
   name: string,

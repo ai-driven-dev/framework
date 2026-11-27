@@ -21,6 +21,8 @@ export interface MarketplaceClaim {
   readonly hostName: string;
   readonly provenance: NativeMarketplaceSource | undefined;
   readonly addedThisRun?: true;
+  /** Moved off an older build: a host keeps the refs installed from it on that build. */
+  readonly repointed?: true;
 }
 
 /** A built marketplace to register, and the catalogue claims this run already holds. */
@@ -68,7 +70,16 @@ export async function registerMarketplace(
     return proof.sourceStatus === "owned" ? { hostName, provenance: proof.source } : undefined;
   if (!(await addedOrReclaimed(run, request, { hostName, decision }))) return undefined;
   const source = await proveAddedSource(run, hostName, builtDir);
-  return source === undefined ? undefined : { hostName, provenance: source, addedThisRun: true };
+  return source === undefined ? undefined : addedClaim(hostName, source, decision);
+}
+
+function addedClaim(
+  hostName: string,
+  provenance: NativeMarketplaceSource,
+  decision: "repoint" | undefined
+): MarketplaceClaim {
+  const added = { hostName, provenance, addedThisRun: true } as const;
+  return decision === "repoint" ? { ...added, repointed: true } : added;
 }
 
 /** Whether the host now holds the catalogue: added, moved off an older build, or reclaimed. */
@@ -78,8 +89,7 @@ async function addedOrReclaimed(
   { hostName, decision }: { readonly hostName: string; readonly decision: "repoint" | undefined }
 ): Promise<boolean> {
   const { builtDir, marketplace } = request;
-  if (decision === "repoint")
-    return replaceRegistration(run, { marketplace, hostName, builtDir }, { force: false });
+  if (decision === "repoint") return replaceRegistration(run, { marketplace, hostName, builtDir });
   const refusal = run.activator.addMarketplace(builtDir, marketplace.scope);
   if (refusal === undefined) return true;
   return reclaimOrReport(run, { marketplace, hostName, builtDir }, refusal);

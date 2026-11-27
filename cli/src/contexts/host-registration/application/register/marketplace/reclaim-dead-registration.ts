@@ -38,19 +38,18 @@ export async function reclaimOrReport(
   warn(
     `Marketplace '${hostName}' was registered to a directory that no longer exists; re-registering it for this project. Plugins installed from it are removed and the ones this CLI manages are put back.`
   );
-  return replaceRegistration(run, registration, { force: true });
+  return replaceRegistration(run, registration);
 }
 
-/** Removes the host's registration of the catalogue, then adds this run's build in its place. */
+/** Forced out, then re-added: Copilot refuses a plain remove with plugins installed (probed 1.0.114). */
 export function replaceRegistration(
   run: RegistrationRun,
-  { marketplace, hostName, builtDir }: DeadRegistration,
-  { force }: { readonly force: boolean }
+  { marketplace, hostName, builtDir }: DeadRegistration
 ): boolean {
   const warn = (message: string): void => warnRegistration(run, message);
   const { activator } = run;
   const removed = bestEffortNativeCall(
-    () => activator.removeMarketplace(hostName, marketplace.scope, { force }),
+    () => activator.removeMarketplace(hostName, marketplace.scope, { force: true }),
     skippedWarning(`unregister stale marketplace '${hostName}'`),
     warn
   ).confirmed;
