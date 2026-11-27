@@ -2,7 +2,7 @@ import { mkdir, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { errorMessage } from "../../../shared/domain/describe-error.js";
 import { AIDD_DIR, AIDD_MARKETPLACES_FILENAME } from "../../../shared/domain/layout/aidd-layout.js";
-import { whenAbsent } from "../../../shared/domain/reading/json-file.js";
+import { tryParseJson, whenAbsent } from "../../../shared/domain/reading/json-file.js";
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import type { Scope } from "../../../shared/domain/scope.js";
 import type { AtomicWrite } from "../../../shared/ports/file-writer.js";
@@ -28,13 +28,9 @@ function unreadable(path: string, reason: string): never {
 
 /** The registry's own list, or the reason the file cannot supply one. */
 function registryEntries(raw: string, path: string): MarketplaceData[] {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch (error) {
-    unreadable(path, error instanceof Error ? error.message : "it is not valid JSON");
-  }
-  const entries = asPlainObject(parsed)?.marketplaces;
+  const parsed = tryParseJson(raw);
+  if (!parsed.ok) unreadable(path, errorMessage(parsed.error));
+  const entries = asPlainObject(parsed.value)?.marketplaces;
   if (!Array.isArray(entries)) unreadable(path, "it carries no `marketplaces` list");
   return entries as MarketplaceData[];
 }

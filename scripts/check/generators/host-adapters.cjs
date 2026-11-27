@@ -1,26 +1,25 @@
 "use strict";
-// cli/assets/hooks-runtime/host-<tool>.cjs, from cli/assets/hooks-runtime/parts/ by the rules cli/scripts/host-adapter-parts.cjs
+// cli/assets/hooks-runtime/host-<tool>.cjs, from cli/assets/hooks-runtime/parts/ by the rules cli/scripts/host-adapter-parts.mjs
 // owns. The adapters stay committed and standalone: sync.cjs copies host-claude.cjs into the plugins. Written by
 // `run.cjs --fix`, from the pre-commit hook.
 const fs = require("node:fs");
 const path = require("node:path");
-const { adapterOf, partText, splitTemplate } = require("../../../cli/scripts/host-adapter-parts.cjs");
+const { adapterFile, isTemplate, partFile, partNamesIn, partText, splitTemplate } = require("../../../cli/scripts/host-adapter-parts.mjs");
 
 const RUNTIME = path.join("cli", "assets", "hooks-runtime");
-const PARTS = path.join(RUNTIME, "parts");
-const TEMPLATE = /^host-.+\.js\.txt$/u;
 
 const rel = (file) => file.split(path.sep).join("/");
 
-/** The adapter a template generates, or `{ problem }` naming the first part it names that no file holds. */
-function generate(root, template) {
-  const pieces = splitTemplate(fs.readFileSync(path.join(root, PARTS, template), "utf8"));
+/** The adapter the template `name` generates, or `{ problem }` naming the first part it names that no file holds. */
+function generate(root, name) {
+  const template = path.join(RUNTIME, partFile(name));
+  const pieces = splitTemplate(fs.readFileSync(path.join(root, template), "utf8"));
   let missing;
   const generated = pieces.map((piece, index) => {
     if (index % 2 === 0) return piece;
-    const part = path.join(PARTS, `${piece}.js.txt`);
+    const part = path.join(RUNTIME, partFile(piece));
     if (fs.existsSync(path.join(root, part))) return partText(fs.readFileSync(path.join(root, part), "utf8"));
-    missing ??= `${rel(path.join(PARTS, template))} names part ${piece}, which ${rel(part)} does not hold`;
+    missing ??= `${rel(template)} names part ${piece}, which ${rel(part)} does not hold`;
     return "";
   });
   return missing === undefined ? generated.join("") : { problem: missing };
@@ -28,18 +27,16 @@ function generate(root, template) {
 
 module.exports = {
   name: "host-adapters",
-  watch: ["cli/assets/hooks-runtime/**", "cli/scripts/host-adapter-parts.cjs"],
+  watch: ["cli/assets/hooks-runtime/**", "cli/scripts/host-adapter-parts.mjs"],
   run({ root, write }) {
-    const parts = path.join(root, PARTS);
-    if (!fs.existsSync(parts)) return [];
     const found = [];
-    for (const template of fs.readdirSync(parts).filter((name) => TEMPLATE.test(name)).sort()) {
-      const generated = generate(root, template);
+    for (const name of partNamesIn(path.join(root, RUNTIME)).filter(isTemplate)) {
+      const generated = generate(root, name);
       if (typeof generated !== "string") {
         found.push(generated);
         continue;
       }
-      const adapter = path.join(RUNTIME, adapterOf(template));
+      const adapter = path.join(RUNTIME, adapterFile(name));
       const file = path.join(root, adapter);
       if (fs.existsSync(file) && fs.readFileSync(file, "utf8") === generated) continue;
       found.push(rel(adapter));

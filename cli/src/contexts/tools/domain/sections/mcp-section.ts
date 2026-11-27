@@ -75,8 +75,7 @@ export class McpConfigPart {
   }
 
   fileOf(content: string, place: ConfigFilePlace = {}): InstallationFile {
-    const { outputPath, mergeStrategy = "user-prime" } = this.#params;
-    return InstallationFile.placed(content, place, { outputPath, mergeStrategy });
+    return InstallationFile.placed(content, place, this.#params);
   }
 
   /** Whether the framework's half of the file is written over what a person keeps in it. */

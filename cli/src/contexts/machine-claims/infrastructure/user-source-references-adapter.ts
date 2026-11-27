@@ -1,6 +1,8 @@
 import { dirname, join } from "node:path";
+import { errorMessage } from "../../../shared/domain/describe-error.js";
 import { USER_SOURCE_REFERENCES_FILENAME } from "../../../shared/domain/layout/aidd-layout.js";
 import { dedupePathSegments, samePathSegment } from "../../../shared/domain/paths.model.js";
+import { tryParseJson } from "../../../shared/domain/reading/json-file.js";
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import { UnreadableUserSourceReferencesError } from "../../../shared/domain/shared.error.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
@@ -153,16 +155,9 @@ export class UserSourceReferencesAdapter implements UserSourceReferences {
  * half-trusting a corrupted shape is how a later write would silently drop what it could not
  * validate. */
 function parseReferencesFile(raw: string, path: string): ReferencesFile {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch (error) {
-    throw new UnreadableUserSourceReferencesError(
-      path,
-      error instanceof Error ? error.message : "it is not valid JSON"
-    );
-  }
-  const versions = asPlainObject(parsed);
+  const parsed = tryParseJson(raw);
+  if (!parsed.ok) throw new UnreadableUserSourceReferencesError(path, errorMessage(parsed.error));
+  const versions = asPlainObject(parsed.value);
   if (versions === null) {
     throw new UnreadableUserSourceReferencesError(path, "it is not a version-keyed object");
   }

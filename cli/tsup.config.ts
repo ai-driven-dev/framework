@@ -1,8 +1,8 @@
 import { copyFileSync, readFileSync } from "node:fs";
-import { createRequire } from "node:module";
 import { join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig, type Options } from "tsup";
+import { joinedHostAdapters } from "./scripts/host-adapter-parts.mjs";
 
 type Plugin = NonNullable<Options["esbuildPlugins"]>[number];
 
@@ -38,9 +38,6 @@ function resolveOutDir(): string {
 }
 
 const outDir = resolveOutDir();
-
-// Required at run time: the config's own bundling cannot inline a CommonJS module that requires Node built-ins.
-const { joinedHostAdapters } = createRequire(import.meta.url)("./scripts/host-adapter-parts.cjs");
 
 /**
  * The binary reads one field of this package's manifest: `version`, in
@@ -91,7 +88,7 @@ export default defineConfig({
     options.minifySyntax = true;
     options.minifyWhitespace = true;
     options.minifyIdentifiers = true;
-    // The binary ships no source map: every function and class keeps its own name, crash stacks too.
+    // The binary ships no source map: a crash still names the error's class and the functions in its frames.
     options.keepNames = true;
   },
   async onSuccess() {

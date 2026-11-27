@@ -1,5 +1,5 @@
 {
-  "entry": ["tests/**/*.test.ts", "vitest.mutation.config.ts", "scripts/host-adapter-parts.cjs"],
+  "entry": ["tests/**/*.test.ts", "vitest.mutation.config.ts", "scripts/host-adapter-parts.mjs"],
   "ignore": ["tests/fixtures/**", "scripts/**/*.d.mts"],
   "ignoreBinaries": ["icacls"],
   "ignoreExportsUsedInFile": true,

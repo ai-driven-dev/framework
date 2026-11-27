@@ -30,8 +30,7 @@ export class HooksConfigPart {
   }
 
   fileOf(content: string, place: ConfigFilePlace = {}): InstallationFile {
-    const { outputPath, mergeStrategy = "user-prime" } = this.#params;
-    return InstallationFile.placed(content, place, { outputPath, mergeStrategy });
+    return InstallationFile.placed(content, place, this.#params);
   }
 
   accepts(relativePath: string): boolean {

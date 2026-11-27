@@ -23,7 +23,7 @@ export function readMergeEntries(jsonContent: string, sectionKey: string | null)
   if (!parsed.ok) {
     return {
       ok: false,
-      reason: parsed.error instanceof Error ? parsed.error.message : String(parsed.error),
+      reason: errorMessage(parsed.error),
     };
   }
   const root = asPlainObject(parsed.value);

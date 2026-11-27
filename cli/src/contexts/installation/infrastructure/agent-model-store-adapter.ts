@@ -1,4 +1,6 @@
 import { join } from "node:path";
+import { errorMessage } from "../../../shared/domain/describe-error.js";
+import { tryParseJson } from "../../../shared/domain/reading/json-file.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { AgentModelStore, AgentProviders, MainModels } from "../ports/agent-model-store.js";
@@ -29,12 +31,9 @@ export class AgentModelStoreAdapter implements AgentModelStore {
 
   private async read<T extends object>(path: string): Promise<T> {
     if (!(await this.fs.fileExists(path))) return {} as T;
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(await this.fs.readFile(path));
-    } catch (error) {
-      throw new Error(`${path} is not valid JSON: ${(error as Error).message}`);
-    }
+    const json = tryParseJson(await this.fs.readFile(path));
+    if (!json.ok) throw new Error(`${path} is not valid JSON: ${errorMessage(json.error)}`);
+    const parsed = json.value;
     if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
       throw new Error(`${path} must contain a JSON object.`);
     }
