@@ -21,7 +21,7 @@ import { relativeLinks } from "../rules/links.js";
 import type { FrameworkBuildMode } from "../translate-profile.js";
 import { buildFlatPlans } from "./build-flat.js";
 import { flatRules } from "./build-flat-rules.js";
-import { agentFiles, hooksPath, isEntry } from "./build-shared.js";
+import { agentFiles, convertedHooksFile, hooksPath, isEntry } from "./build-shared.js";
 
 /** Where a build puts one plugin for a tool and which rules each file goes through. The files
  * are named from the output directory; a flat layout leaves its MCP servers and hooks file to the
@@ -103,22 +103,17 @@ function marketplaceHooks(
   const shipped = canon.components.hooks.filter(
     ({ relativePath }) => !(artifact.skipHooksJson && relativePath === PLUGIN_HOOKS_RELATIVE)
   );
-  const plans = shipped.map(({ relativePath, content }) => {
-    const converted =
-      relativePath === PLUGIN_HOOKS_RELATIVE
-        ? artifact.convertHooks?.(content, plugin, carriesRelease(plugin, canon.components.hooks))
-        : undefined;
-    warnings.push(...(converted?.warnings ?? []));
+  const conversion = { plugin, carriesRelease: carriesRelease(plugin, canon.components.hooks) };
+  const plans = shipped.map((file) => {
+    const converted = convertedHooksFile(artifact, file, conversion);
+    warnings.push(...converted.warnings);
     return {
-      source: relativePath,
-      path: `plugins/${plugin}/${hooksPath(artifact, plugin, relativePath)}`,
-      content: converted?.content ?? content,
-      shape:
-        converted === undefined && artifact.transform && relativePath.endsWith(".json")
-          ? (text: string) => artifact.transform?.(text, plugin, basename(relativePath)) ?? text
-          : undefined,
+      source: file.relativePath,
+      path: `plugins/${plugin}/${hooksPath(artifact, plugin, file.relativePath)}`,
+      content: converted.content,
+      shape: converted.shape,
       rootToken,
-      script: (text: string) => artifact.script?.(relativePath, text) ?? text,
+      script: (text: string) => artifact.script?.(file.relativePath, text) ?? text,
     };
   });
   return { plans, warnings };
