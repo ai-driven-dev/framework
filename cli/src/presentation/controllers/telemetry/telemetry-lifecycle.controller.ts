@@ -43,11 +43,17 @@ async function turnOn(
     onRefused: () => printIdentityRule(output),
   });
   const result = await container.telemetry.enableTelemetry.execute({ cwd: projectRoot, choice });
-  const retention =
+  printOnResult(
+    output,
     result.status === "on"
-      ? await container.telemetry.readTranscriptRetention.execute({ root: result.root })
-      : undefined;
-  printOnResult(output, result, retention);
+      ? {
+          ...result,
+          retention: await container.telemetry.readTranscriptRetention.execute({
+            root: result.root,
+          }),
+        }
+      : result
+  );
   if (result.status === "refused") output.exit(1);
 }
 

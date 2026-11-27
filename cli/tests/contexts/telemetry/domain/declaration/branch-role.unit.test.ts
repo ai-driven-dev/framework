@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import {
-  branchRoleOf,
-  currentBranchOf,
-} from "../../../../../src/contexts/telemetry/domain/declaration/branch-role.js";
+import { branchHeadOf } from "../../../../../src/contexts/telemetry/domain/declaration/branch-role.js";
+
+const branchRoleOf = (head: string | null, originHead: string | null) =>
+  branchHeadOf(head, originHead).role;
 
 describe("the ref a branch is read from", () => {
   it.each([
@@ -10,8 +10,13 @@ describe("the ref a branch is read from", () => {
     ["refs/heads/", null],
     ["refs/tags/v1", null],
     ["", null],
+    [null, null],
   ])("reads %j as %j", (ref, branch) => {
-    expect(currentBranchOf(ref)).toBe(branch);
+    expect(branchHeadOf(ref, null).branch).toBe(branch);
+  });
+
+  it("is detached when it names no branch, and names none", () => {
+    expect(branchHeadOf(null, null)).toStrictEqual({ role: "detached", branch: null });
   });
 
   it("trims a remote head the same way", () => {

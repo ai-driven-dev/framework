@@ -9,7 +9,7 @@ import {
   parseConsentRecords,
 } from "../../../src/contexts/telemetry/domain/consent/consent-history.js";
 import { resolveBinding } from "../../../src/contexts/telemetry/domain/declaration/binding-resolution.js";
-import { branchRoleOf } from "../../../src/contexts/telemetry/domain/declaration/branch-role.js";
+import { branchHeadOf } from "../../../src/contexts/telemetry/domain/declaration/branch-role.js";
 import {
   declarationOf,
   parseSessionCarry,
@@ -149,7 +149,7 @@ describe("the shared fixture of task bindings", () => {
 
   it.each(Object.entries(cases.binding))("binds %s", (name, input) => {
     const config = input.gitConfig === null ? null : cases.gitConfig[input.gitConfig];
-    const role = branchRoleOf(input.head, input.originHead);
+    const { role } = branchHeadOf(input.head, input.originHead);
     const declared =
       config === null || config === undefined || role !== "working"
         ? null
@@ -175,7 +175,7 @@ describe("the shared fixture of task bindings", () => {
   });
 
   it.each(Object.entries(cases.branchRole))("gives %s its role", (name, input) => {
-    expect(branchRoleOf(input.head, input.originHead)).toBe(expected.branchRole?.[name]);
+    expect(branchHeadOf(input.head, input.originHead).role).toBe(expected.branchRole?.[name]);
   });
 
   it.each(Object.entries(cases.consent))("reads consent %s", (name, input) => {
