@@ -18,6 +18,32 @@ const PRESENCE = {
   agentsList: ["reviewer.md"],
   skillsList: ["commit"],
   hasHooksJson: true,
+  hooks: {
+    SessionStart: [
+      {
+        hooks: [
+          { type: "command", command: "node $" + "{CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs load" },
+          {
+            type: "command",
+            command: "node $" + "{CLAUDE_PLUGIN_ROOT}/hooks/slow.cjs",
+            timeout: 20,
+          },
+        ],
+      },
+    ],
+    UserPromptSubmit: [
+      {
+        matcher: "",
+        hooks: [{ type: "command", command: "node $" + "{CLAUDE_PLUGIN_ROOT}/hooks/ask.cjs" }],
+      },
+    ],
+    PreToolUse: [
+      {
+        matcher: "Write",
+        hooks: [{ type: "command", command: "node $" + "{CLAUDE_PLUGIN_ROOT}/hooks/lock.cjs" }],
+      },
+    ],
+  },
   hasMcpJson: true,
   mcpServers: {
     docs: { url: "https://example.com/mcp" },
@@ -47,7 +73,6 @@ describe("building Kimi's plugin contract", () => {
 
     expect(manifest.skills).toBe("./skills/");
     expect(manifest).not.toHaveProperty("agents");
-    expect(manifest).not.toHaveProperty("hooks");
     expect(manifest.mcpServers).toEqual({
       docs: { url: "https://example.com/mcp" },
       local: { command: "./bin/serve.js", args: ["--stdio"] },
@@ -57,13 +82,25 @@ describe("building Kimi's plugin contract", () => {
   it("names no skills and no servers for a plugin holding none", () => {
     const manifest = synthesize()(
       { name: "aidd-test" },
-      { ...PRESENCE, skillsList: [], hasMcpJson: false, mcpServers: {} }
+      { ...PRESENCE, skillsList: [], hasMcpJson: false, mcpServers: {}, hooks: {} }
     );
 
     expect(manifest).toEqual({ name: "aidd-test" });
   });
 
-  it("ships no hooks, with the same reason as the flat contract", () => {
-    expect(contract().artifacts.hooks).toEqual(present(kimi.buildContracts.flat)().artifacts.hooks);
+  it("lists the hooks of the events Kimi fires inline, from the plugin root, with the four fields it takes", () => {
+    expect(synthesize()({ name: "aidd-test" }, PRESENCE).hooks).toEqual([
+      { event: "SessionStart", command: "node ./hooks/memory.cjs load" },
+      { event: "SessionStart", command: "node ./hooks/slow.cjs", timeout: 20 },
+      { event: "UserPromptSubmit", command: "node ./hooks/ask.cjs" },
+    ]);
+  });
+
+  it("ships the plugin's hook scripts with Kimi's adapter in place of Claude Code's", () => {
+    const { hooks } = contract().artifacts;
+    const script = present(hooks.supported ? hooks.script : undefined);
+
+    expect(script("hooks/lib/host.cjs", "claude's")).toContain('const HOST = "kimi";');
+    expect(script("hooks/memory.cjs", "as shipped")).toBe("as shipped");
   });
 });

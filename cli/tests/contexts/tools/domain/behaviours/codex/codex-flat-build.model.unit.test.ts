@@ -20,6 +20,7 @@ const _NO_CONTENT = {
   agentsList: [],
   skillsList: [],
   hasHooksJson: false,
+  hooks: {},
   hasMcpJson: false,
 };
 

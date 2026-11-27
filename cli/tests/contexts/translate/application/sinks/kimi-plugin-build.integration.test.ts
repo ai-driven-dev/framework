@@ -77,7 +77,10 @@ describe("a plugin build for kimi", () => {
     expect(built).toContain("plugins/aidd-test/skills/commit/SKILL.md");
     expect(built).toContain("plugins/aidd-test/agents/code-reviewer.md");
     expect(built.filter((path) => path.includes(".mcp.json"))).toEqual([]);
-    expect(built.filter((path) => path.startsWith("plugins/aidd-test/hooks/"))).toEqual([]);
+    expect(built.filter((path) => path.startsWith("plugins/aidd-test/hooks/"))).toEqual([
+      "plugins/aidd-test/hooks/check.sh",
+      "plugins/aidd-test/hooks/session-start.js",
+    ]);
   });
 
   it("names the skills with a ./ path and carries the servers inline with the plugin root resolved", async () => {
@@ -89,6 +92,28 @@ describe("a plugin build for kimi", () => {
     expect(manifest.skills).toBe("./skills/");
     expect(manifest.mcpServers).toEqual({
       "aidd-test-server": { command: "./bin/server.js", args: [] },
+    });
+  });
+
+  it("lists the hooks of the events Kimi fires in the manifest, run from the plugin root, and reports the others", async () => {
+    await buildKimiPlugin();
+
+    const manifest = JSON.parse(
+      await readFile(join(out, "plugins/aidd-test/.kimi-plugin/plugin.json"), "utf-8")
+    );
+    expect(manifest.hooks).toEqual([
+      { event: "SessionStart", command: "node ./hooks/session-start.js" },
+    ]);
+    expect(logger.warnMessages).toContain("kimi: unmapped event 'PreToolUse' skipped");
+  });
+
+  it("lists each built plugin in a catalog Kimi reads, by the path from the catalog to the plugin", async () => {
+    await buildKimiPlugin();
+
+    const catalog = JSON.parse(await readFile(join(out, ".kimi-plugin/marketplace.json"), "utf-8"));
+    expect(catalog).toEqual({
+      version: "2",
+      plugins: [{ id: "aidd-test", displayName: "aidd-test", source: "../plugins/aidd-test" }],
     });
   });
 

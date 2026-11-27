@@ -6,6 +6,7 @@ import type {
   SupportedArtifact,
   ToolBuildContract,
 } from "../../../../shared/domain/materialization/build-contract.js";
+import { carriesRelease } from "../../../../shared/domain/plugin/canon-paths.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import { PLUGIN_HOOKS_RELATIVE } from "../canon-format.js";
 import { mergeFlatHooks } from "../flat-layout.js";
@@ -39,6 +40,7 @@ export function flatOwnHooksFile(
   const { content, warnings } = mergeFlatHooks({ file, contract }, null, {
     json: manifest.content,
     plugin,
+    carriesRelease: carriesRelease(plugin, canon.components.hooks),
   });
   return { plan: { source: "", path: hooksFilePath(file, plugin), content }, warnings };
 }

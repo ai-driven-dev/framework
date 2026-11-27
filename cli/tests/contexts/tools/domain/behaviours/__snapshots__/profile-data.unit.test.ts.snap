@@ -629,7 +629,9 @@ exports[`the data each registered profile declares > kimi 1`] = `
     "manifest": [
       ".kimi-plugin/plugin.json",
     ],
-    "marketplace": [],
+    "marketplace": [
+      ".kimi-plugin/marketplace.json",
+    ],
   },
   "frontmatter": {
     "agents": null,

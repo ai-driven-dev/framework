@@ -1,9 +1,10 @@
 /** What the builders read of a descriptor to deliver a tool's hooks: where each route writes them. */
 
 import type {
-  ArtifactContract,
   ConvertHooks,
+  SupportedArtifact,
 } from "../../../../../shared/domain/materialization/build-contract.js";
+import { HOST_ADAPTER_PATH } from "../../../../../shared/domain/plugin/canon-paths.js";
 import { CapabilityConfigError } from "../../../contract/errors/tools.error.js";
 import type { HookScript } from "../../../contract/tool-vocabulary.js";
 import type { HooksFileFormat } from "../../hooks/hooks-entry-shape.js";
@@ -24,10 +25,6 @@ import {
 } from "../../sections/hooks-section.js";
 import { type HooksRouting, PLUGIN_HOOKS_SOURCE, type ProjectHooksRoute } from "./descriptor.js";
 
-/** Where a plugin keeps the adapter between its hooks and the host: Claude Code's, as shipped,
- * which a build for another tool replaces with that tool's. */
-const HOST_ADAPTER_PATH = "hooks/lib/host.cjs";
-
 export function hookScript(descriptor: HooksRouting): HookScript | undefined {
   const adapter = descriptor.runtime?.adapter;
   if (adapter === undefined) return undefined;
@@ -44,7 +41,7 @@ export function withHookScript(descriptor: HooksRouting): { readonly hookScript?
 export function pluginTreeHooksArtifact(
   descriptor: HooksRouting,
   convertHooks?: ConvertHooks
-): ArtifactContract {
+): SupportedArtifact {
   return {
     supported: true,
     source: PLUGIN_HOOKS_SOURCE,
@@ -53,9 +50,10 @@ export function pluginTreeHooksArtifact(
         ? { kind: "relative" }
         : { kind: "file", at: descriptor.pluginFile },
     script: hookScript(descriptor),
+    ...(descriptor.manifestListsHooks === true ? { skipHooksJson: true } : {}),
     ...(convertHooks === undefined
       ? {}
-      : { convertHooks, transform: (json, plugin) => convertHooks(json, plugin).content }),
+      : { convertHooks, transform: (json, plugin) => convertHooks(json, plugin, false).content }),
   };
 }
 

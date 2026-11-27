@@ -5748,7 +5748,7 @@
         "pluginName": "aidd-async-dev",
         "component": "hooks",
         "toolId": "kimi",
-        "reason": "Kimi reads hooks from the user config.toml or a local plugin, never from a project, and a plugin's hooks are not delivered until a payload is captured"
+        "reason": "Kimi reads hooks from the user config.toml or a local plugin, never from a project"
       }
     ],
     "notices": []
@@ -5831,7 +5831,7 @@
         "pluginName": "aidd-context",
         "component": "hooks",
         "toolId": "kimi",
-        "reason": "Kimi reads hooks from the user config.toml or a local plugin, never from a project, and a plugin's hooks are not delivered until a payload is captured"
+        "reason": "Kimi reads hooks from the user config.toml or a local plugin, never from a project"
       }
     ],
     "notices": []

@@ -1,8 +1,11 @@
+// biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
+import adapter from "../../../assets/hooks-runtime/host-kimi.cjs";
 import type { NativeRegistrationSection } from "../../contexts/host-registration/contract/native-registration-spec.js";
 import {
   buildKimiFlatContract,
   buildKimiPluginContract,
 } from "../../contexts/tools/domain/behaviours/kimi/kimi-build.model.js";
+import { declareHooks } from "../../contexts/tools/domain/formats/hooks/declaration.js";
 import { descriptionOnlyRule } from "../../contexts/tools/domain/formats/rule-frontmatter.js";
 import { contract } from "../../contexts/tools/domain/profile/contract-builders.js";
 import { defineAiTool } from "../../contexts/tools/domain/profile/define-tool.js";
@@ -58,19 +61,35 @@ const AGENT_TOOLS: ReadonlyMap<string, string> = new Map([
 
 // https://www.kimi.com/code/docs/en/kimi-code-cli/customization/hooks.html
 const USER_CONFIG_REASON =
-  "Kimi reads hooks from the user config.toml or a local plugin, never from a project, and a plugin's hooks are not delivered until a payload is captured";
+  "Kimi reads hooks from the user config.toml or a local plugin, never from a project";
+
+const hooks = declareHooks(
+  { toolId: "kimi", directory: DIRECTORY, adapter },
+  {
+    // Only the events a plugin's hooks fired on Kimi, as captured, are delivered.
+    undeclaredEvents: "skipped",
+    manifestListsHooks: true,
+    events: { SessionStart: "SessionStart", UserPromptSubmit: "UserPromptSubmit" },
+  }
+);
+
+const MARKETPLACE_FILE = ".kimi-plugin/marketplace.json";
 
 export const kimi = defineAiTool({
   toolId: "kimi",
   directory: DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
   displayName: "Kimi Code CLI",
-  distributionProbes: { manifest: [".kimi-plugin/plugin.json"] },
+  distributionProbes: {
+    manifest: [".kimi-plugin/plugin.json"],
+    marketplace: [MARKETPLACE_FILE],
+  },
   signalDir: null,
   buildContracts: {
     marketplace: contract(buildKimiPluginContract, {
       agentTools: AGENT_TOOLS,
-      hooksReason: USER_CONFIG_REASON,
+      hooks,
+      marketplaceRelative: MARKETPLACE_FILE,
     }),
     flat: contract(buildKimiFlatContract, {
       layout: KIMI_FLAT_LAYOUT,

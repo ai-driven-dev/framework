@@ -5,6 +5,8 @@ const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 
+const { readHookOutput } = require("../lib/hook-output.cjs");
+
 const REPO = path.resolve(__dirname, "../..");
 const HOOKS = path.join(REPO, "plugins/aidd-context/hooks");
 const ENTRY = "memory.cjs";
@@ -214,15 +216,18 @@ test("Stop: a continuation turn answers nothing", () => {
 // ---- Stop: what the person sees -------------------------------------------------------------
 
 for (const host of PAYLOAD_HOSTS) {
-  test(`${host}: Stop continues the turn with the file it could not sync, and only the claude adapter prints it for the person`, () => {
+  test(`${host}: Stop continues the turn with the file it could not sync, and only claude and copilot print it for the person`, () => {
     const root = project({ "CLAUDE.md": TEAM_BLOCK, [VCS]: BANK });
     write(root, `${MEMORY}/internal/new.md`, "# New\n");
     const result = run(host, stopPayload(host, root));
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /not synced/u, `${host} printed ${result.stdout}`);
-    const out = JSON.parse(result.stdout);
+    const { progress, answer } = readHookOutput(result.stdout);
+    const out = JSON.parse(answer);
     if (host === "claude") assert.equal(out.systemMessage, out.reason);
-    else assert.ok(!result.stdout.includes("systemMessage"), result.stdout);
+    else assert.ok(!answer.includes("systemMessage"), answer);
+    if (host === "copilot") assert.match(progress.join("\n"), /not synced/u, result.stdout);
+    else assert.deepEqual(progress, [], result.stdout);
   });
 }
 

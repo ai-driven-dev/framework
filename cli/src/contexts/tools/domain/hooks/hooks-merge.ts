@@ -12,6 +12,7 @@ import {
 } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import { PLUGIN_HOOKS_SOURCE } from "../formats/hooks/descriptor.js";
 import { type Entry, type HooksFileFormat, shapeEntries } from "./hooks-entry-shape.js";
+import { routeEvents } from "./hooks-route.js";
 import { unmappedEventWarning } from "./hooks-warnings.js";
 import type { PluginHooksShape } from "./plugin-hooks-shape.js";
 
@@ -53,16 +54,15 @@ export function mergeHooks(
 ): { content: string; warnings: readonly string[] } {
   const file = stripPlugin(parseFile(existing), shipped.plugin, target);
   const hooks = file.hooks ?? {};
-  const warnings: string[] = [];
-  const rewritten = rewriteRoot(shipped, target.scriptsDir).hooks ?? {};
-  for (const [event, groups] of Object.entries(rewritten)) {
-    const toolEvent = target.eventMap === undefined ? event : target.eventMap[event];
-    if (toolEvent === undefined) {
-      warnings.push(unmappedEventWarning(event));
-      continue;
-    }
-    hooks[toolEvent] = [...(hooks[toolEvent] ?? []), ...shapeEntries(groups, target.file)];
+  const { routed, skipped } = routeEvents(
+    Object.entries(rewriteRoot(shipped, target.scriptsDir).hooks ?? {}),
+    target.eventMap,
+    (groups) => shapeEntries(groups, target.file)
+  );
+  for (const [toolEvent, entries] of routed) {
+    hooks[toolEvent] = [...(hooks[toolEvent] ?? []), ...entries];
   }
+  const warnings = skipped.map(unmappedEventWarning);
   return { content: serialize(file, hooks, target.file), warnings };
 }
 

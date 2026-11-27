@@ -221,7 +221,7 @@ describe.each([
 });
 
 describe("when a plugin's category does not match", () => {
-  it("carries its data and says nothing itself", () => {
+  it("carries its data and says nothing itself for an ai category", () => {
     const error = new CategoryMismatchError(["vscode"], "ai", ["claude", "cursor"]);
     expect({
       name: error.name,
@@ -238,7 +238,7 @@ describe("when a plugin's category does not match", () => {
     });
   });
 
-  it("carries its data and says nothing itself", () => {
+  it("carries its data and says nothing itself for an ide category", () => {
     const error = new CategoryMismatchError(["claude", "cursor"], "ide", ["vscode"]);
     expect({
       name: error.name,

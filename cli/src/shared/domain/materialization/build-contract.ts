@@ -3,6 +3,7 @@ import type { SourceMarketplaceRef, SourcePluginEntryRef } from "../plugin/sourc
 import type { ConfigAsset, SchemaName } from "../reading/config-asset.js";
 import type { CommandsSlot } from "./command-markdown.js";
 import type { FlatArtifactLayout, FlatHooksLoaderEntry } from "./flat-paths.js";
+import type { PluginPresence } from "./plugin-presence.js";
 
 /** All a marketplace builder reads of the output tree. */
 export interface BuildFileReader {
@@ -85,7 +86,8 @@ export type ArtifactPlacement =
 /** A plugin's hooks.json in a tool's own form, and what the conversion left out. */
 export type ConvertHooks = (
   json: string,
-  plugin: string
+  plugin: string,
+  carriesRelease: boolean
 ) => { content: string; warnings: readonly string[] };
 
 export type ArtifactContract =
@@ -136,8 +138,7 @@ export type ArtifactContract =
        * adapter replaces the one the plugin ships. Absent, every script is written as shipped. */
       readonly script?: (pluginPath: string, content: string) => string;
       /** Delivers everything under hooks/ except hooks.json, for a tool whose own side reads
-       * none: OpenCode today, whose scripts are still delivered and whose trigger is
-       * `hooksBridge`. */
+       * none: OpenCode, whose trigger is `hooksBridge`, and Kimi, whose manifest lists them. */
       readonly skipHooksJson?: boolean;
       /** A generated event bridge, for a tool with no hooks.json of its own and no other way
        * to trigger a plugin's declared hooks. Read only when `skipHooksJson` is also true. */
@@ -157,7 +158,11 @@ export interface ToolBuildContract {
 
   /** Synthesize a tool-native plugin manifest from the source manifest + presence flags. null if tool has no manifest. */
   readonly synthesizeManifest:
-    | ((source: Record<string, unknown>, presence: PluginPresence) => Record<string, unknown>)
+    | ((
+        source: Record<string, unknown>,
+        presence: PluginPresence,
+        warn?: (warning: string) => void
+      ) => Record<string, unknown>)
     | null;
 
   readonly manifestSchemaName: SchemaName | null;
@@ -210,6 +215,8 @@ export interface ShippedHooks {
   readonly json: string;
   readonly plugin: string;
   readonly locate?: (pluginPath: string) => string;
+  /** Whether this plugin runs the one release of held PostToolUse answers for every plugin. */
+  readonly carriesRelease?: boolean;
 }
 
 /** A config file a tool builds from every plugin at once. The build reads what it names and
@@ -243,15 +250,4 @@ export interface ConfigArtifactFile {
   /** Relative to the output root. */
   readonly path: string;
   readonly content: string;
-}
-
-export interface PluginPresence {
-  readonly hasAgents: boolean;
-  /** Agent markdown files relative to the plugin's `agents/` dir (e.g. "planner.md"), sorted. */
-  readonly agentsList: readonly string[];
-  readonly skillsList: readonly string[];
-  readonly hasHooksJson: boolean;
-  readonly hasMcpJson: boolean;
-  /** The servers `.mcp.json` declares, by name, for a tool whose manifest carries them inline. */
-  readonly mcpServers: Readonly<Record<string, unknown>>;
 }

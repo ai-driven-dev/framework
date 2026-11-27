@@ -8,7 +8,7 @@ import {
   resolveVersion,
   synthesizeSharedManifest,
 } from "../../../../src/contexts/tools/domain/marketplace-catalog.js";
-import type { PluginPresence } from "../../../../src/shared/domain/materialization/build-contract.js";
+import type { PluginPresence } from "../../../../src/shared/domain/materialization/plugin-presence.js";
 import { InvalidSourceMarketplaceError } from "../../../../src/shared/domain/shared.error.js";
 import { InMemoryFileAdapter } from "../../../shared/testing/in-memory-file-adapter.fake.js";
 
@@ -17,6 +17,7 @@ const EMPTY_PRESENCE: PluginPresence = {
   agentsList: [],
   skillsList: [],
   hasHooksJson: false,
+  hooks: {},
   hasMcpJson: false,
   mcpServers: {},
 };
@@ -26,6 +27,7 @@ const FULL_PRESENCE: PluginPresence = {
   agentsList: ["implementer.md", "planner.md", "reviewer.md"],
   skillsList: ["commit", "plan"],
   hasHooksJson: true,
+  hooks: {},
   hasMcpJson: true,
   mcpServers: {},
 };

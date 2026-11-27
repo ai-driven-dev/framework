@@ -70,7 +70,11 @@ PostToolUse (an `fs_write` creating a file, a `str_replace` edit, an `execute_ba
 --model qwen3-coder-next "<prompt>"`. Their stdin carries no `stop_hook_active`. After a Stop hook
 printed `{"decision": "block", "reason": ...}` the model answered the reason and Stop fired once
 for that prompt, never again on the continuation turn. Output printed by a PostToolUse hook, in
-every shape tried, was not read by the model.
+every shape tried, was not read by the model. Kimi's SessionStart, UserPromptSubmit, TurnStarted and
+StopFailure, from `kimi` 0.42.0 started with `kimi web` and a plugin installed over
+`POST /api/v1/plugins`, then `kimi --output-format stream-json -p`: the model turn itself was
+refused (403), so no tool or Stop payload exists. The host's `session_` prefix on the session id is
+kept.
 
 ## How the harder ones were reached
 
@@ -80,7 +84,7 @@ every shape tried, was not read by the model.
   that name was routed to another model by a local proxy. The arguments are the host's own tool
   schema; the model only filled them.
 
-Antigravity's `PostToolUse` (a `write_file`, a `run_command`, then an `edit_file`) and `Stop` (`executionNum` 0, then 1 on the continued turn end), captured from real `agy` runs. Its payloads name their event in `hookEventName`. Its edit tool is `edit_file`, with `Path`, `Target` and `Replacement`. Its `SessionStart` was answered with an `injectSteps` system message carrying a passphrase (`run: answer`), and the model repeated the passphrase, so the injection reaches it.
+Antigravity's `PostToolUse` (a `write_file`, a `run_command`, then an `edit_file`) and `Stop` (`executionNum` 0, then 1 on the continued turn end), captured from real `agy` runs. Its payloads name their event in `hookEventName`. Its edit tool is `edit_file`, with `Path`, `Target` and `Replacement`. Its `SessionStart` was answered with an `injectSteps` system message carrying a passphrase (`run: answer`), and the model repeated the passphrase, so the injection reaches it. Its `PreInvocation` (`log`, then `relay`: a held message injected as `injectSteps`) was captured on `gemini-4-hydrogen-low`, and the model acted on it.
 
 ## Checking the fixtures against the hosts
 
