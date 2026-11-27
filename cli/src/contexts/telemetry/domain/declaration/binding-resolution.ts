@@ -59,7 +59,7 @@ function declared(declaration: TaskDeclaration): SessionBinding {
 
 /** A session's own binding at an instant: what it declared, else what it carried. A carry
  * takes the carried session's binding as it stood when the carry was made, whatever was
- * declared there since. */
+ * declared there since. Work with no session id has neither. */
 function sessionBinding({
   facts,
   sessionId,
@@ -67,9 +67,9 @@ function sessionBinding({
   visiting,
 }: {
   readonly facts: BindingFacts;
-  readonly sessionId: string;
+  readonly sessionId: string | null;
   readonly at: number;
-  readonly visiting: ReadonlySet<string>;
+  readonly visiting: ReadonlySet<string | null>;
 }): SessionBinding | null {
   if (visiting.has(sessionId)) return null;
   const own = latestUpTo(
@@ -96,15 +96,13 @@ function sessionBinding({
 /** Whether a piece of work is bound to a task: the session's own declaration, then the one
  * it carried across a `/clear`, then its branch's. */
 export function resolveBinding(facts: BindingFacts): Binding {
-  if (facts.sessionId !== null) {
-    const session = sessionBinding({
-      facts,
-      sessionId: facts.sessionId,
-      at: facts.at.getTime(),
-      visiting: new Set(),
-    });
-    if (session !== null) return session;
-  }
+  const session = sessionBinding({
+    facts,
+    sessionId: facts.sessionId,
+    at: facts.at.getTime(),
+    visiting: new Set(),
+  });
+  if (session !== null) return session;
   const branch = facts.branch;
   if (branch !== null) {
     return {

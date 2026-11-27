@@ -84,6 +84,7 @@ function calendarRange(asked: AskedPeriod): PeriodOutcome {
     }
   }
   const { from = null, to = null } = asked;
+  // A limit: `null > day` is false as well, so the null checks only narrow for the compiler.
   if (from !== null && to !== null && from > to) {
     return { ok: false, message: "--from is after --to." };
   }

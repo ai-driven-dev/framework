@@ -20,6 +20,7 @@ function resolvedIn(
   flag: PrefixFlag,
   typed: string | null
 ): { readonly id: string | null } | AmbiguousStart {
+  // A limit: no id observed starts with `null`, which a prefix of `null` would be read as.
   if (typed === null) return { id: null };
   const found = resolveId(
     typed,
