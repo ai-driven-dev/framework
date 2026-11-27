@@ -3,6 +3,7 @@ import type { ClaimsView } from "../../../../src/contexts/host-registration/cont
 import type { HostMarketplaceRegistryReading } from "../../../../src/contexts/host-registration/domain/reading/marketplace-registry-reading.js";
 import type { HostPluginRegistryReading } from "../../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { NativeMarketplaceSource } from "../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
+import { userBuiltMarketplaceDir } from "../../../../src/shared/domain/layout/aidd-layout.js";
 import type { AiToolId } from "../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import { catalogReadersOver } from "../../../shared/testing/catalog-readers.builder.js";
@@ -30,6 +31,25 @@ export const catalogAt = (dir: string, plugins: string[]) => ({
 export const enabled = (...refs: string[]) => ({
   location: "p",
   refs: new Map(refs.map((ref) => [ref, { enabled: true }])),
+});
+
+/** Codex's shared build of `aidd` per CLI version, its listed source and its catalog seed. */
+export const USER_CACHE_ROOT = "/home/.config/aidd";
+export const codexBuild = (cliVersion: string): string =>
+  userBuiltMarketplaceDir({
+    userConfigDir: USER_CACHE_ROOT,
+    cliVersion,
+    marketplaceName: "aidd",
+    target: TOOL.codex,
+  });
+export const listedAt = (dir: string): NativeMarketplaceSource => ({
+  kind: "effective-list",
+  root: dir,
+  sourceType: "local",
+  source: dir,
+});
+export const codexCatalogAt = (dir: string) => ({
+  [`${dir}/.agents/plugins/marketplace.json`]: JSON.stringify({ name: "aidd", plugins: [] }),
 });
 
 export function setup(

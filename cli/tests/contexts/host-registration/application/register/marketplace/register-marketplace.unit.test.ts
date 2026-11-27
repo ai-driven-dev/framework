@@ -4,14 +4,23 @@ import {
   registrationOf,
 } from "../../../../../../src/contexts/host-registration/application/register/marketplace/register-marketplace.js";
 import { UnreadableBuiltCatalogError } from "../../../../../../src/contexts/host-registration/contract/host-registration.error.js";
-import type { NativeMarketplaceSource } from "../../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
 import {
   builtMarketplaceDir,
   userBuiltMarketplaceDir,
 } from "../../../../../../src/shared/domain/layout/aidd-layout.js";
 import { FakeHostActions } from "../../../../../shared/testing/fake-host-actions.fake.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
-import { catalogAt, DIR, enabled, OWN, setup } from "../../../testing/registration-run.builder.js";
+import {
+  catalogAt,
+  codexBuild,
+  codexCatalogAt,
+  DIR,
+  enabled,
+  listedAt,
+  OWN,
+  setup,
+  USER_CACHE_ROOT,
+} from "../../../testing/registration-run.builder.js";
 
 const target = {
   marketplace: { name: "aidd", scope: "project" as const },
@@ -38,21 +47,7 @@ describe("registering a marketplace on a host", () => {
 
 describe("registering on a host that refuses a re-add from another source", () => {
   const NAME = "aidd";
-  const USER_ROOT = "/home/.config/aidd";
-  const build = (cliVersion: string) =>
-    userBuiltMarketplaceDir({
-      userConfigDir: USER_ROOT,
-      cliVersion,
-      marketplaceName: NAME,
-      target: TOOL.codex,
-    });
-  const listed = (dir: string): NativeMarketplaceSource => ({
-    kind: "effective-list",
-    root: dir,
-    sourceType: "local",
-    source: dir,
-  });
-  const thisBuild = build("2.0.0");
+  const thisBuild = codexBuild("2.0.0");
   const codexTarget = {
     marketplace: { name: NAME, scope: "user" as const },
     builtDir: thisBuild,
@@ -77,30 +72,25 @@ describe("registering on a host that refuses a re-add from another source", () =
       tool: TOOL.codex,
       activator: host({ available: true, conflictOnAdd: true, installed }),
       ...(plugins === undefined ? {} : { plugins }),
-      userCacheRoot: USER_ROOT,
-      sources: new Map([[NAME, listed(registered)]]),
+      userCacheRoot: USER_CACHE_ROOT,
+      sources: new Map([[NAME, listedAt(registered)]]),
       claims: {
         machine: async () => ({
-          marketplaces: [{ alias: NAME, hostName: NAME, provenance: listed(registered) }],
+          marketplaces: [{ alias: NAME, hostName: NAME, provenance: listedAt(registered) }],
           claimedRefs: [],
         }),
       },
-      files: {
-        [`${thisBuild}/.agents/plugins/marketplace.json`]: JSON.stringify({
-          name: NAME,
-          plugins: [],
-        }),
-      },
+      files: codexCatalogAt(thisBuild),
     });
   }
 
   it("moves the registration this CLI recorded on an older build to this one, without a word", async () => {
-    const { run, activator, warnings } = codexHoldingRecorded(build("1.0.0"));
+    const { run, activator, warnings } = codexHoldingRecorded(codexBuild("1.0.0"));
     const claim = await registerMarketplace(run, codexTarget);
     expect(warnings).toEqual([]);
     expect(claim).toEqual({
       hostName: NAME,
-      provenance: listed(thisBuild),
+      provenance: listedAt(thisBuild),
       addedThisRun: true,
     });
     expect(activator.removedMarketplaces).toEqual([NAME]);
@@ -124,7 +114,7 @@ describe("registering on a host that refuses a re-add from another source", () =
         return super.enablePlugin(...args);
       }
     }
-    const { run } = codexHoldingRecorded(build("1.0.0"), {
+    const { run } = codexHoldingRecorded(codexBuild("1.0.0"), {
       installed: ["demo@aidd", "extra@aidd"],
       host: (options) => new OrderedHost(options),
     });
@@ -133,7 +123,7 @@ describe("registering on a host that refuses a re-add from another source", () =
   });
 
   it("never moves a registration whose installed plugins the host cannot list", async () => {
-    const { run, activator, warnings } = codexHoldingRecorded(build("1.0.0"), {
+    const { run, activator, warnings } = codexHoldingRecorded(codexBuild("1.0.0"), {
       installed: "unlistable",
     });
     expect(await registerMarketplace(run, codexTarget)).toBeUndefined();
@@ -144,7 +134,7 @@ describe("registering on a host that refuses a re-add from another source", () =
   });
 
   it("moves an older build that holds a plugin no project claims, and puts that plugin back", async () => {
-    const { run, activator, warnings } = codexHoldingRecorded(build("1.0.0"), {
+    const { run, activator, warnings } = codexHoldingRecorded(codexBuild("1.0.0"), {
       installed: ["hand@aidd"],
       plugins: enabled("hand@aidd"),
     });
@@ -155,12 +145,12 @@ describe("registering on a host that refuses a re-add from another source", () =
   });
 
   it("leaves a registration on a newer build in place, warns, and counts it as registered", async () => {
-    const newer = build("3.0.0");
+    const newer = codexBuild("3.0.0");
     const { run, activator, warnings } = codexHoldingRecorded(newer);
     const claim = await registerMarketplace(run, codexTarget);
     expect(activator.removedMarketplaces).toEqual([]);
     expect(activator.addedMarketplaces).toEqual([]);
-    expect(claim).toEqual({ hostName: NAME, provenance: listed(newer) });
+    expect(claim).toEqual({ hostName: NAME, provenance: listedAt(newer) });
     expect(warnings).toEqual([
       {
         text: `codex's marketplace '${NAME}' (${newer}) already carries a newer aidd-framework build, 3.0.0, than this run's own 2.0.0 — not registering this run's build over it.`,
@@ -171,7 +161,7 @@ describe("registering on a host that refuses a re-add from another source", () =
 
   it("never moves an older build of another marketplace", async () => {
     const other = userBuiltMarketplaceDir({
-      userConfigDir: USER_ROOT,
+      userConfigDir: USER_CACHE_ROOT,
       cliVersion: "1.0.0",
       marketplaceName: "other",
       target: TOOL.codex,

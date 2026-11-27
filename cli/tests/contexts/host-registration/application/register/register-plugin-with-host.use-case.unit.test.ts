@@ -7,7 +7,6 @@ import type { ClaimsView } from "../../../../../src/contexts/host-registration/c
 import type { HostMarketplaceRegistryReading } from "../../../../../src/contexts/host-registration/domain/reading/marketplace-registry-reading.js";
 import type { HostPluginRegistryReading } from "../../../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
-import { userBuiltMarketplaceDir } from "../../../../../src/shared/domain/layout/aidd-layout.js";
 import type { AiToolId, ToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { catalogReadersOver } from "../../../../shared/testing/catalog-readers.builder.js";
@@ -17,6 +16,13 @@ import { registeredTools, TOOL } from "../../../../shared/testing/registered-too
 import { FakeHostMarketplaceRegistry } from "../../testing/fake-host-marketplace-registry.fake.js";
 import { FakeHostMarketplaceSources } from "../../testing/fake-host-marketplace-sources.fake.js";
 import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.fake.js";
+import {
+  codexBuild,
+  codexCatalogAt,
+  enabled,
+  listedAt,
+  USER_CACHE_ROOT,
+} from "../../testing/registration-run.builder.js";
 
 const PLATFORM = "linux";
 const DIR = "/built/aidd";
@@ -106,10 +112,6 @@ const EARLIER = { alias: "aidd", hostName: "aidd", provenance: OWN };
 const CLAIMED = { marketplaces: [EARLIER], claimedRefs: [] };
 const REF = "p@aidd";
 const RECORD = { marketplaces: [], pluginRefs: [REF], binary: "claude" };
-const enabled = (...refs: string[]) => ({
-  location: "p",
-  refs: new Map(refs.map((ref) => [ref, { enabled: true }])),
-});
 
 describe("register plugin with host", () => {
   it.each([TOOL.vscode, TOOL.cursor])(
@@ -246,20 +248,7 @@ describe("register plugin with host", () => {
   });
 
   it("moves codex off an older build that holds a plugin no project claims, and enables the refs it is asked for", async () => {
-    const userCacheRoot = "/home/.config/aidd";
-    const build = (cliVersion: string) =>
-      userBuiltMarketplaceDir({
-        userConfigDir: userCacheRoot,
-        cliVersion,
-        marketplaceName: "aidd",
-        target: TOOL.codex,
-      });
-    const older: NativeMarketplaceSource = {
-      kind: "effective-list",
-      root: build("1.0.0"),
-      sourceType: "local",
-      source: build("1.0.0"),
-    };
+    const older = listedAt(codexBuild("1.0.0"));
     const { activator, warnings, run } = setup({
       tool: TOOL.codex,
       activator: new FakeHostActions({
@@ -275,14 +264,9 @@ describe("register plugin with host", () => {
           claimedRefs: [],
         }),
       },
-      files: {
-        [`${build("2.0.0")}/.agents/plugins/marketplace.json`]: JSON.stringify({
-          name: "aidd",
-          plugins: [],
-        }),
-      },
-      userCacheRoot,
-      build: build("2.0.0"),
+      files: codexCatalogAt(codexBuild("2.0.0")),
+      userCacheRoot: USER_CACHE_ROOT,
+      build: codexBuild("2.0.0"),
       refs: [REF],
     });
     await run();
