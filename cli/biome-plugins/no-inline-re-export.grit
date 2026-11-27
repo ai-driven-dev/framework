@@ -1,0 +1,12 @@
+language js
+
+// A module re-exporting a name it does not own becomes a second source of truth for it.
+// `noBarrelFile` sees only a file that does nothing else and `noReExportAll` only `export *`.
+or {
+  `export { $names } from $source`,
+  `export type { $names } from $source`,
+  `export * as $ns from $source`,
+  `export type * from $source`
+} as $statement where {
+  register_diagnostic(span=$statement, message="a re-export makes this module a second source of truth: import the symbol from the module that defines it", severity="error")
+}

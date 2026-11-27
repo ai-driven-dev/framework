@@ -1,0 +1,6 @@
+language js
+
+// The exit status is set where the run ends, by the exit the error translator calls.
+`process.exitCode = $value` where {
+  register_diagnostic(span=$value, message="process.exitCode is set by the exit alone: throw a typed error from an owner's *.error.ts file and map it in EXIT_CODES", severity="error")
+}

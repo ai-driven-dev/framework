@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseCopilotMarketplaceCatalog } from "../../../../../src/contexts/distribution/domain/catalog-parsers/copilot-marketplace-catalog.js";
-import { InvalidPluginManifestError } from "../../../../../src/kernel/errors.js";
+import { InvalidPluginManifestError } from "../../../../../src/shared/domain/shared.error.js";
 
 const SAMPLE_CATALOG = JSON.stringify({
   name: "aidd-framework",
@@ -16,7 +16,7 @@ const SAMPLE_CATALOG = JSON.stringify({
   ],
 });
 
-describe("parseCopilotMarketplaceCatalog", () => {
+describe("parsing a Copilot marketplace catalog", () => {
   describe("valid multi-plugin catalog", () => {
     it("returns a catalog with the correct number of plugins", () => {
       const catalog = parseCopilotMarketplaceCatalog(SAMPLE_CATALOG);

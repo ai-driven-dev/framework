@@ -1,0 +1,3 @@
+function hasPerson(person) {
+  return typeof person === "string" && person !== "";
+}

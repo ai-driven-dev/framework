@@ -12,12 +12,12 @@
         "timeout": 5
       },
       {
-        "command": "node ./.cursor/hooks/aidd-telemetry/session-start.cjs",
-        "timeout": 10
+        "command": "node ./.cursor/hooks/aidd-telemetry/task.cjs remind",
+        "timeout": 5
       },
       {
-        "command": "node ./.cursor/hooks/aidd-telemetry/catch-up.cjs",
-        "timeout": 120
+        "command": "node ./.cursor/hooks/aidd-telemetry/ledger.cjs ingest",
+        "timeout": 5
       }
     ],
     "postToolUse": [
@@ -38,12 +38,6 @@
         "command": "node ./.cursor/hooks/aidd-context/memory.cjs sync",
         "timeout": 5
       }
-    ],
-    "beforeSubmitPrompt": [
-      {
-        "command": "node ./.cursor/hooks/aidd-telemetry/prompt-gate.cjs",
-        "timeout": 30
-      }
     ]
   }
 }
@@ -54,11 +48,10 @@ script, identical to the plugin source
 
 ## project/.cursor/hooks/aidd-context/lib/contracts/04-skill-generate/scripts/contract.json
 {
-  "version": 1,
   "kind": "skill",
   "unit": "folder",
   "targets": "plugins/*/skills/*",
-  "scope": [".claude/skills/*", ".cursor/skills/*", ".opencode/skills/*", ".kilo/skills/*", ".github/skills/*", ".agents/skills/*"],
+  "scope": [".claude/skills/*", ".cursor/skills/*", ".opencode/skills/*", ".kilo/skills/*", ".github/skills/*", ".agents/skills/*", ".kiro/skills/*"],
   "shell": false,
   "marker": "SKILL.md",
   "rules": {
@@ -143,7 +136,6 @@ targets: [{{host tools}}]
 
 ## project/.cursor/hooks/aidd-context/lib/contracts/05-rule-generate/scripts/contract.json
 {
-  "version": 1,
   "kind": "rule",
   "unit": "file",
   "scope": ["aidd_docs/rules/*/*.md"],
@@ -162,23 +154,26 @@ targets: [{{host tools}}]
 
 ## project/.cursor/hooks/aidd-context/lib/contracts/06-agent-generate/scripts/contract.json
 {
-  "version": 1,
   "kind": "agent",
   "unit": "file",
   "targets": "plugins/*/agents/*.md",
   "scope": [
     ".claude/agents/*.md",
-    ".cursor/agents/*.md"
+    ".cursor/agents/*.md",
+    ".github/agents/*.agent.md",
+    ".agents/agents/*/agent.md",
+    ".opencode/agents/*.md",
+    ".kilo/agents/*.md",
+    ".kiro/agents/*.md",
+    ".kimi-code/agents/*.md"
   ],
   "shell": false,
   "rules": {
     "AGENT-02": {
-      "op": "equals",
+      "op": "custom",
       "in": "*.md",
-      "field": "name",
-      "to": "basename",
-      "why": "hosts resolve the agent by file name",
-      "fix": "set name to {expected}"
+      "check": "name",
+      "why": "hosts resolve the agent by file name"
     },
     "AGENT-03": {
       "op": "pattern",
@@ -217,6 +212,9 @@ targets: [{{host tools}}]
 }
 
 
+## project/.cursor/hooks/aidd-context/lib/contracts/06-agent-generate/scripts/custom/name.cjs
+script, identical to the plugin source
+
 ## project/.cursor/hooks/aidd-context/lib/contracts/07-command-generate/assets/command-template.md
 ---
 description: "{{what the command does, one line}}"
@@ -239,7 +237,6 @@ disable-model-invocation:
 
 ## project/.cursor/hooks/aidd-context/lib/contracts/07-command-generate/scripts/contract.json
 {
-  "version": 1,
   "kind": "command",
   "unit": "file",
   "scope": [
@@ -286,13 +283,10 @@ script, identical to the plugin source
 ## project/.cursor/hooks/aidd-context/memory.cjs
 script, identical to the plugin source
 
-## project/.cursor/hooks/aidd-telemetry/catch-up.cjs
+## project/.cursor/hooks/aidd-telemetry/ledger.cjs
 script, identical to the plugin source
 
 ## project/.cursor/hooks/aidd-telemetry/lib/aidd.cjs
-script, identical to the plugin source
-
-## project/.cursor/hooks/aidd-telemetry/lib/binding.cjs
 script, identical to the plugin source
 
 ## project/.cursor/hooks/aidd-telemetry/lib/claude-only.cjs
@@ -307,22 +301,13 @@ script, identical to the plugin source
 ## project/.cursor/hooks/aidd-telemetry/lib/context.cjs
 script, identical to the plugin source
 
-## project/.cursor/hooks/aidd-telemetry/lib/declaration.cjs
-script, identical to the plugin source
-
 ## project/.cursor/hooks/aidd-telemetry/lib/git.cjs
 script, identical to the plugin source
 
-## project/.cursor/hooks/aidd-telemetry/lib/hook-io.cjs
-script, identical to the plugin source
+## project/.cursor/hooks/aidd-telemetry/lib/host.cjs
+script, identical to the host adapter host-cursor.cjs
 
 ## project/.cursor/hooks/aidd-telemetry/lib/jsonl.cjs
-script, identical to the plugin source
-
-## project/.cursor/hooks/aidd-telemetry/lib/lookup.cjs
-script, identical to the plugin source
-
-## project/.cursor/hooks/aidd-telemetry/lib/presence.cjs
 script, identical to the plugin source
 
 ## project/.cursor/hooks/aidd-telemetry/lib/telemetry-dir.cjs
@@ -331,10 +316,7 @@ script, identical to the plugin source
 ## project/.cursor/hooks/aidd-telemetry/lib/tool.cjs
 script, identical to the plugin source
 
-## project/.cursor/hooks/aidd-telemetry/prompt-gate.cjs
-script, identical to the plugin source
-
-## project/.cursor/hooks/aidd-telemetry/session-start.cjs
+## project/.cursor/hooks/aidd-telemetry/task.cjs
 script, identical to the plugin source
 
 ## project/.cursor/settings.json
@@ -383,18 +365,13 @@ project cursor aidd-telemetry scope=user: 0 hook files
   "entries": [
     {
       "event": "sessionStart",
-      "command": "node ./.cursor/hooks/aidd-telemetry/session-start.cjs",
-      "digest": "daac9d4ea10fff9226f4b1604070a0f5"
+      "command": "node ./.cursor/hooks/aidd-telemetry/task.cjs remind",
+      "digest": "f1c0a86807eb8cdaa3de9549d09bbe55"
     },
     {
       "event": "sessionStart",
-      "command": "node ./.cursor/hooks/aidd-telemetry/catch-up.cjs",
-      "digest": "0a4ab6089fa2ff8a93f649eceff1a720"
-    },
-    {
-      "event": "beforeSubmitPrompt",
-      "command": "node ./.cursor/hooks/aidd-telemetry/prompt-gate.cjs",
-      "digest": "9cd664ac5f179902b97cbfd28ab6bb51"
+      "command": "node ./.cursor/hooks/aidd-telemetry/ledger.cjs ingest",
+      "digest": "9ec011cee1ddcae2141c2c362da0bdb0"
     }
   ],
   "scripts": {}
@@ -438,18 +415,13 @@ machine cursor aidd-telemetry scope=user: 0 hook files
   "entries": [
     {
       "event": "sessionStart",
-      "command": "node ./.cursor/hooks/aidd-telemetry/session-start.cjs",
-      "digest": "daac9d4ea10fff9226f4b1604070a0f5"
+      "command": "node ./.cursor/hooks/aidd-telemetry/task.cjs remind",
+      "digest": "f1c0a86807eb8cdaa3de9549d09bbe55"
     },
     {
       "event": "sessionStart",
-      "command": "node ./.cursor/hooks/aidd-telemetry/catch-up.cjs",
-      "digest": "0a4ab6089fa2ff8a93f649eceff1a720"
-    },
-    {
-      "event": "beforeSubmitPrompt",
-      "command": "node ./.cursor/hooks/aidd-telemetry/prompt-gate.cjs",
-      "digest": "9cd664ac5f179902b97cbfd28ab6bb51"
+      "command": "node ./.cursor/hooks/aidd-telemetry/ledger.cjs ingest",
+      "digest": "9ec011cee1ddcae2141c2c362da0bdb0"
     }
   ],
   "scripts": {}

@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "target": "ESNext",
+    "useDefineForClassFields": false,
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "lib": ["ESNext"],

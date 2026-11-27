@@ -5,7 +5,7 @@
 const fs = require("node:fs");
 const nodePath = require("node:path");
 const { list } = require("./markdown.cjs");
-const { placed, systemOf, breakpointsOf, TOKENED_KINDS } = require("./model.cjs");
+const { placed, systemOf, breakpointsOf, isElement, TOKENED_KINDS } = require("./model.cjs");
 const { text, checkOf, besideTokens, RESOLVER_FILE, CSS_FILE, ENGINE_REF } = require("./project.cjs");
 const { MODIFIERS, RESOLVER_VERSION, MEDIA_EXTENSION, MIN_THEMES_FOR_MODIFIER, orderRef, resolverOfProject } = require("./resolver.cjs");
 const { FONT_WEIGHTS, RAW_CSS_EXTENSION, VAR_REFERENCE, render, customProperty, citedBy, loopOf, declarationsOf, layered, contextsOf, resolved } = require("./css.cjs");
@@ -151,6 +151,9 @@ function cubicBezierProblem(value) {
 function fontFamilyProblem(value) {
   const valid = typeof value === "string" || (Array.isArray(value) && value.length > 0 && value.every((name) => typeof name === "string"));
   if (!valid) return bad("fontFamily is a name or a list of names", "write a name, or a list of names");
+  // The stylesheet quotes a name itself: a name already quoted comes out doubled, and CSS drops the stack.
+  const quoted = [value].flat().find((name) => /["']/.test(name));
+  if (quoted !== undefined) return bad(`fontFamily ${JSON.stringify(quoted)} carries its own quotes, which CSS doubles`, `write it bare, as ${JSON.stringify(quoted.replace(/["']/g, ""))}`);
   // A name holding commas is a stack written as one string: CSS quotes it and finds no such family.
   const joined = [value].flat().find((name) => name.includes(","));
   if (joined === undefined) return null;
@@ -177,8 +180,11 @@ const tokenProblem = (project, file = project.tokensFile) => (path, message, fix
 /** Every token's CSS custom property. */
 const propertiesOf = (tree) => new Set([...tree.tokens.keys()].map(customProperty));
 
+/** Without tokens.json and without a component or a screen, nothing needs a token yet. */
+const awaitsElements = (tree, project) => tree.problem === MISSING && !placed(project).some(isElement);
+
 function jsonProblems(tree, project) {
-  if (!tree.problem) return [];
+  if (!tree.problem || awaitsElements(tree, project)) return [];
   const fix = tree.problem === MISSING ? `write tokens.json by hand, or run node ${ENGINE_REF} extract` : "make tokens.json a JSON object";
   return [{ file: project.tokensFile, message: tree.problem, fix }];
 }
@@ -491,7 +497,7 @@ const REGENERATE = "with the engine's tokens command";
 /** tokens.css is what the tokens generate. It is not judged while the tokens have an error, and a
  * composite token without raw CSS is named, since no stylesheet can carry it. */
 function stylesheetProblems(tree, project) {
-  if (blockers(project).length) return [];
+  if (blockers(project).length || awaitsElements(tree, project)) return [];
   const { css, problems } = generate(project);
   if (css === null) return problems;
   const file = cssFileOf(project);
@@ -500,7 +506,22 @@ function stylesheetProblems(tree, project) {
   return current === null || current === css ? [] : [{ file, message: `out of date with the tokens, regenerate it ${REGENERATE}`, fix: RUN_TOKENS }];
 }
 
-const RULES = { ...BASE_RULES, T10: stylesheetProblems };
+/** A primitive group whose type of token no semantic token cites: no record may cite a primitive, so none can use it. */
+function coverageProblems(tree, project) {
+  const system = systemOf(project);
+  const groups = list(system?.frontMatter.primitives);
+  if (!groups.length || blockers(project).length) return [];
+  const cited = new Set([...citations(project)].filter(([name]) => !isPrimitive(name, groups)).flatMap(([, names]) => names));
+  return groups.flatMap((group) => {
+    const members = [...tree.tokens].filter(([name]) => isPrimitive(name, [group]));
+    const types = [...new Set(members.map(([, token]) => typeOf(tree, token)))].filter((type) => type !== undefined);
+    return types
+      .filter((type) => !members.some(([name, token]) => typeOf(tree, token) === type && cited.has(name)))
+      .map((type) => ({ file: system.file, message: `primitives "${group}": no semantic token cites its ${type} tokens, so no record can use them`, fix: "add a semantic token citing one, in a group primitives does not list", excerpt: group }));
+  });
+}
+
+const RULES = { ...BASE_RULES, T10: stylesheetProblems, T11: coverageProblems };
 
 /** Every broken token rule, in rule order. */
 const check = checkOf(RULES, run);
@@ -510,6 +531,13 @@ const check = checkOf(RULES, run);
 function cssNames(project) {
   const tree = read(project);
   return tree.unusable ? null : propertiesOf(tree);
+}
+
+/** Every token as `{name, type, property}`, in tokens.json's order. `type` is absent for a raw CSS
+ * token without `$type`. */
+function catalog(project) {
+  const tree = read(project);
+  return [...tree.tokens].map(([name, token]) => ({ name, type: typeOf(tree, token), property: customProperty(name) }));
 }
 
 /** Every token's name by its CSS custom property. */
@@ -548,4 +576,4 @@ function resolvedValues(project) {
  * itself when it names none. */
 const tokenNameOf = (project, ref) => namesByProperty(read(project)).get(ref) ?? ref;
 
-module.exports = { check, blockers, generate, citations, resolvedValues, tokenNameOf, cssNames, cssFileOf };
+module.exports = { check, blockers, generate, catalog, citations, resolvedValues, TYPES, tokenNameOf, cssNames, cssFileOf };

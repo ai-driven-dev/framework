@@ -32,17 +32,17 @@ test("the title names the release and its themes the way the published ones do",
   );
 });
 
-test("the description follows the published layout, with commands, contributors and links", () => {
+test("the description follows the published layout, with outcomes, contributors and links", () => {
   assert.equal(
     youtubeMetadata(plan, context).description,
     [
       "Les nouveautés du framework AI-Driven Dev 5.13, démontrées de bout en bout.",
       "",
       "Au programme :",
-      "- aidd telemetry : compter aussi le travail fait avec Codex.",
-      "- /aidd-context:05-rule-generate : vérifier qu'aucune règle n'en contredit une autre.",
+      "- compter aussi le travail fait avec Codex.",
+      "- vérifier qu'aucune règle n'en contredit une autre.",
       "",
-      "Version livrée par 2 contributeurs (crédits dans les notes de version).",
+      "Version livrée par 2 contributeurs, merci à eux.",
       "",
       "Notes de version : https://github.com/ai-driven-dev/framework/releases/tag/v5.13.0",
       "Code source : https://github.com/ai-driven-dev/framework",
@@ -95,4 +95,16 @@ test("youtubeProblems accepts one programme line per scene, so a scene showing s
     youtube: { themes: ["Installation"], programme: [{ surface: "aidd setup --global", theme: "Installation", text: "une installation, tous les projets." }] },
   };
   assert.deepEqual(youtubeProblems(grouped), []);
+});
+
+test("the contributors are counted whichever template thanks them", () => {
+  const waved = { ...plan, scenes: [{ template: "contributor-wave", logins: ["alice", "bob"] }] };
+
+  assert.match(youtubeMetadata(waved, context).description, /Version livrée par 2 contributeurs/);
+});
+
+test("no surface is printed in the description: a viewer reads outcomes, not commands", () => {
+  const { description } = youtubeMetadata(plan, context);
+
+  for (const { surface } of plan.youtube.programme) assert.ok(!description.includes(surface), `${surface} printed`);
 });

@@ -1,23 +1,21 @@
 import {
-  InvalidMarketplaceNameError,
-  InvalidMarketplaceScopeError,
-} from "../../../kernel/errors.js";
-import type { MarketplaceScope } from "../../../kernel/scope.js";
-import {
   type PluginSource,
-  parsePluginSource,
+  pluginSourceIdentity,
   serializePluginSource,
-} from "../../../kernel/source.js";
+} from "../../../shared/domain/plugin/source.js";
+import { parsePluginSource } from "../../../shared/domain/plugin/source-parsing.js";
+import { isScope, type Scope } from "../../../shared/domain/scope.js";
+import { InvalidMarketplaceNameError } from "../../../shared/domain/shared.error.js";
+import { InvalidMarketplaceScopeError } from "../contract/distribution.error.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../contract/marketplace.js";
 
 export const MARKETPLACE_NAME_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-export const FRAMEWORK_MARKETPLACE_NAME = "aidd-framework";
-export const STALE_MAX_DAYS_DEFAULT = 7;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 export interface MarketplaceData {
   name: string;
   source: Record<string, unknown>;
-  scope: MarketplaceScope;
+  scope: Scope;
   addedAt: string;
   lastFetched?: string;
   version?: string;
@@ -28,14 +26,10 @@ export interface MarketplaceData {
  * without pretending it is already one of the two the domain accepts. */
 export type StoredMarketplaceData = Omit<MarketplaceData, "scope"> & { scope: string };
 
-function isMarketplaceScope(value: string): value is MarketplaceScope {
-  return value === "project" || value === "user";
-}
-
 export class Marketplace {
   readonly name: string;
   readonly source: PluginSource;
-  readonly scope: MarketplaceScope;
+  readonly scope: Scope;
   readonly addedAt: string;
   readonly lastFetched?: string;
   readonly version?: string;
@@ -43,7 +37,7 @@ export class Marketplace {
   private constructor(params: {
     name: string;
     source: PluginSource;
-    scope: MarketplaceScope;
+    scope: Scope;
     addedAt: string;
     lastFetched?: string;
     version?: string;
@@ -59,7 +53,7 @@ export class Marketplace {
   static create(params: {
     name: string;
     source: PluginSource;
-    scope: MarketplaceScope;
+    scope: Scope;
     addedAt: string;
   }): Marketplace {
     return Marketplace.fromJSON({
@@ -74,7 +68,7 @@ export class Marketplace {
     if (!MARKETPLACE_NAME_REGEX.test(data.name)) {
       throw new InvalidMarketplaceNameError(data.name);
     }
-    if (!isMarketplaceScope(data.scope)) {
+    if (!isScope(data.scope)) {
       throw new InvalidMarketplaceScopeError(String(data.scope));
     }
     const source = parsePluginSource(data.source);
@@ -120,6 +114,10 @@ export class Marketplace {
       lastFetched: this.lastFetched,
       version,
     });
+  }
+
+  isSourcedFrom(source: PluginSource): boolean {
+    return pluginSourceIdentity(this.source) === pluginSourceIdentity(source);
   }
 
   isFramework(): boolean {

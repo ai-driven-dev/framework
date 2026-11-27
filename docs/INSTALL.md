@@ -3,7 +3,7 @@
 ## Requirements
 
 - [Node](https://nodejs.org) 22.12 or later (`node --version`).
-- An AI coding tool: Claude Code, Cursor, GitHub Copilot, Codex, OpenCode, Kilo Code or Antigravity CLI.
+- An AI coding tool: Claude Code, Cursor, GitHub Copilot, Codex, OpenCode, Kilo Code, Antigravity CLI, Kiro or Kimi Code CLI.
 
 ## Pick a method
 
@@ -37,7 +37,7 @@ npx @ai-driven-dev/cli@latest setup --ide claude --plugins recommended --yes
 npx @ai-driven-dev/cli@latest setup --global --ide claude,codex,opencode --plugins all --yes
 ```
 
-It installs the plugins once for the whole machine and writes nothing in your project. It takes any of `claude`, `codex`, `copilot`, `cursor`, `kilo` and `opencode`: [what each one gets](../cli/README.md#scope).
+It installs the plugins once for the whole machine and writes nothing in your project. It takes any of `claude`, `codex`, `copilot`, `cursor`, `kilo`, `kimi` and `opencode`: [what each one gets](../cli/README.md#scope).
 
 ### Check
 
@@ -119,7 +119,34 @@ cp -r aidd-framework-cursor-marketplace-<version>/plugins/aidd-* ~/.cursor/plugi
 
 </details>
 
-*OpenCode and Kilo Code have no marketplace: use flat files. Antigravity CLI also uses flat files.*
+<details>
+<summary><b>Antigravity CLI</b></summary>
+
+<br />
+
+1. Download `aidd-framework-antigravity-marketplace-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest). Antigravity registers no marketplace: copy its plugin directories.
+2. Unzip it.
+3. From your project's root, copy the plugins:
+
+```sh
+mkdir -p .agents/plugins
+cp -r aidd-framework-antigravity-marketplace-<version>/plugins/aidd-* .agents/plugins/
+```
+
+</details>
+
+<details>
+<summary><b>Kimi Code CLI</b></summary>
+
+<br />
+
+1. Download `aidd-framework-kimi-marketplace-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest). It holds plugin directories, not a catalog.
+2. Unzip it. The plugins are the `plugins/aidd-*` directories.
+3. Installing them by hand in Kimi's web UI is unverified. `aidd setup --global --ide kimi` installs the plugins through the server Kimi starts.
+
+</details>
+
+*OpenCode and Kilo Code have no marketplace: use flat files. Kiro also uses flat files. The Antigravity CLI installs each plugin as a directory under `.agents/plugins/`.*
 
 ## Flat files
 
@@ -130,7 +157,7 @@ git clone https://github.com/ai-driven-dev/framework.git
 npx @ai-driven-dev/cli@latest translate ./framework --to <tool> --as flat --out .
 ```
 
-Replace `<tool>` with your tool: `claude`, `cursor`, `copilot`, `codex`, `opencode`, `kilo` or `antigravity`.
+Replace `<tool>` with your tool: `claude`, `cursor`, `copilot`, `codex`, `opencode`, `kilo`, `antigravity`, `kiro` or `kimi`.
 
 <details>
 <summary>Without Node</summary>
@@ -170,7 +197,7 @@ For another tool's marketplace, use that tool's plugin manager.
 | Claude Code marketplace | `claude plugin uninstall <plugin>` |
 | Flat files | Delete the files you copied |
 
-Codex and Antigravity share `.agents/skills/`. When removing either tool, keep skills still used by the other.
+Codex, Antigravity (flat files) and Kimi share `.agents/skills/`. When removing any of them, keep skills still used by another.
 
 ## Problems
 

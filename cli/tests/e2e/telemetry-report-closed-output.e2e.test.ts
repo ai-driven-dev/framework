@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { cliPath, createTestEnv, sandboxedEnv } from "./helpers.js";
+import { cliPath, createTestEnv, sandboxedEnv } from "../shared/testing/cli-sandbox.builder.js";
 
 let env: Awaited<ReturnType<typeof createTestEnv>>;
 

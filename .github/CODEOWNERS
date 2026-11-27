@@ -3,3 +3,15 @@
 # Only AIDD Maintainers can approve and merge - see GOVERNANCE.md.
 # See https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 *       @ai-driven-dev/framework-reviewers
+
+# The guards that hold the CLI to its architecture. Listing only admin here
+# means a change to a guard needs an admin's approval: a guard loosened in the
+# same pull request it lets through is no guard.
+/cli/tests/architecture/                    @ai-driven-dev/admin
+/cli/biome.json                             @ai-driven-dev/admin
+/cli/type-assertions-baseline.json          @ai-driven-dev/admin
+/cli/scripts/check-bundle-size.mjs          @ai-driven-dev/admin
+/cli/scripts/generate-biome-boundaries.mjs  @ai-driven-dev/admin
+/scripts/check-cli-type-honesty.mjs         @ai-driven-dev/admin
+/scripts/gate-witness.js                    @ai-driven-dev/admin
+/lefthook.yml                               @ai-driven-dev/admin

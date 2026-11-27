@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * Appends each release line's commit author as `(@login)`, or the name when no account, to the
- * GitHub releases release-please just created. Also drops a merge commit's duplicate line
- * (see credit()).
+ * Appends each release line's contributors as `(@login, ...)`, or the name when no account, to the
+ * GitHub releases release-please just created: the commit author, its human co-authors, and the
+ * authors of the pull requests its own pull request supersedes. Also drops a merge commit's
+ * duplicate line (see credit()).
  *
- * Workaround: release-please's `include-commit-authors` is a no-op (googleapis/release-please#2761).
- * Delete this script, its test and its ci.yml step once #2892 ships in the pinned action.
+ * release-please's `include-commit-authors` is a no-op (googleapis/release-please#2761).
  */
 
 const { execFileSync } = require("node:child_process");
@@ -68,8 +68,9 @@ function credit(body, resolve) {
       const tail = item.line.slice(item.match.index + item.match[0].length);
       if (ALREADY_CREDITED.test(tail)) return item.line;
 
-      const who = item.meta.isMerge ? item.meta.prAuthor || item.meta.who : item.meta.who;
-      return who ? `${item.line} (${who})` : item.line;
+      const author = item.meta.isMerge ? item.meta.prAuthor || item.meta.who : item.meta.who;
+      const credits = [...new Set([author, ...(item.meta.also || [])].filter(Boolean))];
+      return credits.length ? `${item.line} (${credits.join(", ")})` : item.line;
     })
     .join("\n");
 }
@@ -98,22 +99,63 @@ function isMerge(apiReply) {
 }
 
 /** A merge commit's credit: its PR author, else the commit author. */
-function prCredit(commitReply, pullsReply) {
-  const prs = JSON.parse(pullsReply);
-  const login = prs[0] && prs[0].user && prs[0].user.login;
+function prCredit(commitReply, pr) {
+  const login = pr && pr.user && pr.user.login;
   return login ? `@${login}` : who(commitReply);
+}
+
+/** The pull request that merged `sha`; the pulls reply also lists others that contain it. */
+function pullRequestOf(sha, pullsReply) {
+  return JSON.parse(pullsReply).find((pr) => pr.merge_commit_sha === sha);
+}
+
+const isBot = (login) => login.endsWith("[bot]");
+
+const CO_AUTHOR = /^co-authored-by:\s*(.+?)\s*<([^>]*)>\s*$/gim;
+const NOREPLY_LOGIN = /^\d+\+([^@]+)@users\.noreply\.github\.com$/i;
+const CLAUDE_EMAIL = "noreply@anthropic.com";
+
+/** The human `Co-authored-by` trailers of a commit message: `@login` from a GitHub noreply address, else the name. */
+function coAuthors(message) {
+  const credits = [];
+  for (const [, name, email] of message.matchAll(CO_AUTHOR)) {
+    if (email.toLowerCase() === CLAUDE_EMAIL) continue;
+    const login = email.match(NOREPLY_LOGIN);
+    if (login && isBot(login[1])) continue;
+    credits.push(login ? `@${login[1]}` : name);
+  }
+  return credits;
+}
+
+// `Supersedes #992`, or a list: `Supersedes #1356, #1361 and #1354`.
+const SUPERSEDES = /\bSupersedes\s+(#\d+(?:(?:\s*,\s*|\s+and\s+)#\d+)*)/g;
+
+/** The authors of the pull requests a PR body supersedes, bots left out. `authorOf(number)` returns a login. */
+function takenOver(body, authorOf) {
+  const numbers = [...body.matchAll(SUPERSEDES)].flatMap((match) => match[1].match(/\d+/g));
+  return numbers
+    .map(authorOf)
+    .filter((login) => login && !isBot(login))
+    .map((login) => `@${login}`);
 }
 
 function resolverFor(repo) {
   const cache = new Map();
+  const authors = new Map();
+  const authorOf = (number) => {
+    if (!authors.has(number)) authors.set(number, gh("api", `repos/${repo}/pulls/${number}`, "-q", ".user.login"));
+    return authors.get(number);
+  };
   return (sha) => {
     if (!cache.has(sha)) {
-      const commitReply = gh("api", `repos/${repo}/commits/${sha}`, "-q", '{login: (.author.login // ""), name: .commit.author.name, parents: (.parents | length)}');
+      const commitReply = gh("api", `repos/${repo}/commits/${sha}`, "-q", '{login: (.author.login // ""), name: .commit.author.name, parents: (.parents | length), message: .commit.message}');
       const merge = isMerge(commitReply);
+      const pr = pullRequestOf(sha, gh("api", `repos/${repo}/commits/${sha}/pulls`));
       cache.set(sha, {
         who: who(commitReply),
         isMerge: merge,
-        prAuthor: merge ? prCredit(commitReply, gh("api", `repos/${repo}/commits/${sha}/pulls`)) : "",
+        prAuthor: merge ? prCredit(commitReply, pr) : "",
+        also: [...coAuthors(JSON.parse(commitReply).message), ...takenOver((pr && pr.body) || "", authorOf)],
       });
     }
     return cache.get(sha);
@@ -161,7 +203,7 @@ function main(repo, outputs) {
   });
 }
 
-module.exports = { credit, tagsFromOutputs, who, isMerge, prCredit, creditReleases };
+module.exports = { credit, tagsFromOutputs, who, isMerge, prCredit, pullRequestOf, coAuthors, takenOver, resolverFor, creditReleases };
 
 if (require.main === module) {
   const repo = process.argv[2];

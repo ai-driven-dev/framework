@@ -70,16 +70,14 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-detect.md](skills/03-shadow-areas/actions/01-detect.md) | - |
-| `actions` | [02-diff.md](skills/03-shadow-areas/actions/02-diff.md) | - |
-| `actions` | [03-render-report.md](skills/03-shadow-areas/actions/03-render-report.md) | - |
+| `actions` | [01-scan.md](skills/03-shadow-areas/actions/01-scan.md) | - |
+| `actions` | [02-report.md](skills/03-shadow-areas/actions/02-report.md) | - |
 | `assets` | [report-template.md](skills/03-shadow-areas/assets/report-template.md) | - |
 | `references` | [categories.md](skills/03-shadow-areas/references/categories.md) | - |
-| `references` | [probe-style.md](skills/03-shadow-areas/references/probe-style.md) | - |
-| `references` | [severity-rubric.md](skills/03-shadow-areas/references/severity-rubric.md) | - |
+| `references` | [lenses.md](skills/03-shadow-areas/references/lenses.md) | - |
 | `scripts` | [contract.json](skills/03-shadow-areas/scripts/contract.json) | - |
 | `scripts` | [validate-shadow-areas.cjs](skills/03-shadow-areas/scripts/validate-shadow-areas.cjs) | - |
-| `-` | [SKILL.md](skills/03-shadow-areas/SKILL.md) | `Scans a written idea, story, PRD or spec for blind spots into a shadow report, when the user wants to find what it leaves unsaid.` |
+| `-` | [SKILL.md](skills/03-shadow-areas/SKILL.md) | `Finds what a written idea, story, PRD or spec leaves unsaid, when the user wants its gaps as questions before building on it.` |
 
 #### `skills/04-fact-check`
 

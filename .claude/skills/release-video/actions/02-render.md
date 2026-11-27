@@ -13,6 +13,7 @@ Turn the accepted plan into the release video and look at it.
    - Failure: go to step 6.
 2. Run `node .claude/skills/release-video/assets/render-release-video.cjs --version <version> --out release-video.mp4`, which needs `npx`, a network, ffmpeg and Chrome.
    - It adds the music and the interface sounds of [sound.md](../references/sound.md).
+   - `--plan <file>` renders another plan, such as a mockup of a few scenes.
 3. Extract one frame near the end of each scene with `ffmpeg -ss <seconds> -i release-video.mp4 -frames:v 1`, and read them with `release-video.png`.
    - Overflow, cut text or wrong value: fix the plan, then render again.
    - Picture that does not say alone what the release brings: fix the plan, then render again.

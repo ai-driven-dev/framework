@@ -14,10 +14,8 @@ The work, and what it was asked to do: a plan, a spec or a request, else the use
 4. Classify each finding with the first question of [decision.md](../references/decision.md) that answers yes.
 5. Keep at most three items in To decide and three in Suggestions, those that matter most to the aim.
 6. Fill [report-template.md](../assets/report-template.md).
-7. Write it to `challenge.md`, in the first folder that exists, and when the file exists append only its round after the last one:
-   - the task folder named;
-   - the folder of the plan or spec the work follows;
-   - a new `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<slug>/`, its slug naming the work.
+7. Write it to `challenge.md` in the folder under `aidd_docs/tasks/` that the work names or whose plan or spec it follows, else in a new `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<slug>/`, its slug naming the work.
+   - The file exists: append only its round after the last one.
 8. Run [validate-challenge.cjs](../scripts/validate-challenge.cjs) on `challenge.md`, fix, repeat until it passes.
 9. Answer with the report from `challenge.md` and its path.
 

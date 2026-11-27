@@ -8,6 +8,7 @@
 // With --check it writes nothing and names each copy that differs, is missing or has no source; exit 1 when any does.
 const fs = require("node:fs");
 const path = require("node:path");
+const { readOrNull } = require("../read-or-null.cjs");
 
 const ENGINE_FILES = ["engine.cjs", "ops.cjs", "markdown.cjs"];
 const ROOT = path.resolve(__dirname, "..", "..", "..");
@@ -33,7 +34,7 @@ function sync({ root = ROOT, write = false } = {}) {
     for (const name of ENGINE_FILES) {
       const source = fs.readFileSync(path.join(__dirname, name));
       const copy = path.join(skill, "scripts", "lib", name);
-      if (fs.existsSync(copy) && fs.readFileSync(copy).equals(source)) continue;
+      if (readOrNull(copy)?.equals(source)) continue;
       stale.push(path.relative(root, copy).split(path.sep).join("/"));
       if (write) {
         fs.mkdirSync(path.dirname(copy), { recursive: true });
@@ -110,7 +111,7 @@ function syncHooks({ root = ROOT, write = false } = {}) {
     for (const [copy, { file: source, transform }] of copies) {
       const file = path.join(plugin, copy);
       const content = transform ? Buffer.from(transform(fs.readFileSync(source, "utf8"))) : fs.readFileSync(source);
-      if (fs.existsSync(file) && fs.readFileSync(file).equals(content)) continue;
+      if (readOrNull(file)?.equals(content)) continue;
       found.push({ path: rel(file), kind: "stale" });
       if (write) {
         fs.mkdirSync(path.dirname(file), { recursive: true });

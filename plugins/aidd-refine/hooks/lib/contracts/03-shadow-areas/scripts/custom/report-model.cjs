@@ -1,60 +1,45 @@
 "use strict";
-// The gaps of a shadow report, read once per file: each category under "## Gaps by Category", its parts, its gap lines and the lines that are neither. Headings are the template op's.
-const fs = require("node:fs");
-const path = require("node:path");
-
-const HEADING = /^(#{1,6}) (.+?)\s*$/u;
-const GAP = /^\[([^\]]*)\] (.*)$/u;
-const SNIPPET = /^>/u;
-const GAPS = "Gaps by Category";
+// A shadow report read once per file: its category sections, its gaps with their quotes, and the lines that are neither.
+const CATEGORIES = ["contradiction", "missing actor", "missing dependency", "missing failure mode", "missing edge case", "ambiguous term", "missing acceptance criterion", "unstated assumption"];
 const CLOSED = "Closed";
+
+const SECTION = /^## (.+?)\s*$/u;
+const GAP = /^- (.+?)\s*$/u;
+const QUOTE = /^\s+> (.+?)\s*$/u;
 
 const models = new WeakMap();
 
-/** The locked categories, severities and question forms, kept beside the checks so the plugin hook carries them too. */
-const locked = () => JSON.parse(fs.readFileSync(path.join(__dirname, "locked-sets.json"), "utf8"));
-
-/** `{ categories, gaps, stray }`: each category `{ name, line }`, each gap `{ line, text, severity, probe, category, part }`, and the stray lines inside "Gaps by Category". */
+/** `{ sections, gaps, stray }`: each section `{ name, line }`, each gap `{ line, text, question, category, closed, quotes }`, each quote `{ line, text }`. */
 function report(ctx) {
   if (models.has(ctx)) return models.get(ctx);
-  const model = { categories: [], gaps: [], stray: [] };
-  let inGaps = false;
-  let category = null;
-  let part = null;
-  let last = null;
+  const model = { sections: [], gaps: [], stray: [] };
+  let section = null;
+  let gap = null;
   ctx.prose.forEach((prose, index) => {
-    if (!prose.trim()) return;
-    const at = { line: index + 1, text: ctx.lines[index].trimEnd() };
-    const heading = HEADING.exec(prose);
+    if (!prose.trim() || /^# /u.test(prose)) return;
+    const raw = ctx.lines[index];
+    const at = { line: index + 1, text: raw.trimEnd() };
+    const heading = SECTION.exec(prose);
+    const item = GAP.test(prose) && GAP.exec(raw);
+    const quote = QUOTE.test(prose) && QUOTE.exec(raw);
     if (heading) {
-      const level = heading[1].length;
-      if (level <= 2) {
-        inGaps = level === 2 && heading[2] === GAPS;
-        category = null;
-      } else if (inGaps && level === 3) {
-        category = { name: heading[2], line: at.line };
-        model.categories.push(category);
-        part = null;
-      } else if (inGaps && level === 4) part = heading[2];
-      last = null;
-      return;
-    }
-    if (!inGaps) return;
-    const gap = GAP.exec(prose);
-    if (gap && category) {
-      last = { ...at, severity: gap[1], probe: gap[2].trim(), category: category.name, part };
-      model.gaps.push(last);
-    } else if (SNIPPET.test(prose) && last) return;
-    else {
-      model.stray.push(at);
-      last = null;
-    }
+      section = { name: heading[1], line: at.line };
+      model.sections.push(section);
+      gap = null;
+    } else if (item && section) {
+      gap = { ...at, question: item[1], category: section.name, closed: section.name === CLOSED, quotes: [] };
+      model.gaps.push(gap);
+    } else if (quote && gap) gap.quotes.push({ line: at.line, text: quote[1] });
+    else model.stray.push(at);
   });
   models.set(ctx, model);
   return model;
 }
 
-/** The gaps counted in the totals and the status: every gap but the closed ones. */
-const inScope = (ctx) => report(ctx).gaps.filter((gap) => gap.part !== CLOSED);
+/** The gaps still open: every gap outside Closed. */
+const open = (ctx) => report(ctx).gaps.filter((gap) => !gap.closed);
 
-module.exports = { report, inScope, locked };
+/** Text with its whitespace runs collapsed, so a quote matches across line breaks. */
+const flat = (text) => text.replace(/\s+/gu, " ").trim();
+
+module.exports = { CATEGORIES, CLOSED, report, open, flat };

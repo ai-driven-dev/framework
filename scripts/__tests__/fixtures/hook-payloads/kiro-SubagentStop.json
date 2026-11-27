@@ -1,0 +1,33 @@
+{
+  "host": "kiro",
+  "event": "SubagentStop",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "session_id": "sess_00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "SubagentStop",
+        "cwd": "/Users/user/project",
+        "agent_id": "00000000-0000-4000-8000-000000000001",
+        "agent_name": "general-task-execution",
+        "last_assistant_message": "DONE"
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "continue",
+      "payload": {
+        "session_id": "sess_00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "SubagentStop",
+        "cwd": "/Users/user/project",
+        "agent_id": "00000000-0000-4000-8000-000000000001",
+        "agent_name": "general-task-execution",
+        "last_assistant_message": "DONE"
+      },
+      "hookAnswer": {
+        "decision": "block",
+        "reason": "The review token is TOKEN-SubagentStop-block0-1. Reply with that token."
+      }
+    }
+  ]
+}

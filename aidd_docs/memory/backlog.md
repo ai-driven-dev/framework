@@ -5,10 +5,10 @@
 | Support | Authority for | Role |
 | --- | --- | --- |
 | GitHub Issues | the work items, their type and their scope | where a change is agreed before a branch exists |
-| AIDD Roadmap board (`ai-driven-dev` org project 8) | order, status, and what ships next | the single source of truth for the roadmap |
+| AIDD Roadmap board (`ai-driven-dev` org project 8) | order, status, and what ships next | the roadmap's single source of truth |
 | Milestones | themes | one milestone per theme; no milestone means backlog |
 | GitHub Discussions (`ai-driven-dev/framework`) | ideas and their upvotes | where an idea is weighed before it becomes an issue |
-| `aidd_docs/` task documents | the local plans, specs and reviews behind an issue | never a substitute for the issue |
+| `aidd_docs/` task documents | the local plans, specs and reviews behind an issue | never replaces the issue |
 
 ## Representation
 
@@ -20,27 +20,30 @@
 | Theme | Milestones | one milestone |
 | Idea | GitHub Discussions | a discussion, ranked by 👍 |
 
-The form stamps the type; nobody sets it by hand. Labels categorize nothing: one exists only when a bot or a human reads it. `.github/labels.yml` declares them, nothing syncs it, and drift is reconciled by hand.
+- The issue form stamps the type; nobody sets it by hand.
+- A label exists only when a bot or a human reads it; labels categorize nothing.
+- `.github/labels.yml` declares the labels; nothing syncs it, so drift is reconciled by hand.
 
 ## Workflow
 
-| Support | Native status | Meaning |
-| --- | --- | --- |
-| Roadmap board | Ideation | weighed, not agreed |
-| Roadmap board | Todo | agreed, not started |
-| Roadmap board | In Progress | being worked |
-| Roadmap board | In review | a pull request is open |
-| Roadmap board | Done | merged |
+| Board status | Meaning |
+| --- | --- |
+| Ideation | weighed, not agreed |
+| Todo | agreed, not started |
+| In Progress | being worked |
+| In review | a pull request is open |
+| Done | merged |
 
-The board is moved by hand, by a human or an agent through `gh`. No workflow advances it.
+- The board moves by hand, by a human or an agent through `gh`; no workflow advances it.
 
 ## Planning
 
-- Priority: a public 👍 is a signal, not a vote. Only Core Team, Certified and Maintainer cast a counted one — mechanism in `GOVERNANCE.md`.
-- Iteration: weekly, a milestone per theme.
-- Milestone: closed by `.github/workflows/close-finished-milestones.yml`, on a schedule, once all its issues are. An empty one is left open.
+- Priority: a public 👍 is a signal, not a vote; only Core Team, Certified and Maintainer votes count (`GOVERNANCE.md`).
+- Iteration: weekly.
+- Milestone: `.github/workflows/close-finished-milestones.yml` closes it once all its issues are; an empty one stays open.
 
 ## Relations
 
-- An issue's branch and pull request carry the routing: the branch prefix decides the target, per `vcs.md`.
-- A `aidd_docs/` task folder is grouped by its parent document (`plan.md`, then `master-plan.md`, then `spec.md`), and a sub-document's status never moves that parent.
+- The branch prefix decides a pull request's target, per `vcs.md`.
+- An `aidd_docs/` task folder is grouped by its parent document: `plan.md`, then `master-plan.md`, then `spec.md`.
+- A sub-document's status never moves its parent.

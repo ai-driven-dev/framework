@@ -1,48 +1,59 @@
 second install threw DuplicatePluginError: Plugin 'aidd-context' is already installed.
 
-## project/.agents/hooks.json
+## project/.agents/plugins/aidd-context/hooks.json
 {
   "aidd-context": {
     "SessionStart": [
       {
         "type": "command",
-        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC1jb250ZXh0L21lbW9yeS5janMgbG9hZA==",
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'../../..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvcGx1Z2lucy9haWRkLWNvbnRleHQvaG9va3MvbWVtb3J5LmNqcyBsb2Fk",
         "timeout": 5
       },
       {
         "type": "command",
-        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC1jb250ZXh0L2FydGlmYWN0cy5janMgc3RhcnQ=",
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'../../..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvcGx1Z2lucy9haWRkLWNvbnRleHQvaG9va3MvYXJ0aWZhY3RzLmNqcyBzdGFydA==",
         "timeout": 5
       }
-    ]
-  },
-  "aidd-telemetry": {
-    "SessionStart": [
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "write_file|edit_file|run_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'../../..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvcGx1Z2lucy9haWRkLWNvbnRleHQvaG9va3MvYXJ0aWZhY3RzLmNqcyBtYXJr",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
       {
         "type": "command",
-        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvc2Vzc2lvbi1zdGFydC5janM=",
-        "timeout": 10
-      },
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'../../..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvcGx1Z2lucy9haWRkLWNvbnRleHQvaG9va3MvbWVtb3J5LmNqcyBzeW5j",
+        "timeout": 5
+      }
+    ],
+    "PreInvocation": [
       {
         "type": "command",
-        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvY2F0Y2gtdXAuY2pz",
-        "timeout": 120
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'../../..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvcGx1Z2lucy9haWRkLWNvbnRleHQvaG9va3MvbGliL2hvc3QuY2pz",
+        "timeout": 5
       }
     ]
   }
 }
 
 
-## project/.agents/hooks/aidd-context/artifacts.cjs
+## project/.agents/plugins/aidd-context/hooks/artifacts.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-context/lib/contracts/04-skill-generate/scripts/contract.json
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/contract.json
 {
-  "version": 1,
   "kind": "skill",
   "unit": "folder",
   "targets": "plugins/*/skills/*",
-  "scope": [".claude/skills/*", ".cursor/skills/*", ".opencode/skills/*", ".kilo/skills/*", ".github/skills/*", ".agents/skills/*"],
+  "scope": [".claude/skills/*", ".cursor/skills/*", ".opencode/skills/*", ".kilo/skills/*", ".github/skills/*", ".agents/skills/*", ".kiro/skills/*"],
   "shell": false,
   "marker": "SKILL.md",
   "rules": {
@@ -92,22 +103,22 @@ script, identical to the plugin source
 }
 
 
-## project/.agents/hooks/aidd-context/lib/contracts/04-skill-generate/scripts/custom/mermaid.cjs
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/mermaid.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-context/lib/contracts/04-skill-generate/scripts/custom/read-next.cjs
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/read-next.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-context/lib/contracts/04-skill-generate/scripts/custom/router-diagram.cjs
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/router-diagram.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-context/lib/contracts/04-skill-generate/scripts/custom/router-edges.cjs
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/router-edges.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-context/lib/contracts/04-skill-generate/scripts/custom/sibling-plugin.cjs
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/sibling-plugin.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-context/lib/contracts/05-rule-generate/assets/rule-template.md
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/05-rule-generate/assets/rule-template.md
 ---
 description: "{{when the rule applies, one line}}"
 paths:
@@ -125,9 +136,8 @@ targets: [{{host tools}}]
 > Fill every `{{...}}`, add one `  - "glob"` line under `paths:` per file pattern or delete `paths:` for a rule on every file, delete the group section when unused, and delete this line.
 
 
-## project/.agents/hooks/aidd-context/lib/contracts/05-rule-generate/scripts/contract.json
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/05-rule-generate/scripts/contract.json
 {
-  "version": 1,
   "kind": "rule",
   "unit": "file",
   "scope": ["aidd_docs/rules/*/*.md"],
@@ -144,25 +154,28 @@ targets: [{{host tools}}]
 }
 
 
-## project/.agents/hooks/aidd-context/lib/contracts/06-agent-generate/scripts/contract.json
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/06-agent-generate/scripts/contract.json
 {
-  "version": 1,
   "kind": "agent",
   "unit": "file",
   "targets": "plugins/*/agents/*.md",
   "scope": [
     ".claude/agents/*.md",
-    ".cursor/agents/*.md"
+    ".cursor/agents/*.md",
+    ".github/agents/*.agent.md",
+    ".agents/agents/*/agent.md",
+    ".opencode/agents/*.md",
+    ".kilo/agents/*.md",
+    ".kiro/agents/*.md",
+    ".kimi-code/agents/*.md"
   ],
   "shell": false,
   "rules": {
     "AGENT-02": {
-      "op": "equals",
+      "op": "custom",
       "in": "*.md",
-      "field": "name",
-      "to": "basename",
-      "why": "hosts resolve the agent by file name",
-      "fix": "set name to {expected}"
+      "check": "name",
+      "why": "hosts resolve the agent by file name"
     },
     "AGENT-03": {
       "op": "pattern",
@@ -201,7 +214,10 @@ targets: [{{host tools}}]
 }
 
 
-## project/.agents/hooks/aidd-context/lib/contracts/07-command-generate/assets/command-template.md
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/06-agent-generate/scripts/custom/name.cjs
+script, identical to the plugin source
+
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/07-command-generate/assets/command-template.md
 ---
 description: "{{what the command does, one line}}"
 argument-hint:
@@ -221,9 +237,8 @@ disable-model-invocation:
 > Fill every `{{...}}`, delete each front matter key the command does not keep, and delete this line.
 
 
-## project/.agents/hooks/aidd-context/lib/contracts/07-command-generate/scripts/contract.json
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/07-command-generate/scripts/contract.json
 {
-  "version": 1,
   "kind": "command",
   "unit": "file",
   "scope": [
@@ -252,109 +267,118 @@ disable-model-invocation:
 }
 
 
-## project/.agents/hooks/aidd-context/lib/contracts/lib/engine.cjs
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/lib/engine.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-context/lib/contracts/lib/markdown.cjs
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/lib/markdown.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-context/lib/contracts/lib/ops.cjs
+## project/.agents/plugins/aidd-context/hooks/lib/contracts/lib/ops.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-context/lib/host.cjs
+## project/.agents/plugins/aidd-context/hooks/lib/host.cjs
 script, identical to the host adapter host-antigravity.cjs
 
-## project/.agents/hooks/aidd-context/lib/markdown.cjs
+## project/.agents/plugins/aidd-context/hooks/lib/markdown.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-context/memory.cjs
+## project/.agents/plugins/aidd-context/hooks/memory.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/catch-up.cjs
+## project/.agents/plugins/aidd-telemetry/hooks.json
+{
+  "aidd-telemetry": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'../../..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvcGx1Z2lucy9haWRkLXRlbGVtZXRyeS9ob29rcy90YXNrLmNqcyByZW1pbmQ=",
+        "timeout": 5
+      },
+      {
+        "type": "command",
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'../../..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvcGx1Z2lucy9haWRkLXRlbGVtZXRyeS9ob29rcy9sZWRnZXIuY2pzIGluZ2VzdA==",
+        "timeout": 5
+      }
+    ]
+  }
+}
+
+
+## project/.agents/plugins/aidd-telemetry/hooks/ledger.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/aidd.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/lib/aidd.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/binding.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/lib/claude-only.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/claude-only.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/lib/codex-session-file.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/codex-session-file.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/lib/consent.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/consent.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/lib/context.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/context.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/lib/git.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/declaration.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/lib/host.cjs
+script, identical to the host adapter host-antigravity.cjs
+
+## project/.agents/plugins/aidd-telemetry/hooks/lib/jsonl.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/git.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/lib/telemetry-dir.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/hook-io.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/lib/tool.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-telemetry/lib/jsonl.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-telemetry/lib/lookup.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-telemetry/lib/presence.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-telemetry/lib/telemetry-dir.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-telemetry/lib/tool.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-telemetry/prompt-gate.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-telemetry/session-start.cjs
+## project/.agents/plugins/aidd-telemetry/hooks/task.cjs
 script, identical to the plugin source
 
 # recorded
-project antigravity aidd-context scope=project: 0 hook files
-  projectHooks {
-  "entries": [
-    {
-      "event": "SessionStart",
-      "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC1jb250ZXh0L21lbW9yeS5janMgbG9hZA==",
-      "digest": "1daba6a99a2ff06947caaa0ee5d6c2e8"
-    },
-    {
-      "event": "SessionStart",
-      "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC1jb250ZXh0L2FydGlmYWN0cy5janMgc3RhcnQ=",
-      "digest": "a407135d0c2dd44b97623e3dad8c6d75"
-    }
-  ],
-  "scripts": {}
-}
+project antigravity aidd-context scope=project: 20 hook files
+  .agents/plugins/aidd-context/hooks.json
+  .agents/plugins/aidd-context/hooks/artifacts.cjs
+  .agents/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/contract.json
+  .agents/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/mermaid.cjs
+  .agents/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/read-next.cjs
+  .agents/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/router-diagram.cjs
+  .agents/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/router-edges.cjs
+  .agents/plugins/aidd-context/hooks/lib/contracts/04-skill-generate/scripts/custom/sibling-plugin.cjs
+  .agents/plugins/aidd-context/hooks/lib/contracts/05-rule-generate/assets/rule-template.md
+  .agents/plugins/aidd-context/hooks/lib/contracts/05-rule-generate/scripts/contract.json
+  .agents/plugins/aidd-context/hooks/lib/contracts/06-agent-generate/scripts/contract.json
+  .agents/plugins/aidd-context/hooks/lib/contracts/06-agent-generate/scripts/custom/name.cjs
+  .agents/plugins/aidd-context/hooks/lib/contracts/07-command-generate/assets/command-template.md
+  .agents/plugins/aidd-context/hooks/lib/contracts/07-command-generate/scripts/contract.json
+  .agents/plugins/aidd-context/hooks/lib/contracts/lib/engine.cjs
+  .agents/plugins/aidd-context/hooks/lib/contracts/lib/markdown.cjs
+  .agents/plugins/aidd-context/hooks/lib/contracts/lib/ops.cjs
+  .agents/plugins/aidd-context/hooks/lib/host.cjs
+  .agents/plugins/aidd-context/hooks/lib/markdown.cjs
+  .agents/plugins/aidd-context/hooks/memory.cjs
+  projectHooks null
   dependents []
-project antigravity aidd-telemetry scope=project: 0 hook files
-  projectHooks {
-  "entries": [
-    {
-      "event": "SessionStart",
-      "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvc2Vzc2lvbi1zdGFydC5janM=",
-      "digest": "4100c41de2bcea80a0e3fed5d428c845"
-    },
-    {
-      "event": "SessionStart",
-      "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC10ZWxlbWV0cnkvY2F0Y2gtdXAuY2pz",
-      "digest": "4216d59d18b66a867925fe452de01eb5"
-    }
-  ],
-  "scripts": {}
-}
+project antigravity aidd-telemetry scope=project: 13 hook files
+  .agents/plugins/aidd-telemetry/hooks.json
+  .agents/plugins/aidd-telemetry/hooks/ledger.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/aidd.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/claude-only.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/codex-session-file.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/consent.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/context.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/git.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/host.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/jsonl.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/telemetry-dir.cjs
+  .agents/plugins/aidd-telemetry/hooks/lib/tool.cjs
+  .agents/plugins/aidd-telemetry/hooks/task.cjs
+  projectHooks null
   dependents []
 project antigravity nativeRegistrations pluginRefs null
 machine: no manifest

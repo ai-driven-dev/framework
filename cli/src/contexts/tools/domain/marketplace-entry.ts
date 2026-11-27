@@ -1,4 +1,4 @@
-import type { MarketplaceSettingsInput } from "./marketplace-settings.js";
+import type { MarketplaceSettingsInput } from "../contract/tool-vocabulary.js";
 
 /**
  * The key a Claude-schema tool records a marketplace under, or `null` when it cannot. The name
@@ -7,7 +7,7 @@ import type { MarketplaceSettingsInput } from "./marketplace-settings.js";
  * subdirectory or npm gets no entry rather than a wrong one, and its plugins stay out of the
  * enabled-plugins map instead of being keyed against a source the tool cannot resolve.
  */
-export function claudeStyleMarketplaceKey(input: MarketplaceSettingsInput): string | null {
+export function sharedMarketplaceKey(input: MarketplaceSettingsInput): string | null {
   const { name, source } = input;
   if (source.kind !== "local" && source.kind !== "github") return null;
   return name;

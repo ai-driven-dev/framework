@@ -24,7 +24,7 @@ test("surfacesOf names a plugin skill by plugin and skill folder", () => {
 
 test("surfacesOf names a CLI command by its binary subcommand", () => {
   assert.deepEqual(
-    surfacesOf(["cli/src/presentation/commands/telemetry.ts"]),
+    surfacesOf(["cli/src/presentation/controllers/telemetry/telemetry.controller.ts"]),
     ["aidd telemetry"]
   );
 });
@@ -36,8 +36,8 @@ test("surfacesOf ignores files that are not a user-facing surface", () => {
       "plugins/aidd-dev/README.md",
       "plugins/aidd-dev/CATALOG.md",
       "plugins/aidd-dev/.claude-plugin/plugin.json",
-      "cli/src/presentation/commands/global-options.ts",
-      "cli/src/kernel/paths.ts",
+      "cli/src/presentation/controllers/menu/global-options.controller.ts",
+      "cli/src/shared/domain/paths.model.ts",
       "scripts/check-release-video.js",
     ]),
     []

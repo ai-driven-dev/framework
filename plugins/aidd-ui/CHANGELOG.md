@@ -1,18 +1,5 @@
 # Changelog
 
-## [0.4.0-alpha.0](https://github.com/ai-driven-dev/framework/compare/aidd-ui-v0.3.0-alpha.0...aidd-ui-v0.4.0-alpha.0) (2026-11-26)
-
-
-### Features
-
-* **lefthook:** run the contract check in hooks and CI ([b7fd022](https://github.com/ai-driven-dev/framework/commit/b7fd02279485f1509876213831b69d5f8fd39499))
-
-
-### Refactoring
-
-* **aidd-refine:** give shadow-areas a router, a report contract and one home per fact ([e4c1d4f](https://github.com/ai-driven-dev/framework/commit/e4c1d4f5cfa2817e97bc9e632f76c54fbca78ffe))
-* **framework:** delete the content scripts the contracts replaced ([#1149](https://github.com/ai-driven-dev/framework/issues/1149)) ([522d4b9](https://github.com/ai-driven-dev/framework/commit/522d4b9809160148a5965d6f27ee0188a28c6838))
-
 ## [0.3.0-alpha.0](https://github.com/ai-driven-dev/framework/compare/aidd-ui-v0.2.1-alpha.0...aidd-ui-v0.3.0-alpha.0) (2026-11-13)
 
 

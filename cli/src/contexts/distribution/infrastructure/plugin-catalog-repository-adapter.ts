@@ -1,30 +1,32 @@
 import { isAbsolute, join, resolve } from "node:path";
-import { MalformedMarketplaceCatalogError } from "../../../kernel/errors.js";
-import { MARKETPLACE_CACHE_SUBDIR } from "../../../kernel/paths.js";
-import type { FileReader } from "../../../kernel/ports/file-reader.js";
-import type { PluginSource } from "../../../kernel/source.js";
-import { type PluginCatalog, parsePluginCatalog } from "../domain/catalog.js";
+import { errorMessage } from "../../../shared/domain/describe-error.js";
+import type { PluginSource } from "../../../shared/domain/plugin/source.js";
+import { InvalidPluginManifestError } from "../../../shared/domain/shared.error.js";
+import type { FileReader } from "../../../shared/ports/file-reader.js";
+import type { PluginCatalog } from "../contract/catalog.js";
+import { MalformedMarketplaceCatalogError } from "../contract/distribution.error.js";
+import { parsePluginCatalog } from "../domain/catalog-parsers/claude-marketplace-catalog.js";
 import { parseCopilotMarketplaceCatalog } from "../domain/catalog-parsers/copilot-marketplace-catalog.js";
-import type { PluginCatalogRepository } from "../domain/ports/plugin-catalog-repository.js";
-
-const COPILOT_MARKETPLACE_PATH = ".plugin/marketplace.json";
-const CLAUDE_MARKETPLACE_PATH = ".claude-plugin/marketplace.json";
+import {
+  CATALOG_LOCATIONS,
+  MARKETPLACE_CACHE_SUBDIR,
+} from "../domain/marketplace-cache-paths.model.js";
+import type { PluginCatalogRepository } from "../ports/plugin-catalog-repository.js";
 
 export class PluginCatalogRepositoryAdapter implements PluginCatalogRepository {
   constructor(private readonly fs: FileReader) {}
 
   async load(frameworkPath: string): Promise<PluginCatalog | null> {
-    const copilotPath = join(frameworkPath, COPILOT_MARKETPLACE_PATH);
-    if (await this.fs.fileExists(copilotPath)) {
-      const catalog = await this.readCopilotNativeCatalog(copilotPath);
+    for (const { format, relative } of CATALOG_LOCATIONS) {
+      const path = join(frameworkPath, relative);
+      if (!(await this.fs.fileExists(path))) continue;
+      const catalog =
+        format === "plugin-root"
+          ? await this.readCopilotNativeCatalog(path)
+          : await this.readClaudeCatalog(path);
       return this.resolveLocalPaths(catalog, frameworkPath);
     }
-    const claudePath = join(frameworkPath, CLAUDE_MARKETPLACE_PATH);
-    if (!(await this.fs.fileExists(claudePath))) {
-      return null;
-    }
-    const catalog = await this.readClaudeCatalog(claudePath);
-    return this.resolveLocalPaths(catalog, frameworkPath);
+    return null;
   }
 
   private isCachePath(fullPath: string): boolean {
@@ -32,8 +34,8 @@ export class PluginCatalogRepositoryAdapter implements PluginCatalogRepository {
   }
 
   private parseDetail(err: unknown): string {
-    const message = err instanceof Error ? err.message : String(err);
-    return message.replace(/^Invalid plugin manifest:\s*/, "");
+    if (err instanceof InvalidPluginManifestError) return err.detail ?? "";
+    return errorMessage(err);
   }
 
   private async readCopilotNativeCatalog(fullPath: string): Promise<PluginCatalog> {

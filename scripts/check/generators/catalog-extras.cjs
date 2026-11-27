@@ -3,6 +3,7 @@
 // Written by `run.cjs --fix`, from the pre-commit hook.
 const fs = require("node:fs");
 const path = require("node:path");
+const { readOrNull } = require("../read-or-null.cjs");
 
 const SCRIPT_REFERENCE = /\$\{CLAUDE_PLUGIN_ROOT\}\/([^\s"]+)/gu;
 
@@ -46,8 +47,8 @@ module.exports = {
   run({ root, write }) {
     const plugins = path.join(root, "plugins");
     const catalog = path.join(root, "docs", "CATALOG.md");
-    if (!fs.existsSync(plugins) || !fs.existsSync(catalog)) return [];
-    const before = fs.readFileSync(catalog, "utf8");
+    const before = readOrNull(catalog, "utf8");
+    if (before === null || !fs.existsSync(plugins)) return [];
     let text = before;
     const found = [];
     for (const name of fs.readdirSync(plugins, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name).sort()) {

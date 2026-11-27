@@ -30,7 +30,7 @@ The repository at the release candidate, read again from the last release tag, n
    - User asks for tags: fill `intro.highlights` with up to five sentences of five words at most, the user's gain first, and no `tagline`.
 9. Fill `youtube` in French: it is the one release message, shown as written by the YouTube description, the Discord post and the Skool page.
    - `themes`: the release's themes, in scene order.
-   - `programme`: one line per scene, saying in French what its title and lead say on screen, as `4 nouveaux agents : explorer, executor, validator, reviewer.`, never one line per surface.
+   - `programme`: one line per scene, the feature's known name then the outcome a user gets, `<Name> : <outcome>` with one colon only, as `Agents : confier chaque tâche à l'un des 4 nouveaux agents.`, never one line per surface. The description prints the text alone.
    - Each line: its `theme`, one of `themes`, and its `surface`, the command the scene shows.
    - Scene showing two commands: one line for each.
 10. Read the plan against [judge.md](../references/judge.md), and rewrite or remove each failing scene.

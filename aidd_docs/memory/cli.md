@@ -2,18 +2,19 @@
 
 The `aidd` binary, built from `cli/` and published to npm as `@ai-driven-dev/cli`.
 
-> `cli/` carries its own `CLAUDE.md` and memory bank. Command detail, interface and internals: [`cli/aidd_docs/memory/cli.md`](../../cli/aidd_docs/memory/cli.md).
+- Before editing anything under `cli/`, load the `working-on-cli` skill and follow the action for your change.
+- CLI detail is on demand under `internal/cli/`; per-context rules are in the `working-on-cli` skill's references.
 
 ## Commands
 
-- `setup --provider` chooses the provider the main session and each IDE's agents run on, machine-wide: [agent guide](../../docs/SUBAGENTS.md#-models).
-- `telemetry` counts the tokens of Claude Code and Codex sessions locally: [usage contract](../product/usage-contract.md).
-- No list here. The surface moves; `aidd --help` is the only reading that stays true.
+- `aidd --help` is the only list that stays true; summary in `internal/cli/commands.md`.
+- `setup --provider` picks the provider of the main session and each tool's agents, machine-wide: [agent guide](../../docs/SUBAGENTS.md#-models). `translate --provider` writes the agents' models into the built tree only.
+- `telemetry` counts Claude Code and Codex tokens locally: [usage contract](../product/usage-contract.md).
 
 ## Interface
 
-- Node (floor in `architecture.md`'s stack table), ESM, Commander.
+- Node, ESM, Commander. The Node floor is `engines` in `cli/package.json`.
 
 ## Distribution
 
-Published to npm; the pipeline, its OIDC publishing and its gates are in `deployment.md`.
+- npm with OIDC publishing: `deployment.md`, `internal/cli/deployment.md`.

@@ -1,4 +1,23 @@
 import { spawnSync } from "node:child_process";
+import { readdirSync } from "node:fs";
+import { join } from "node:path";
+
+/** The telemetry tests the guard runs, as vitest path filters: a path prefix, so a filter that
+ * names no file selects nothing and the guard would pass over zero tests. */
+export const TELEMETRY_TESTS = [
+  "tests/contexts/telemetry/",
+  "tests/presentation/controllers/telemetry/",
+  "tests/presentation/presenters/telemetry/",
+  "tests/e2e/telemetry",
+];
+
+/** The filters that no test file under `root` matches, in the slash form vitest filters by. */
+export function unmatchedTestFilters(root, filters) {
+  const files = readdirSync(join(root, "tests"), { recursive: true })
+    .map((file) => `tests/${file}`.replaceAll("\\", "/"))
+    .filter((file) => file.endsWith(".test.ts"));
+  return filters.filter((filter) => !files.some((file) => file.startsWith(filter)));
+}
 
 /* What a child Node writes for one instant and one number, in its own zone and locale and in
  * English: a locale is foreign only if it writes them otherwise, whatever it is called. A locale

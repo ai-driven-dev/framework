@@ -3,6 +3,7 @@
 // The tool list, from the CLI's tool-support record, stays with scripts/sync-generated-docs.mjs (hook step).
 const fs = require("node:fs");
 const path = require("node:path");
+const { readOrNull } = require("../read-or-null.cjs");
 
 const STATUS = {
   stable: { label: "stable", color: "2da44e" },
@@ -18,7 +19,8 @@ module.exports = {
   watch: ["README.md", "plugins/**", "docs/assets/plugins/plugins.json"],
   run({ root, write }) {
     const readme = path.join(root, "README.md");
-    if (!fs.existsSync(readme)) return [];
+    const before = readOrNull(readme, "utf8");
+    if (before === null) return [];
     const base = path.join(root, "plugins");
     const dirs = (dir) => (fs.existsSync(dir) ? fs.readdirSync(dir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name) : []);
     // A directory under skills/ is a skill once it carries a SKILL.md, the CLI's own test.
@@ -32,7 +34,6 @@ module.exports = {
       return fs.existsSync(manifest) ? Object.keys(JSON.parse(fs.readFileSync(manifest, "utf8")).hooks ?? {}).length : 0;
     };
     const plugins = dirs(base).sort();
-    const before = fs.readFileSync(readme, "utf8");
     let text = before;
 
     const hero = `<kbd>${plugins.length} plugins</kbd> · <kbd>${plugins.reduce((n, p) => n + skillsOf(p).length, 0)} skills</kbd> · <kbd>${plugins.reduce((n, p) => n + agentsOf(p), 0)} agents</kbd>`;

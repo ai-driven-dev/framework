@@ -1,90 +1,52 @@
-/**
- * Past ten direct `.ts` files a folder stops being a place and becomes a pile: files stop
- * finding their neighbours and duplication creeps in unnoticed.
- */
+/** A folder holds at most FOLDER_CAP source files of its own. */
+import { dirname, relative, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { expectRatchet, sourceFiles } from "./helpers.js";
+import { CLI_ROOT, SRC, sourceFiles } from "./source-graph.js";
 
-const MAX_FILES_PER_FOLDER = 10;
+const FOLDER_CAP = 10;
 
-/**
- * Directories over the limit, each with the count it carries and the reason it is still here.
- * The list may only shrink, and an entry leaves when the defect behind it is fixed, not when
- * files are shuffled. The test asserts the count, so a reason nobody measured fails here.
- */
-const BASELINE: readonly { readonly path: string; readonly count: number }[] = [
-  // Eleven files carry the command surface, plus three helpers no other folder imports. That
-  // is the flattest mapping from the CLI's surface to its source; moving the helpers out
-  // would leave eleven, still over the limit and clearer about nothing.
-  { path: "src/presentation/commands", count: 15 },
-  // One display module per command, mirroring `presentation/commands/`: that mirror is what
-  // lets a command's rendering be asserted without running the binary. Fewer files would mean
-  // one module rendering several commands, which is what put the printing in the actions.
-  { path: "src/presentation/display", count: 15 },
+/** Folders under src that grow with the product, by design: folder => reason. */
+const GROWS_BY_DESIGN: Readonly<Record<string, string>> = {
+  "composition/tool-profiles": "one file per registered tool",
+};
 
-  // `marketplace-source-drift.ts` decides a version/migration drift, a fact about aidd's own
-  // migration: that concern belongs to `framework`, not `tools`.
-  { path: "src/contexts/framework/domain", count: 11 },
-
-  // Four native-cache and host-CLI helpers are shared by `clean` at project and machine scope
-  // both, which is what `earned-sharing.arch.test.ts` means by earned; a `clean/`-only home
-  // would pass that rule by sitting outside the directory it judges. Nothing else here groups
-  // with them.
-  { path: "src/contexts/framework/application/shared", count: 13 },
-];
-
-/** A subfolder counts toward itself, not toward its parent. */
-function countsByDirectory(files: readonly string[]): Map<string, number> {
-  const counts = new Map<string, number>();
-  for (const file of files) {
-    const dir = file.slice(0, file.lastIndexOf("/"));
-    counts.set(dir, (counts.get(dir) ?? 0) + 1);
-  }
-  return counts;
+function folderSizes(files: readonly string[]): Map<string, number> {
+  const sizes = new Map<string, number>();
+  for (const file of files) sizes.set(dirname(file), (sizes.get(dirname(file)) ?? 0) + 1);
+  return sizes;
 }
 
-function foldersOverLimit(files: readonly string[], limit: number): string[] {
-  return [...countsByDirectory(files)]
-    .filter(([, count]) => count > limit)
-    .map(([dir]) => dir)
-    .sort();
+function overTheCap(sizes: ReadonlyMap<string, number>, cap: number): Map<string, number> {
+  return new Map([...sizes].filter(([, size]) => size > cap));
 }
 
-describe("folders stay small enough to hold in mind", () => {
-  it("no directory carries more than ten direct source files", () => {
-    const violations = foldersOverLimit(sourceFiles(), MAX_FILES_PER_FOLDER);
+describe("folder size", () => {
+  it("counts the files a folder holds directly, and keeps the folders over the cap", () => {
+    const sizes = folderSizes(["a/x.ts", "a/y.ts", "a/b/z.ts"]);
 
-    const { added, fixed } = expectRatchet(
-      violations,
-      BASELINE.map((entry) => entry.path)
+    expect(overTheCap(sizes, 1)).toEqual(new Map([["a", 2]]));
+  });
+
+  it("holds every folder under src to the cap", () => {
+    const actual = overTheCap(folderSizes(sourceFiles()), FOLDER_CAP);
+    const found = Object.fromEntries(
+      [...actual]
+        .map(([dir, size]) => [relative(SRC, resolve(CLI_ROOT, dir)).split("\\").join("/"), size])
+        .filter(([dir]) => !(dir in GROWS_BY_DESIGN))
     );
-    expect(added, "new folder past the size limit — split it").toEqual([]);
-    expect(fixed, "fixed — remove these from BASELINE").toEqual([]);
+
+    expect(found).toEqual({});
   });
 
-  it("holds each baseline entry to the count its reason was written around", () => {
-    const measured = countsByDirectory(sourceFiles());
-    const recorded = BASELINE.map(({ path, count }) => `${path}: ${count}`);
-    const actual = BASELINE.map(({ path }) => `${path}: ${measured.get(path) ?? 0}`);
+  it("lists only folders that exist", () => {
+    const folders = new Set(
+      sourceFiles().map((file) =>
+        relative(SRC, resolve(CLI_ROOT, dirname(file)))
+          .split("\\")
+          .join("/")
+      )
+    );
 
-    expect(
-      actual,
-      "a baseline count drifted from the tree — fix the number and its reason"
-    ).toEqual(recorded);
-  });
-});
-
-describe("the guard itself", () => {
-  it("fails the ratchet by name when a folder is pushed past the limit", () => {
-    const files = [
-      ...Array.from({ length: 11 }, (_, i) => `src/pile/f${i}.ts`),
-      ...Array.from({ length: 10 }, (_, i) => `src/tidy/f${i}.ts`),
-    ];
-
-    const violations = foldersOverLimit(files, MAX_FILES_PER_FOLDER);
-    expect(violations, "eleven files is over, ten is not").toEqual(["src/pile"]);
-
-    const { added } = expectRatchet(violations, []);
-    expect(added, "the ratchet names the offender, not just the detector").toEqual(["src/pile"]);
+    expect(Object.keys(GROWS_BY_DESIGN).filter((dir) => !folders.has(dir))).toEqual([]);
   });
 });

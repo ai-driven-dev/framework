@@ -1,0 +1,159 @@
+import { chmod, mkdtemp, readFile, rm, stat } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { CredentialRecordFileAdapter } from "../../../../src/contexts/auth/infrastructure/credential-record-file-adapter.js";
+import { aMachineWith, type StubBinary } from "../testing/stub-binary.builder.js";
+
+/**
+ * `process.platform` is a plain value property, so it is redefined rather than spied on; the
+ * win32 branch alone shells out, and it needs `USERNAME`, which no POSIX session has.
+ */
+async function asWin32<T>(run: () => Promise<T>, account: string | null = "tester"): Promise<T> {
+  const platform = Object.getOwnPropertyDescriptor(process, "platform");
+  const username = process.env.USERNAME;
+  Object.defineProperty(process, "platform", { value: "win32", configurable: true });
+  if (account === null) delete process.env.USERNAME;
+  else process.env.USERNAME = account;
+  try {
+    return await run();
+  } finally {
+    if (platform !== undefined) Object.defineProperty(process, "platform", platform);
+    if (username === undefined) delete process.env.USERNAME;
+    else process.env.USERNAME = username;
+  }
+}
+
+const STORED = { method: "stored", token: "ghp_x" } as const;
+
+describe("storing a credential record in a file", () => {
+  let root: string;
+  let userDir: string;
+  let records: CredentialRecordFileAdapter;
+  const machines: StubBinary[] = [];
+  const projectFile = (): string => join(root, "project", ".aidd", "auth.json");
+  const userFile = (): string => join(userDir, "auth.json");
+
+  beforeEach(async () => {
+    root = await mkdtemp(join(tmpdir(), "aidd-auth-file-"));
+    userDir = join(root, "user");
+    records = new CredentialRecordFileAdapter(
+      join(root, "project"),
+      () => userDir,
+      () => new Date(0)
+    );
+  });
+
+  afterEach(async () => {
+    for (const machine of machines.splice(0)) await machine.dispose();
+    await rm(root, { recursive: true, force: true });
+  });
+
+  describe("where the records live", () => {
+    it("keeps the project record under the project root and the user one in the user directory", async () => {
+      await records.save(STORED, "project");
+      await records.save({ method: "external", provider: "gh" }, "user");
+
+      expect(JSON.parse(await readFile(projectFile(), "utf-8"))).toMatchObject({
+        level: "project",
+      });
+      expect(JSON.parse(await readFile(userFile(), "utf-8"))).toMatchObject({ level: "user" });
+    });
+  });
+
+  describe("writing a record", () => {
+    it.each([
+      [
+        "stored",
+        STORED,
+        [
+          '  "method": "stored",',
+          '  "level": "user",',
+          '  "createdAt": "1970-01-01T00:00:00.000Z",',
+          '  "token": "ghp_x"',
+        ],
+      ],
+      [
+        "external",
+        { method: "external", provider: "gh" } as const,
+        [
+          '  "method": "external",',
+          '  "level": "user",',
+          '  "createdAt": "1970-01-01T00:00:00.000Z",',
+          '  "provider": "gh"',
+        ],
+      ],
+    ])(
+      "writes the %s record as these exact bytes, stamped by the clock it was given",
+      async (_method, credential, lines) => {
+        await records.save(credential, "user");
+
+        expect(await readFile(userFile(), "utf-8")).toBe(
+          ["{", '  "version": 1,', ...lines, "}"].join("\n")
+        );
+      }
+    );
+  });
+
+  describe.skipIf(process.platform === "win32")("on POSIX", () => {
+    it("restricts an existing world-readable file to its owner when it rewrites it", async () => {
+      await records.save(STORED, "user");
+      await chmod(userFile(), 0o644);
+
+      await records.save(STORED, "user");
+
+      expect((await stat(userFile())).mode & 0o777).toBe(0o600);
+    });
+  });
+
+  describe("on win32, with an icacls stub", () => {
+    async function givenIcacls(): Promise<StubBinary> {
+      const machine = await aMachineWith("icacls", {});
+      machines.push(machine);
+      return machine;
+    }
+
+    it("restricts the file through an icacls argument list, never a shell command line", async () => {
+      const machine = await givenIcacls();
+      await asWin32(() => records.save(STORED, "user"));
+
+      expect(await machine.invocations()).toStrictEqual([
+        [userFile(), "/inheritance:r", "/grant:r", "tester:(R,W)"],
+      ]);
+    });
+
+    it("names the account from the environment, not the %USERNAME% only a shell would expand", async () => {
+      const machine = await givenIcacls();
+      await asWin32(() => records.save(STORED, "user"), "Ada Lovelace");
+
+      expect((await machine.invocations())[0]).toContain("Ada Lovelace:(R,W)");
+    });
+
+    it.each([
+      ["empty", ""],
+      ["unset", null],
+    ])(
+      "refuses to leave inheritance stripped with no grant when the account is %s",
+      async (_state, account) => {
+        const machine = await givenIcacls();
+        await expect(asWin32(() => records.save(STORED, "user"), account)).rejects.toThrow(
+          expect.objectContaining({
+            detail: `Failed to set restrictive permissions on ${userFile()}: USERNAME is not set, so no account can be granted access`,
+          })
+        );
+        expect(await machine.invocations()).toStrictEqual([]);
+      }
+    );
+
+    it("passes a path carrying shell metacharacters as one verbatim argument", async () => {
+      // No `"`: the file is really written to disk, and that is illegal on NTFS. `&`, the
+      // space, `;` and `$` are legal there and still split under a real shell.
+      userDir = join(root, "a & echo pwned; $HOME & b");
+      const machine = await givenIcacls();
+
+      await asWin32(() => records.save(STORED, "user"));
+
+      expect((await machine.invocations())[0]?.[0]).toBe(userFile());
+    });
+  });
+});
