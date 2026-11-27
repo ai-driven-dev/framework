@@ -128,7 +128,7 @@ describe("a tool's plugins capability, as far as hooks go", () => {
       routed({
         rootToken: ROOT,
         file: FLAT_FILE,
-        eventMap: { Start: "start" },
+        eventMap: { Start: ["start"] },
         undeclaredEvents: "skipped",
         project: {
           pluginFile: "hooks.json",

@@ -29,10 +29,13 @@ function isRecord(value: unknown): value is object {
 
 function routeOf(value: unknown): HookEventRoute | undefined {
   if (!isRecord(value)) return undefined;
-  const native: unknown = Reflect.get(value, "native");
+  const natives: unknown = Reflect.get(value, "natives");
   const relay: unknown = Reflect.get(value, "relay");
-  if (typeof native !== "string" || (relay !== "native" && relay !== "bridge")) return undefined;
-  return { native, relay };
+  if (!Array.isArray(natives) || !natives.every((native) => typeof native === "string")) {
+    return undefined;
+  }
+  if (relay !== "native" && relay !== "bridge") return undefined;
+  return { natives, relay };
 }
 
 function declaredEvents(descriptor: object): Map<string, HookEventRoute> {
@@ -132,7 +135,7 @@ export const PROFILE_FILE_CHECKS: readonly ConformanceCheck<FileConformanceSubje
     for (const [native, canonical] of pairs ?? []) {
       const route = declared.events.get(canonical);
       expect(route, `${canonical} relayed, never declared`).toBeDefined();
-      if (route?.relay === "native") expect(route.native).toBe(native);
+      if (route?.relay === "native") expect(route.natives).toContain(native);
     }
     if (pairs === null) {
       const literals = [...declared.events.keys()].filter((event) =>
@@ -161,10 +164,12 @@ export const PROFILE_FILE_CHECKS: readonly ConformanceCheck<FileConformanceSubje
     const relayed = new Set(relayedEvents(declared));
     for (const [event, route] of declared.events) {
       if (!relayed.has(event)) continue;
-      const captured = subject.payloadFixtures.includes(
-        `${subject.profile.toolId}-${route.native}.json`
-      );
-      expect(captured, `${subject.profile.toolId}: no payload for ${event}`).toBe(true);
+      for (const native of route.natives) {
+        const captured = subject.payloadFixtures.includes(
+          `${subject.profile.toolId}-${native}.json`
+        );
+        expect(captured, `${subject.profile.toolId}: no payload for ${native}`).toBe(true);
+      }
     }
   }),
 ];

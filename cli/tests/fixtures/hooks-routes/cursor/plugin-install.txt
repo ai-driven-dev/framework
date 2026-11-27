@@ -32,6 +32,12 @@
         "command": "node ./.cursor/hooks/aidd-context/memory.cjs sync",
         "timeout": 5
       }
+    ],
+    "sessionEnd": [
+      {
+        "command": "node ./.cursor/hooks/aidd-context/memory.cjs sync",
+        "timeout": 5
+      }
     ]
   }
 }
@@ -344,6 +350,11 @@ project cursor aidd-context scope=user: 0 hook files
       "event": "stop",
       "command": "node ./.cursor/hooks/aidd-context/memory.cjs sync",
       "digest": "8854ed7708a15016cb1713219a3d1101"
+    },
+    {
+      "event": "sessionEnd",
+      "command": "node ./.cursor/hooks/aidd-context/memory.cjs sync",
+      "digest": "8854ed7708a15016cb1713219a3d1101"
     }
   ],
   "scripts": {}
@@ -387,6 +398,11 @@ machine cursor aidd-context scope=user: 0 hook files
     },
     {
       "event": "stop",
+      "command": "node ./.cursor/hooks/aidd-context/memory.cjs sync",
+      "digest": "8854ed7708a15016cb1713219a3d1101"
+    },
+    {
+      "event": "sessionEnd",
       "command": "node ./.cursor/hooks/aidd-context/memory.cjs sync",
       "digest": "8854ed7708a15016cb1713219a3d1101"
     }

@@ -136,7 +136,7 @@ function bridgedEvents([
   preToolUse,
   userPromptSubmit,
 ]: BridgeNativeEvents): Record<BridgeEvent, HookEventRoute> {
-  const bridged = (native: string): HookEventRoute => ({ native, relay: "bridge" });
+  const bridged = (native: string): HookEventRoute => ({ natives: [native], relay: "bridge" });
   return {
     SessionStart: bridged(sessionStart),
     PostToolUse: bridged(postToolUse),

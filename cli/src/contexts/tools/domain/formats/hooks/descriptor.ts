@@ -22,12 +22,15 @@ export const CANONICAL_HOOK_EVENTS = [
 
 export type CanonicalHookEvent = (typeof CANONICAL_HOOK_EVENTS)[number];
 
-/** The tool's native event a canonical event fires on, and whether the tool's own hooks file
+/** The tool's native events a canonical event fires on, and whether the tool's own hooks file
  * ("native") or a bridge it loads ("bridge") carries it to the hook. */
 export type HookEventRoute = {
-  readonly native: string;
+  readonly natives: readonly string[];
   readonly relay: "native" | "bridge";
 };
+
+/** Source event to the native events the tool fires for it. */
+export type HookEventMap = Readonly<Record<string, readonly string[]>>;
 
 /** The hooks a plugin ships, the same for every tool: one manifest and the scripts beside it. */
 export const PLUGIN_HOOKS_SOURCE = {
@@ -79,8 +82,8 @@ export interface HooksDescriptor {
   readonly trustNotice?: string;
   /** Canonical event to the tool's native event and how each reaches the hook. */
   readonly events: ReadonlyMap<CanonicalHookEvent, HookEventRoute>;
-  /** Source event to the tool's native event, derived from `events`. */
-  readonly eventMap: Readonly<Record<string, string>>;
+  /** Derived from `events`. */
+  readonly eventMap: HookEventMap;
   /** `skipped`: the merge drops an event `eventMap` omits and reports it. `relayed`: it reaches
    * the tool under the name the plugin gave it. */
   readonly undeclaredEvents: "relayed" | "skipped";

@@ -74,13 +74,12 @@ const hooks = declareHooks(
       UserPromptSubmit: "beforeSubmitPrompt",
       PreToolUse: "preToolUse",
       PostToolUse: "postToolUse",
-      Stop: "stop",
+      // A headless `cursor-agent -p` run ends on `sessionEnd` without a `stop` (captured payload).
+      Stop: ["stop", "sessionEnd"],
       SubagentStop: "subagentStop",
     },
     rootToken: CURSOR_PLUGIN_ROOT_TOKEN,
     manifestNamesHooks: true,
-    // Limit: headless `cursor-agent -p` delivers no `stop`, so a headless run gets no turn-end
-    // script (no memory sync).
     // `timeout` is in seconds on both sides: Claude's hooks.json and Cursor's per-script option.
     file: {
       wrapper: { version: 1 },

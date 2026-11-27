@@ -18,7 +18,7 @@ import type { PluginPresence } from "../../../../../shared/domain/materializatio
 import { rewritePluginRootInJson } from "../../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import { portableAgentFrontmatter } from "../../formats/agents/portable-agent.js";
 import { AGENTS_FILE, agentsIndexFiles } from "../../formats/agents-rules-index.js";
-import type { HooksRouting } from "../../formats/hooks/descriptor.js";
+import type { HookEventMap, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { pluginTreeHooksArtifact } from "../../formats/hooks/routes.js";
 import { hostToolNames } from "../../formats/host-tool-names.js";
 import { shapeEntries } from "../../hooks/hooks-entry-shape.js";
@@ -113,7 +113,7 @@ const PLUGIN_MANIFEST_RELATIVE = ".kimi-plugin/plugin.json";
 const CATALOG_VERSION = "2";
 
 /** Kimi's hooks, with the native event each canonical event fires on. */
-export type KimiHooks = HooksRouting & { readonly eventMap: Readonly<Record<string, string>> };
+export type KimiHooks = HooksRouting & { readonly eventMap: HookEventMap };
 
 export interface KimiPluginSpec {
   readonly agentTools: KimiAgentTools;

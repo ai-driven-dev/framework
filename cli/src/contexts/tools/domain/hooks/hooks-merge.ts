@@ -10,7 +10,7 @@ import {
   escapeRegExp,
   rewritePluginRootInJson,
 } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
-import { PLUGIN_HOOKS_SOURCE } from "../formats/hooks/descriptor.js";
+import { type HookEventMap, PLUGIN_HOOKS_SOURCE } from "../formats/hooks/descriptor.js";
 import { type Entry, type HooksFileFormat, shapeEntries } from "./hooks-entry-shape.js";
 import { routeEvents } from "./hooks-route.js";
 import { unmappedEventWarning } from "./hooks-warnings.js";
@@ -19,7 +19,7 @@ import type { PluginHooksShape } from "./plugin-hooks-shape.js";
 /** What the engine reads of a descriptor: the file's form and the events the tool fires. */
 export interface HooksMergeTarget {
   readonly file: HooksFileFormat;
-  readonly eventMap?: Readonly<Record<string, string>> | undefined;
+  readonly eventMap?: HookEventMap | undefined;
   /** Each plugin's scripts land in a folder of its own under this one. */
   readonly scriptsDir: string;
   /** The variable the tool expands to a plugin's directory: a command may name the plugin's

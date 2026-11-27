@@ -14,7 +14,7 @@ import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js"
 
 const UNSTAMPED = 'const HOST = "unstamped";';
 const OWNER = { toolId: TOOL.claude, directory: ".claude/", adapter: UNSTAMPED };
-const ROUTE: HookEventRoute = { native: "SessionStart", relay: "native" };
+const ROUTE: HookEventRoute = { natives: ["SessionStart"], relay: "native" };
 const FILE = { wrapper: {}, entries: { shape: "matchers", itemsKept: "all" } } as const;
 
 function declaration(overrides: Partial<HooksDeclaration> = {}): HooksDeclaration {
@@ -111,13 +111,18 @@ describe("declaring a tool's hooks", () => {
     it("fires every canonical event under its own name, and relays the rest", () => {
       const declared = declareHooks(OWNER, {});
       expect([...declared.events.keys()]).toEqual([...CANONICAL_HOOK_EVENTS]);
-      expect(declared.eventMap.Stop).toBe("Stop");
+      expect(declared.eventMap.Stop).toEqual(["Stop"]);
       expect(declared.undeclaredEvents).toBe("relayed");
     });
 
     it("reads a name as the native event of the hooks file", () => {
       const declared = declareHooks(OWNER, { events: { SessionStart: "begin" } });
-      expect(declared.events.get("SessionStart")).toEqual({ native: "begin", relay: "native" });
+      expect(declared.events.get("SessionStart")).toEqual({ natives: ["begin"], relay: "native" });
+    });
+
+    it("reads a list as every native event one source event fires on", () => {
+      const declared = declareHooks(OWNER, { events: { Stop: ["stop", "sessionEnd"] } });
+      expect(declared.eventMap.Stop).toEqual(["stop", "sessionEnd"]);
     });
 
     it("holds the plugin-root variable a hooks file states, and none without a file", () => {

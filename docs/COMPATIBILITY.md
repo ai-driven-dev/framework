@@ -71,7 +71,7 @@ Sources: [Claude Code](https://code.claude.com/docs/en/hooks), [Codex](https://d
 | --- | --- |
 | Only a project `.cursor/hooks.json` fires | A plugin-scope hooks file does nothing |
 | `postToolUse` takes `additional_context` only, so `decision: block` is dropped ([hooks](https://cursor.com/docs/hooks)) | A `PostToolUse` block does not stop Cursor |
-| A headless `cursor-agent -p` run delivers no `stop` | A `Stop` hook such as a memory sync does not run headless |
+| A headless `cursor-agent -p` run that ends in error fires `sessionEnd`, not `stop`, and `sessionEnd` takes no output | A `Stop` hook such as a memory sync runs on that `sessionEnd`, but cannot continue the turn |
 
 ### OpenCode and Kilo Code
 

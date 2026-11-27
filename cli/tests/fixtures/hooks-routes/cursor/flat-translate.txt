@@ -32,6 +32,12 @@
         "command": "node ./.cursor/hooks/aidd-context/memory.cjs sync",
         "timeout": 5
       }
+    ],
+    "sessionEnd": [
+      {
+        "command": "node ./.cursor/hooks/aidd-context/memory.cjs sync",
+        "timeout": 5
+      }
     ]
   }
 }

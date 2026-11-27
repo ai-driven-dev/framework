@@ -11,8 +11,8 @@ const target: WrappedCommandHooksTarget = {
   descriptor: {
     flat: { scriptsDir: ".h/hooks/" },
     eventMap: {
-      SessionStart: "SessionStart",
-      PostToolUse: "PostToolUse",
+      SessionStart: ["SessionStart"],
+      PostToolUse: ["PostToolUse"],
     },
     toolNames: new Map([
       ["Write", "put"],

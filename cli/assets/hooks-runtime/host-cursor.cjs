@@ -10,11 +10,12 @@ const os = require("node:os");
 const path = require("node:path");
 
 const HOST = "cursor";
-// `sessionEnd` stays unmapped: it is fire and forget, with no output to answer.
+// `sessionEnd` is fire and forget: it carries no `status`, so `continueTurn` never answers it.
 const EVENTS = new Map([
   ["sessionStart", "SessionStart"],
   ["postToolUse", "PostToolUse"],
   ["stop", "Stop"],
+  ["sessionEnd", "Stop"],
 ]);
 // An edit arrives as a Write carrying the whole file it left.
 const WRITES = new Set(["Write"]);
