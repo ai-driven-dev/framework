@@ -1,9 +1,5 @@
 # Write targets
 
-Where a skill tree is written, per host.
-
-## Targets
-
 | Host | Root | Official source |
 | --- | --- | --- |
 | Claude Code / `claude` | `.claude/skills/<name>/` | [Skills](https://code.claude.com/docs/en/skills) |
@@ -17,39 +13,12 @@ Where a skill tree is written, per host.
 | Kimi Code CLI / `kimi` | `.agents/skills/<name>/` | [Skills](https://www.kimi.com/code/docs/en/kimi-code-cli/customization/skills.html) |
 | Plugin source | where the target host's plugin format puts skills | the target host's plugin docs |
 
-## Frontmatter
+## Write
 
-Emit `name` and `description`, the two fields of the [Agent Skills](https://agentskills.io/specification) standard every host reads.
+Use the confirmed targets or the roots that already hold the skill. Use `name` and `description` for portable frontmatter.
 
-Read the target's official documentation for requested native fields and pass the documented keys and types as JSON. Ask only when a required choice is missing.
+For native options on project targets, read the official docs and pipe `{"name":"deploy","targets":["claude"],"nativeOptions":{"claude":{"disable-model-invocation":true}}}` to `node "$scaffold" --native - "$project_root" --plan`. Use the skill's `scripts/scaffold-skill.cjs` and the absolute project path. Include the preview in the plan and resolve any refusal before writing.
 
-For project targets, pipe JSON containing `name`, the selected host IDs in `targets`, and `nativeOptions` keyed by host ID to the scaffold script.
+After approval, repeat any native preview. Scaffold missing files with the portable plan on stdin via `node "$scaffold" - "$skill_folder"`, and fill them per `skill-tree.md` and `skill-authoring.md`.
 
-```json
-{
-  "name": "deploy",
-  "targets": ["claude", "kilo"],
-  "nativeOptions": { "claude": { "disable-model-invocation": true } }
-}
-```
-
-```sh
-node "$scaffold" --native - "$project_root" --plan
-node "$scaffold" --native - "$project_root"
-```
-
-`$scaffold` is the absolute path to `scripts/scaffold-skill.cjs` in this skill and `$project_root` is the project directory.
-
-- The script updates only requested frontmatter fields in existing project skill files and refuses changes to `name` or `description`.
-- For a shared path, the selected hosts must request identical options, with absent options counting as empty.
-- Treat the canonical plugin source according to its plugin format.
-
-## Plan and apply
-
-Use the confirmed targets. For an existing skill, locate the roots that already hold it.
-
-With requested native options, run the preview and include its paths and options in the plan. On refusal, report the writer's reason and resolve it before writing.
-
-After approval, rerun that preview before writing. If any `SKILL.md` or action file is missing, pipe the portable plan to `node "$scaffold" - "$skill_folder"`. Fill the files per [skill-tree.md](skill-tree.md) and [skill-authoring.md](skill-authoring.md).
-
-Copy the portable tree to each distinct target root, keeping existing target-specific frontmatter. Once the selected project targets have their `SKILL.md`, pass the approved native request again without `--plan`.
+Copy the portable tree to each distinct root and keep existing target-specific fields. Apply the approved native request without `--plan` once the destination files exist.

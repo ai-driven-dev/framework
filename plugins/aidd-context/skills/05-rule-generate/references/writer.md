@@ -33,24 +33,3 @@ Options cannot replace fields managed by the writer or be applied to a host with
 The result is JSON: `files` lists each path and its operation, `conflicts` each copy the writer did not produce, `error` a `{code, message}`. Exit 0 means done; any other exit comes with `error`.
 
 When the preview asks to choose among config files, ask which listed file to update. Rerun with the matching selection flag and keep that flag when applying the approved plan.
-
-The JSONC editor uses the parser bundled with the skill, so an installed copy runs with Node alone.
-
-To regenerate the bundle from the repository root with CLI dependencies installed:
-
-```sh
-node --input-type=commonjs - <<'NODE'
-const { createRequire } = require("node:module");
-const { readFileSync } = require("node:fs");
-const { buildSync } = createRequire(require.resolve("./cli/node_modules/tsup/package.json"))("esbuild");
-const pkg = "./cli/node_modules/jsonc-parser";
-const { version } = require(pkg + "/package.json");
-const license = readFileSync(pkg + "/LICENSE.md", "utf8").replace(/\r\n/g, "\n").trim();
-buildSync({
-  stdin: { contents: 'export { createScanner, parseTree, SyntaxKind } from "' + pkg + '/lib/esm/main.js";', resolveDir: process.cwd() },
-  bundle: true, format: "cjs", platform: "node", minify: true, legalComments: "none",
-  banner: { js: "/* Generated from https://github.com/microsoft/node-jsonc-parser v" + version + "\n\n" + license + "\n*/" },
-  outfile: "plugins/aidd-context/skills/05-rule-generate/scripts/lib/jsonc-parser.cjs",
-});
-NODE
-```
