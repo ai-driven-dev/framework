@@ -105,7 +105,7 @@ const CODEX_CONFIG_ASSETS: readonly ShippedConfig[] = [
 // project-local settings file is inert, so the `codex` CLI is driven directly instead.
 const CODEX_ACTIVATION: NativeActivationSpec = {
   binary: "codex",
-  upgradeVerb: "upgrade",
+  // No upgrade verb: `marketplace upgrade` refreshes Git marketplaces only, and codex reads a local one live (probed 0.172.0).
   enableVerb: "add",
   disableVerb: "remove",
   // Codex's own `plugin remove` deletes a marketplace's cached content but leaves the

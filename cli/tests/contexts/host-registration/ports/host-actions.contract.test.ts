@@ -82,7 +82,6 @@ const REAL_HOSTS: readonly {
   host: "claude" | "codex" | "copilot";
   marketplace: string;
   shape: HostCliShape;
-  upgradesLocal: boolean;
 }[] = [
   {
     host: "claude",
@@ -95,13 +94,11 @@ const REAL_HOSTS: readonly {
       upgradeVerb: "update",
       pluginArgs: ["--yes"],
     },
-    upgradesLocal: true,
   },
   {
     host: "codex",
     marketplace: "cx-one",
-    shape: { upgradeVerb: "upgrade", enableVerb: "add", disableVerb: "remove" },
-    upgradesLocal: false,
+    shape: { enableVerb: "add", disableVerb: "remove" },
   },
   {
     host: "copilot",
@@ -112,7 +109,6 @@ const REAL_HOSTS: readonly {
       disableVerb: "uninstall",
       forceRemoveArgs: ["--force"],
     },
-    upgradesLocal: true,
   },
 ];
 
@@ -138,7 +134,7 @@ describe.skipIf(process.platform === "win32" || process.env.AIDD_HOST_CONTRACT !
       sandbox.dispose();
     });
 
-    for (const { host, marketplace, shape, upgradesLocal } of REAL_HOSTS) {
+    for (const { host, marketplace, shape } of REAL_HOSTS) {
       describe.skipIf(hostVersion(host) === undefined)(host, () => {
         const ref = `p@${marketplace}`;
         const timeout = 120000;
@@ -155,7 +151,7 @@ describe.skipIf(process.platform === "win32" || process.env.AIDD_HOST_CONTRACT !
               actions.addMarketplace(source, "user");
               actions.enablePlugin(ref, "user");
               actions.uninstallPlugin(ref, "user");
-              if (upgradesLocal) actions.upgradeMarketplaces(marketplace);
+              actions.upgradeMarketplaces(marketplace);
               actions.removeMarketplace(marketplace, "user");
             }).not.toThrow();
           },
