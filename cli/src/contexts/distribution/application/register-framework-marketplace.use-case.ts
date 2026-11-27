@@ -29,6 +29,7 @@ export class RegisterFrameworkMarketplace {
   ): Promise<RegisterFrameworkMarketplaceResult> {
     const list = await this.registry.list(options.projectRoot);
     const found = list.find((m) => m.name === FRAMEWORK_MARKETPLACE_NAME);
+    const source = options.pluginSource ?? this.deriveSource(options.frameworkPath);
     if (found?.scope === "project") {
       // A project-scope entry from before the machine-scope move is retired unconditionally,
       // `--force` or not: this is the migration itself completing, never an option a caller
@@ -36,12 +37,9 @@ export class RegisterFrameworkMarketplace {
       // so leaving this one in place would make the user-scope entry written below invisible to
       // every future `list()` call.
       await this.registry.delete(options.projectRoot, FRAMEWORK_MARKETPLACE_NAME, "project");
-    } else if (found !== undefined) {
-      // Already migrated (scope "user"): idempotent unless a caller asks to rewrite it.
-      if (!options.force) return { registered: false, scope: found.scope };
-      await this.registry.delete(options.projectRoot, FRAMEWORK_MARKETPLACE_NAME, "user");
+    } else if (found !== undefined && (!options.force || found.isSourcedFrom(source))) {
+      return { registered: false, scope: found.scope };
     }
-    const source = options.pluginSource ?? this.deriveSource(options.frameworkPath);
     // Machine scope, not project: every project on this machine registers the same framework
     // marketplace, so a second project must find the first project's entry rather than write
     // its own: codex and copilot refuse a second source under the same name outright, and
@@ -51,7 +49,7 @@ export class RegisterFrameworkMarketplace {
       name: FRAMEWORK_MARKETPLACE_NAME,
       source,
       scope: "user",
-      addedAt: new Date().toISOString(),
+      addedAt: found?.addedAt ?? new Date().toISOString(),
     });
     await this.registry.save(options.projectRoot, marketplace);
     return { registered: true, scope: marketplace.scope };

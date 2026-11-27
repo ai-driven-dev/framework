@@ -83,6 +83,57 @@ describe("registering the framework marketplace", () => {
     });
 
     expect(result.registered).toBe(true);
-    expect(registry.getAll(PROJECT_ROOT).map((m) => m.scope)).toEqual(["user"]);
+    expect(registry.getAll(PROJECT_ROOT).map((m) => [m.scope, m.addedAt])).toEqual([
+      ["user", "2026-01-01T00:00:00Z"],
+    ]);
+  });
+
+  describe("forced again, as every setup does", () => {
+    const REMOTE = { kind: "github" as const, repo: "ai-driven-dev/framework", ref: "v5.14.0" };
+    const FETCHED = {
+      name: FRAMEWORK_MARKETPLACE_NAME,
+      source: { kind: "github", repo: "ai-driven-dev/framework", ref: "v5.14.0" },
+      scope: "user",
+      addedAt: "2026-11-27T13:17:31.984Z",
+      lastFetched: "2026-11-27T13:17:34.635Z",
+      version: "5.14.0",
+    };
+
+    async function registryHolding(): Promise<InMemoryMarketplaceRegistry> {
+      const registry = new InMemoryMarketplaceRegistry();
+      await registry.save(PROJECT_ROOT, Marketplace.fromJSON(FETCHED));
+      return registry;
+    }
+
+    it("leaves the entry as it was fetched when the source is the same", async () => {
+      const registry = await registryHolding();
+
+      await new RegisterFrameworkMarketplace(registry).execute({
+        projectRoot: PROJECT_ROOT,
+        pluginSource: REMOTE,
+        force: true,
+      });
+
+      expect(registry.getAll(PROJECT_ROOT).map((m) => m.toJSON())).toEqual([FETCHED]);
+    });
+
+    it("keeps when it was first added, and nothing fetched from the old source, when the source moves", async () => {
+      const registry = await registryHolding();
+
+      await new RegisterFrameworkMarketplace(registry).execute({
+        projectRoot: PROJECT_ROOT,
+        pluginSource: { ...REMOTE, ref: "v5.15.0" },
+        force: true,
+      });
+
+      expect(registry.getAll(PROJECT_ROOT).map((m) => m.toJSON())).toEqual([
+        {
+          name: FRAMEWORK_MARKETPLACE_NAME,
+          source: { ...FETCHED.source, ref: "v5.15.0" },
+          scope: "user",
+          addedAt: FETCHED.addedAt,
+        },
+      ]);
+    });
   });
 });
