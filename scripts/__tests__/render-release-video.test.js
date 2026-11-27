@@ -1105,7 +1105,7 @@ test("the story stays readable, its unclear phrases are highlighted, and each qu
 
   assert.ok(marked.length === 2 && marked[1] > marked[0]);
   assert.deepEqual(asked.map((x) => x.sel), ["#s1 [data-q='1']", "#s1 [data-q='0']"], "the questions come out of story order");
-  assert.ok(asked[0].at > marked[0] && asked[0].at < marked[1] && asked[1].at > asked[0].at, "a question waits for every phrase to be highlighted");
+  assert.ok(asked[0].at > marked[1] && asked[1].at > asked[0].at);
   assert.ok(closed.length === 2 && closed[0] > asked[1].at);
   assert.ok(!beats.some((x) => x.act === "focus"), "the story is dimmed");
   assert.match(html, /<div class="sq-row" data-row="0"><p>.*?data-mark="1".*?<\/p><div class="sq-qs"><div class="sq-q" data-q="1"/);
@@ -1166,17 +1166,25 @@ test("a gate outcome naming a file the project lacks fails the render", () => {
   assert.throws(() => buildHtml({ scenes: [bad], skipped: [] }, { version: "5.15" }), /gate outcome "Blocked": no file "README\.md" in the project/);
 });
 
-test("each agent card says it is an agent", () => {
-  assert.match(shownBy(models).html, /<div class="ms-card" data-card="0" data-s="0"><span class="ms-kind">agent<\/span><span class="ms-role">reviewer<\/span>/);
+test("each card says whether it is the main session or a subagent, the main one set apart", () => {
+  const withMain = { ...models, cards: [{ ...models.cards[0], role: "session", kind: "main" }, ...models.cards] };
+  const { html } = shownBy(withMain);
+
+  assert.match(html, /<div class="ms-card main" data-card="0" data-s="0"><span class="ms-kind">main<\/span><span class="ms-role">session<\/span>/);
+  assert.match(html, /<div class="ms-card" data-card="1" data-s="0"><span class="ms-kind">subagent<\/span><span class="ms-role">reviewer<\/span>/);
 });
 
-test("the scan moves fast: each question appears right after its phrase is highlighted", () => {
+test("the phrases are highlighted under the first subtitle, then each question appears as its phrase lights again", () => {
   const beats = beatsOf(shownBy(scan).html);
+  const caps = beats.filter((x) => x.act === "cap").map((x) => x.at);
   const marks = at(beats, "fill", "data-mark");
+
+  assert.ok(marks.every((m) => m.at >= caps[0] && m.at < caps[1]), "a phrase is highlighted outside the first subtitle");
   for (const m of marks) {
     const k = m.sel.match(/'(\d+)'/)[1];
     const [q] = at(beats, "from", `data-q='${k}'`);
-    assert.ok(q.at - m.at > 0 && q.at - m.at <= 0.6, `question ${k} comes ${q.at - m.at} s after its phrase`);
+    const [lit] = at(beats, "pulse", `data-gap='${k}'`);
+    assert.ok(lit && lit.at === q.at, `question ${k} comes without its phrase lighting`);
   }
 });
 
@@ -1198,4 +1206,14 @@ test("each design card comes about a second after the last", () => {
   const lit = at(beatsOf(shownBy(chain).html), "set", "data-card").filter((x) => x.value === '"on"').map((x) => x.at);
 
   lit.slice(1).forEach((t, i) => assert.ok(t - lit[i] <= 1.25, `${t - lit[i]} s between cards`));
+});
+
+test("the first subtitle of a scan stays on screen 3 seconds before the next", () => {
+  const caps = beatsOf(shownBy(scan).html).filter((x) => x.act === "cap").map((x) => x.at);
+
+  assert.ok(caps[1] - caps[0] >= 3, `${caps[1] - caps[0]} s`);
+});
+
+test("the agent cards keep room for their model under the terminal", () => {
+  assert.match(shownBy(models).html, /\.ms-cards \{[^}]*min-height: 210px/);
 });

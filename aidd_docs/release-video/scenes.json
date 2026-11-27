@@ -223,6 +223,27 @@
       "terminal": "Terminal · ~/acme-app",
       "cards": [
         {
+          "role": "session",
+          "faces": [
+            {
+              "model": "no model"
+            },
+            {
+              "model": "mistral-large-4",
+              "logo": "mistral-color"
+            },
+            {
+              "model": "gpt-6.1-terra",
+              "logo": "openai"
+            },
+            {
+              "model": "claude-sonnet-5-5",
+              "logo": "anthropic"
+            }
+          ],
+          "kind": "main"
+        },
+        {
           "role": "reviewer",
           "faces": [
             {
@@ -312,6 +333,9 @@
               "text": "Models on mistral, for every project on this machine:"
             },
             {
+              "text": "  opencode main session: mistral/mistral-large-4, written in ~/.config/opencode/opencode.jsonc"
+            },
+            {
               "text": "  opencode reviewer: mistral/mistral-large-4 (high)"
             },
             {
@@ -327,6 +351,9 @@
               "text": "Models on openai, for every project on this machine:"
             },
             {
+              "text": "  opencode main session: openai/gpt-6.1-terra, written in ~/.config/opencode/opencode.jsonc"
+            },
+            {
               "text": "  opencode reviewer: openai/gpt-6.1-sol (high)"
             },
             {
@@ -340,6 +367,9 @@
           "lines": [
             {
               "text": "Models on anthropic, for every project on this machine:"
+            },
+            {
+              "text": "  opencode main session: anthropic/claude-sonnet-5-5, written in ~/.config/opencode/opencode.jsonc"
             },
             {
               "text": "  opencode reviewer: anthropic/claude-opus-5-5 (high)"

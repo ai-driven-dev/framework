@@ -345,6 +345,8 @@ td { padding: 14px 14px; border-bottom: 2px solid #15153f; vertical-align: top; 
 .gh-slot .gh-c { padding: 7px 16px; } .gh-slot .gh-c p { font-size: 22px; } .gh-slot .gh-file, .gh-slot .gh-bar { font-size: 18px; padding: 6px 14px; }
 .gh-hero { flex-wrap: wrap; } .gh-hero-k { flex-basis: 100%; font-size: 30px; font-weight: 800; color: #ffd37a; letter-spacing: 0.02em; }
 .gh-slot[data-s="resolved"] .gh-full { opacity: 0.4 !important; } .gh-slot[data-s="resolved"] .gh-file { visibility: hidden; } .gh-slot[data-s="resolved"] .gh-bar { opacity: 1; align-self: start; background: #1c1630; }
+.ms-card.main { border-color: #5ee6a8; background: linear-gradient(160deg, #123a3a, #0b0b36); } .ms-card.main .ms-kind { color: #5ee6a8; border-color: #2f7a60; }
+.ms-cards { min-height: 210px; } .ms-body { font-size: 19px !important; line-height: 1.35 !important; }
 `;
 
 const esc = (value) =>
@@ -897,7 +899,7 @@ const modelSwitch = {
     const cards = s.cards
       .map(
         (card, c) =>
-          `<div class="ms-card" data-card="${c}" data-s="0"><span class="ms-kind">agent</span><span class="ms-role">${esc(card.role)}</span>` +
+          `<div class="ms-card${card.kind === "main" ? " main" : ""}" data-card="${c}" data-s="0"><span class="ms-kind">${esc(card.kind ?? "subagent")}</span><span class="ms-role">${esc(card.role)}</span>` +
           card.faces.map((f, k) => `<div class="ms-face" data-face="${k}">${f.logo ? logoHtml(f.logo, "ms-logo") : `<span class="ms-slot"></span>`}<b>${esc(f.model)}</b></div>`).join("") +
           `</div>`
       )
@@ -1071,13 +1073,14 @@ const scanQuestions = {
     const out = [beat(BEAT_FROM, "in", ".sq-rows", "pop"), caption(BEAT_FROM, 0, "pop")];
     const passages = s.story.flatMap((segs) => segs.filter((seg) => typeof seg === "object"));
     let t = 1.0;
-    out.push(beat(t, "in", ".sq-head", "pop"));
+    passages.forEach((seg, i) => out.push(beat(t + 0.45 * i, "fill", `[data-mark='${seg.gap}']`, "pop")));
+    t = 3.7;
+    out.push(beat(t, "in", ".sq-head", "pop"), caption(t, 1, "pop"));
     passages.forEach((seg, i) => {
-      const at = t + 0.75 * i;
-      out.push(beat(at, "fill", `[data-mark='${seg.gap}']`, "pop"), beat(at + 0.3, "from", `[data-q='${seg.gap}']`, "pop", { x: -40, opacity: 0, duration: 0.4 }));
-      if (i === 0) out.push(caption(at + 0.3, 1, "pop"));
+      const at = t + 0.6 * i;
+      out.push(beat(at, "pulse", `[data-gap='${seg.gap}']`, "pop"), beat(at, "from", `[data-q='${seg.gap}']`, "pop", { x: -40, opacity: 0, duration: 0.4 }));
     });
-    t += 0.75 * passages.length + 1.2;
+    t += 0.6 * passages.length + 1.2;
     out.push(caption(t, 2, "pop"));
     passages.forEach((seg, i) => out.push(beat(t + 0.3 * i, "set", `[data-gap='${seg.gap}']`, "pop", "filled"), beat(t + 0.3 * i, "set", `[data-q='${seg.gap}']`, "pop", "closed")));
     out.push(beat(t + 0.3 * passages.length, "flip", ".sq-status", "pop", "1"));
