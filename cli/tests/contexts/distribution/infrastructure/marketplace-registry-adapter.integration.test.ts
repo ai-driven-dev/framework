@@ -47,11 +47,14 @@ describe("storing the marketplace registry in files", () => {
     );
   });
 
-  it("refuses a registry file that is not JSON at all, naming the file", async () => {
+  it("refuses a registry file that is not JSON at all, naming the file and the parser's reason", async () => {
     await writeFile(userFile, "not json", "utf-8");
 
     await expect(adapter.list(projectRoot)).rejects.toThrow(
-      expect.objectContaining({ path: userFile })
+      expect.objectContaining({
+        path: userFile,
+        reason: expect.stringContaining("Unexpected token"),
+      })
     );
   });
 

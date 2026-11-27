@@ -2,6 +2,7 @@ import { copyFileSync, readFileSync } from "node:fs";
 import { join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig, type Options } from "tsup";
+import { joinedHostAdapters } from "./scripts/host-adapter-parts.mjs";
 
 type Plugin = NonNullable<Options["esbuildPlugins"]>[number];
 
@@ -75,7 +76,7 @@ export default defineConfig({
   splitting: false,
   shims: false,
   skipNodeModulesBundle: true,
-  esbuildPlugins: [versionOnlyManifest],
+  esbuildPlugins: [versionOnlyManifest, joinedHostAdapters],
   esbuildOptions(options) {
     options.loader = {
       ...options.loader,
@@ -86,6 +87,9 @@ export default defineConfig({
     };
     options.minifySyntax = true;
     options.minifyWhitespace = true;
+    options.minifyIdentifiers = true;
+    // The binary ships no source map: a crash still names the error's class and the functions in its frames.
+    options.keepNames = true;
   },
   async onSuccess() {
     copyFileSync(

@@ -1,4 +1,3 @@
-import { FileHash } from "../../../../shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import { CapabilityConfigError } from "../../contract/errors/tools.error.js";
 import type { ConfigFilePlace } from "../../contract/tool-profile.js";
@@ -31,13 +30,7 @@ export class HooksConfigPart {
   }
 
   fileOf(content: string, place: ConfigFilePlace = {}): InstallationFile {
-    return new InstallationFile({
-      relativePath: place.relativePath ?? this.#params.outputPath,
-      content,
-      hash: FileHash.of(content),
-      mergeStrategy: this.#params.mergeStrategy ?? "user-prime",
-      frameworkPath: place.frameworkPath,
-    });
+    return InstallationFile.placed(content, place, this.#params);
   }
 
   accepts(relativePath: string): boolean {

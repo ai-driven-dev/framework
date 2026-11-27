@@ -1,11 +1,27 @@
 import { pathRulesOf, posixRelative } from "../../../shared/domain/paths.model.js";
 import type { PluginSource, PluginSourceGitSubdir } from "../../../shared/domain/plugin/source.js";
+import type { PluginCatalogEntry } from "../contract/catalog.js";
+import type { PluginSourceMatch } from "../contract/plugin-source-match.js";
 import type { Marketplace } from "./marketplace.js";
 
 /** Where a marketplace is checked out on this machine, and the platform whose path rules spell it. */
 export interface MarketplaceCheckout {
   readonly path: string;
   readonly platform: string;
+}
+
+/** `entry` of `marketplace`'s catalog, read from `checkout`, with the source an installer fetches it from. */
+export function pluginSourceMatch(
+  marketplace: Marketplace,
+  checkout: MarketplaceCheckout,
+  entry: PluginCatalogEntry
+): PluginSourceMatch {
+  return {
+    marketplaceName: marketplace.name,
+    githubMarketplace: marketplace.source.kind === "github",
+    entry,
+    source: resolvePluginSourceFromMarketplace(entry.source, marketplace, checkout),
+  };
 }
 
 export function resolvePluginSourceFromMarketplace(

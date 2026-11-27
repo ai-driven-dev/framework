@@ -1,4 +1,3 @@
-import { FileHash } from "../../../../shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { MergeStrategy } from "../../../../shared/domain/merge.js";
 import type { ConfigAsset } from "../../../../shared/domain/reading/config-asset.js";
@@ -71,13 +70,7 @@ export class ConfigSection {
   }
 
   fileOf(content: string, place: ConfigFilePlace = {}): InstallationFile {
-    return new InstallationFile({
-      relativePath: place.relativePath ?? this.#params.outputPath,
-      content,
-      hash: FileHash.of(content),
-      mergeStrategy: this.#params.mergeStrategy,
-      frameworkPath: place.frameworkPath,
-    });
+    return InstallationFile.placed(content, place, this.#params);
   }
 
   /** Whether this section writes the file at `destination`. */
