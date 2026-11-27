@@ -12,14 +12,13 @@ function manifestWithClaude(): Manifest {
 }
 
 describe("loading the manifests an add needs", () => {
-  it("returns the project manifest and an empty machine manifest when none is claimed yet", async () => {
+  it("returns the project manifest", async () => {
     const project = new InMemoryManifestRepository(manifestWithClaude());
     const user = new InMemoryManifestRepository();
 
-    const { manifest, machine } = await loadAddManifests({ project, user }, registeredTools());
+    const { manifest } = await loadAddManifests({ project, user }, registeredTools());
 
     expect(manifest.hasTool(TOOL.claude)).toBe(true);
-    expect(machine.hasTool(TOOL.claude)).toBe(false);
   });
 
   it("returns a copy of the machine manifest it finds", async () => {

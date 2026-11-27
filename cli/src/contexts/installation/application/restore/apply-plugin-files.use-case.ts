@@ -22,6 +22,7 @@ interface ApplyPluginFilesRequest {
   projectRoot: string;
   cacheDir: string;
   manifest: Manifest;
+  machine: Manifest;
   fileFilter?: ((relativePath: string) => boolean) | null;
   /** Overwrite a project hook the user edited after install instead of refusing. */
   force?: boolean;
@@ -53,9 +54,10 @@ export class ApplyPluginFiles {
     dist: PluginDistribution,
     options: ApplyPluginFilesRequest
   ): Promise<number> {
-    const { tool, plugin, projectRoot, manifest, force = false } = options;
+    const { tool, plugin, projectRoot, manifest, machine, force = false } = options;
+    const hooksGuard = { overwriteEdited: force };
     return rematerializePlugin(
-      { dist, tool, mode, plugin, projectRoot, manifest, hooksGuard: { overwriteEdited: force } },
+      { dist, tool, mode, plugin, projectRoot, manifest, machine, hooksGuard },
       this.deps
     );
   }

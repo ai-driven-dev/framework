@@ -2,6 +2,7 @@ import type { ToolIdResolver } from "../../../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../../../tools/contract/tool-catalog.js";
 import { Manifest } from "../../../domain/manifest.js";
 import type { ManifestRepository } from "../../../ports/manifest-repository.js";
+import { loadMachineManifest } from "../../shared/load-machine-manifest.js";
 import { requireManifest } from "../../shared/require-manifest.js";
 
 /** The project manifest an add edits, and the machine's, empty when nothing is claimed yet. */
@@ -14,10 +15,9 @@ export async function loadAddManifests(
     (await requireManifest(manifests.project)).toJSON(),
     resolveToolId
   );
-  const existingMachine = await manifests.user.load();
-  const machine =
-    existingMachine === null
-      ? Manifest.create()
-      : Manifest.fromJSON(existingMachine.toJSON(), resolveToolId);
+  const machine = Manifest.fromJSON(
+    (await loadMachineManifest(manifests.user)).toJSON(),
+    resolveToolId
+  );
   return { manifest, machine };
 }

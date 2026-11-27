@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { builtPlacementOf } from "../../../../../src/composition/orchestration/built-placement.js";
 import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.use-case.js";
-import type { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
+import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { RecordedPlugin } from "../../../../../src/contexts/installation/domain/plugins/recorded-plugin.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { parsePluginName } from "../../../../../src/shared/domain/plugin/plugin-name.js";
@@ -64,6 +64,7 @@ async function replaceOnClaude(marketplace: string | undefined, strict = false) 
     toolId: TOOL.claude,
     projectRoot: PROJECT_ROOT,
     manifest,
+    machine: Manifest.create(),
   });
   return {
     fs: deps.fs,
@@ -154,6 +155,7 @@ describe("replacing a plugin that came from no marketplace", () => {
         toolId: TOOL.kiro,
         projectRoot: PROJECT_ROOT,
         manifest,
+        machine: Manifest.create(),
       });
     });
 
