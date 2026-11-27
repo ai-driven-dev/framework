@@ -54,6 +54,29 @@ describe("guarding a catalog against a name conflict", () => {
     );
   });
 
+  it("proceeds over an older shared build of its own whose plugin list differs", async () => {
+    const root = "/home/.config/aidd";
+    const build = (cliVersion: string) =>
+      userBuiltMarketplaceDir({
+        userConfigDir: root,
+        cliVersion,
+        marketplaceName: "aidd",
+        target: "claude",
+      });
+    const { run, warnings } = setup({
+      registry: { location: "r", entries: new Map([["aidd", build("1.0.0")]]) },
+      files: catalogAt(build("1.0.0"), ["b"]),
+      userCacheRoot: root,
+    });
+    const decision = await guard(run, {
+      builtDir: build("2.0.0"),
+      identity: requested,
+      marketplace: { name: "aidd", scope: "user" },
+    });
+    expect(decision).toBeUndefined();
+    expect(warnings).toEqual([]);
+  });
+
   it("skips, with a warning, a host already following a newer shared build", async () => {
     const root = "/home/.config/aidd";
     const registered = userBuiltMarketplaceDir({
