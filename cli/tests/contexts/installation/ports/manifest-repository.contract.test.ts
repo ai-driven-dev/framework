@@ -1,7 +1,6 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { withRecordsBeside } from "../../../../src/composition/contexts/machine-claims.js";
 import { ManifestRepositoryAdapter } from "../../../../src/contexts/installation/infrastructure/manifest-repository-adapter.js";
 import { UserManifestRepositoryAdapter } from "../../../../src/contexts/installation/infrastructure/user-manifest-repository-adapter.js";
 import { atomicWriteFile } from "../../../../src/shared/infrastructure/atomic-write.js";
@@ -24,8 +23,10 @@ describeManifestRepositoryContract("the in-memory repository", async () => ({
 async function projectFile(): Promise<ManifestFileSubject> {
   const root = await mkdtemp(join(tmpdir(), "aidd-manifest-repo-"));
   const open = (writer = atomicWriteFile) => {
-    const deps = manifestFileDeps(() => join(root, ".aidd"), writer);
-    return withRecordsBeside(new ManifestRepositoryAdapter(root, deps), deps.records);
+    return new ManifestRepositoryAdapter(
+      root,
+      manifestFileDeps(() => join(root, ".aidd"), writer)
+    );
   };
   return {
     repository: open(),
@@ -39,8 +40,10 @@ async function projectFile(): Promise<ManifestFileSubject> {
 async function userFile(): Promise<ManifestFileSubject> {
   const dir = await mkdtemp(join(tmpdir(), "aidd-user-manifest-repo-"));
   const open = (writer = atomicWriteFile) => {
-    const deps = manifestFileDeps(() => dir, writer);
-    return withRecordsBeside(new UserManifestRepositoryAdapter(() => dir, deps), deps.records);
+    return new UserManifestRepositoryAdapter(
+      () => dir,
+      manifestFileDeps(() => dir, writer)
+    );
   };
   return {
     repository: open(),

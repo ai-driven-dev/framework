@@ -1,5 +1,4 @@
 import { join } from "node:path";
-import type { ManifestRepository } from "../../contexts/installation/ports/manifest-repository.js";
 import type { UserScopeFileGuard } from "../../contexts/installation/ports/plugin/user-plugin-materialization.js";
 import { AssertUserScopeWriteBoundary } from "../../contexts/machine-claims/application/ownership/assert-user-scope-write-boundary.use-case.js";
 import { DetachNativePluginRefs } from "../../contexts/machine-claims/application/ownership/detach-native-plugin-refs.use-case.js";
@@ -19,7 +18,6 @@ import { UserSourceReferencesAdapter } from "../../contexts/machine-claims/infra
 import type {
   MachineManifestRepository,
   MachineRecords,
-  ScopeRecordsRepository,
 } from "../../contexts/machine-claims/ports/machine-manifest.js";
 import type { PluginClaimsRepository } from "../../contexts/machine-claims/ports/plugin-claims-repository.js";
 import type { UserSourceReferences } from "../../contexts/machine-claims/ports/user-source-references.js";
@@ -123,25 +121,6 @@ export function heldByMachineLock<R extends { readonly path: string }>(repositor
   const lock = new UserScopeLockAdapter(() => `${repository.path}.lock`);
   return Object.assign(repository, {
     withExclusiveAccess: <T>(action: () => Promise<T>) => lock.withExclusiveAccess(action),
-  });
-}
-
-/** A scope's repository with its records beside it. Each read or write of the records first
- * reads the manifest, which splits a v8 document, so neither reads nor writes over its records.
- * Takes no lock: a caller holding the machine lock reads them, and the lock is not re-entrant. */
-export function withRecordsBeside<R extends ManifestRepository>(
-  repository: R,
-  records: RecordStore
-): R & ScopeRecordsRepository {
-  return Object.assign(repository, {
-    loadRecords: async () => {
-      await repository.load();
-      return records.load();
-    },
-    saveRecords: async (saved: MachineRecords) => {
-      await repository.load();
-      await records.save(saved);
-    },
   });
 }
 
