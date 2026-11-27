@@ -513,7 +513,7 @@
                 "path": "<FRAMEWORK_FIXTURE>/plugins/aidd-test"
               },
               "version": "<VERSION>",
-              "strict": false,
+              "strict": true,
               "files": {},
               "scope": "project",
               "marketplace": "aidd-framework"
@@ -593,7 +593,7 @@
                 "path": "<FRAMEWORK_FIXTURE>/plugins/aidd-test"
               },
               "version": "<VERSION>",
-              "strict": false,
+              "strict": true,
               "files": {},
               "scope": "project",
               "marketplace": "aidd-framework"

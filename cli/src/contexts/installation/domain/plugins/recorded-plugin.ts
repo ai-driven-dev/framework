@@ -95,6 +95,12 @@ export class RecordedPlugin implements RecordedPluginParts {
     return entryFromRecordedPlugin(this);
   }
 
+  /** A reloaded distribution with the strictness the catalog gave this plugin when it was
+   * recorded: a plugin's own manifest never carries it. */
+  asRecorded(dist: PluginDistribution): PluginDistribution {
+    return dist.withStrict(this.plugin.strict);
+  }
+
   withPlugin(plugin: InstalledPlugin): RecordedPlugin {
     return new RecordedPlugin({ ...this, plugin });
   }
