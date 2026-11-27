@@ -1,4 +1,4 @@
-import { mkdtemp, realpath, rm } from "node:fs/promises";
+import { mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -135,6 +135,13 @@ describe("declaring on a branch", () => {
     expect(await new GitBranchBindingSourceAdapter(env).bindings(repo)).toMatchObject([
       { task: null, none: true },
     ]);
+  });
+
+  it("fails loudly when git cannot write its config, another writer holding it", async () => {
+    await writeFile(join(repo, ".git", "config.lock"), "");
+    await expect(store.declare(repo, "feat/x", task("first"))).rejects.toThrow(
+      "git config branch.feat/x.aiddTask failed"
+    );
   });
 
   it("declares none on a branch that never had a task", async () => {

@@ -60,13 +60,17 @@ describe("locating a working directory", () => {
 
   it("takes the lowest root commit when the history has several", async () => {
     const repo = join(base, "repo");
-    initRepository(repo, env);
-    git(repo, env, "checkout", "-q", "--orphan", "other");
-    git(repo, env, "commit", "-q", "--allow-empty", "-m", "second root");
-    git(repo, env, "checkout", "-q", "main");
-    git(repo, env, "merge", "-q", "--allow-unrelated-histories", "-m", "join", "other");
+    const on = (day: string) => ({ ...env, GIT_AUTHOR_DATE: day, GIT_COMMITTER_DATE: day });
+    initRepository(repo, on("2026-01-01T00:00:00Z"));
+    const later = on("2026-01-02T00:00:00Z");
+    git(repo, later, "checkout", "-q", "--orphan", "other");
+    git(repo, later, "commit", "-q", "--allow-empty", "-m", "the other history");
+    git(repo, later, "checkout", "-q", "main");
+    git(repo, later, "merge", "-q", "--allow-unrelated-histories", "-m", "join", "other");
     const roots = git(repo, env, "rev-list", "--max-parents=0", "HEAD").split("\n").filter(Boolean);
+    // Dated so that git lists first the root that is not the lowest.
     expect(roots).toHaveLength(2);
+    expect(roots[0]).not.toBe([...roots].sort()[0]);
     const located = await locator.locate(repo);
     expect(located).toMatchObject({ rootCommit: [...roots].sort()[0] });
   });
@@ -128,6 +132,13 @@ describe("locating a working directory", () => {
     initRepository(repo, env);
     const blind = new GitRepositoryLocatorAdapter(env, async () => "unidentified");
     expect(await blind.locate(repo)).toMatchObject({ status: "repository", clone: null });
+  });
+
+  it("cannot read a repository whose git dir cannot be identified at all", async () => {
+    const repo = join(base, "repo");
+    initRepository(repo, env);
+    const failing = new GitRepositoryLocatorAdapter(env, () => Promise.reject(new Error("EIO")));
+    expect(await failing.locate(repo)).toEqual({ status: "unreadable" });
   });
 
   it("keeps a worktree of a bare repository as its own main working tree", async () => {
