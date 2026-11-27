@@ -30,7 +30,7 @@ re-assert them here. Spend your words on the *how*.
 
 ## 🔗 Linked issue
 
-<!-- "Closes #N" auto-closes the issue on merge; "Refs #N" links without closing. Delete this whole section if there is no issue. -->
+<!-- "Closes #N" auto-closes the issue on merge; "Refs #N" links without closing; "Supersedes #N" credits that pull request's author in the release notes when this one takes over its work. Delete this whole section if it links nothing. -->
 
 Closes #
 
