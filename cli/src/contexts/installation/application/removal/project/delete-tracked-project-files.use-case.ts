@@ -16,7 +16,8 @@ export interface TrackedProjectFilesDeps {
 }
 
 /** The files the manifest tracks for each installed tool: its own, its merged keys and its
- * plugins'. */
+ * plugins', then the tool directory once they leave it empty. Limit: an empty tool directory the
+ * user made before setup is not told apart, since the manifest records no directory. */
 export class DeleteTrackedProjectFiles {
   constructor(
     private readonly deps: TrackedProjectFilesDeps,
@@ -41,6 +42,10 @@ export class DeleteTrackedProjectFiles {
           projectRoot
         );
       }
+      await this.deps.fs.deleteEmptyDirectories(
+        join(projectRoot, this.tools.profile(toolId).directory),
+        projectRoot
+      );
     }
     return deleted;
   }
