@@ -1,18 +1,20 @@
 #!/usr/bin/env node
 "use strict";
-// Usage: node write-rule.cjs --project <abs dir> (--input <request.json> --tools <ids> | --remove <category>/<slug> | --publish [--tools <ids>]) [--plan] [--force]
+// Usage: node write-rule.cjs --project <abs dir> (--input <request.json> --tools <ids> | --remove <category>/<slug> | --publish [--tools <ids>]) [--plan] [--force] [--kilo-config <file>] [--opencode-config <file>]
 // Tool ids: claude,cursor,copilot,antigravity,codex,opencode,kilo,kiro,kimi.
 // Writes a rule source under aidd_docs/rules and publishes it to each host it targets.
 // Exit 0 ok, 1 refusal, 2 usage error, 3 filesystem error. Prints one JSON object on stdout.
 const fs = require("node:fs");
 const path = require("node:path");
 const { createHash } = require("node:crypto");
+const { createScanner, parseTree, SyntaxKind } = require("./lib/jsonc-parser.cjs");
 
 const EXIT = { OK: 0, REFUSED: 1, USAGE: 2, FILESYSTEM: 3 };
 const FLAGS = ["--publish", "--plan", "--force"];
-const VALUES = ["--project", "--tools", "--input", "--remove"];
+const CONFIG_SELECTION = { kilo: "--kilo-config", opencode: "--opencode-config" };
+const VALUES = ["--project", "--tools", "--input", "--remove", ...Object.values(CONFIG_SELECTION)];
 const ACTIONS = ["--input", "--remove", "--publish"];
-const REQUEST_KEYS = ["category", "slug", "description", "body", "paths"];
+const REQUEST_KEYS = ["category", "slug", "description", "body", "paths", "nativeOptions"];
 const CATEGORY_NAMES = ["architecture", "standards", "programming-languages", "frameworks-and-libraries", "tooling", "testing", "design-patterns", "quality", "domain", "other"];
 const CATEGORIES = CATEGORY_NAMES.map((name, index) => `0${index}-${name}`);
 const SLUG = /^\d-[a-z0-9]+(?:[-.@][a-z0-9]+)*$/;
@@ -26,7 +28,7 @@ const MISSING = ["ENOENT", "ENOTDIR"];
 const SOURCE_DIR = "aidd_docs/rules";
 const SOURCE_EXTENSION = ".md";
 const FRONTMATTER_SOURCE = /^---\n([\s\S]*?)\n---\n\n([\s\S]*)$/;
-const SOURCE_LINE = { description: /^description: (.*)$/, glob: /^ {2}- (.*)$/, targets: /^targets: \[(.*)\]$/, paths: /^paths:$/ };
+const SOURCE_LINE = { description: /^description: (.*)$/, glob: /^ {2}- (.*)$/, targets: /^targets: \[(.*)\]$/, paths: /^paths:$/, nativeOptions: /^nativeOptions: (.*)$/ };
 
 const AGENTS = "AGENTS.md";
 const INDEX_START = "<!-- aidd_rules:start -->";
@@ -66,18 +68,22 @@ const HOSTS = {
   claude: {
     path: (rule) => `.claude/rules/${rule.category}/${rule.slug}.md`,
     frontmatter: (rule) => (isScoped(rule) ? `paths:\n${yamlList(rule.paths)}` : ""),
+    managedFields: ["paths"],
   },
   cursor: {
     path: (rule) => `.cursor/rules/${rule.category}/${rule.slug}.mdc`,
     frontmatter: (rule) => `description: ${quote(rule.description)}\n${isScoped(rule) ? `globs: ${rule.paths.join(", ")}\n` : ""}alwaysApply: ${!isScoped(rule)}\n`,
+    managedFields: ["description", "globs", "alwaysApply"],
   },
   copilot: {
     path: (rule) => `.github/instructions/${rule.category.split("-")[0]}-${rule.slug.replace(SLUG_PREFIX, "")}.instructions.md`,
     frontmatter: (rule) => `applyTo: ${isScoped(rule) ? joinedGlobs(rule) : '"**"'}\n`,
+    managedFields: ["applyTo"],
   },
   antigravity: {
     path: (rule) => `.agents/rules/${rule.slug}.md`,
     frontmatter: (rule) => `description: ${quote(rule.description)}\n${isScoped(rule) ? `trigger: glob\nglobs: ${joinedGlobs(rule)}\n` : "trigger: always_on\n"}`,
+    managedFields: ["description", "trigger", "globs"],
     maxBytes: 24000,
   },
   codex: { indexed: true },
@@ -93,6 +99,7 @@ const HOSTS = {
   kiro: {
     path: (rule) => `.kiro/steering/${rule.category}-${rule.slug}.md`,
     frontmatter: (rule) => `inclusion: ${isScoped(rule) ? `fileMatch\nfileMatchPattern: [${rule.paths.map(quote).join(", ")}]` : "always"}\n`,
+    managedFields: ["inclusion", "fileMatchPattern"],
   },
 };
 const TOOLS = Object.keys(HOSTS);
@@ -137,6 +144,35 @@ function parseTools(list) {
 const isSingleLine = (value) => typeof value === "string" && value.trim() !== "" && !LINE_BREAK.test(value);
 const isGlob = (value) => typeof value === "string" && value !== "" && !GLOB_FORBIDDEN.test(value);
 const isGlobRequest = (value) => typeof value === "string" && expandBraces(value).every(isGlob);
+const isObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+const isNativeKey = (key) => /^[a-z][a-z0-9_-]*$/iu.test(key);
+
+function isFiniteJson(value) {
+  if (typeof value === "number") return Number.isFinite(value);
+  return !value || typeof value !== "object" || Object.values(value).every(isFiniteJson);
+}
+
+function validateNativeOptions(options, targets) {
+  if (!isObject(options)) refuse("nativeOptions must be an object keyed by selected tool.");
+  for (const [tool, fields] of Object.entries(options)) {
+    if (!targets.includes(tool)) refuse(`Native rule options supplied for unselected tool ${tool}.`);
+    if (!isObject(fields)) refuse(`${tool} native rule options must be an object.`);
+    if (!Object.keys(fields).length) continue;
+    if (!HOSTS[tool].frontmatter) {
+      if (HOSTS[tool].config && targets.includes("kilo") && targets.includes("opencode")) {
+        refuse(`The shared Kilo and OpenCode rule copy has no native front matter for ${tool}.`);
+      }
+      refuse(`${tool} has no per-rule native fields.`);
+    }
+    for (const [field, value] of Object.entries(fields)) {
+      if (!isNativeKey(field) || !isFiniteJson(value)) refuse(`Invalid native rule field ${tool}.${field}.`);
+      if (HOSTS[tool].managedFields.includes(field)) refuse(`${tool}.${field} is managed by the rule writer.`);
+      if (tool === "copilot" && field === "excludeAgent" && !["code-review", "cloud-agent"].includes(value)) {
+        refuse("copilot.excludeAgent must be code-review or cloud-agent.");
+      }
+    }
+  }
+}
 
 function validateRule(rule) {
   const categoryIndex = CATEGORIES.indexOf(rule.category);
@@ -145,7 +181,10 @@ function validateRule(rule) {
   if (!isSingleLine(rule.description)) refuse("Description must be a non-empty single line.");
   if (typeof rule.body !== "string" || !rule.body.trim()) refuse("Body must be non-empty.");
   if (!Array.isArray(rule.paths) || !rule.paths.every(isGlobRequest)) refuse("Paths must be non-empty globs without a comma outside a brace group, or a newline.");
-  return { ...rule, paths: [...new Set(rule.paths.flatMap(expandBraces))], targets: parseTools(rule.targets) };
+  const targets = parseTools(rule.targets);
+  const nativeOptions = rule.nativeOptions === undefined ? {} : rule.nativeOptions;
+  validateNativeOptions(nativeOptions, targets);
+  return { ...rule, paths: [...new Set(rule.paths.flatMap(expandBraces))], targets, nativeOptions };
 }
 
 function parseJson(text, message) {
@@ -164,8 +203,7 @@ function readRequest(file) {
     refuse("Input must be a readable JSON file.");
   }
   const request = parseJson(text, "Input must be a readable JSON file.");
-  const isObject = request && typeof request === "object" && !Array.isArray(request);
-  if (!isObject || Object.keys(request).some((key) => !REQUEST_KEYS.includes(key))) refuse(`Request must be an object with ${REQUEST_KEYS.join(", ")}.`);
+  if (!isObject(request) || Object.keys(request).some((key) => !REQUEST_KEYS.includes(key))) refuse(`Request must be an object with ${REQUEST_KEYS.join(", ")}.`);
   return request;
 }
 
@@ -173,7 +211,9 @@ const sourcePath = (rule) => `${SOURCE_DIR}/${rule.category}/${rule.slug}${SOURC
 
 function renderSource(rule) {
   const paths = isScoped(rule) ? `paths:\n${yamlList(rule.paths)}` : "";
-  return `---\ndescription: ${quote(rule.description)}\n${paths}targets: [${rule.targets.join(", ")}]\n---\n\n${rule.body}`;
+  const configured = Object.fromEntries(Object.entries(rule.nativeOptions).filter(([, fields]) => Object.keys(fields).length));
+  const native = Object.keys(configured).length ? `nativeOptions: ${quote(configured)}\n` : "";
+  return `---\ndescription: ${quote(rule.description)}\n${paths}targets: [${rule.targets.join(", ")}]\n${native}---\n\n${rule.body}`;
 }
 
 function parseLegacySource(match, text, relativePath) {
@@ -187,9 +227,11 @@ function parseFrontmatterSource(match, relativePath) {
     const description = SOURCE_LINE.description.exec(line);
     const glob = SOURCE_LINE.glob.exec(line);
     const targets = SOURCE_LINE.targets.exec(line);
+    const nativeOptions = SOURCE_LINE.nativeOptions.exec(line);
     if (description) rule.description = parseJson(description[1], unparseable);
     else if (glob) rule.paths.push(parseJson(glob[1], unparseable));
     else if (targets) rule.targets = targets[1] ? targets[1].split(", ") : [];
+    else if (nativeOptions && rule.nativeOptions === undefined) rule.nativeOptions = parseJson(nativeOptions[1], unparseable);
     else if (!SOURCE_LINE.paths.test(line)) refuse(unparseable);
   }
   [rule.category, rule.slug] = relativePath.slice(SOURCE_DIR.length + 1, -SOURCE_EXTENSION.length).split("/");
@@ -210,7 +252,8 @@ function parseSource(text, relativePath) {
 
 function renderCopy(rule, tool) {
   const host = HOSTS[tool];
-  const frontmatter = host.frontmatter ? host.frontmatter(rule) : "";
+  const native = Object.entries(rule.nativeOptions[tool] ?? {}).map(([key, value]) => `${key}: ${quote(value)}\n`).join("");
+  const frontmatter = (host.frontmatter?.(rule) ?? "") + native;
   const scopeLine = host.config && isScoped(rule) ? `Applies to files matching ${codeList(rule.paths)}.\n\n` : "";
   const text = (frontmatter ? `---\n${frontmatter}---\n` : "") + scopeLine + rule.body;
   if (host.maxBytes && Buffer.byteLength(text) > host.maxBytes) refuse(`The ${tool} rule exceeds ${host.maxBytes} bytes.`);
@@ -295,9 +338,10 @@ function openProject(value) {
   }
 
   // A Windows checkout may turn every line ending into CRLF; the writer reads and writes LF.
-  const read = (relativePath) => orWhenMissing(() => fs.readFileSync(resolve(relativePath), "utf8").replace(CRLF, "\n"), null);
+  const readRaw = (relativePath) => orWhenMissing(() => fs.readFileSync(resolve(relativePath), "utf8"), null);
+  const read = (relativePath) => readRaw(relativePath)?.replace(CRLF, "\n") ?? null;
   const list = (relativePath) => orWhenMissing(() => fs.readdirSync(resolve(relativePath)).sort(), []);
-  return { resolve, read, list };
+  return { resolve, read, readRaw, list };
 }
 
 function orWhenMissing(action, fallback) {
@@ -340,7 +384,7 @@ function itemFromRequest(file, tools, sources) {
   if (!rule.body.startsWith(TITLE_PREFIX)) refuse("Body must start with a `# <title>` line.");
   const prior = sources.get(sourcePath(rule));
   const targets = parseTools([...(prior ? prior.targets : []), ...tools]);
-  return { rule: { ...rule, body: withFinalNewline(rule.body), targets }, prior };
+  return { rule: { ...rule, body: withFinalNewline(rule.body), targets, nativeOptions: { ...prior?.nativeOptions, ...rule.nativeOptions } }, prior };
 }
 
 function itemFromRemoval(identity, sources) {
@@ -354,9 +398,11 @@ function planChanges(project, options) {
   const items = collectItems(options, sources);
   const plan = { writes: new Map(), conflicts: [] };
   const finalSources = planRuleFiles(plan, project, items, sources);
-  for (const host of Object.values(HOSTS).filter((candidate) => candidate.config)) {
-    const targeted = items.some((item) => !item.deleting && copyTools(item.rule).some((tool) => HOSTS[tool] === host));
-    if (targeted) planConfig(plan, project, host.config);
+  for (const [tool, selection] of Object.entries(CONFIG_SELECTION)) {
+    const targeted = items.some((item) => !item.deleting && copyTools(item.rule).includes(tool));
+    const selected = options[selection];
+    if (selected && !targeted) refuse(`${selection} requires a published ${tool} rule.`);
+    if (targeted) planConfig(plan, project, HOSTS[tool].config, selection, selected);
   }
   // An existing block is rebuilt too, so lines for hosts that now take copies disappear.
   const indexed = items.some((item) => isIndexed(item.rule));
@@ -408,30 +454,63 @@ function planIndex(plan, project, finalSources, required) {
   if (next !== null) planChange(plan, AGENTS, current, next || null);
 }
 
-function parseJsonObject(text) {
-  try {
-    const value = JSON.parse(text);
-    return value && typeof value === "object" && !Array.isArray(value) ? value : null;
-  } catch {
-    return null;
+function readConfig(file, text, glob) {
+  const errors = [];
+  const root = parseTree(text, errors, { allowTrailingComma: true });
+  if (errors.length || root?.type !== "object") refuse(`${file} must be a valid JSON or JSONC object.`);
+  const fields = root.children.filter((property) => property.children[0].value === "instructions");
+  const instructions = fields[0]?.children[1];
+  if (fields.length > 1 || (instructions && (instructions.type !== "array" || instructions.children.some((item) => item.type !== "string")))) {
+    refuse(`${file} must have at most one "instructions" field, an array of strings, before adding ${quote(glob)}.`);
   }
+  return { file, text, root, instructions };
 }
 
-const acceptsInstructions = (config) => Boolean(config) && (config.instructions === undefined || Array.isArray(config.instructions));
+const hasGlob = (config, glob) => config.instructions?.children.some((item) => item.value === glob);
+const lineStart = (text, offset) => text.lastIndexOf("\n", offset - 1) + 1;
+const whitespace = /^[ \t]*$/;
+
+// Insert around the AST offsets so comments, line endings and all existing entries remain in place.
+function appendConfigEntry(text, container, entry) {
+  const last = container.children.at(-1);
+  const from = last ? last.offset + last.length : container.offset + 1;
+  const close = container.offset + container.length - 1;
+  const tail = text.slice(from, close);
+  const trailing = createScanner(tail, true).scan() === SyntaxKind.CommaToken;
+  const separator = last && !trailing ? "," : "";
+  const closingLine = lineStart(text, close);
+  const closingIndent = text.slice(closingLine, close);
+  if (closingLine >= from && whitespace.test(closingIndent)) {
+    const lastIndent = last ? text.slice(lineStart(text, last.offset), last.offset) : null;
+    const indent = lastIndent !== null && whitespace.test(lastIndent) ? lastIndent : closingIndent + (closingIndent.includes("\t") ? "\t" : "  ");
+    const eol = text[closingLine - 2] === "\r" ? "\r\n" : "\n";
+    return text.slice(0, from) + separator + text.slice(from, closingLine) + indent + entry + (trailing ? "," : "") + eol + text.slice(closingLine);
+  }
+  const space = (last || tail) && !/\s$/.test(tail) ? " " : "";
+  return text.slice(0, from) + separator + tail + space + entry + (trailing ? "," : "") + text.slice(close);
+}
 
 // The config is never a conflict and never cleaned up: a glob matching no rule is harmless.
-function planConfig(plan, project, config) {
+function planConfig(plan, project, config, selection, selected) {
   const entry = quote(config.glob);
-  const found = config.files.map((file) => [file, project.read(file)]).filter(([, text]) => text !== null);
-  if (found.some(([, text]) => text.includes(entry))) return;
+  const found = config.files.map((file) => [file, project.readRaw(file)])
+    .filter(([, text]) => text !== null)
+    .map(([file, text]) => readConfig(file, text, config.glob));
+  const chosen = selected && found.find(({ file }) => file === selected);
+  if (selected && !chosen) refuse(`${selection} must name an existing config: ${config.files.join(", ")}.`);
+  const existing = found.find((candidate) => hasGlob(candidate, config.glob));
+  if (existing) {
+    if (chosen && !hasGlob(chosen, config.glob)) refuse(`${entry} is already in ${existing.file}.`);
+    return;
+  }
   if (!found.length) {
     planChange(plan, config.files[0], null, `{\n  "instructions": [${entry}]\n}\n`);
     return;
   }
-  const parsed = found.length === 1 ? parseJsonObject(found[0][1]) : null;
-  if (!acceptsInstructions(parsed)) refuse(`Add ${entry} to "instructions" in ${found.map(([file]) => file).join(" and ")} by hand, then rerun.`);
-  parsed.instructions = [...(parsed.instructions ?? []), config.glob];
-  planChange(plan, found[0][0], found[0][1], `${JSON.stringify(parsed, null, 2)}\n`);
+  if (found.length > 1 && !chosen) refuse(`Choose a config with ${selection}: ${found.map(({ file }) => file).join(" and ")}.`);
+  const { file, text, root, instructions } = chosen || found[0];
+  const next = appendConfigEntry(text, instructions ?? root, instructions ? entry : `"instructions": [${entry}]`);
+  planChange(plan, file, text, next);
 }
 
 // ---------- effects ----------

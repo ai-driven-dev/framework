@@ -13,6 +13,9 @@ node "$validator" "$project_root/.claude/agents/$name.md"
 - `$host_ids`: the confirmed IDs from `hosts.md`, comma-separated.
 - `$agent_json`: a temporary file outside the project holding `name`, `description` and `body`, plus each other frontmatter field the agent keeps, such as `model`, `effort` or `tools`. Claude Code also keeps `color`, `permissionMode` and `disallowedTools`; Copilot keeps `include-custom-instructions`.
 
+Put requested, documented agent settings in `nativeOptions` under their confirmed host ID, such as `{"nativeOptions":{"kilo":{"temperature":0.25,"permission":{"edit":"deny"}}}}`.
+The writer preserves JSON value types in native YAML or TOML and refuses a native key that replaces agent identity, instructions or a managed field.
+
 The agent contract validates the Claude Code rendering and the plugin source only; other hosts' files are not checked.
 
 | Option | Effect |

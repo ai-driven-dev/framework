@@ -12,7 +12,7 @@ For shared `.agents/` paths, resolve the host from declared tools or the AIDD ma
 | codex    | `.codex/`                                                                            | `AGENTS.md`                        |
 | cursor   | `.cursor/` or `.cursorrules`                                                         | `AGENTS.md`                        |
 | opencode | `.opencode/`                                                                         | `AGENTS.md`                        |
-| kilo     | `.kilo/`, `kilo.json` or `kilo.jsonc`                                                | `AGENTS.md`                        |
+| kilo     | `.kilo/`, `.kilocode/`, `kilo.json` or `kilo.jsonc`                                                | `AGENTS.md`                        |
 | kiro     | `.kiro/`                                                                             | `AGENTS.md`                        |
 | kimi     | `.kimi-code/`                                                                        | `AGENTS.md`                        |
 | antigravity | `.agents/agents/`, `.agents/rules/`, `.agents/hooks.json` or `.agents/plugins/`   | `AGENTS.md`                        |

@@ -23,10 +23,21 @@ node "$writer" --project "$project_root" --remove "$name"
 | `timeout` | seconds before the host stops the script, 30 when absent |
 | `plugin` | a plugin host's full module text, in place of every field above |
 
+Pass native options in a top-level `nativeOptions` object keyed by selected host, for example `{ "cursor": { "failClosed": true } }`.
+
+| Host | Native command hook options |
+| --- | --- |
+| Claude Code and Codex | `statusMessage` (string), `async` (boolean) |
+| Cursor | `failClosed` (boolean) |
+| GitHub Copilot | `env` (object of strings) |
+| Kiro | `description` (string), `enabled` (boolean) |
+
+Use the handler form and event in the host's documentation from `--describe`; for OpenCode and Kilo use the existing plugin module input.
+
 | Option | Effect |
 | --- | --- |
 | `--describe` | Writes nothing; prints per host its doc, moments, effects, shell tool and its command argument, cwd, trust and the other hosts' hooks it also runs, each fact with its source. |
-| `--plan` | Writes nothing; lists each path with `create`, `update`, `unchanged` or `delete`. |
+| `--plan` | Writes nothing; lists each path with `create`, `update`, `unchanged` or `delete` and its requested native options. |
 | `--force` | Overwrites each path the plan lists as `update`; without it, the writer refuses. |
 
 The result is JSON: `hosts` the description, `changes` each path and its operation, `error` a `{code, message}`. Exit 0 means done, 1 a refusal, 2 a usage error, 3 a filesystem error.

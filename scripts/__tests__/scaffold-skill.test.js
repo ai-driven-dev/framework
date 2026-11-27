@@ -58,6 +58,14 @@ function withPlan(change) {
   return plan;
 }
 
+function native(root, payload, ...options) {
+  const result = spawnSync(process.execPath, [ENGINE, "--native", "-", root, ...options], {
+    input: JSON.stringify({ name: PLAN.name, ...payload }),
+    encoding: "utf8",
+  });
+  return { status: result.status, output: result.stdout, error: result.stderr };
+}
+
 describe("skill scaffold", () => {
   beforeEach(() => {
     root = fs.mkdtempSync(path.join(os.tmpdir(), "skill-scaffold-"));
@@ -78,6 +86,113 @@ describe("skill scaffold", () => {
     run(PLAN);
     const text = read("SKILL.md");
     assert.match(text, /^---\nname: brainstorm\ndescription: Clarifies a vague intent, when the user wants to brainstorm\.\n---\n\n# Brainstorm\n/u);
+  });
+
+  it("previews distinct host metadata, then edits only the approved frontmatter", () => {
+    const claude = path.join(root, ".claude/skills/brainstorm");
+    const kilo = path.join(root, ".kilo/skills/brainstorm");
+    for (const folder of [claude, kilo]) {
+      assert.equal(run(PLAN, folder).code, 0);
+      fillContent(folder);
+    }
+    const claudeFile = path.join(claude, "SKILL.md");
+    const kiloFile = path.join(kilo, "SKILL.md");
+    const current = fs.readFileSync(claudeFile, "utf8").replace("\n---", '\nmetadata:\n  author: "AIDD"\n---');
+    fs.writeFileSync(claudeFile, current);
+    const kiloBefore = fs.readFileSync(kiloFile, "utf8");
+    const action = path.join(claude, "actions/01-capture.md");
+    const actionBefore = fs.readFileSync(action, "utf8");
+    const payload = {
+      targets: ["claude", "kilo"],
+      nativeOptions: { claude: { "disable-model-invocation": true }, kilo: { metadata: { category: "planning" } } },
+    };
+    const preview = native(root, payload, "--plan");
+    assert.equal(preview.status, 0, preview.error);
+    assert.deepEqual(JSON.parse(preview.output).changes.map(({ hosts, operation, options }) => [hosts, operation, options]), [
+      [["claude"], "update", payload.nativeOptions.claude],
+      [["kilo"], "update", payload.nativeOptions.kilo],
+    ]);
+    assert.equal(fs.readFileSync(claudeFile, "utf8"), current);
+    assert.equal(fs.readFileSync(kiloFile, "utf8"), kiloBefore);
+    const result = native(root, payload);
+    assert.equal(result.status, 0, result.error);
+    assert.equal(fs.readFileSync(claudeFile, "utf8"), current.replace("\n---", "\ndisable-model-invocation: true\n---"));
+    assert.equal(fs.readFileSync(kiloFile, "utf8"), kiloBefore.replace("\n---", '\nmetadata: {"category":"planning"}\n---'));
+    assert.equal(fs.readFileSync(action, "utf8"), actionBefore);
+    assert.deepEqual(JSON.parse(native(root, payload, "--plan").output).changes.map(({ operation }) => operation), ["unchanged", "unchanged"]);
+    assert.equal(spawnSync(process.execPath, [CHECK, claude], { encoding: "utf8" }).status, 0);
+  });
+
+  it("plans one write per shared target only for structurally equal options", () => {
+    const first = { metadata: { category: "planning", maintainer: "AIDD" } };
+    const second = { metadata: { maintainer: "AIDD", category: "planning" } };
+    const targets = ["codex", "antigravity", "kimi"];
+    const preview = native(root, { targets, nativeOptions: { codex: first, antigravity: second, kimi: second } }, "--plan");
+    assert.equal(preview.status, 0, preview.error);
+    const { changes } = JSON.parse(preview.output);
+    assert.equal(changes.length, 1);
+    assert.equal(changes[0].path, ".agents/skills/brainstorm/SKILL.md");
+    const conflict = native(root, {
+      targets: ["claude", ...targets],
+      nativeOptions: { claude: { "disable-model-invocation": true }, codex: first, kimi: second },
+    });
+    assert.equal(conflict.status, 1);
+    assert.match(conflict.error, /\.agents\/skills\/brainstorm\/SKILL\.md.*codex.*antigravity/u);
+    assert.deepEqual(fs.readdirSync(root), []);
+  });
+
+  it("writes every supported project target through the installed skill", (t) => {
+    const installed = fs.mkdtempSync(path.join(os.tmpdir(), "skill-installed-"));
+    t.after(() => fs.rmSync(installed, { recursive: true, force: true }));
+    fs.cpSync(SKILL, installed, { recursive: true });
+    const engine = path.join(installed, "scripts/scaffold-skill.cjs");
+    const targets = ["claude", "cursor", "opencode", "copilot", "codex", "kilo", "antigravity", "kiro", "kimi"];
+    const payload = { name: PLAN.name, targets, nativeOptions: Object.fromEntries(targets.map((host) => [host, { license: "MIT" }])) };
+    const invoke = (...flags) => spawnSync(process.execPath, [engine, "--native", "-", root, ...flags], {
+      input: JSON.stringify(payload), encoding: "utf8", cwd: installed, env: { PATH: "" },
+    });
+    const preview = invoke("--plan");
+    assert.equal(preview.status, 0, preview.stderr);
+    const { changes } = JSON.parse(preview.stdout);
+    assert.deepEqual(changes.flatMap(({ hosts }) => hosts).sort(), [...targets].sort());
+    assert.deepEqual(changes.map((change) => change.path.split("/")[0]), [".claude", ".cursor", ".opencode", ".github", ".agents", ".kilo", ".kiro"]);
+    assert.deepEqual(fs.readdirSync(root), []);
+    for (const change of changes) assert.equal(run(PLAN, path.dirname(path.join(root, change.path))).code, 0);
+    const apply = invoke();
+    assert.equal(apply.status, 0, apply.stderr);
+    for (const change of changes) assert.match(fs.readFileSync(path.join(root, change.path), "utf8"), /\nlicense: "MIT"\n---\n/u);
+  });
+
+  it("refuses native edits to scaffold fields before any target changes", () => {
+    const result = native(root, { targets: ["claude"], nativeOptions: { claude: { name: "other" } } }, "--plan");
+    assert.equal(result.status, 1);
+    assert.match(result.error, /claude.*name.*managed/u);
+    assert.deepEqual(fs.readdirSync(root), []);
+  });
+
+  it("refuses a read-only native target before changing any selected skill", { skip: process.platform === "win32" || process.geteuid?.() === 0 }, () => {
+    const claude = path.join(root, ".claude/skills/brainstorm");
+    const kilo = path.join(root, ".kilo/skills/brainstorm");
+    for (const folder of [claude, kilo]) assert.equal(run(PLAN, folder).code, 0);
+    const claudeFile = path.join(claude, "SKILL.md");
+    const kiloFile = path.join(kilo, "SKILL.md");
+    const before = fs.readFileSync(claudeFile, "utf8");
+    fs.chmodSync(kiloFile, 0o444);
+    const payload = {
+      targets: ["claude", "kilo"],
+      nativeOptions: { claude: { "disable-model-invocation": true }, kilo: { license: "MIT" } },
+    };
+    try {
+      for (const flags of [["--plan"], []]) {
+        const result = native(root, payload, ...flags);
+        assert.equal(result.status, 1);
+        assert.match(result.error, /\.kilo\/skills\/brainstorm\/SKILL\.md/u);
+        assert.equal(fs.readFileSync(claudeFile, "utf8"), before);
+        assert.equal(fs.readFileSync(kiloFile, "utf8"), before);
+      }
+    } finally {
+      fs.chmodSync(kiloFile, 0o644);
+    }
   });
 
   it("reads a plan from stdin without creating an intermediate plan file", () => {

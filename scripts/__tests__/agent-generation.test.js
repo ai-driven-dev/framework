@@ -4,6 +4,7 @@ const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { test } = require("node:test");
+const { load } = require("js-yaml");
 
 const skill = path.resolve(__dirname, "../../plugins/aidd-context/skills/06-agent-generate");
 const ALL = "claude,cursor,copilot,antigravity,codex,opencode,kilo,kiro,kimi";
@@ -37,6 +38,74 @@ function fixture(t) {
 }
 
 const json = (r) => JSON.parse(r.stdout);
+
+test("writes documented native options only to their selected host", (t) => {
+  const { run, read, project } = fixture(t);
+  const nativeOptions = {
+    claude: { maxTurns: 5 },
+    cursor: { readonly: true },
+    copilot: { infer: false },
+    antigravity: { mainAgent: false },
+    codex: { features: { shell_tool: false } },
+    opencode: { hidden: true },
+    kilo: { temperature: 0.25, permission: { edit: "deny", bash: { "*": "deny", "git status": "allow" } } },
+    kiro: { resources: ["file://README.md"] },
+    kimi: { override: false },
+  };
+  const request = { ...agent, nativeOptions };
+  const preview = run(request, ALL, ["--plan"]);
+  assert.equal(preview.status, 0, preview.stdout + preview.stderr);
+  assert.deepEqual(fs.readdirSync(project), []);
+  const applied = run(request);
+  assert.equal(applied.status, 0, applied.stdout + applied.stderr);
+  assert.ok(json(applied).dropped.every(({ field }) => field !== "nativeOptions"));
+  const expected = {
+    ".claude/agents/code-reviewer.md": "maxTurns: 5",
+    ".cursor/agents/code-reviewer.md": "readonly: true",
+    ".github/agents/code-reviewer.agent.md": "infer: false",
+    ".agents/agents/code-reviewer/agent.md": "mainAgent: false",
+    ".codex/agents/code-reviewer.toml": 'features = { "shell_tool" = false }',
+    ".opencode/agents/code-reviewer.md": "hidden: true",
+    ".kilo/agents/code-reviewer.md": 'temperature: 0.25\npermission: {"edit":"deny","bash":{"*":"deny","git status":"allow"}}',
+    ".kiro/agents/code-reviewer.md": 'resources: ["file://README.md"]',
+    ".kimi-code/agents/code-reviewer.md": "override: false",
+  };
+  for (const [file, options] of Object.entries(expected)) {
+    const content = read(file);
+    assert.ok(content.includes(options), file);
+    assert.ok(Object.entries(expected).every(([other, values]) => other === file || !content.includes(values)), file);
+  }
+  assert.ok(json(run(request)).files.every(({ operation }) => operation === "unchanged"));
+});
+
+test("refuses invalid native agent options before writing any target", (t) => {
+  const { run, project } = fixture(t);
+  for (const [nativeOptions, message] of [
+    [{ cursor: { readonly: true } }, /cursor.*selected/u],
+    [{ kilo: { variant: "low" } }, /kilo.*variant/u],
+    [{ kilo: { temperature: "0.25" } }, /kilo.*temperature/u],
+    [{ kilo: { permission: { edit: "invalid" } } }, /kilo.*permission/u],
+    [{ kilo: { "x\nmode": "primary" } }, /kilo.*mode/su],
+    [{ kilo: { prompt: "duplicate instructions" } }, /kilo.*prompt/u],
+    [{ codex: { features: { shell_tool: null } } }, /codex.*features/u],
+  ]) {
+    const result = run({ ...agent, nativeOptions }, "claude,codex,kilo");
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.match(json(result).error.message, message);
+    assert.deepEqual(fs.readdirSync(project), []);
+  }
+});
+
+test("preserves native YAML strings with syntax and line separators", (t) => {
+  const { run, read } = fixture(t);
+  const initialPrompt = 'Check "quoted": values\n---\n\u0085\u2028\u2029';
+  const result = run({ ...agent, nativeOptions: { claude: { initialPrompt }, kimi: { whenToUse: "false", override: false } } }, "claude,kimi");
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const metadata = (file) => load(read(file).split("\n---\n")[0].slice(4));
+  assert.equal(metadata(".claude/agents/code-reviewer.md").initialPrompt, initialPrompt);
+  assert.equal(metadata(".kimi-code/agents/code-reviewer.md").whenToUse, "false");
+  assert.equal(metadata(".kimi-code/agents/code-reviewer.md").override, false);
+});
 
 test("renders each host's native file from the CLI mapping", (t) => {
   const { run, read } = fixture(t);

@@ -12,8 +12,10 @@ The confirmed plan and target.
    - No SKILL.md or action file missing: skip this step.
 2. Write each file the plan lists at its place in [skill-tree.md](../references/skill-tree.md), per [skill-authoring.md](../references/skill-authoring.md).
    - Existing file: edit it in place.
-3. Copy the tree to each other distinct target root of [tool-write.md](../references/tool-write.md).
-4. Read [validate](04-validate.md).
+3. Copy the portable tree to each other distinct target root of [tool-write.md](../references/tool-write.md), preserving existing target-specific frontmatter.
+   - Native options requested: use the portable frontmatter for newly copied targets.
+4. Apply the approved native frontmatter per [tool-write.md](../references/tool-write.md) once all selected targets have their `SKILL.md`.
+5. Read [validate](04-validate.md).
 
 ## Output
 

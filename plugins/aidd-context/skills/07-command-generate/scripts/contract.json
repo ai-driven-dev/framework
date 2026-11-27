@@ -15,6 +15,12 @@
       "template": "../assets/command-template.md",
       "why": "one shape per command",
       "fix": "follow command-template.md",
+      "additionalFrontmatterIn": [
+        "**/.claude/commands/*.md",
+        "**/.github/prompts/*.prompt.md",
+        "**/.opencode/commands/*.md",
+        "**/.kilo/commands/*.md"
+      ],
       "optional": [
         "argument-hint",
         "model",

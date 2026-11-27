@@ -13,6 +13,9 @@ node "$validator" "$project_root/.claude/commands/$name.md"
 - `$host_ids`: the confirmed IDs from `hosts.md`, comma-separated.
 - `$command_json`: a temporary file outside the project holding `name`, `description` and `body`, plus each optional field the command keeps: `argument-hint`, `model`, `agent`, `allowed-tools`, or `disable-model-invocation` as a boolean.
 
+Put requested, documented command settings in `nativeOptions` under their confirmed host ID, such as `{"nativeOptions":{"kilo":{"variant":"high","subtask":true}}}`.
+The writer preserves JSON value types in native YAML and refuses a native key that replaces command identity, instructions or a managed field.
+
 | Option | Effect |
 | --- | --- |
 | none | Writes each host's file. |
