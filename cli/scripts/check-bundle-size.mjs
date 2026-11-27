@@ -84,7 +84,7 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 917 KB: 899.1 KB, Antigravity's plugin directories, taking back the hooks an earlier release merged into the project's file, and the build reporting an event the host never fires (+4.2 KB over next's 894.9 KB); 2.0% measured headroom.
 // 941 KB: 922.6 KB, Kimi's plugins through its local server and the plugin rules listed in AGENTS.md for Codex and Kimi (+9.0 KB over the 913.6 KB above); 2.0% measured headroom.
 // 960 KB: 941.1 KB, the Kimi and Copilot hook channels, Antigravity level-two relay, the 5.8.0 upgrade fixes and Cursor's stop hooks on sessionEnd again (+18.5 KB over the 922.6 KB above); 2.0% measured headroom.
-// 732 KB: 717.5 KB, local identifiers mangled with every function and class name kept (-201.7 KB), each host adapter joined from its parts so a shared part ships once (-21.3 KB), and duplicated error, file and plugin-source helpers merged (-0.6 KB) (-223.6 KB under the 941.1 KB above); 2.0% measured headroom.
+// 734 KB: 718.7 KB, local identifiers mangled with every function and class name kept (-201.7 KB), each host adapter joined from its parts so a shared part ships once (-21.3 KB), and duplicated error, file and plugin-source helpers merged (-0.6 KB), measured after merging next (-222.4 KB under the 941.1 KB above); 2.1% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 
