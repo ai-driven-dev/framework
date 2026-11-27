@@ -193,7 +193,8 @@ describe("registering a marketplace", () => {
         projectRoot: PROJECT_ROOT,
       });
 
-      await useCase.register(flow, localFrameworkSource("/framework-source"));
+      const claim = await useCase.register(flow, localFrameworkSource("/framework-source"));
+      await claim?.();
 
       expect(await userSourceReferences.listAllReferencingProjects()).toStrictEqual([PROJECT_ROOT]);
     });
@@ -213,7 +214,8 @@ describe("registering a marketplace", () => {
         projectRoot: PROJECT_ROOT,
       });
 
-      await useCase.register(flow, localFrameworkSource("/framework-source"));
+      const claim = await useCase.register(flow, localFrameworkSource("/framework-source"));
+      await claim?.();
 
       expect(await userSourceReferences.listAllReferencingProjects()).toStrictEqual([]);
     });

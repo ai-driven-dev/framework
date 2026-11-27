@@ -2,13 +2,14 @@ import type { DetectProjectContext } from "../../../contexts/installation/applic
 import type { InitProject } from "../../../contexts/installation/application/init-project.use-case.js";
 import type { ProjectContext } from "../../../contexts/installation/contract/project-context.js";
 import type { ResolveSetupSource } from "../resolve-setup-source.use-case.js";
-import type { RegisterFrameworkSource } from "../setup-flow.js";
+import type { ClaimFrameworkSource, RegisterFrameworkSource } from "../setup-flow.js";
 import type { SetupFlow } from "../setup-flow.model.js";
 
 export interface PreparedSetupProject {
   readonly context: ProjectContext | undefined;
   /** Whether this run created the manifest the setup works on. */
   readonly isNew: boolean;
+  readonly claimSource: ClaimFrameworkSource | undefined;
 }
 
 /** Gets a project ready for a setup: what it holds, which source it follows, its manifest. */
@@ -32,7 +33,7 @@ export class PrepareSetupProject {
       projectRoot: flow.projectRoot,
       ifAbsent: true,
     });
-    await this.register(flow, source);
-    return { context, isNew };
+    const claimSource = await this.register(flow, source);
+    return { context, isNew, claimSource };
   }
 }

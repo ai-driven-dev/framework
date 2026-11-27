@@ -34,6 +34,7 @@ function prepareOver(parts: { initialized?: boolean; withDetector?: boolean } = 
   });
   const register = vi.fn(async () => {
     calls.push("register");
+    return undefined;
   });
   const prepare = new PrepareSetupProject(
     parts.withDetector === false ? undefined : { execute: detect },
@@ -75,7 +76,11 @@ describe("preparing a setup project", () => {
     it("reports a project it just initialized as new, with what it detected", async () => {
       const { prepare, context } = prepareOver({ initialized: true });
 
-      expect(await prepare.execute(flow)).toStrictEqual({ context, isNew: true });
+      expect(await prepare.execute(flow)).toStrictEqual({
+        context,
+        isNew: true,
+        claimSource: undefined,
+      });
     });
   });
 
