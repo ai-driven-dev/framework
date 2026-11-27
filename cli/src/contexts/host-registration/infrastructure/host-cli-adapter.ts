@@ -121,12 +121,7 @@ export class HostCliAdapter implements HostActions {
   }
 
   enablePlugin(pluginRef: string, scope: Scope = "project"): HostRefusal {
-    const verb = this.shape.enableVerb;
-    if (verb === undefined) return undefined;
-    return this.run(
-      ["plugin", verb, pluginRef, ...(this.shape.pluginArgs ?? []), ...this.scopeArgsFor(scope)],
-      `plugin ${verb} ${pluginRef}`
-    );
+    return this.runPluginVerb(this.shape.enableVerb, pluginRef, scope);
   }
 
   updatePlugin(pluginRef: string): HostRefusal {
@@ -140,7 +135,11 @@ export class HostCliAdapter implements HostActions {
    * tool that installed at one scope and uninstalls at its default would silently miss the
    * entry it wrote. */
   uninstallPlugin(pluginRef: string, scope: Scope = "project"): HostRefusal {
-    const verb = this.shape.disableVerb;
+    return this.runPluginVerb(this.shape.disableVerb, pluginRef, scope);
+  }
+
+  /** A plugin command at `scope`; nothing when the host names no `verb` for it. */
+  private runPluginVerb(verb: string | undefined, pluginRef: string, scope: Scope): HostRefusal {
     if (verb === undefined) return undefined;
     return this.run(
       ["plugin", verb, pluginRef, ...(this.shape.pluginArgs ?? []), ...this.scopeArgsFor(scope)],

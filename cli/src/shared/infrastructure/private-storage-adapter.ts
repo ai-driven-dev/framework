@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { chmod, mkdir, open, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { errorMessage } from "../domain/describe-error.js";
 import { whenAbsent } from "../domain/reading/json-file.js";
 import type { PrivateStorage } from "../ports/private-storage.js";
 
@@ -46,9 +47,7 @@ export class PrivateStorageAdapter implements PrivateStorage {
         `${windowsAccount(this.host.env)}:(OI)(CI)F`,
       ]);
     } catch (error) {
-      throw new Error(
-        `Failed to restrict ${created} to its owner: ${error instanceof Error ? error.message : String(error)}`
-      );
+      throw new Error(`Failed to restrict ${created} to its owner: ${errorMessage(error)}`);
     }
   }
 

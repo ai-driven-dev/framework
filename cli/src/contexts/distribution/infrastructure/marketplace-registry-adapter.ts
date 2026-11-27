@@ -1,5 +1,6 @@
 import { mkdir, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { errorMessage } from "../../../shared/domain/describe-error.js";
 import { AIDD_DIR, AIDD_MARKETPLACES_FILENAME } from "../../../shared/domain/layout/aidd-layout.js";
 import { whenAbsent } from "../../../shared/domain/reading/json-file.js";
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
@@ -108,7 +109,7 @@ export class MarketplaceRegistryAdapter implements MarketplaceRegistry {
     try {
       raw = await whenAbsent(() => readFile(path, "utf-8"), undefined);
     } catch (error) {
-      unreadable(path, error instanceof Error ? error.message : String(error));
+      unreadable(path, errorMessage(error));
     }
     if (raw === undefined) return [];
     return registryEntries(raw, path).map((m) => Marketplace.fromJSON({ ...m, scope }));

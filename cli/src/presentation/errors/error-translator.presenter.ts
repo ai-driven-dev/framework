@@ -1,3 +1,4 @@
+import { errorMessage } from "../../shared/domain/describe-error.js";
 import { AiddError } from "../../shared/domain/shared.error.js";
 import type { Output } from "../terminal/output.model.js";
 import { EXIT_CODES, UNCATALOGUED_EXIT } from "./error-exit-codes.presenter.js";
@@ -7,7 +8,7 @@ import { MESSAGES } from "./error-messages.presenter.js";
  * any other error by its message, anything else as it came. */
 export function render(error: unknown): string {
   if (error instanceof AiddError) return MESSAGES[error.code](error, render);
-  return error instanceof Error ? error.message : String(error);
+  return errorMessage(error);
 }
 
 /** Reports the error and ends the process with the exit code its table entry gives. */

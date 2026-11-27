@@ -1,6 +1,23 @@
 import { isAbsolute, relative } from "node:path";
 import type { PluginSource, PluginSourceGitSubdir } from "../../../shared/domain/plugin/source.js";
+import type { PluginCatalogEntry } from "../contract/catalog.js";
+import type { PluginSourceMatch } from "../contract/plugin-source-match.js";
 import type { Marketplace } from "./marketplace.js";
+
+/** `entry` of `marketplace`'s catalog, read from `localPath`, with the source an installer fetches it from. */
+export function pluginSourceMatch(
+  marketplace: Marketplace,
+  localPath: string,
+  entry: PluginCatalogEntry
+): PluginSourceMatch {
+  return {
+    marketplaceName: marketplace.name,
+    githubMarketplace: marketplace.source.kind === "github",
+    entry,
+    source: resolvePluginSourceFromMarketplace(entry.source, marketplace, localPath),
+  };
+}
+
 export function resolvePluginSourceFromMarketplace(
   entrySource: PluginSource,
   marketplace: Marketplace,

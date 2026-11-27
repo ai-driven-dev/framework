@@ -1,3 +1,4 @@
+import { errorMessage } from "../../../../../shared/domain/describe-error.js";
 import { McpConfigError } from "../../../../../shared/domain/shared.error.js";
 import { InvalidMcpServerConfigError } from "../../../contract/errors/tools.error.js";
 
@@ -39,9 +40,7 @@ function typedServers(content: string): Record<string, TypedServer> {
   try {
     parsed = JSON.parse(content);
   } catch (err) {
-    throw new McpConfigError(
-      `Cannot parse MCP config: ${err instanceof Error ? err.message : String(err)}`
-    );
+    throw new McpConfigError(`Cannot parse MCP config: ${errorMessage(err)}`);
   }
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
     throw new McpConfigError("MCP config must be a JSON object");

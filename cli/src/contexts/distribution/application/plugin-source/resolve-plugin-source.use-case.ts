@@ -1,7 +1,7 @@
 import { PluginNotInMarketplaceError } from "../../contract/distribution.error.js";
 import type { PluginSourceMatch } from "../../contract/plugin-source-match.js";
 import type { Marketplace } from "../../domain/marketplace.js";
-import { resolvePluginSourceFromMarketplace } from "../../domain/plugin-source-resolver.js";
+import { pluginSourceMatch } from "../../domain/plugin-source-resolver.js";
 import type { MarketplaceRegistry } from "../../ports/marketplace-registry.js";
 import type { ResolveMarketplace } from "../resolve-marketplace.use-case.js";
 
@@ -43,11 +43,6 @@ export class ResolvePluginSource {
     if (!catalog) return [];
     return catalog.plugins
       .filter((entry) => entry.name === command.pluginName)
-      .map((entry) => ({
-        marketplaceName: marketplace.name,
-        githubMarketplace: marketplace.source.kind === "github",
-        entry,
-        source: resolvePluginSourceFromMarketplace(entry.source, marketplace, localPath),
-      }));
+      .map((entry) => pluginSourceMatch(marketplace, localPath, entry));
   }
 }

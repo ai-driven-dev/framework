@@ -1,4 +1,5 @@
 import { applyEdits, modify, type ParseError, parse } from "jsonc-parser";
+import { errorMessage } from "../../../shared/domain/describe-error.js";
 import { stripJsonComments } from "../../../shared/domain/reading/jsonc.js";
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import type {
@@ -94,7 +95,7 @@ function refusedUnless<T>(plan: () => T): T | MainModelRefusal {
   try {
     return plan();
   } catch (error) {
-    return { refused: error instanceof Error ? error.message : String(error) };
+    return { refused: errorMessage(error) };
   }
 }
 

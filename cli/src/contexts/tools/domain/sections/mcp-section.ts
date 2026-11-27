@@ -1,4 +1,3 @@
-import { FileHash } from "../../../../shared/domain/file-hash.js";
 import { InstallationFile } from "../../../../shared/domain/installation-file.js";
 import type { ConfigRef } from "../../contract/config-refs.js";
 import { DualConfigError } from "../../contract/errors/tools.error.js";
@@ -76,13 +75,8 @@ export class McpConfigPart {
   }
 
   fileOf(content: string, place: ConfigFilePlace = {}): InstallationFile {
-    return new InstallationFile({
-      relativePath: place.relativePath ?? this.#params.outputPath,
-      content,
-      hash: FileHash.of(content),
-      mergeStrategy: this.#params.mergeStrategy ?? "user-prime",
-      frameworkPath: place.frameworkPath,
-    });
+    const { outputPath, mergeStrategy = "user-prime" } = this.#params;
+    return InstallationFile.placed(content, place, { outputPath, mergeStrategy });
   }
 
   /** Whether the framework's half of the file is written over what a person keeps in it. */

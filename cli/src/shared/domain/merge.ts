@@ -1,3 +1,4 @@
+import { errorMessage } from "./describe-error.js";
 import { FileHash } from "./file-hash.js";
 import { isErrnoException, tryParseJson } from "./reading/json-file.js";
 import { stripJsonComments } from "./reading/jsonc.js";
@@ -134,7 +135,7 @@ async function readExistingJson(
 function rethrowUnlessMissing(path: string, err: unknown): void {
   const code = isErrnoException(err) ? err.code : undefined;
   if (code === "ENOENT") return;
-  throw new JsonParseError(path, err instanceof Error ? err.message : String(err));
+  throw new JsonParseError(path, errorMessage(err));
 }
 
 const PROTOTYPE_POLLUTION_KEYS = new Set(["__proto__", "constructor", "prototype"]);

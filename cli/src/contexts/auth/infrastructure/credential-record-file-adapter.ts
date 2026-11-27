@@ -3,6 +3,7 @@ import { chmod, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { errorMessage } from "../../../shared/domain/describe-error.js";
 import { AIDD_DIR } from "../../../shared/domain/layout/aidd-layout.js";
+import { isErrnoException } from "../../../shared/domain/reading/json-file.js";
 import { AuthStorageError, CredentialRecordUnreadableError } from "../contract/auth.error.js";
 import type { AuthLevel, Credential } from "../contract/credential.js";
 import {
@@ -67,7 +68,7 @@ export class CredentialRecordFileAdapter implements CredentialRecordRepository {
 }
 
 function isMissing(err: unknown): boolean {
-  return err instanceof Error && "code" in err && err.code === "ENOENT";
+  return isErrnoException(err) && err.code === "ENOENT";
 }
 
 async function restrictToOwner(path: string): Promise<void> {
