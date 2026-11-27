@@ -97,8 +97,7 @@ export interface AntigravityPluginFiles {
  * rewritten into the named group `agy` reads at the plugin's root, and an event `agy` never fires
  * reported by the build. No catalog is read, so the one written is the shared shape. Limit: the
  * plugin's `hooks.json` belongs to aidd, like every file of its directory: a later install or sync
- * rewrites it, so a group's `enabled` flag a person set there does not survive, and the install
- * from a built tree does not show the build's warnings. */
+ * rewrites it, so a group's `enabled` flag a person set there does not survive. */
 export function buildAntigravityPluginTreeContract(
   hooks: AntigravityHooks,
   files: AntigravityPluginFiles,

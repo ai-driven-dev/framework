@@ -2,10 +2,10 @@ import type {
   ConvertHooks,
   ShippedHooks,
 } from "../../../../../shared/domain/materialization/build-contract.js";
+import { toolWarning } from "../../../../../shared/domain/plugin/plugin-translation-skip.js";
 import type { ProjectHooksFormat } from "../../../contract/tool-vocabulary.js";
 import type { FlatHooksRoute, HooksRouting } from "../../formats/hooks/descriptor.js";
 import { pluginScriptDir, pluginScriptPath } from "../../hooks/hooks-merge.js";
-import { toolWarning } from "../../hooks/hooks-warnings.js";
 import type { WrappedCommandHooksTarget } from "../../hooks/wrapped-command-hooks-convert.js";
 import {
   isWrappedCommandHooksFileEmpty,

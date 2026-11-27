@@ -6,9 +6,10 @@ import type {
   SupportedArtifact,
 } from "../../../../../shared/domain/materialization/build-contract.js";
 import type { FlatHooksLoaderEntry } from "../../../../../shared/domain/materialization/flat-paths.js";
+import { toolWarning } from "../../../../../shared/domain/plugin/plugin-translation-skip.js";
 import type { ProjectHooksFormat } from "../../../contract/tool-vocabulary.js";
 import { mergeHooks } from "../../hooks/hooks-merge.js";
-import { toolWarning, unmappedEventWarning } from "../../hooks/hooks-warnings.js";
+import { unmappedEventWarning } from "../../hooks/hooks-warnings.js";
 import type { BridgeDelivery, ProjectMergeDelivery } from "../../sections/hooks-section.js";
 import {
   type FlatHooksRoute,
