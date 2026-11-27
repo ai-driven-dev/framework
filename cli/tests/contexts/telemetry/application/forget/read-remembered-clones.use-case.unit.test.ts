@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ReadRememberedClones } from "../../../../../src/contexts/telemetry/application/forget/read-remembered-clones.use-case.js";
 import type { BranchSnapshot } from "../../../../../src/contexts/telemetry/domain/branch-binding.js";
-import { cloneOf } from "../../testing/clone.builder.js";
+import { cloneOf, tokenOf } from "../../testing/clone.builder.js";
 import { InMemoryConsentHistory } from "../../testing/in-memory-consent-history.fake.js";
 import { InMemoryResolutions } from "../../testing/in-memory-resolutions.fake.js";
 import { InMemorySnapshots } from "../../testing/in-memory-snapshots.fake.js";
@@ -47,6 +47,17 @@ describe("listing the clones remembered", () => {
   it("lists a clone that consented even when no session ever ran there", async () => {
     const { history, read } = setup();
     history.consented(cloneOf("/w/c/.git"));
+    expect(await read()).toMatchObject({
+      clones: ["/w/c/.git"],
+      consenting: new Set(["/w/c/.git"]),
+    });
+  });
+
+  it("keeps a clone that consented then turned measurement off, and adds none for the withdrawal", async () => {
+    const { history, read } = setup();
+    const clone = cloneOf("/w/c/.git");
+    history.consented(clone);
+    await history.append({ kind: "close", token: tokenOf(clone), at: "2026-02-01T00:00:00.000Z" });
     expect(await read()).toMatchObject({
       clones: ["/w/c/.git"],
       consenting: new Set(["/w/c/.git"]),

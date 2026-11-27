@@ -2,6 +2,8 @@ import { mkdir, mkdtemp, readdir, readFile, realpath, rm } from "node:fs/promise
 import { tmpdir } from "node:os";
 import { basename, join, relative, sep } from "node:path";
 import { afterAll, afterEach, beforeAll, describe, it, vi } from "vitest";
+import { containerFactory } from "../../../src/composition/container.js";
+import { createFrameworkBuildUseCase } from "../../../src/composition/contexts/translate.js";
 import { createOutput } from "../../../src/composition/shared.js";
 import { claude } from "../../../src/composition/tool-profiles/claude.js";
 import { codexSpec } from "../../../src/composition/tool-profiles/codex.js";
@@ -9,6 +11,7 @@ import { copilot } from "../../../src/composition/tool-profiles/copilot.js";
 import { cursor } from "../../../src/composition/tool-profiles/cursor.js";
 import { kilo } from "../../../src/composition/tool-profiles/kilo.js";
 import { opencode } from "../../../src/composition/tool-profiles/opencode.js";
+import { InitProject } from "../../../src/contexts/installation/application/init-project.use-case.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.use-case.js";
 import type { HooksDescriptor } from "../../../src/contexts/tools/domain/formats/hooks/descriptor.js";
 import { defineAiTool } from "../../../src/contexts/tools/domain/profile/define-tool.js";
@@ -108,15 +111,11 @@ async function writeSource(source: string): Promise<void> {
 type Deps = Awaited<ReturnType<typeof deps>>;
 
 async function deps(project: string) {
-  const { containerFactory } = await import("../../../src/composition/container.js");
   return containerFactory(catalogOf())(project, { verbose: false }, createOutput(false));
 }
 
 async function installTool(project: string, toolId: AiToolId): Promise<void> {
   const wired = await deps(project);
-  const { InitProject } = await import(
-    "../../../src/contexts/installation/application/init-project.use-case.js"
-  );
   await new InitProject(
     {
       fs: wired.shared.fs,
@@ -147,9 +146,6 @@ async function build(
   toolId: AiToolId,
   mode: "marketplace" | "flat"
 ): Promise<string | null> {
-  const { createFrameworkBuildUseCase } = await import(
-    "../../../src/composition/contexts/translate.js"
-  );
   const wired = await deps(ws.project);
   const out = join(ws.root, `out-${mode}`);
   await mkdir(out, { recursive: true });

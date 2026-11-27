@@ -178,7 +178,7 @@ describe("only projects that opted in are stored", () => {
     const s = setup({ refused: true });
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
     const result = await s.ingest.execute();
-    expect(result.refused).toBe(true);
+    expect(result).toMatchObject({ refused: true, filesRead: 0, unreadable: [] });
     expect(s.ledger.events).toEqual([]);
     expect(s.locator.asked).toEqual([]);
     expect(s.resolutions.saves).toBe(0);
