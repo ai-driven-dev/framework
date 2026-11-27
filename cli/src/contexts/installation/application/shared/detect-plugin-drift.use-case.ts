@@ -109,8 +109,8 @@ export class DetectPluginDrift {
     if (entries.length === 0 || location === null) return [];
     const { relativePath, format } = location;
     const content = await whenAbsent(() => this.fs.readFile(join(projectRoot, relativePath)), null);
-    const current =
-      content === null ? [] : recordedProjectHookEntries(format, content, recorded.plugin.name);
+    if (content === null) return [{ relativePath, kind: "missing" }];
+    const current = recordedProjectHookEntries(format, content, recorded.plugin.name);
     return projectHookEntriesEdited(entries, current)
       ? [{ relativePath, kind: "hash-mismatch" }]
       : [];

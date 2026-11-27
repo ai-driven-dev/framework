@@ -237,24 +237,39 @@ describe("DetectPluginDrift - a plugin's entries in the project hooks file", () 
       .build();
   }
 
-  function fsWithHooks(content: string): FileReader {
-    return { ...makeFs(new Set()), readFile: async () => content };
+  function fsWithHooks(content: string | null): FileReader {
+    const readFile = async () => {
+      if (content !== null) return content;
+      throw Object.assign(new Error("absent"), { code: "ENOENT" });
+    };
+    return { ...makeFs(new Set()), readFile };
   }
 
-  it("reports the hooks file once an entry the install recorded was edited", async () => {
-    const detect = (content: string) =>
-      new DetectPluginDrift(fsWithHooks(content), registeredTools(), () => "/home/dev").execute({
-        manifest: cursorManifestWithRecordedHooks(),
-        projectRoot: "/proj",
-        toolIds: [TOOL.cursor],
-      });
+  const detect = (content: string | null) =>
+    new DetectPluginDrift(fsWithHooks(content), registeredTools(), () => "/home/dev").execute({
+      manifest: cursorManifestWithRecordedHooks(),
+      projectRoot: "/proj",
+      toolIds: [TOOL.cursor],
+    });
 
+  it("reports the hooks file once an entry the install recorded was edited", async () => {
     expect(await detect(pristineHooks)).toEqual([]);
     expect(await detect(editedHooks)).toEqual([
       {
         toolId: TOOL.cursor,
         pluginName: "aidd-context",
         files: [{ relativePath: ".cursor/hooks.json", kind: "hash-mismatch" }],
+        notInstalledOnMachine: false,
+      },
+    ]);
+  });
+
+  it("reports the hooks file as missing once it was deleted", async () => {
+    expect(await detect(null)).toEqual([
+      {
+        toolId: TOOL.cursor,
+        pluginName: "aidd-context",
+        files: [{ relativePath: ".cursor/hooks.json", kind: "missing" }],
         notInstalledOnMachine: false,
       },
     ]);
