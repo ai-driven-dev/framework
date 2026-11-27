@@ -89,6 +89,7 @@ export class DetectPluginDrift {
       ...(await this.editedHookEntries(recorded, profile, projectRoot)),
     ];
     if (files.length === 0) return null;
+    // Limit: a missing user plugin whose hook entries also drifted reads as drift; never observed.
     const allMissing =
       files.length === plugin.files.size && files.every((f) => f.kind === "missing");
     if (allMissing && plugin.scope === "user") {

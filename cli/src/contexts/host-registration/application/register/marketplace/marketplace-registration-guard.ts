@@ -20,7 +20,7 @@ export async function untouchedReason(
   const unproven = sourceUnproven(proof);
   const collision = heldByHost && !proof.canonical;
   if (unproven || collision) {
-    if (heldByHost) await guardAgainstConflict(run, request);
+    if (heldByHost) await guardAgainstConflict(run, request, proof);
     return unproven
       ? `${lead} host source unproven (${proof.sourceReason ?? "unknown"}); registration left untouched.`
       : `${lead} is already registered on the host without a canonical AIDD claim; same-name collision left untouched.`;

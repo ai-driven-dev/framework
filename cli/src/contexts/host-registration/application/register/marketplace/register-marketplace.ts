@@ -14,7 +14,7 @@ import {
 } from "../registration-run.js";
 import { type CatalogRequest, guardAgainstConflict } from "./catalog-source-guard.js";
 import { followsRequestedSource, untouchedReason } from "./marketplace-registration-guard.js";
-import { reclaimOrReport } from "./reclaim-dead-registration.js";
+import { reclaimOrReport, replaceRegistration } from "./reclaim-dead-registration.js";
 
 /** A marketplace the host holds and this project may claim; its absence is a refusal. */
 export interface MarketplaceClaim {
@@ -61,23 +61,25 @@ export async function registerMarketplace(
   const requestedSource = (await run.fs.realpathIfResolvable(builtDir)) ?? builtDir;
   if (followsRequestedSource(proof, requestedSource, run.platform))
     return { hostName, provenance: proof.source };
-  const decision = await guardAgainstConflict(run, request);
+  const decision = await guardAgainstConflict(run, request, proof);
   // A "skip" is a host already following a newer shared build, never this project's own
   // pre-migration cache, so it counts as registered.
   if (decision === "skip")
     return proof.sourceStatus === "owned" ? { hostName, provenance: proof.source } : undefined;
-  if (!(await addedOrReclaimed(run, request, hostName))) return undefined;
+  if (!(await addedOrReclaimed(run, request, { hostName, decision }))) return undefined;
   const source = await proveAddedSource(run, hostName, builtDir);
   return source === undefined ? undefined : { hostName, provenance: source, addedThisRun: true };
 }
 
-/** Whether the host now holds the catalogue: added, or taken back from a dead registration. */
+/** Whether the host now holds the catalogue: added, moved off an older build, or reclaimed. */
 async function addedOrReclaimed(
   run: RegistrationRun,
   request: CatalogRequest,
-  hostName: string
+  { hostName, decision }: { readonly hostName: string; readonly decision: "repoint" | undefined }
 ): Promise<boolean> {
   const { builtDir, marketplace } = request;
+  if (decision === "repoint")
+    return replaceRegistration(run, { marketplace, hostName, builtDir }, { force: false });
   const refusal = run.activator.addMarketplace(builtDir, marketplace.scope);
   if (refusal === undefined) return true;
   return reclaimOrReport(run, { marketplace, hostName, builtDir }, refusal);

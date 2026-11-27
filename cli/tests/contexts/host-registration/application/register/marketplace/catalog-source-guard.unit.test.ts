@@ -1,8 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { guardAgainstConflict } from "../../../../../../src/contexts/host-registration/application/register/marketplace/catalog-source-guard.js";
+import {
+  type CatalogRequest,
+  guardAgainstConflict,
+} from "../../../../../../src/contexts/host-registration/application/register/marketplace/catalog-source-guard.js";
+import type { NativeCatalogProof } from "../../../../../../src/contexts/host-registration/application/register/native-catalog-proof.js";
+import type { RegistrationRun } from "../../../../../../src/contexts/host-registration/application/register/registration-run.js";
 import { MarketplaceSourceConflictError } from "../../../../../../src/contexts/host-registration/contract/host-registration.error.js";
 import { userBuiltMarketplaceDir } from "../../../../../../src/shared/domain/layout/aidd-layout.js";
 import { catalogAt, DIR, setup } from "../../../testing/registration-run.builder.js";
+
+const ABSENT: NativeCatalogProof = { canonical: false, hostReadable: true, sourceStatus: "absent" };
+const guard = (run: RegistrationRun, request: CatalogRequest) =>
+  guardAgainstConflict(run, request, ABSENT);
 
 describe("guarding a catalog against a name conflict", () => {
   const requested = { name: "aidd", pluginNames: ["a"] };
@@ -11,7 +20,7 @@ describe("guarding a catalog against a name conflict", () => {
   it("proceeds when the host registry holds nothing under the name", async () => {
     const { run } = setup();
     expect(
-      await guardAgainstConflict(run, { builtDir: DIR, identity: requested, marketplace: subject })
+      await guard(run, { builtDir: DIR, identity: requested, marketplace: subject })
     ).toBeUndefined();
   });
 
@@ -21,7 +30,7 @@ describe("guarding a catalog against a name conflict", () => {
       files: catalogAt("/other", ["a"]),
     });
     expect(
-      await guardAgainstConflict(run, { builtDir: DIR, identity: requested, marketplace: subject })
+      await guard(run, { builtDir: DIR, identity: requested, marketplace: subject })
     ).toBeUndefined();
   });
 
@@ -30,7 +39,7 @@ describe("guarding a catalog against a name conflict", () => {
       registry: { location: "r", entries: new Map([["aidd", "/other"]]) },
       files: catalogAt("/other", ["b"]),
     });
-    const refusal = guardAgainstConflict(run, {
+    const refusal = guard(run, {
       builtDir: DIR,
       identity: requested,
       marketplace: subject,
@@ -63,7 +72,7 @@ describe("guarding a catalog against a name conflict", () => {
       registry: { location: "r", entries: new Map([["aidd-framework", registered]]) },
       userCacheRoot: root,
     });
-    const decision = await guardAgainstConflict(run, {
+    const decision = await guard(run, {
       builtDir: built,
       identity: { name: "aidd-framework", pluginNames: [] },
       marketplace: { name: "aidd-framework", scope: "user" },

@@ -28,7 +28,7 @@ export async function reclaimOrReport(
   registration: DeadRegistration,
   addError: NativeRefusal
 ): Promise<boolean> {
-  const { marketplace, hostName } = registration;
+  const { hostName } = registration;
   const warn = (message: string): void => warnRegistration(run, message);
   const refusal = await refusalToReclaim(run, registration, addError);
   if (refusal !== undefined) {
@@ -38,15 +38,25 @@ export async function reclaimOrReport(
   warn(
     `Marketplace '${hostName}' was registered to a directory that no longer exists; re-registering it for this project. Plugins installed from it are removed and the ones this CLI manages are put back.`
   );
+  return replaceRegistration(run, registration, { force: true });
+}
+
+/** Removes the host's registration of the catalogue, then adds this run's build in its place. */
+export function replaceRegistration(
+  run: RegistrationRun,
+  { marketplace, hostName, builtDir }: DeadRegistration,
+  { force }: { readonly force: boolean }
+): boolean {
+  const warn = (message: string): void => warnRegistration(run, message);
   const { activator } = run;
   const removed = bestEffortNativeCall(
-    () => activator.removeMarketplace(hostName, marketplace.scope, { force: true }),
+    () => activator.removeMarketplace(hostName, marketplace.scope, { force }),
     skippedWarning(`unregister stale marketplace '${hostName}'`),
     warn
   ).confirmed;
   if (!removed) return false;
   return bestEffortNativeCall(
-    () => activator.addMarketplace(registration.builtDir, marketplace.scope),
+    () => activator.addMarketplace(builtDir, marketplace.scope),
     skippedWarning(`register marketplace '${hostName}'`),
     warn
   ).confirmed;

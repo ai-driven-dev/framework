@@ -4,6 +4,13 @@ import {
   registrationOf,
 } from "../../../../../../src/contexts/host-registration/application/register/marketplace/register-marketplace.js";
 import { UnreadableBuiltCatalogError } from "../../../../../../src/contexts/host-registration/contract/host-registration.error.js";
+import type { NativeMarketplaceSource } from "../../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
+import {
+  builtMarketplaceDir,
+  userBuiltMarketplaceDir,
+} from "../../../../../../src/shared/domain/layout/aidd-layout.js";
+import { FakeHostActions } from "../../../../../shared/testing/fake-host-actions.fake.js";
+import { TOOL } from "../../../../../shared/testing/registered-tools.builder.js";
 import { catalogAt, DIR, OWN, setup } from "../../../testing/registration-run.builder.js";
 
 const target = {
@@ -26,6 +33,98 @@ describe("registering a marketplace on a host", () => {
   it("refuses a built catalogue it cannot read back", async () => {
     const { run } = setup();
     await expect(registerMarketplace(run, target)).rejects.toThrow(UnreadableBuiltCatalogError);
+  });
+});
+
+describe("registering on a host that refuses a re-add from another source", () => {
+  const NAME = "aidd";
+  const USER_ROOT = "/home/.config/aidd";
+  const build = (cliVersion: string) =>
+    userBuiltMarketplaceDir({
+      userConfigDir: USER_ROOT,
+      cliVersion,
+      marketplaceName: NAME,
+      target: TOOL.codex,
+    });
+  const listed = (dir: string): NativeMarketplaceSource => ({
+    kind: "effective-list",
+    root: dir,
+    sourceType: "local",
+    source: dir,
+  });
+  const thisBuild = build("2.0.0");
+  const codexTarget = {
+    marketplace: { name: NAME, scope: "user" as const },
+    builtDir: thisBuild,
+    catalogClaims: [],
+  };
+
+  function codexHoldingRecorded(registered: string) {
+    return setup({
+      tool: TOOL.codex,
+      activator: new FakeHostActions({ available: true, conflictOnAdd: true }),
+      userCacheRoot: USER_ROOT,
+      sources: new Map([[NAME, listed(registered)]]),
+      claims: {
+        machine: async () => ({
+          marketplaces: [{ alias: NAME, hostName: NAME, provenance: listed(registered) }],
+          claimedRefs: [],
+        }),
+      },
+      files: {
+        [`${thisBuild}/.agents/plugins/marketplace.json`]: JSON.stringify({
+          name: NAME,
+          plugins: [],
+        }),
+      },
+    });
+  }
+
+  it("moves the registration this CLI recorded on an older build to this one, without a word", async () => {
+    const { run, activator, warnings } = codexHoldingRecorded(build("1.0.0"));
+    const claim = await registerMarketplace(run, codexTarget);
+    expect(warnings).toEqual([]);
+    expect(claim).toEqual({
+      hostName: NAME,
+      provenance: listed(thisBuild),
+      addedThisRun: true,
+    });
+    expect(activator.removedMarketplaces).toEqual([NAME]);
+    expect(activator.forcedRemovals).toEqual([false]);
+    expect(activator.addedMarketplaces).toEqual([thisBuild]);
+  });
+
+  it("leaves a registration on a newer build in place, warns, and counts it as registered", async () => {
+    const newer = build("3.0.0");
+    const { run, activator, warnings } = codexHoldingRecorded(newer);
+    const claim = await registerMarketplace(run, codexTarget);
+    expect(activator.removedMarketplaces).toEqual([]);
+    expect(activator.addedMarketplaces).toEqual([]);
+    expect(claim).toEqual({ hostName: NAME, provenance: listed(newer) });
+    expect(warnings).toEqual([
+      {
+        text: `codex's marketplace '${NAME}' (${newer}) already carries a newer aidd-framework build, 3.0.0, than this run's own 2.0.0 — not registering this run's build over it.`,
+        hint: "update-cli",
+      },
+    ]);
+  });
+
+  it("never moves an older build of another marketplace", async () => {
+    const other = userBuiltMarketplaceDir({
+      userConfigDir: USER_ROOT,
+      cliVersion: "1.0.0",
+      marketplaceName: "other",
+      target: TOOL.codex,
+    });
+    const { run, activator } = codexHoldingRecorded(other);
+    await registerMarketplace(run, codexTarget);
+    expect(activator.removedMarketplaces).toEqual([]);
+  });
+
+  it("never moves a registration whose path names no build version", async () => {
+    const { run, activator } = codexHoldingRecorded(builtMarketplaceDir("/p", NAME, TOOL.codex));
+    await registerMarketplace(run, codexTarget);
+    expect(activator.removedMarketplaces).toEqual([]);
   });
 });
 

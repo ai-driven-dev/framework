@@ -78,7 +78,8 @@ export class CheckMarketplaceSource {
   }
 }
 
-async function resolvedDrift(
+/** The drift between two sources, each path resolved first: the drift parsers compare spelling. */
+export async function resolvedDrift(
   fs: FileReader,
   sources: { readonly registeredSource: string; readonly requestedSource: string },
   context: MarketplaceSourceDriftContext

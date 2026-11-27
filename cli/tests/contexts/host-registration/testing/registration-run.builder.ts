@@ -3,6 +3,7 @@ import type { ClaimsView } from "../../../../src/contexts/host-registration/cont
 import type { HostMarketplaceRegistryReading } from "../../../../src/contexts/host-registration/domain/reading/marketplace-registry-reading.js";
 import type { HostPluginRegistryReading } from "../../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { NativeMarketplaceSource } from "../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
+import type { AiToolId } from "../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import { catalogReadersOver } from "../../../shared/testing/catalog-readers.builder.js";
 import { FakeHostActions } from "../../../shared/testing/fake-host-actions.fake.js";
@@ -39,9 +40,12 @@ export function setup(
     claims?: Partial<ClaimsView>;
     files?: Record<string, string>;
     userCacheRoot?: string;
+    tool?: AiToolId;
+    activator?: FakeHostActions;
   } = {}
 ) {
-  const activator = new FakeHostActions({ available: true });
+  const tool = options.tool ?? TOOL.claude;
+  const activator = options.activator ?? new FakeHostActions({ available: true });
   const logger = new CapturingLogger();
   const warnings: string[] = [];
   const hosts = {
@@ -53,16 +57,16 @@ export function setup(
     ),
     sources: new FakeHostMarketplaceSources(
       activator,
-      "registry",
+      tool === TOOL.claude ? "registry" : "effective-list",
       () => "aidd",
       options.sources ?? new Map()
     ),
   };
-  const profile = registeredTools().aiProfileIfAny(TOOL.claude);
-  if (profile === null) throw new Error("claude is an AI tool");
+  const profile = registeredTools().aiProfileIfAny(tool);
+  if (profile === null) throw new Error(`${tool} is an AI tool`);
   const fs = new InMemoryFileAdapter(options.files ?? {});
   const run: RegistrationRun = {
-    toolId: TOOL.claude,
+    toolId: tool,
     profile,
     activator,
     fs,
