@@ -1,14 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import { errorMessage } from "../../../shared/domain/describe-error.js";
+import { describeError } from "../../../shared/domain/describe-error.js";
 import type { RecipeDirectory, RecipeFiles, RecipeSource } from "../ports/recipe-files.js";
-
-function errorCode(error: unknown): string {
-  if (error instanceof Error && "code" in error && typeof error.code === "string") {
-    return error.code;
-  }
-  return errorMessage(error);
-}
 
 export class RecipeFilesAdapter implements RecipeFiles {
   read(file: string, contentRequired = true): RecipeSource {
@@ -22,7 +15,7 @@ export class RecipeFilesAdapter implements RecipeFiles {
       };
     } catch (error) {
       // Readability is a recipe/link validation result, never a silent successful read.
-      return { kind: "unreadable", code: errorCode(error) };
+      return { kind: "unreadable", code: describeError(error) };
     } finally {
       if (descriptor !== undefined) fs.closeSync(descriptor);
     }
@@ -37,7 +30,7 @@ export class RecipeFilesAdapter implements RecipeFiles {
         )
         .map((entry) => path.join(directory.path, entry.name));
     } catch (error) {
-      if (directory.optional && errorCode(error) === "ENOENT") return [];
+      if (directory.optional && describeError(error) === "ENOENT") return [];
       throw error;
     }
   }

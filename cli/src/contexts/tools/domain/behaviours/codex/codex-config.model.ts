@@ -1,3 +1,4 @@
+import { errorMessage } from "../../../../../shared/domain/describe-error.js";
 import { TomlParseError } from "../../../contract/errors/tools.error.js";
 import type { TomlCodec } from "../../formats/toml.js";
 
@@ -11,7 +12,7 @@ function parseToml(toml: TomlCodec, content: string): TomlRecord {
   try {
     return toml.parse(content);
   } catch (err) {
-    throw new TomlParseError(err instanceof Error ? err.message : String(err));
+    throw new TomlParseError(errorMessage(err));
   }
 }
 

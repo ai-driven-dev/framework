@@ -3,6 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 const adapters = require("../../check/generators/host-adapters.cjs");
+const { isTemplate, partNamesIn, templateOf } = require("../../../cli/scripts/host-adapter-parts.mjs");
 const { scratchRoot } = require("./helpers.js");
 
 const REPO = path.resolve(__dirname, "../../..");
@@ -56,8 +57,8 @@ describe("host adapters generator", () => {
   });
 
   it("finds every committed adapter to be what its parts generate", () => {
-    const templates = fs.readdirSync(path.join(REPO, PARTS)).filter((name) => /^host-.+\.js\.txt$/u.test(name)).map((name) => name.replace(/\.js\.txt$/u, ""));
-    const committed = fs.readdirSync(path.join(REPO, RUNTIME)).filter((name) => /^host-.+\.cjs$/u.test(name)).map((name) => name.replace(/\.cjs$/u, ""));
+    const templates = partNamesIn(path.join(REPO, RUNTIME)).filter(isTemplate);
+    const committed = fs.readdirSync(path.join(REPO, RUNTIME)).map(templateOf).filter((name) => name !== undefined).sort();
     assert.ok(templates.length > 0, "no template found: the scope is stale");
     assert.deepEqual(committed, templates, "an adapter with no template is never generated");
     assert.deepEqual(adapters.run({ root: REPO, write: false }), []);

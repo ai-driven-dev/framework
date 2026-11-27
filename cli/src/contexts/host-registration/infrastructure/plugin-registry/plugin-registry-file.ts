@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { describeError } from "../../../../shared/domain/describe-error.js";
+import { isErrnoException } from "../../../../shared/domain/reading/json-file.js";
 import type { HostPluginRegistryReading } from "../../domain/reading/plugin-registry-reading.js";
 
 /**
@@ -15,7 +16,7 @@ export async function readPluginRegistryFile(
   try {
     content = await readFile(path, "utf8");
   } catch (error) {
-    return error instanceof Error && "code" in error && error.code === "ENOENT"
+    return isErrnoException(error) && error.code === "ENOENT"
       ? { location: path, absent: true }
       : { location: path, unreadable: describeError(error) };
   }

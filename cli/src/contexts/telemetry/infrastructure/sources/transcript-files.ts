@@ -1,6 +1,7 @@
 import { constants, type Stats } from "node:fs";
 import { type FileHandle, open, readdir } from "node:fs/promises";
 import { join } from "node:path";
+import { errorMessage } from "../../../../shared/domain/describe-error.js";
 import { isErrnoException } from "../../../../shared/domain/reading/json-file.js";
 import type { EachTranscriptLine } from "../../domain/transcript/line-splitter.js";
 import { LineSplitter } from "../../domain/transcript/line-splitter.js";
@@ -78,7 +79,7 @@ export async function eachLine(
 /** Why `path` could not be read, to be shown by name: the error code when it has one. */
 function unreadableBecause(path: string, error: unknown): string {
   if (isErrnoException(error)) return `${path}: ${error.code}`;
-  return `${path}: ${error instanceof Error ? error.message : String(error)}`;
+  return `${path}: ${errorMessage(error)}`;
 }
 
 /** What a walk gathers: `TranscriptListing`, still being filled. */
