@@ -1,4 +1,5 @@
 import { copyFileSync, readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig, type Options } from "tsup";
@@ -38,6 +39,9 @@ function resolveOutDir(): string {
 
 const outDir = resolveOutDir();
 
+// Required at run time: the config's own bundling cannot inline a CommonJS module that requires Node built-ins.
+const { joinedHostAdapters } = createRequire(import.meta.url)("./scripts/host-adapter-parts.cjs");
+
 /**
  * The binary reads one field of this package's manifest: `version`, in
  * `src/composition/shared.ts`. Importing the manifest would otherwise
@@ -75,7 +79,7 @@ export default defineConfig({
   splitting: false,
   shims: false,
   skipNodeModulesBundle: true,
-  esbuildPlugins: [versionOnlyManifest],
+  esbuildPlugins: [versionOnlyManifest, joinedHostAdapters],
   esbuildOptions(options) {
     options.loader = {
       ...options.loader,
@@ -86,6 +90,9 @@ export default defineConfig({
     };
     options.minifySyntax = true;
     options.minifyWhitespace = true;
+    options.minifyIdentifiers = true;
+    // The binary ships no source map: every function and class keeps its own name, crash stacks too.
+    options.keepNames = true;
   },
   async onSuccess() {
     copyFileSync(
