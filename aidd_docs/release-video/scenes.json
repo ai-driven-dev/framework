@@ -803,47 +803,47 @@
       {
         "surface": "aidd setup",
         "theme": "Outils",
-        "text": "Utiliser AIDD dans 9 outils d'IA, Kiro et Kimi compris."
+        "text": "Outils : AIDD dans 9 outils d'IA, Kiro et Kimi compris."
       },
       {
         "surface": "hooks des plugins AIDD",
         "theme": "Contrôle",
-        "text": "Laisser des contrôles automatiques bloquer, signaler et faire corriger l'IA pendant qu'elle travaille."
+        "text": "Hooks : bloquer, signaler et faire corriger l'IA pendant qu'elle travaille."
       },
       {
         "surface": "aidd setup --provider",
         "theme": "Modèles",
-        "text": "Choisir chez quel fournisseur tournent la session principale et les sous-agents."
+        "text": "Modèles : choisir chez quel fournisseur tournent la session principale et les sous-agents."
       },
       {
         "surface": "aidd-pm:04-spec",
         "theme": "Contrôle",
-        "text": "Écrire la spec d'une fonctionnalité, courte, et la garder intacte une fois approuvée."
+        "text": "Spec : écrire la spec d'une fonctionnalité, courte, et la garder intacte une fois approuvée."
       },
       {
         "surface": "aidd-refine:02-challenge",
         "theme": "Contrôle",
-        "text": "Mettre à l'épreuve un travail fini et ce qu'on lui demandait, chaque constat avec sa preuve."
+        "text": "Challenge : mettre à l'épreuve un travail fini et ce qu'on lui demandait, chaque constat avec sa preuve."
       },
       {
         "surface": "aidd-refine:03-shadow-areas",
         "theme": "Contrôle",
-        "text": "Voir ce qu'une idée, une story, un PRD ou une spec laisse flou, sous forme de questions."
+        "text": "Shadow areas : voir ce qu'une idée, une story, un PRD ou une spec laisse flou, sous forme de questions."
       },
       {
         "surface": "aidd-vcs:06-answer-comments",
         "theme": "Contrôle",
-        "text": "Faire répondre l'IA aux commentaires de revue, fermer les fils réglés et ne garder que vos décisions."
+        "text": "Answer comments : faire répondre l'IA aux commentaires de revue, fermer les fils réglés et ne garder que vos décisions."
       },
       {
         "surface": "aidd-ui:01-journeys → 06-review",
         "theme": "Design",
-        "text": "Créer votre design system, de la marque aux écrans revus, en bêta."
+        "text": "AIDD UI (bêta) : créer votre design system, de la marque aux écrans revus."
       },
       {
         "surface": "CLI aidd",
         "theme": "Outils",
-        "text": "Profiter d'une CLI reconstruite pour la fiabilité, testée à chaque niveau."
+        "text": "CLI : reconstruite pour la fiabilité, testée à chaque niveau."
       }
     ]
   }
