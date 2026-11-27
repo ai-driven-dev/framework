@@ -6,7 +6,7 @@ import {
   consentOf,
   MEASUREMENT_SWITCH,
   measurementRefused,
-  tokenOfKey,
+  tokenOf,
   turnedOff,
 } from "../domain/telemetry-consent.js";
 import type { ConsentSource } from "../ports/consent-source.js";
@@ -78,7 +78,7 @@ export class FindConsentedRepository {
     // clone turned off is told so only past this point, where `on` would not refuse it.
     if (log.damaged || located.clone === null) return { reason: "unreadable-consent" };
     if (turnedOff(reading)) return { reason: "turned-off" };
-    const token = tokenOfKey(reading.kind === "value" ? reading.value : null);
+    const token = tokenOf(reading);
     const named = log.openFor(located.clone).find((interval) => interval.token === token);
     if (named === undefined) return { reason: "no-consent" };
     return { since: new Date(named.from).toISOString() };

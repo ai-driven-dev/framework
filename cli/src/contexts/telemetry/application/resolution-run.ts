@@ -11,7 +11,7 @@ import {
   unreadableAt,
   verdictOn,
 } from "../domain/resolution/resolution-judgement.js";
-import { type CloneConsentReading, tokenOfKey } from "../domain/telemetry-consent.js";
+import { type CloneConsentReading, tokenOf } from "../domain/telemetry-consent.js";
 import type { ConsentSource } from "../ports/consent-source.js";
 import type { RepositoryLocator } from "../ports/repository-locator.js";
 
@@ -57,9 +57,7 @@ export interface ResolutionRun {
 const closedIntervalOf =
   (consents: ConsentLog, readClone: ResolutionMachine["readClone"]) =>
   async (clone: CloneIdentity): Promise<boolean> => {
-    const reading = await readClone(clone);
-    const token = reading.kind === "value" ? tokenOfKey(reading.value) : null;
-    return token !== null && consents.hasClosed(clone, token);
+    return consents.hasClosed(clone, tokenOf(await readClone(clone)));
   };
 
 /** What a run remembers of the directories it saw, as it goes. */

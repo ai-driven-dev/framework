@@ -1,13 +1,11 @@
-import { tryParseJson } from "../../../../shared/domain/reading/json-file.js";
 import { stripJsonComments } from "../../../../shared/domain/reading/jsonc.js";
-import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
+import { plainObjectIn } from "../../../../shared/domain/reading/plain-object.js";
 import { RETENTION_DEFAULT_DAYS, RETENTION_WANTED_DAYS } from "../../contract/claude-retention.js";
+import { counter } from "../read-back.js";
 
 function daysIn(text: string | null): number | null {
   if (text === null) return null;
-  const parsed = tryParseJson(stripJsonComments(text));
-  const value = parsed.ok ? asPlainObject(parsed.value)?.cleanupPeriodDays : undefined;
-  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : null;
+  return counter(plainObjectIn(stripJsonComments(text))?.cleanupPeriodDays);
 }
 
 /** The first settings text that sets `cleanupPeriodDays` wins, so they are given the way

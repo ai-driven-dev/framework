@@ -1,6 +1,7 @@
 import { rm, writeFile } from "node:fs/promises";
-import { isErrnoException, tryParseJson } from "../../../../../shared/domain/reading/json-file.js";
-import { asPlainObject } from "../../../../../shared/domain/reading/plain-object.js";
+import { isErrnoException } from "../../../../../shared/domain/reading/json-file.js";
+import { plainObjectIn } from "../../../../../shared/domain/reading/plain-object.js";
+import { isCount, isInstant } from "../../../domain/read-back.js";
 import { modifiedAtIfPresent, readTextIfPresent } from "../../reading/text-file.js";
 
 export interface LockOptions {
@@ -46,13 +47,10 @@ interface Holder {
 }
 
 function holderIn(text: string): Holder | null {
-  const parsed = tryParseJson(text);
-  const lock = parsed.ok ? asPlainObject(parsed.value) : null;
-  const createdAt = Date.parse(String(lock?.created_at));
+  const lock = plainObjectIn(text);
   const pid = lock?.pid;
-  return typeof pid === "number" && Number.isInteger(pid) && !Number.isNaN(createdAt)
-    ? { pid, createdAt }
-    : null;
+  const createdAt = lock?.created_at;
+  return isCount(pid) && isInstant(createdAt) ? { pid, createdAt: Date.parse(createdAt) } : null;
 }
 
 /** A lock file holding the pid and creation time of its owner, created exclusively. The owner

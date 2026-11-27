@@ -1,7 +1,8 @@
 import { asPlainObject } from "../../../../../shared/domain/reading/plain-object.js";
 import type { UsageRecord, UsageTool } from "../../../contract/usage-record.js";
+import { text } from "../../../domain/read-back.js";
 import { CodexContext } from "../../../domain/transcript/codex-context.js";
-import { expected, type Json, text } from "../../../domain/transcript/line-values.js";
+import { expected, type Json } from "../../../domain/transcript/line-values.js";
 import type { LineNames } from "../../../domain/transcript-position.js";
 
 export interface CodexUsageLine {

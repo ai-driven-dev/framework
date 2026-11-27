@@ -77,8 +77,7 @@ export class UsageLedgerAdapter implements UsageLedger {
     for (const name of names) {
       const partition = partitionOf(name);
       if (holds !== undefined && !holds(partition)) continue;
-      const text = (await readTextIfPresent(join(this.dir, name))) ?? "";
-      parts.push({ partition, ...readDay(text) });
+      parts.push({ partition, ...readDay(await readTextIfPresent(join(this.dir, name))) });
     }
     return mergeDays(parts);
   }
@@ -90,8 +89,7 @@ export class UsageLedgerAdapter implements UsageLedger {
     const days = partitionByDay(records);
     const emptied: string[] = [];
     // Every write comes before any removal, so the order of the writes is free.
-    for (const day of new Set([...days.keys(), ...kept.keys(), ...held.keys()])) {
-      if (!named(day)) continue;
+    for (const day of new Set([...[...days.keys()].filter(named), ...held.keys()])) {
       const content = dayContent(days.get(day) ?? [], kept.get(day) ?? []);
       const emptiedPath = await this.writeDay(day, content, held.get(day));
       if (emptiedPath !== null) emptied.push(emptiedPath);
@@ -133,8 +131,7 @@ export class UsageLedgerAdapter implements UsageLedger {
       if (!named(day)) continue;
       const text = await readTextIfPresent(join(this.dir, name));
       held.set(day, text);
-      const lines = keptLines(text);
-      if (lines.size > 0) kept.set(day, lines);
+      kept.set(day, keptLines(text));
     }
     return { held, kept };
   }

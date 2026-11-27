@@ -1,6 +1,6 @@
-import { tryParseJson } from "../../../shared/domain/reading/json-file.js";
-import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
+import { plainObjectIn } from "../../../shared/domain/reading/plain-object.js";
 import { USAGE_AGENTS, USAGE_TOOLS, type UsageRecord } from "../contract/usage-record.js";
+import { isCount, isFilledText, isListed, isNullableText } from "./read-back.js";
 import { shiftDay } from "./report/period.js";
 import { compareText } from "./text-order.js";
 import { foldUsage } from "./usage-fold.js";
@@ -112,9 +112,10 @@ function daysOf(record: StoredUsage, was: StoredUsage | undefined): string[] {
 }
 
 /** Records grouped by the day of their own time, each day in time order then key, so the
- * bytes of a partition depend on what it holds and never on the order it was found in. A
- * record with no day (see `dayOf`) is left out. Linear in the records, bar the sort: each
- * time is parsed once, and each day's array only ever grows by `push`. */
+ * bytes of a partition depend on what it holds and never on the order it was found in. The
+ * days come in order too: a day follows from its time. A record with no day (see `dayOf`) is
+ * left out. Linear in the records, bar the sort: each time is parsed once, and each day's
+ * array only ever grows by `push`. */
 export function partitionByDay(
   records: readonly StoredUsage[]
 ): ReadonlyMap<string, readonly StoredUsage[]> {
@@ -136,23 +137,7 @@ export function partitionByDay(
     if (held === undefined) days.set(day, [record]);
     else held.push(record);
   }
-  return new Map([...days.entries()].sort(([a], [b]) => compareText(a, b)));
-}
-
-function isText(value: unknown): value is string {
-  return typeof value === "string" && value !== "";
-}
-
-function isListed<T>(list: readonly T[], value: unknown): value is T {
-  return list.some((member) => member === value);
-}
-
-function isCounter(value: unknown): boolean {
-  return value === null || (typeof value === "number" && Number.isInteger(value) && value >= 0);
-}
-
-function isNullableText(value: unknown): boolean {
-  return value === null || typeof value === "string";
+  return days;
 }
 
 function isStoredUsage(
@@ -161,22 +146,21 @@ function isStoredUsage(
   return (
     isListed(USAGE_TOOLS, object.tool) &&
     isListed(USAGE_AGENTS, object.agent) &&
-    isText(object.key) &&
-    isText(object.session_id) &&
+    isFilledText(object.key) &&
+    isFilledText(object.session_id) &&
     typeof object.at === "string" &&
     dayOf(object.at) !== null &&
-    isText(object.repository_id) &&
+    isFilledText(object.repository_id) &&
     isNullableText(object.tool_version) &&
     isNullableText(object.model) &&
     isNullableText(object.cwd) &&
     isNullableText(object.git_branch) &&
-    COUNTERS.every((field) => isCounter(object[field]))
+    COUNTERS.every((field) => object[field] === null || isCount(object[field]))
   );
 }
 
 function readStoredUsage(line: string): StoredUsage | null {
-  const parsed = tryParseJson(line);
-  const object = parsed.ok ? asPlainObject(parsed.value) : null;
+  const object = plainObjectIn(line);
   return object !== null && isStoredUsage(object) ? object : null;
 }
 

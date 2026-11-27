@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   consentOf,
   consentValue,
+  tokenOf,
   tokenOfKey,
   turnedOff,
 } from "../../../../src/contexts/telemetry/domain/telemetry-consent.js";
@@ -40,6 +41,22 @@ describe("a clone's consent", () => {
 
   it("is unreadable, not absent, when git could not answer", () => {
     expect(consentOf({ kind: "unreadable" })).toBe("unreadable");
+  });
+});
+
+describe("the token a clone's key grants", () => {
+  it("is the one its key names", () => {
+    expect(tokenOf(value("2:abc-123"))).toBe("abc-123");
+  });
+
+  it.each([
+    [value(null)],
+    [value("off")],
+    [{ kind: "unreadable" } as const],
+    [{ kind: "absent" } as const],
+    [{ kind: "replaced" } as const],
+  ])("is none when the clone reads %j", (reading) => {
+    expect(tokenOf(reading)).toBeNull();
   });
 });
 

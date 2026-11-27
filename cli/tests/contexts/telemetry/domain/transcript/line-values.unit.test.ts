@@ -1,27 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  counter,
-  expected,
-  text,
-} from "../../../../../src/contexts/telemetry/domain/transcript/line-values.js";
-
-describe("reading a counter", () => {
-  it("accepts a non-negative integer and nothing else", () => {
-    expect(counter(0)).toBe(0);
-    expect(counter(7)).toBe(7);
-    expect(counter(-1)).toBeNull();
-    expect(counter(1.5)).toBeNull();
-    expect(counter("3")).toBeNull();
-  });
-});
-
-describe("reading a text", () => {
-  it("accepts a non-empty string and nothing else", () => {
-    expect(text("a")).toBe("a");
-    expect(text("")).toBeNull();
-    expect(text(4)).toBeNull();
-  });
-});
+import { expected } from "../../../../../src/contexts/telemetry/domain/transcript/line-values.js";
 
 describe("reading an expected field", () => {
   it("returns the count and notes nothing when it is there", () => {

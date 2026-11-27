@@ -1,3 +1,4 @@
+import { linesIn } from "../read-back.js";
 import { parseStoredUsage, type StoredUsage, usageId } from "../stored-usage.js";
 import { compareText } from "../text-order.js";
 import { foldUsage } from "../usage-fold.js";
@@ -14,11 +15,10 @@ export interface DayPart extends DayRead {
 }
 
 /** One day's file: its records, and how many lines were none. */
-export function readDay(text: string): DayRead {
+export function readDay(text: string | null): DayRead {
   const records: StoredUsage[] = [];
   let skippedLines = 0;
-  for (const line of text.split("\n")) {
-    if (line === "") continue;
+  for (const line of linesIn(text)) {
     const read = parseStoredUsage(line);
     if (read === null) {
       skippedLines += 1;
@@ -31,8 +31,7 @@ export function readDay(text: string): DayRead {
 
 /** The lines of a day's file that are no record, each once: kept as they are. */
 export function keptLines(text: string | null): ReadonlySet<string> {
-  const lines = (text ?? "").split("\n");
-  return new Set(lines.filter((line) => line !== "" && parseStoredUsage(line) === null));
+  return new Set(linesIn(text).filter((line) => parseStoredUsage(line) === null));
 }
 
 /** What a day's file holds once rewritten: its records, then the lines kept. `null` when

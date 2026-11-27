@@ -2,6 +2,7 @@ import { join } from "node:path";
 import type { PrivateStorage } from "../../../../../shared/ports/private-storage.js";
 import { type BranchSnapshot, snapshotKey } from "../../../domain/branch-binding.js";
 import { parseBranchSnapshot } from "../../../domain/declaration/branch-snapshot-line.js";
+import { linesIn } from "../../../domain/read-back.js";
 import type { BindingSnapshotStore } from "../../../ports/bindings/binding-snapshot-store.js";
 import { readTextIfPresent } from "../../reading/text-file.js";
 
@@ -37,8 +38,9 @@ export class BindingSnapshotStoreAdapter implements BindingSnapshotStore {
 
   /** Every snapshot, in the order taken. */
   private async read(): Promise<BranchSnapshot[]> {
-    const text = (await readTextIfPresent(this.path)) ?? "";
-    return text.split("\n").flatMap((line) => parseBranchSnapshot(line) ?? []);
+    return linesIn(await readTextIfPresent(this.path)).flatMap(
+      (line) => parseBranchSnapshot(line) ?? []
+    );
   }
 
   async append(snapshots: readonly BranchSnapshot[]): Promise<void> {

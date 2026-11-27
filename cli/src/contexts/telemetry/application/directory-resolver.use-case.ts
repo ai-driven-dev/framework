@@ -2,7 +2,7 @@ import { cloneKey } from "../domain/consent/clone-identity.js";
 import { closeEvent } from "../domain/consent/consent-history.js";
 import { ConsentLog } from "../domain/consent/consent-log.js";
 import { RememberedResolutions } from "../domain/remembered-resolutions.js";
-import { tokenOfKey } from "../domain/telemetry-consent.js";
+import { tokenOf } from "../domain/telemetry-consent.js";
 import type { ConsentHistory } from "../ports/consent-history.js";
 import type { ConsentSource } from "../ports/consent-source.js";
 import type { ResolutionStore } from "../ports/resolution-store.js";
@@ -55,8 +55,7 @@ export class DirectoryResolver {
         continue;
       }
       if (reading.kind === "absent") continue;
-      const named = reading.kind === "value" && tokenOfKey(reading.value) === interval.token;
-      if (!named) {
+      if (tokenOf(reading) !== interval.token) {
         await this.deps.history.append(closeEvent(interval.token, this.deps.now()));
         consents = await this.consentLog();
       }
