@@ -21,7 +21,7 @@ export interface DeadRegistration {
   readonly builtDir: string;
 }
 
-// Reclaim only a dead Claude registration whose current source is recognisably AIDD-owned.
+// Reclaim only a dead registration (a host declaring `sourceCheckVerb`) whose current source is recognisably AIDD-owned.
 // `hostName`, never the project's alias, names every host-facing call.
 export async function reclaimOrReport(
   run: RegistrationRun,
