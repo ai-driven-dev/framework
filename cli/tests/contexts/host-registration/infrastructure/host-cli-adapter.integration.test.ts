@@ -1,11 +1,12 @@
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { windowsCommandLine } from "../../../../src/contexts/host-registration/infrastructure/executable-on-path.js";
 import { HostCliAdapter } from "../../../../src/contexts/host-registration/infrastructure/host-cli-adapter.js";
 import type { HostCliShape } from "../../../../src/contexts/host-registration/ports/host-cli-shape.js";
+import { newestRecording } from "../testing/recorded-host.builder.js";
 
 vi.mock("node:child_process", () => ({
   spawnSync: vi.fn(),
@@ -219,5 +220,47 @@ describe("a batch shim on PATH", () => {
 
     expect(new HostCliAdapter("probe.cmd", FULL_SHAPE).isAvailable()).toBe(true);
     expect(adapter().isAvailable()).toBe(false);
+  });
+});
+
+describe("listing the plugins a host installed from a marketplace", () => {
+  const listedBy = (host: string, id: string) =>
+    newestRecording(host).steps.find((step) => step.id === id)?.stdout ?? "";
+  const listing = (stdout: string, status = 0) =>
+    mockSpawnSync.mockReturnValue(makeResult({ stdout, status }));
+
+  it("names the enabled plugins of that marketplace alone, listed from the home directory", () => {
+    listing(listedBy("codex", "plugin-list"));
+    const codex = adapter({ pluginListLayout: "installed-plugin-ids" });
+
+    expect(codex.refsInstalledFrom("cx-one")).toEqual(["p@cx-one"]);
+    expect(codex.refsInstalledFrom("other")).toEqual([]);
+    expect(mockSpawnSync).toHaveBeenCalledWith(
+      "probe-tool",
+      ["plugin", "list", "--json"],
+      expect.objectContaining({ cwd: homedir() })
+    );
+  });
+
+  it("leaves out a plugin the host lists as disabled", () => {
+    listing(listedBy("copilot", "plugin-list-after-uninstall"));
+
+    expect(
+      adapter({ pluginListLayout: "name-marketplace-rows" }).refsInstalledFrom("mk-one")
+    ).toEqual([]);
+  });
+
+  it.each([
+    ["fails", "", 1, "installed-plugin-ids"],
+    ["answers no JSON", "not json", 0, "installed-plugin-ids"],
+    ["is not declared", "[]", 0, undefined],
+  ] as const)("names nothing when the list %s", (_case, stdout, status, pluginListLayout) => {
+    listing(stdout, status);
+
+    expect(
+      adapter(pluginListLayout === undefined ? {} : { pluginListLayout }).refsInstalledFrom(
+        "cx-one"
+      )
+    ).toBeUndefined();
   });
 });

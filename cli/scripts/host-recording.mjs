@@ -208,6 +208,7 @@ export function recordHost(host) {
       step("marketplace-list", ["plugin", "marketplace", "list", "--json"]);
       step("upgrade-local-marketplace", ["plugin", "marketplace", "upgrade", name]);
       step("install", ["plugin", "add", ref]);
+      step("plugin-list", ["plugin", "list", "--json"]);
       step("remove", ["plugin", "remove", ref]);
       step("remove-marketplace", ["plugin", "marketplace", "remove", name]);
     } else {
@@ -220,7 +221,9 @@ export function recordHost(host) {
       renameSync(marketA, `${marketA}-gone`);
       step("update-marketplace-vanished", ["plugin", "marketplace", "update", name]);
       renameSync(`${marketA}-gone`, marketA);
+      step("plugin-list", ["plugin", "list", "--json"]);
       step("uninstall", ["plugin", "uninstall", ref]);
+      step("plugin-list-after-uninstall", ["plugin", "list", "--json"]);
       step("remove-marketplace", ["plugin", "marketplace", "remove", name]);
     }
     return { host, version, steps };

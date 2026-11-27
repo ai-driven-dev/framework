@@ -108,6 +108,7 @@ const CODEX_ACTIVATION: NativeActivationSpec = {
   // No upgrade verb: `marketplace upgrade` refreshes Git marketplaces only, and codex reads a local one live (probed 0.172.0).
   enableVerb: "add",
   disableVerb: "remove",
+  pluginListLayout: "installed-plugin-ids",
   // Codex's own `plugin remove` deletes a marketplace's cached content but leaves the
   // now-empty `cache/<hostName>/` shell behind. No `marketplaceRegistry` is declared -
   // codex refuses a re-add from a different source itself, so there is no registry to

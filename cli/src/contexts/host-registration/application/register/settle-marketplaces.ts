@@ -19,7 +19,6 @@ export interface SettledMarketplaces {
   readonly preservedMarketplaces: readonly RegisteredMarketplace[];
   readonly catalogClaims: readonly RegisteredMarketplace[];
   readonly addedHostNames: ReadonlySet<string>;
-  readonly repointedHostNames: ReadonlySet<string>;
   /** A marketplace whose build failed was warned about and left unregistered this run. */
   readonly buildFailed: boolean;
 }
@@ -29,7 +28,6 @@ interface Settling {
   readonly preservedMarketplaces: RegisteredMarketplace[];
   readonly catalogClaims: RegisteredMarketplace[];
   readonly addedHostNames: Set<string>;
-  readonly repointedHostNames: Set<string>;
   buildFailed: boolean;
 }
 
@@ -51,7 +49,6 @@ export async function settleMarketplaces<M extends RegistrationSubject>(
     preservedMarketplaces: [],
     catalogClaims: [],
     addedHostNames: new Set(),
-    repointedHostNames: new Set(),
     buildFailed: false,
   };
   const scene = {
@@ -86,12 +83,11 @@ async function settleOne<M extends RegistrationSubject>(
 function keepClaim(
   settling: Settling,
   entry: RegisteredMarketplace,
-  claim: { readonly hostName: string; readonly addedThisRun?: true; readonly repointed?: true }
+  claim: { readonly hostName: string; readonly addedThisRun?: true }
 ): void {
   settling.marketplaces.push(entry);
   settling.catalogClaims.push(entry);
   if (claim.addedThisRun === true) settling.addedHostNames.add(claim.hostName);
-  if (claim.repointed === true) settling.repointedHostNames.add(claim.hostName);
 }
 
 /** A marketplace this run did not register keeps what the project recorded for it, unless the

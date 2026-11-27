@@ -29,6 +29,7 @@ export type NativeCliShape = Pick<
   | "enableVerb"
   | "disableVerb"
   | "pluginArgs"
+  | "pluginListLayout"
 >;
 
 /** A tool's native activation, asked and never read: every stored value sits behind an answer. */
@@ -63,6 +64,7 @@ export class NativeActivation implements NativeActivationAnswers {
       enableVerb: spec.enableVerb,
       disableVerb: spec.disableVerb,
       pluginArgs: spec.pluginArgs,
+      pluginListLayout: spec.pluginListLayout,
     };
   }
 

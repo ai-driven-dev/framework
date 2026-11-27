@@ -87,6 +87,7 @@ describe("ClaudeCliAdapter - removing a user-scope marketplace deletes its regis
     new HostCliAdapter("claude", {
       scopeArgs: { project: ["--scope", "local"], user: ["--scope", "user"] },
       userRemoveArgs: [],
+      pluginListLayout: "id-scope-rows",
     });
 
   function listing(stdout: string, status = 0) {

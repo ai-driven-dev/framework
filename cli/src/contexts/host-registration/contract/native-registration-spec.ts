@@ -16,6 +16,9 @@ export type MarketplaceRegistryLayout = "install-locations-by-name";
 /** How a host's marketplace list answers when asked for JSON. */
 export type MarketplaceListLayout = "marketplaces-with-source" | "name-source-rows";
 
+/** How a host's `plugin list --json` answers. */
+export type PluginListLayout = "id-scope-rows" | "installed-plugin-ids" | "name-marketplace-rows";
+
 /** Where a host's registry lives under the home directory, and the layout its file is read as. */
 export interface HostRegistryDeclaration<Layout extends string> {
   readonly location: HomeTemplate;
@@ -78,6 +81,8 @@ export interface NativeActivationSpec {
   /** Arguments every `plugin <verb> <ref>` call carries, after the reference. Claude needs
    * `--yes` on install and uninstall alike: a headless stdin can answer no prompt. */
   pluginArgs?: readonly string[];
+  /** How the host's own plugin list answers, read before a forced marketplace removal. */
+  pluginListLayout?: PluginListLayout;
   /** This tool's own plugin registry: the file it keeps and the layout it is read as. Read by
    * `doctor` to compare what the host loads with what a manifest claims. Omit for a tool whose
    * registry was never measured; it is then reported unanswerable rather than assumed to agree. */

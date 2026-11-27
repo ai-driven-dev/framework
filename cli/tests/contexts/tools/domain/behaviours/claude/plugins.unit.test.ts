@@ -53,6 +53,7 @@ describe("claude plugins", () => {
         disableVerb: "uninstall",
         upgradeVerb: "update",
         pluginArgs: ["--yes"],
+        pluginListLayout: "id-scope-rows",
       });
       expect(activation?.marketplaceRegistryAt("/home/tester")?.layout).toBe(
         "install-locations-by-name"

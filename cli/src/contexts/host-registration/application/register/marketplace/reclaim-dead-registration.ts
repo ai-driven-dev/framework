@@ -41,24 +41,39 @@ export async function reclaimOrReport(
   return replaceRegistration(run, registration);
 }
 
-/** Forced out, then re-added: Copilot refuses a plain remove with plugins installed (probed 1.0.114). */
+/** Forced out, re-added, then every ref listed from it put back: Copilot's forced remove uninstalls them, Codex keeps them on the old build (probed 1.0.114, 0.172.0). */
 export function replaceRegistration(
   run: RegistrationRun,
   { marketplace, hostName, builtDir }: DeadRegistration
 ): boolean {
   const warn = (message: string): void => warnRegistration(run, message);
   const { activator } = run;
+  const installed = activator.refsInstalledFrom(hostName);
+  if (installed === undefined) {
+    warn(
+      `Native plugin activation — marketplace '${hostName}' not moved to this build: the plugins installed from it could not be listed.`
+    );
+    return false;
+  }
   const removed = bestEffortNativeCall(
     () => activator.removeMarketplace(hostName, marketplace.scope, { force: true }),
     skippedWarning(`unregister stale marketplace '${hostName}'`),
     warn
   ).confirmed;
   if (!removed) return false;
-  return bestEffortNativeCall(
+  const added = bestEffortNativeCall(
     () => activator.addMarketplace(builtDir, marketplace.scope),
     skippedWarning(`register marketplace '${hostName}'`),
     warn
   ).confirmed;
+  if (!added) return false;
+  for (const ref of installed)
+    bestEffortNativeCall(
+      () => activator.enablePlugin(ref, marketplace.scope),
+      skippedWarning(`enable plugin '${ref}'`),
+      warn
+    );
+  return true;
 }
 
 /** Why a dead registration is not reclaimed, or `undefined` when it is ours to take back. */

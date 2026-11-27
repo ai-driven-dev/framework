@@ -264,6 +264,9 @@ export class CrashingUninstallActivator implements HostActions {
   upgradeMarketplaces(): HostRefusal {
     return undefined;
   }
+  refsInstalledFrom(): readonly string[] {
+    return [];
+  }
   enablePlugin(): HostRefusal {
     return undefined;
   }
@@ -293,6 +296,9 @@ export class OrderRecordingActivator implements HostActions {
   }
   upgradeMarketplaces(): HostRefusal {
     return undefined;
+  }
+  refsInstalledFrom(): readonly string[] {
+    return [];
   }
   enablePlugin(): HostRefusal {
     return undefined;
@@ -325,6 +331,9 @@ export class AssertingActivator implements HostActions {
   }
   upgradeMarketplaces(): HostRefusal {
     return undefined;
+  }
+  refsInstalledFrom(): readonly string[] {
+    return [];
   }
   enablePlugin(): HostRefusal {
     return undefined;

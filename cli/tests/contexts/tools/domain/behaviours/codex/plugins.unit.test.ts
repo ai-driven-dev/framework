@@ -15,6 +15,7 @@ describe("codex plugins", () => {
       expect(activation?.cliShape()).toEqual({
         enableVerb: "add",
         disableVerb: "remove",
+        pluginListLayout: "installed-plugin-ids",
       });
       expect(activation?.pluginRegistryAt("/home/tester")?.layout).toBe("toml-plugin-tables");
       expect(activation?.marketplaceSourcesDeclaration()).toEqual(

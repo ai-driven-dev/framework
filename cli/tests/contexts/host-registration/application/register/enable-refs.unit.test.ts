@@ -2,10 +2,7 @@ import { describe, expect, it } from "vitest";
 import { enableRefs } from "../../../../../src/contexts/host-registration/application/register/enable-refs.js";
 import { enabled, setup } from "../../testing/registration-run.builder.js";
 
-const proven = {
-  proven: [{ alias: "aidd", hostName: "aidd" }],
-  repointedHostNames: new Set<string>(),
-};
+const proven = [{ alias: "aidd", hostName: "aidd" }];
 const ask = (...refs: string[]) => ({ scope: "project" as const, refsToEnable: () => refs });
 
 describe("enabling plugin refs on a host", () => {
@@ -22,14 +19,9 @@ describe("enabling plugin refs on a host", () => {
       seen.push(names);
       return [];
     };
-    await enableRefs(
-      run,
-      { scope: "project", refsToEnable },
-      {
-        proven: [{ alias: "mine", hostName: "theirs" }],
-        repointedHostNames: new Set(),
-      }
-    );
+    await enableRefs(run, { scope: "project", refsToEnable }, [
+      { alias: "mine", hostName: "theirs" },
+    ]);
     expect(seen.map((names) => [...names])).toEqual([[["mine", "theirs"]]]);
   });
 
@@ -47,16 +39,5 @@ describe("enabling plugin refs on a host", () => {
     });
     expect(await enableRefs(run, ask("x@aidd"), proven)).toEqual(["x@aidd"]);
     expect(activator.enabledPlugins).toEqual([]);
-  });
-
-  it("enables again a ref it owns on a catalogue moved to a newer build", async () => {
-    const { run, activator } = setup({
-      plugins: enabled("x@aidd"),
-      claims: { machine: async () => ({ marketplaces: [], claimedRefs: ["x@aidd"] }) },
-    });
-    expect(
-      await enableRefs(run, ask("x@aidd"), { ...proven, repointedHostNames: new Set(["aidd"]) })
-    ).toEqual(["x@aidd"]);
-    expect(activator.enabledPlugins).toEqual(["x@aidd"]);
   });
 });

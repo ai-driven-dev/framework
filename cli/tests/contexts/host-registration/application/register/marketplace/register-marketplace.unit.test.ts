@@ -59,10 +59,13 @@ describe("registering on a host that refuses a re-add from another source", () =
     catalogClaims: [],
   };
 
-  function codexHoldingRecorded(registered: string) {
+  function codexHoldingRecorded(
+    registered: string,
+    installed: readonly string[] | "unlistable" = []
+  ) {
     return setup({
       tool: TOOL.codex,
-      activator: new FakeHostActions({ available: true, conflictOnAdd: true }),
+      activator: new FakeHostActions({ available: true, conflictOnAdd: true, installed }),
       userCacheRoot: USER_ROOT,
       sources: new Map([[NAME, listed(registered)]]),
       claims: {
@@ -88,11 +91,25 @@ describe("registering on a host that refuses a re-add from another source", () =
       hostName: NAME,
       provenance: listed(thisBuild),
       addedThisRun: true,
-      repointed: true,
     });
     expect(activator.removedMarketplaces).toEqual([NAME]);
     expect(activator.forcedRemovals).toEqual([true]);
     expect(activator.addedMarketplaces).toEqual([thisBuild]);
+  });
+
+  it("puts back on this build every plugin the host listed from it before the move", async () => {
+    const { run, activator } = codexHoldingRecorded(build("1.0.0"), ["demo@aidd", "extra@aidd"]);
+    await registerMarketplace(run, codexTarget);
+    expect(activator.enabledPlugins).toEqual(["demo@aidd", "extra@aidd"]);
+  });
+
+  it("never moves a registration whose installed plugins the host cannot list", async () => {
+    const { run, activator, warnings } = codexHoldingRecorded(build("1.0.0"), "unlistable");
+    expect(await registerMarketplace(run, codexTarget)).toBeUndefined();
+    expect(activator.removedMarketplaces).toEqual([]);
+    expect(warnings).toEqual([
+      `Native plugin activation — marketplace '${NAME}' not moved to this build: the plugins installed from it could not be listed.`,
+    ]);
   });
 
   it("leaves a registration on a newer build in place, warns, and counts it as registered", async () => {

@@ -12,20 +12,7 @@ import {
   runsThroughShell,
   windowsCommandLine,
 } from "./executable-on-path.js";
-
-/** Whether a plugin list names a plugin of the marketplace installed beyond the user's scope. A
- * list that does not parse counts as yes, like one that could not be read. */
-function listsOtherScopeUse(stdout: string, name: string): boolean {
-  // biome-ignore lint/plugin: a list that does not parse counts as use elsewhere, the answer that keeps the marketplace
-  try {
-    const plugins = JSON.parse(stdout) as { id?: string; scope?: string }[];
-    return plugins.some(
-      (plugin) => plugin.id !== undefined && isRefOnHost(plugin.id, name) && plugin.scope !== "user"
-    );
-  } catch {
-    return true;
-  }
-}
+import { type ListedPlugin, PLUGIN_LIST_PARSERS } from "./plugin-list-parsers.js";
 
 /**
  * Drives a host's own plugin CLI. Everything that differs between hosts comes from the shape its
@@ -96,13 +83,33 @@ export class HostCliAdapter implements HostActions {
   /** Whether a plugin of this marketplace is installed at a scope other than the user's, in any
    * project. A list it cannot read counts as yes, since that keeps the narrower removal. */
   private usedAtAnotherScope(name: string): boolean {
+    const listed = this.listedPlugins();
+    if (listed === undefined) return true;
+    return listed.some((plugin) => isRefOnHost(plugin.ref, name) && plugin.scope !== "user");
+  }
+
+  refsInstalledFrom(name: string): readonly string[] | undefined {
+    return this.listedPlugins()
+      ?.filter((plugin) => plugin.enabled && isRefOnHost(plugin.ref, name))
+      .map((plugin) => plugin.ref);
+  }
+
+  /** Every plugin the host lists from the home directory; `undefined` when it cannot be read. */
+  private listedPlugins(): readonly ListedPlugin[] | undefined {
+    const layout = this.shape.pluginListLayout;
+    if (layout === undefined) return undefined;
     const result = this.spawn(
       ["plugin", "list", "--json"],
       ["ignore", "pipe", "ignore"],
       homedir()
     );
-    if (result.error !== undefined || result.status !== 0) return true;
-    return listsOtherScopeUse(result.stdout, name);
+    if (result.error !== undefined || result.status !== 0) return undefined;
+    // biome-ignore lint/plugin: a list that does not parse answers nothing, like one that could not be read
+    try {
+      return PLUGIN_LIST_PARSERS[layout](result.stdout);
+    } catch {
+      return undefined;
+    }
   }
 
   /** A tool that cannot tell a dead registration from a live one answers `"unknown"`, which

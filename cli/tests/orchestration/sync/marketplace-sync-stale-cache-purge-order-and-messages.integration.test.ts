@@ -61,6 +61,9 @@ describe("SyncSettings - when the stale cache is purged and what it says", () =>
       upgradeMarketplaces(): HostRefusal {
         return undefined;
       }
+      refsInstalledFrom(): readonly string[] {
+        return [];
+      }
       enablePlugin(): HostRefusal {
         return undefined;
       }

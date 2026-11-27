@@ -26,6 +26,7 @@ describe("a tool's native activation", () => {
       upgradeVerb: "upgrade",
       updateVerb: "update",
       pluginArgs: ["--yes"],
+      pluginListLayout: "id-scope-rows",
     } as const;
 
     expect(new NativeActivation(declared).cliShape()).toStrictEqual({
@@ -38,6 +39,7 @@ describe("a tool's native activation", () => {
       enableVerb: declared.enableVerb,
       disableVerb: declared.disableVerb,
       pluginArgs: declared.pluginArgs,
+      pluginListLayout: declared.pluginListLayout,
     });
   });
 
