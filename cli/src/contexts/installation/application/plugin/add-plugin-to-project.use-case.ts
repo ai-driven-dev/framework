@@ -4,7 +4,7 @@ import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { MissingPluginMetadataError } from "../../contract/installation.error.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { AssertProjectIntegrationRemovable } from "../removal/assert-project-integration-removable.use-case.js";
-import { assertRequestedVersion } from "./add/existing-plugin.js";
+import { assertRequestedVersion, type PreviousInstall } from "./add/existing-plugin.js";
 import type { PlacePlugin } from "./add/place-plugin.use-case.js";
 import type { AddPluginRequest } from "./add/plugin-add.js";
 import { registerNativeGithubPlugins } from "./add/register-native-github-plugins.js";
@@ -19,6 +19,11 @@ export interface AddTargets {
   toolIds: AiToolId[];
   manifest: Manifest;
   machine: Manifest;
+}
+
+/** The targets of an add, with what an earlier step already superseded of the plugin. */
+interface SupersedingTargets extends AddTargets {
+  readonly previous?: PreviousInstall;
 }
 
 /** What placing an added plugin collaborates with. The tool catalog is the constructor's second argument. */
@@ -38,7 +43,9 @@ export class AddPluginToProject {
   async execute(options: AddPluginRequest, targets: AddTargets): Promise<void> {
     const { source, projectRoot, githubMarketplace } = options;
     const { toolIds, manifest, machine } = targets;
-    if (githubMarketplace) await this.prepareGithubAdd(options, toolIds, manifest);
+    const previous = githubMarketplace
+      ? await this.prepareGithubAdd(options, toolIds, manifest)
+      : undefined;
     const added = await this.deps.source.execute({
       source,
       projectRoot,
@@ -47,28 +54,28 @@ export class AddPluginToProject {
       catalog: options.pluginMetadata,
     });
     if (added.isGithubMarketplace) {
-      await this.addGithubMarketplacePlugin(options, added, { manifest, machine });
+      await this.addGithubMarketplacePlugin(options, added, { manifest, machine, previous });
     } else {
       await this.addLocalPlugin(options, added.distribution, targets);
     }
   }
 
-  /** Refuses or clears an existing entry before anything is fetched. */
+  /** Refuses or clears an existing entry before anything is fetched, returning what it held. */
   private async prepareGithubAdd(
     options: AddPluginRequest,
     toolIds: AiToolId[],
     manifest: Manifest
-  ): Promise<void> {
+  ): Promise<PreviousInstall> {
     const { pluginMetadata, projectRoot, replace } = options;
     if (pluginMetadata === undefined) throw new MissingPluginMetadataError();
     const existing = { pluginName: pluginMetadata.name, toolIds, manifest, projectRoot, replace };
-    await supersedeExisting(this.deps.assertIntegration, this.tools, existing);
+    return supersedeExisting(this.deps.assertIntegration, this.tools, existing);
   }
 
   private async addGithubMarketplacePlugin(
     options: AddPluginRequest,
     added: GithubAddedPluginSource,
-    manifests: Pick<AddTargets, "manifest" | "machine">
+    manifests: Pick<SupersedingTargets, "manifest" | "machine" | "previous">
   ): Promise<void> {
     const { flat, distribution } = added;
     if (flat.length > 0 && distribution !== undefined)
@@ -79,7 +86,7 @@ export class AddPluginToProject {
   private async addLocalPlugin(
     options: AddPluginRequest,
     read: PluginDistribution,
-    targets: AddTargets
+    targets: SupersedingTargets
   ): Promise<void> {
     const { toolIds, manifest, machine } = targets;
     const { source, projectRoot, marketplace, requiredVersion, replace, pluginMetadata } = options;
@@ -87,7 +94,9 @@ export class AddPluginToProject {
     const pluginName = dist.manifest.name;
     assertRequestedVersion(dist, requiredVersion);
     const existing = { pluginName, toolIds, manifest, projectRoot, replace };
-    const previous = await supersedeExisting(this.deps.assertIntegration, this.tools, existing);
+    const previous =
+      targets.previous ??
+      (await supersedeExisting(this.deps.assertIntegration, this.tools, existing));
     await this.deps.place.execute({
       dist,
       toolIds,
