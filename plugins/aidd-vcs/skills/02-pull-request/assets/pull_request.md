@@ -15,7 +15,6 @@ argument-hint: N/A
 <!--
 Instructions:
   - At least one of these must be checked.
-  - If you do not know which one to pick, pick "Feature".
   - Base yourself on commit history.
 -->
 
@@ -34,21 +33,23 @@ Instructions:
 - put important details here if necessary, in **bold**.
 -->
 
-## 🚶‍➡️ Behavior
+## 📌 Main changes
 
 <!--
 Instructions:
-- Summarize the behavior changes in a few sentences.
-- Use bullet points.
+- List the main changes as concise bullet points; reuse them in the final summary.
 - Focus on the user experience.
 - Be precise, not vague.
 -->
+
+## 🛠️ How it works
+
+<!-- Keep the approach brief; use numbered steps for an ordered process and bold the opening words of each step. -->
 
 ## 🧪 Steps to test
 
 <!--
 Instructions:
-- Give a list of steps to test the PR, using UI or not.
-- Use checkboxes.
+- Use one unchecked checkbox per acceptance criterion, phrased as an observable result; group related conditions or verification steps in nested bullets.
 - Do not include installation process, focus on functional testing.
 -->
