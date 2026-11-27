@@ -5,7 +5,7 @@ const { spawnSync } = require("node:child_process");
 const test = require("node:test");
 const yaml = require("js-yaml");
 
-const { credit, tagsFromOutputs, who, isMerge, prCredit, creditReleases } = require("../credit-release-authors.cjs");
+const { credit, tagsFromOutputs, who, isMerge, prCredit, pullRequestOf, coAuthors, takenOver, creditReleases } = require("../credit-release-authors.cjs");
 
 const root = path.resolve(__dirname, "../..");
 
@@ -296,15 +296,68 @@ test("isMerge: a two-parent commit is a merge commit", () => {
 
 test("prCredit: the pull request's author is credited over the commit author", () => {
   const commitReply = '{"login":"blafourcade","name":"Baptiste Lafourcade","parents":2}';
-  const pullsReply = JSON.stringify([{ user: { login: "alexsoyes" } }]);
 
-  assert.equal(prCredit(commitReply, pullsReply), "@alexsoyes");
+  assert.equal(prCredit(commitReply, { user: { login: "alexsoyes" } }), "@alexsoyes");
 });
 
-test("prCredit: falls back to the commit author when the pulls reply names no pull request", () => {
+test("prCredit: falls back to the commit author when no pull request merged the commit", () => {
   const commitReply = '{"login":"blafourcade","name":"Baptiste Lafourcade","parents":2}';
 
-  assert.equal(prCredit(commitReply, "[]"), "@blafourcade");
+  assert.equal(prCredit(commitReply, undefined), "@blafourcade");
+});
+
+// Real reply order: the pull request that merged a squash commit is not always listed first.
+test("pullRequestOf: the pull request whose merge commit is the SHA, not the first one listed", () => {
+  const sha = "ac73e9e87341dfc50ef1205a61c3fdac8b79bb9f";
+  const pullsReply = JSON.stringify([
+    { number: 1345, merge_commit_sha: "ea42611a46b642ad097cda53c526135313a8782e" },
+    { number: 1371, merge_commit_sha: sha },
+  ]);
+
+  assert.equal(pullRequestOf(sha, pullsReply).number, 1371);
+});
+
+// --- co-authors and taken-over pull requests -----------------------------
+
+test("credit: the line's other contributors join its credit, the author once", () => {
+  const resolve = () => ({ who: "@blafourcade", also: ["@waewoo", "@blafourcade", "Jane Doe"] });
+
+  assert.equal(credit(LINE_A, resolve), `${LINE_A} (@blafourcade, @waewoo, Jane Doe)`);
+});
+
+test("coAuthors: a GitHub noreply address is credited as @login, any other address by name", () => {
+  const message = [
+    "fix(cli): a subject",
+    "",
+    "Co-authored-by: Baptiste LAFOURCADE <119650761+blafourcade@users.noreply.github.com>",
+    "Co-Authored-By: Jane Doe <jane@example.com>",
+  ].join("\n");
+
+  assert.deepEqual(coAuthors(message), ["@blafourcade", "Jane Doe"]);
+});
+
+test("coAuthors: Claude and bots are never credited", () => {
+  const message = [
+    "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>",
+    "Co-authored-by: Claude Sonnet 5.5 <noreply@anthropic.com>",
+    "Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+  ].join("\n");
+
+  assert.deepEqual(coAuthors(message), []);
+});
+
+// Phrasings taken from merged pull request bodies.
+test("takenOver: each pull request a Supersedes line names, in single and list form", () => {
+  const authors = { 992: "waewoo", 1356: "blafourcade", 1361: "blafourcade", 1354: "blafourcade" };
+  const authorOf = (number) => authors[number] || "not-a-takeover";
+
+  assert.deepEqual(takenOver("Generators write for Kiro. Supersedes #992, crediting @waewoo.", authorOf), ["@waewoo"]);
+  assert.deepEqual(takenOver("Refs #1320. Supersedes #1356, #1361 and #1354.", authorOf), ["@blafourcade", "@blafourcade", "@blafourcade"]);
+  assert.deepEqual(takenOver("Supersedes the framing of #1346: facts come from docs.", authorOf), []);
+});
+
+test("takenOver: a bot's superseded pull request is never credited", () => {
+  assert.deepEqual(takenOver("Supersedes #1218.", () => "dependabot[bot]"), []);
 });
 
 // --- CLI entry: a bad or missing RELEASE_OUTPUTS fails loud, not silent --

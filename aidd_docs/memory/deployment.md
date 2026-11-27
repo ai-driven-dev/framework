@@ -38,7 +38,7 @@ Branch model: `vcs.md`. Cadence and safety rules: [`RELEASE.md`](../../RELEASE.m
 - The release PR merges with `--merge --admin`, the only method `.github/rulesets/main.json` allows.
 - So `main` never holds merged but unversioned code.
 - Tags: umbrella, `cli-v<semver>`, `<plugin>-v<semver>`.
-- `scripts/credit-release-authors.cjs` appends each author as `(@login)`, until release-please credits authors itself.
+- `scripts/credit-release-authors.cjs` appends each line's author, human co-authors and the authors of the pull requests its own one supersedes, as `(@login, ...)`. Release-please would credit the author alone.
 - The umbrella stays a draft until every asset is attached; n8n listens for its publication.
 - A failed video build keeps the release a draft: nothing is announced without its video.
 - A failed YouTube upload still lets Discord and Skool post, without the video link.
