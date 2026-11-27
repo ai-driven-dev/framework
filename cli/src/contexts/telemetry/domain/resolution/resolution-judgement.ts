@@ -11,8 +11,12 @@ export type DirectoryOutcome =
       readonly stored: RepositoryResolution;
       /** Resolved from the directory as it stands, not from what was remembered of it. */
       readonly live: boolean;
+      readonly mayConsent?: never;
     }
-  | { readonly skipped: Exclude<NotStoredReason, "unreadable-consent"> }
+  | {
+      readonly skipped: Exclude<NotStoredReason, "unreadable-consent">;
+      readonly mayConsent?: never;
+    }
   | {
       readonly skipped: "unreadable-consent";
       /** A clone remembered at the directory consented at the call's time: what the directory

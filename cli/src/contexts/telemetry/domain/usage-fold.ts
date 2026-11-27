@@ -34,14 +34,19 @@ function compareWinner(a: UsageRecord, b: UsageRecord): number {
   );
 }
 
-/** One record per `(tool, key)` across everything given: a streamed call and a resumed copy
- * show the same call several times, and only one of them is the call. */
-export function foldUsage<T extends UsageRecord>(records: Iterable<T>): T[] {
+/** One item per `(tool, key)` of its record across everything given: a streamed call and a
+ * resumed copy show the same call several times, and only one of them is the call. */
+export function foldUsageBy<T>(items: Iterable<T>, recordOf: (item: T) => UsageRecord): T[] {
   const winners = new Map<string, T>();
-  for (const record of records) {
+  for (const item of items) {
+    const record = recordOf(item);
     const id = `${record.tool}\u0000${record.key}`;
     const held = winners.get(id);
-    if (held === undefined || compareWinner(record, held) < 0) winners.set(id, record);
+    if (held === undefined || compareWinner(record, recordOf(held)) < 0) winners.set(id, item);
   }
-  return [...winners.entries()].sort(([a], [b]) => compareText(a, b)).map(([, record]) => record);
+  return [...winners.entries()].sort(([a], [b]) => compareText(a, b)).map(([, item]) => item);
+}
+
+export function foldUsage<T extends UsageRecord>(records: Iterable<T>): T[] {
+  return foldUsageBy(records, (record) => record);
 }

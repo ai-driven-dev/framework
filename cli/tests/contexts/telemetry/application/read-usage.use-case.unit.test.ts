@@ -64,8 +64,7 @@ const read = (files: Readonly<Record<string, Transcript>>, since = new Map()) =>
 describe("reading usage from transcripts", () => {
   it("hands back each call with its file and where the file now ends", async () => {
     const reading = await read({ "/t/a": { lines: [["call:k1", true]] } });
-    expect(reading.records.map((record) => record.key)).toEqual(["k1"]);
-    expect([...reading.fileOf.values()]).toEqual(["/t/a"]);
+    expect(reading.calls.map(({ record, path }) => [record.key, path])).toEqual([["k1", "/t/a"]]);
     expect(reading.positions.get("/t/a")).toEqual(END);
   });
 
@@ -78,17 +77,17 @@ describe("reading usage from transcripts", () => {
         ],
       },
     });
-    expect(reading.records.map((record) => record.session_id)).toEqual(["first"]);
+    expect(reading.calls.map(({ record }) => record.session_id)).toEqual(["first"]);
   });
 
   it("counts nothing from a line read again only for its context", async () => {
     const reading = await read({ "/t/a": { lines: [["call:k1", false]] } });
-    expect(reading.records).toEqual([]);
+    expect(reading.calls).toEqual([]);
   });
 
   it("keeps a file's old place and counts none of it when it changed under the read", async () => {
     const reading = await read({ "/t/a": { lines: [["call:k1", true]], position: null } });
-    expect(reading.records).toEqual([]);
+    expect(reading.calls).toEqual([]);
     expect(reading.positions.size).toBe(0);
   });
 

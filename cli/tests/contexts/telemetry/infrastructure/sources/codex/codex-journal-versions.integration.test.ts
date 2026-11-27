@@ -83,7 +83,9 @@ describe("the Codex journal as each observed tool version writes it", () => {
     it.skipIf(NO_ZSTD && version === COMPRESSED)(
       `reads a ${version} session into ${calls} calls: input ${input}, output ${output}, cache read ${cacheRead}, cache write ${cacheWrite}`,
       async () => {
-        const { records } = await read([resolve(SESSIONS, version)]);
+        const records = (await read([resolve(SESSIONS, version)])).calls.map(
+          ({ record }) => record
+        );
         const total = (field: "input" | "output" | "cache_read" | "cache_write") =>
           records.reduce((sum, record) => sum + (record[field] ?? Number.NaN), 0);
         expect(records.length).toBe(calls);

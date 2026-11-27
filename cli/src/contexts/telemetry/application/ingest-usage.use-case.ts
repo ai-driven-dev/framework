@@ -167,10 +167,9 @@ export class IngestUsage {
     );
     const oldest = readings.flatMap((reading) => reading.oldestTranscriptAt ?? []).sort();
     return {
-      records: readings.flatMap((reading) => reading.records),
+      calls: readings.flatMap((reading) => reading.calls),
       positions: new Map([...before, ...readings.flatMap((reading) => [...reading.positions])]),
       unrecognised: readings.flatMap((reading) => reading.unrecognised),
-      fileOf: new Map(readings.flatMap((reading) => [...reading.fileOf])),
       dropped: readings.flatMap((reading) => reading.dropped),
       oldestTranscriptAt: oldest[0] ?? null,
       skipped: new Set(readings.flatMap((reading) => [...reading.skipped])),
