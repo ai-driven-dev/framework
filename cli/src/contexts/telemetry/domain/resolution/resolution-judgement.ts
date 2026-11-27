@@ -93,8 +93,11 @@ export function directoryFrom(
     clone: located.clone,
     at: seen.at(),
   });
-  const others = learned.ownersOf(dir).filter((owner) => !sameClone(owner.clone, current.clone));
-  return { directory: { owners: [current, ...others], current }, remembered: learned };
+  // `learned` holds `current` too: a twin owner answers as the same clone.
+  return {
+    directory: { owners: [current, ...learned.ownersOf(dir)], current },
+    remembered: learned,
+  };
 }
 
 /** A call made in `cwd` at `at`. `closed` says whether the clone's own key, as it stands, names

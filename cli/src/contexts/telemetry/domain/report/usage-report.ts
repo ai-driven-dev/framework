@@ -7,6 +7,7 @@ import {
   type ReportRow,
   type Tally,
   UNATTRIBUTED_REASONS,
+  type UnattributedReason,
   type UsageReport,
 } from "../../contract/usage-report.js";
 import type { StoredUsage } from "../stored-usage.js";
@@ -43,10 +44,8 @@ function tally(held: Tally, record: StoredUsage): Tally {
   };
 }
 
-function unattributedValue(
-  attribution: Extract<Attribution, { state: "unattributed" }>
-): AxisValue {
-  return { kind: "unattributed", reason: attribution.reason };
+function unattributedValue(reason: UnattributedReason): AxisValue {
+  return { kind: "unattributed", reason };
 }
 
 /** What a call is on one axis: the row it lands on, and what a filter on that axis compares. */
@@ -83,11 +82,11 @@ export function axisValueOf({
     case "task":
       return attribution.state === "attributed"
         ? value(attribution.task)
-        : unattributedValue(attribution);
+        : unattributedValue(attribution.reason);
     case "ticket":
       return attribution.state === "attributed"
         ? value(attribution.ticket)
-        : unattributedValue(attribution);
+        : unattributedValue(attribution.reason);
   }
 }
 
@@ -103,8 +102,10 @@ const isValueRow = (row: ReportRow): row is ValueRow => row.value.kind === "valu
 const isOtherRow = (row: ReportRow): row is OtherRow => row.value.kind !== "value";
 
 /** Calls the axis has no value for, then work with no task, by reason. */
+const OTHER_ORDER = [ABSENT, ...UNATTRIBUTED_REASONS.map(unattributedValue)].map(rowKeyOf);
+
 function rank({ value }: OtherRow): number {
-  return value.kind === "absent" ? 0 : 1 + UNATTRIBUTED_REASONS.indexOf(value.reason);
+  return OTHER_ORDER.indexOf(rowKeyOf(value));
 }
 
 /** Days read in order; every other axis reads largest first. */

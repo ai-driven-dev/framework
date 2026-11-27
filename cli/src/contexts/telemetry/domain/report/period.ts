@@ -5,14 +5,15 @@ const DAY_MS = 86_400_000;
 /** The UTC day `days` after a `YYYY-MM-DD` day, as `toISOString` writes its first ten
  * characters: a day past four-digit years comes out in a shape no `YYYY-MM-DD` test accepts. */
 export function shiftDay(day: string, days: number): string {
-  return new Date(Date.parse(`${day}T00:00:00.000Z`) + days * DAY_MS).toISOString().slice(0, 10);
+  return shifted(day, days).toISOString().slice(0, 10);
+}
+
+/** The instant `days` after a `YYYY-MM-DD` day: an invalid date past what a date can hold. */
+function shifted(day: string, days: number): Date {
+  return new Date(Date.parse(`${day}T00:00:00.000Z`) + days * DAY_MS);
 }
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
-
-/** More days than lie between 0000-01-01 and 9999-12-31: a shift past it never names a
- * four-digit day, and one far enough past it leaves what a date can hold. */
-const MAX_SHIFT = 3_652_425;
 
 /** The UTC day of an instant, `YYYY-MM-DD`. */
 export function dayOf(at: string): string {
@@ -27,9 +28,9 @@ export function inPeriod(at: string, period: Period): boolean {
 /** The day `days` after a `YYYY-MM-DD` day, or `null` past what four digits can name, the
  * end of what a date can hold included. */
 function shift(day: string, days: number): string | null {
-  if (Math.abs(days) > MAX_SHIFT) return null;
-  const shifted = shiftDay(day, days);
-  return DAY.test(shifted) ? shifted : null;
+  if (Number.isNaN(shifted(day, days).getTime())) return null;
+  const text = shiftDay(day, days);
+  return DAY.test(text) ? text : null;
 }
 
 /** The days whose partitions can hold a call of the period, as a test on a `YYYY-MM-DD` day:
