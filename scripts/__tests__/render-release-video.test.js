@@ -1068,7 +1068,8 @@ test("a scanner sweeps the spec, and each line it reaches lights and spawns its 
   assert.ok(lit[0].at > sweep.at && lit[1].at > lit[0].at);
   assert.match(html, /<div class="cr-row" data-line="1"[^>]*><p>The theme stays after a reload\.<\/p><div class="cr-finding red" data-finding="1"><b>Deal breaker<\/b><span>Breaks when storage is blocked<\/span><small>theme\.ts:14<\/small><\/div><\/div>/);
   assert.ok(!html.includes("cr-slide"), "a section slide");
-  assert.ok(!/attack/i.test(html.replace(/<script[\s\S]*?<\/script>/g, "").replace(/<[^>]+>/g, " ")), "the word attack on screen");
+  const markup = html.split("<script").map((part, i) => (i === 0 ? part : part.slice(part.indexOf("</script>") + 9))).join("");
+  assert.ok(!/attack/i.test(markup), "the word attack on screen");
 });
 
 test("a design chain lights its stylised cards left to right, each with its skill, its keywords and an abstract visual", () => {
