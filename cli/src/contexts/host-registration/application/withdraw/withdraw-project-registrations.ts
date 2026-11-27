@@ -52,8 +52,7 @@ async function withdrawProjectTool(
     return undefined;
   }
   const run = { deps, activator, withdrawal, registrations, facts };
-  // Every plugin ref uninstalled before any marketplace is removed: only Copilot declares
-  // `forceRemoveArgs`, Claude can refuse a plain remove, and Codex's leaves the refs enabled (probed 0.172.0).
+  // Refs first: Copilot refuses a plain remove over installed plugins, Codex's leaves them enabled (probed 1.0.114, 0.172.0).
   for (const ref of registrations.pluginRefs) {
     await uninstallProjectRef(run, ref);
   }
