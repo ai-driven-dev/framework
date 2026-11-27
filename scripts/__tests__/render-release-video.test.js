@@ -69,6 +69,13 @@ test("the thumbnail is its own still composition showing the whole version and t
   assert.match(html, /data-duration="1"/);
 });
 
+test("a product scene ends 1.6 seconds after its last beat, a little faster than a terminal scene", () => {
+  const { html } = shownBy(gate);
+  const last = Math.max(...beatsOf(html).map((x) => x.at)) - 5;
+
+  assert.equal(sceneDuration(gate), Math.ceil((last + 1.6) * 2) / 2);
+});
+
 test("the video opens on the thumbnail for one frame, so a chat shows it as the preview, and keeps its bitrate", () => {
   const args = posterArgs({ video: "v.mp4", poster: "t.png", out: "o.mp4", bitrate: 866446 });
   const joined = args.join(" ");
@@ -78,6 +85,22 @@ test("the video opens on the thumbnail for one frame, so a chat shows it as the 
   assert.match(joined, /adelay=34\|34/);
   assert.equal(args[args.indexOf("-b:v") + 1], "866k");
   assert.equal(args[args.indexOf("-maxrate") + 1], "1083k");
+});
+
+test("a long video is encoded at the bitrate that keeps it under the Discord upload cap, sound included", () => {
+  const args = posterArgs({ video: "v.mp4", poster: "t.png", out: "o.mp4", bitrate: 1140000, duration: 102 });
+  const kbps = Number(args[args.indexOf("-b:v") + 1].replace("k", ""));
+  const audio = Number(args[args.indexOf("-b:a") + 1].replace("k", ""));
+  const maxrate = Number(args[args.indexOf("-maxrate") + 1].replace("k", ""));
+
+  assert.ok(((kbps + audio) * 1000 * 102) / 8 <= 9 * 1024 * 1024, `${kbps}k video and ${audio}k sound for 102 s`);
+  assert.ok(maxrate <= kbps * 1.25);
+});
+
+test("a short video keeps its own bitrate when it already fits", () => {
+  const args = posterArgs({ video: "v.mp4", poster: "t.png", out: "o.mp4", bitrate: 866446, duration: 30 });
+
+  assert.equal(args[args.indexOf("-b:v") + 1], "866k");
 });
 
 test("a scene's note appears after its last row, not with its window", () => {
@@ -575,3 +598,639 @@ test("a row that follows the work appears once the work is done, with its click"
   assert.ok(5 + sceneDuration(verdict) >= at + 2.5, "the scene cuts before the verdict is read");
 });
 
+
+test("the opening second and a half is encoded at a high quality of its own, the rest at the video's bitrate", () => {
+  const args = posterArgs({ video: "v.mp4", poster: "t.png", out: "o.mp4", bitrate: 866446 });
+
+  assert.equal(args[args.indexOf("-x264-params") + 1], "zones=0,45,q=12");
+});
+
+test("the poster is converted with the video's own colour matrix, and the output says which", () => {
+  const args = posterArgs({ video: "v.mp4", poster: "t.png", out: "o.mp4", bitrate: 866446 });
+  const joined = args.join(" ");
+
+  assert.match(joined, /\[0:v\]scale=1920:1080:out_color_matrix=bt709:out_range=tv,/);
+  assert.match(joined, /-colorspace bt709 -color_primaries bt709 -color_trc bt709/);
+});
+
+const pr = {
+  template: "github-pr",
+  pill: "Review",
+  title: "PR review:",
+  accent: "every comment answered.",
+  lead: "Settled threads close themselves.",
+  surfaces: [],
+  captions: ["Each comment answered", "Settled threads resolved", "Summary posted"],
+  pr: {
+    repo: "acme/acme-app",
+    number: 128,
+    title: "Add a dark mode toggle",
+    author: "alice",
+    branch: "feat/dark-mode",
+    base: "next",
+    checks: [{ name: "ci / test", state: "pass" }],
+  },
+  threads: [
+    { file: "src/theme.ts", line: 12, author: "bob", comment: "Rename this?", reply: "Renamed. (3f9c2a1b7)", resolve: true },
+    { file: "src/toggle.tsx", line: 30, author: "carol", comment: "Default to the system theme?", reply: "Should the default follow the system theme?" },
+  ],
+  summary: { kicker: "Your review, summed up by AI", title: "Review comments", lines: ["Done: 1 (3f9c2a1b7). Answered: 0. Decided: 0."] },
+};
+
+const ide = {
+  template: "ide-window",
+  pill: "Tools",
+  title: "Checks that run",
+  accent: "on their own.",
+  surfaces: [],
+  ide: {
+    label: "Claude Code · ~/acme-app",
+    files: [
+      { path: "CLAUDE.md", lines: ["# CLAUDE.md"] },
+      { path: "aidd_docs/tasks/dark-mode/plan.md", lines: ["# Plan: Dark mode toggle"] },
+    ],
+  },
+  steps: [
+    { caption: "Memory loaded", notice: { label: "SessionStart", text: "AIDD Context: refresh project memory", tone: "dim" }, open: "CLAUDE.md" },
+    { caption: "Broken plan fixed", user: "plan the dark mode toggle" },
+    { agent: "Plan written.", open: "aidd_docs/tasks/dark-mode/plan.md", file: "aidd_docs/tasks/dark-mode/plan.md", state: "red" },
+    { add: ["## Impact"], file: "aidd_docs/tasks/dark-mode/plan.md", state: "green" },
+  ],
+};
+
+const grid = {
+  template: "tool-grid",
+  pill: "Tools",
+  title: "One install,",
+  accent: "every tool.",
+  surfaces: [],
+  captions: ["Skills loaded in each tool"],
+  tools: [
+    { name: "Claude Code", dir: ".claude/", count: "48 skills" },
+    { name: "Codex", dir: ".codex/", count: "48 skills" },
+    { name: "Cursor", dir: ".cursor/", count: "48 skills" },
+  ],
+};
+
+const blocks = {
+  template: "architecture-blocks",
+  pill: "Context",
+  title: "Everything around",
+  accent: "one core.",
+  surfaces: [],
+  captions: ["Contexts in place", "Every test green"],
+  core: "AIDD",
+  blocks: [{ label: "Memory", detail: "aidd_docs/memory" }, { label: "Rules" }, { label: "Skills" }, { label: "Agents" }],
+  counter: { to: 48, label: "skills" },
+};
+
+const BEAT = /b\(([\d.]+), "(\w+)", "([^"]+)"(?:, (.*))?\);/g;
+const beatsOf = (html) => [...html.matchAll(BEAT)].map((m) => ({ at: Number(m[1]), act: m[2], sel: m[3], value: m[4] }));
+
+const panels = {
+  template: "panel-sequence",
+  pill: "CLI",
+  title: "CLI refactored",
+  surfaces: [],
+  captions: ["Clean layers.", "10 bounded contexts.", "Each test level proves one thing."],
+  panels: [
+    { kind: "layers", items: [{ label: "presentation", detail: "commands and output" }, { label: "contexts", detail: "the business" }, { label: "shared", detail: "pure types" }] },
+    { kind: "grid", items: [{ label: "installation" }, { label: "tools" }, { label: "translate" }] },
+    { kind: "levels", items: [{ label: "unit", detail: "a rule, no disk" }, { label: "e2e", detail: "the built binary" }] },
+  ],
+};
+
+const logos = {
+  template: "logo-row",
+  pill: "Tools",
+  title: "Now in 9 AI tools.",
+  surfaces: [],
+  captions: ["Kiro and Kimi join."],
+  tools: [{ name: "Claude Code", logo: "claudecode-color" }, { name: "Cursor", logo: "cursor" }, { name: "Kiro", logo: "kiro-color", new: true }, { name: "Kimi", logo: "kimi", new: true }],
+};
+
+const gate = {
+  template: "gate",
+  pill: "Hooks",
+  title: "Your AI checks itself as it works.",
+  surfaces: [],
+  captions: ["Blocked before a bad write.", "Told what it missed.", "Sent back until it is right."],
+  actor: "AI",
+  gate: "Hook",
+  target: "Your project",
+  files: ["spec.md", "button.css", "plan.md"],
+  outcomes: [
+    { kind: "block", label: "Blocked", action: "Edit spec.md", file: "spec.md", detail: "spec.md is locked" },
+    { kind: "inform", label: "Noted", action: "Write button.css", file: "button.css", detail: "Memory refreshed", note: "Memory" },
+    { kind: "require", label: "Fix required", action: "Write plan.md", file: "plan.md", detail: "Section Impact missing", fixed: "plan.md ✓" },
+  ],
+};
+
+const models = {
+  template: "model-switch",
+  pill: "Models",
+  title: "Pick your agents' models.",
+  surfaces: [],
+  captions: ["On Mistral.", "On OpenAI."],
+  terminal: "Terminal · ~/acme-app",
+  cards: [
+    { role: "reviewer", faces: [{ model: "claude-opus-5-5", logo: "anthropic" }, { model: "mistral-large-4", logo: "mistral-color" }, { model: "gpt-6.1-sol", logo: "openai" }] },
+    { role: "executor", faces: [{ model: "claude-haiku-5-5", logo: "anthropic" }, { model: "mistral-small-latest", logo: "mistral-color" }, { model: "gpt-6-luna", logo: "openai" }] },
+  ],
+  runs: [
+    { command: "aidd setup --provider mistral", flip: true, lines: [{ text: "Models on mistral:" }, { text: "  opencode reviewer: mistral/mistral-large-4 (high)" }] },
+    { command: "aidd setup --provider openai", flip: true, lines: [{ text: "Models on openai:" }, { text: "  opencode reviewer: openai/gpt-6.1-sol (high)" }] },
+  ],
+};
+
+const lock = {
+  template: "doc-lock",
+  pill: "Spec",
+  title: "Approved specs stay as approved.",
+  surfaces: [],
+  captions: ["A short spec.", "Approved, it locks.", "The AI's edit is refused."],
+  file: "spec.md",
+  status: ["status: draft", "status: locked"],
+  sections: [{ heading: "Target", text: "Dark mode stays on reload." }, { heading: "Done-when", text: "The toggle survives a reload." }],
+  attempt: { action: "Edit spec.md", refusal: "spec.md is locked: only the person who approves it sets its status back to draft. Write nothing to it." },
+};
+
+const challenge = {
+  template: "challenge-report",
+  pill: "Challenge",
+  title: "Every spec challenged, with proof.",
+  badge: "Rebuilt lean",
+  surfaces: [],
+  captions: ["The spec, line by line.", "Each finding, with its proof."],
+  spec: {
+    file: "spec.md",
+    lines: [
+      { text: "## Target" },
+      { text: "The theme stays after a reload.", finding: { tone: "red", label: "Deal breaker", text: "Breaks when storage is blocked", evidence: "theme.ts:14" } },
+      { text: "No flash of the wrong theme.", finding: { tone: "grn", label: "Holds", text: "Survives a reload" } },
+    ],
+  },
+};
+
+const chain = {
+  template: "chain-cards",
+  pill: "AIDD UI · Beta",
+  title: "From brand to reviewed screens.",
+  surfaces: [],
+  captions: ["Each step builds on the last.", "Reviewed, then published."],
+  steps: [
+    { label: "Journeys", skill: "aidd-ui:01-journeys", keywords: ["persona", "steps", "wireframe"], visual: "wireframe" },
+    { label: "Review", skill: "aidd-ui:06-review", keywords: ["OK / Revise", "publish"], visual: "verdict", caption: 1 },
+  ],
+};
+
+const scan = {
+  template: "scan-questions",
+  pill: "Shadow areas",
+  title: "Find what your story leaves unclear.",
+  surfaces: [],
+  captions: ["Unclear meaning, highlighted.", "Each becomes a plain question.", "Answered, the story is clear."],
+  file: "story.md",
+  story: [["As a visitor I ", { text: "quickly", fixed: "within 1 s", gap: 1 }, " switch theme."], ["Saved for ", { text: "a while", fixed: "a year", gap: 0 }, "."]],
+  gaps: [{ category: "missing edge case", question: "How long is a while?", quote: "a while" }, { category: "ambiguous term", question: "How fast is quickly?", quote: "quickly" }],
+  status: ["2 open questions", "Clear ✓"],
+};
+
+const wave = { template: "contributor-wave", pill: "Thanks", title: "Thank you.", surfaces: [], logins: ["alice", "bob", "carol"] };
+
+const surfaces = [pr, ide, grid, blocks, panels, logos, gate, models, lock, challenge, scan, chain, wave];
+
+for (const s of surfaces) {
+  test(`every beat of a ${s.template} scene has a sound at its own time, and the scene holds for reading after the last`, () => {
+    const { html, cues } = shownBy(s);
+    const beats = beatsOf(html);
+    const head = [5, 5.14, 5.28, 5.5];
+    const sounded = cues.filter((c) => c.t >= 5 && c.t < 5 + sceneDuration(s) && !head.includes(c.t)).map((c) => c.t);
+
+    assert.ok(beats.length > 2, "no beat");
+    assert.deepEqual([...new Set(sounded)], [...new Set(beats.map((x) => x.at))]);
+    assert.equal(sceneDuration(s), Math.ceil((Math.max(...beats.map((x) => x.at)) - 5 + 1.6 + (s.lead ? 0.5 : 0)) * 2) / 2);
+  });
+
+  test(`nothing on a ${s.template} scene moves or leaves the layout: elements fade or scale in place`, () => {
+    const { html } = shownBy(s);
+
+    assert.ok(!html.includes("data-show"), "an element is out of the layout until it appears");
+    assert.ok(beatsOf(html).every((x) => ["in", "set", "fill", "count", "focus", "cap", "from", "to", "fromto", "type", "flip", "pulse", "shake"].includes(x.act)), "an unknown beat");
+    assert.match(html, /if \(act === "in"\) return tl\.fromTo\(sel, \{ opacity: 0, scale: 0\.96 \}, \{ opacity: 1, scale: 1,/);
+    assert.ok(!/rotate[XY]\(|skew/.test(html.match(/<style>([\s\S]*?)<\/style>/)[1]), "a tilted or skewed panel");
+  });
+}
+
+test("a product scene keeps one fixed title, and says each beat's outcome in a light subtitle", () => {
+  const { html } = shownBy(pr);
+  const caps = beatsOf(html).filter((x) => x.act === "cap");
+
+  assert.match(html, /<div class="band"><div class="band-top"><span class="pill"[^>]*>Review<\/span><h2 id="s1-h">PR review: <span class="g">every comment answered\.<\/span><\/h2><\/div><div class="sub-slot"><span class="cap" data-cap="0">Each comment answered<\/span>/);
+  assert.deepEqual(caps.map((x) => x.value), ["0", "1", "2"]);
+  assert.ok(caps.every((x, i) => i === 0 || x.at > caps[i - 1].at));
+});
+
+test("a scene with more than three captions fails the render", () => {
+  const bad = { ...pr, captions: ["a", "b", "c", "d"] };
+
+  assert.throws(() => buildHtml({ scenes: [bad], skipped: [] }, { version: "5.15" }), /github-pr: 4 captions, 3 at most/);
+});
+
+test("a pull request page shows its header, branches and checks", () => {
+  const { html } = shownBy(pr);
+
+  assert.match(html, /Add a dark mode toggle <span class="gh-num">#128<\/span>/);
+  assert.match(html, /into <code>next<\/code> from <code>feat\/dark-mode<\/code>/);
+  assert.match(html, /<span class="gh-check" data-s="pass">ci \/ test<\/span>/);
+});
+
+test("each review comment gets its answer in turn, then the settled threads resolve in place, then the summary is posted", () => {
+  const beats = beatsOf(shownBy(pr).html);
+  const replies = beats.filter((x) => x.act === "in" && x.sel.includes("data-reply")).map((x) => x.at);
+  const resolves = beats.filter((x) => x.act === "set" && x.value === '"resolved"');
+  const [summary] = beats.filter((x) => x.act === "in" && x.sel.includes("gh-hero"));
+
+  assert.equal(replies.length, 2);
+  assert.ok(replies[1] > replies[0], "the answers come together");
+  assert.deepEqual(resolves.map((x) => x.sel), ["#s1 [data-thread='0']"]);
+  assert.ok(resolves.every((x) => x.at > replies.at(-1)), "a thread resolves before every answer is posted");
+  assert.ok(summary.at > resolves.at(-1).at);
+});
+
+test("a pull request page holds six threads at most, so they stay readable", () => {
+  const bad = { ...pr, threads: [pr.threads, pr.threads, pr.threads, pr.threads[0]].flat() };
+
+  assert.throws(() => buildHtml({ scenes: [bad], skipped: [] }, { version: "5.15" }), /github-pr: 7 threads, 6 at most/);
+});
+
+test("each answer carries the kind the skill gave it, and the summary lists its learnings as bullets", () => {
+  const kinds = { ...pr, threads: [{ ...pr.threads[0], kind: "done" }, { ...pr.threads[1], kind: "user-call" }], summary: { ...pr.summary, sections: [{ heading: "Learnings", items: ["Read colors from the tokens"], list: "bullets" }] } };
+  const { html } = shownBy(kinds);
+
+  assert.match(html, /data-reply="0"[^>]*>.*?<span class="gh-kind" data-kind="done">done<\/span>/);
+  assert.match(html, /<span class="gh-kind" data-kind="user-call">user-call<\/span>/);
+  assert.match(html, /<h5>Learnings<\/h5><ul><li>Read colors from the tokens <span class="gh-link">\(thread\)<\/span><\/li><\/ul>/);
+});
+
+test("a review thread with no answer fails the render", () => {
+  const bad = { ...pr, threads: [{ ...pr.threads[0], reply: undefined }] };
+
+  assert.throws(() => buildHtml({ scenes: [bad], skipped: [] }, { version: "5.15" }), /github-pr thread 1 has no reply/);
+});
+
+test("a pull request page may show the command that works on it", () => {
+  const { html } = shownBy({ ...pr, prompt: "/aidd-vcs:06-answer-comments 128" });
+
+  assert.match(html, /<span class="gh-run">&gt; \/aidd-vcs:06-answer-comments 128<\/span>/);
+});
+
+test("an IDE window shows its file tree, and a step turns a file red, then green", () => {
+  const { html } = shownBy(ide);
+  const marks = beatsOf(html).filter((x) => x.act === "set" && x.sel.includes("data-file"));
+
+  assert.match(html, /<li class="ide-file" data-file="1"[^>]*>.*?plan\.md<\/li>/);
+  assert.deepEqual(marks.map((x) => x.value), ['"red"', '"green"']);
+  assert.ok(marks[1].at > marks[0].at);
+});
+
+test("an IDE step shows its notice, its messages and the lines it adds in place in the open file", () => {
+  const { html } = shownBy(ide);
+
+  assert.match(html, /class="ide-notice dim"[^>]*><b>SessionStart<\/b><span>AIDD Context: refresh project memory<\/span>/);
+  assert.match(html, /class="ide-msg user"[^>]*>plan the dark mode toggle</);
+  assert.match(html, /<div class="ide-code" data-pane="1"[^>]*>.*?<span class="ide-line add" data-step="3"[^>]*>## Impact<\/span>/);
+});
+
+test("an IDE step with a caption starts a new beat", () => {
+  const caps = beatsOf(shownBy(ide).html).filter((x) => x.act === "cap");
+
+  assert.deepEqual(caps.map((x) => x.value), ["0", "1"]);
+});
+
+test("an IDE step that marks a file with an unknown state fails the render", () => {
+  const bad = { ...ide, steps: [{ file: "CLAUDE.md", state: "blue" }] };
+
+  assert.throws(() => buildHtml({ scenes: [bad], skipped: [] }, { version: "5.15" }), /ide-window step 1: state "blue", one of red, green/);
+});
+
+test("a tool grid draws one window per tool, and each lights up in turn", () => {
+  const { html } = shownBy(grid);
+  const lights = beatsOf(html).filter((x) => x.act === "set" && x.value === '"on"');
+
+  assert.equal((html.match(/class="tg-win"/g) ?? []).length, 3);
+  assert.match(html, /Claude Code<\/b><small>\.claude\/<\/small>/);
+  assert.deepEqual(lights.map((x) => x.sel), ["#s1 [data-tool='0']", "#s1 [data-tool='1']", "#s1 [data-tool='2']"]);
+  assert.ok(lights.every((x, i) => i === 0 || x.at > lights[i - 1].at));
+});
+
+test("context blocks gather around their core, then the counter counts up to its value", () => {
+  const beats = beatsOf(shownBy(blocks).html);
+  const placed = beats.filter((x) => x.sel.includes("data-block"));
+  const [count] = beats.filter((x) => x.act === "count");
+
+  assert.equal(placed.length, 4);
+  assert.equal(count.value, "48");
+  assert.ok(count.at > Math.max(...placed.map((x) => x.at)));
+});
+
+test("a new scene escapes its text", () => {
+  const evil = { ...pr, threads: [{ ...pr.threads[0], comment: "<b>x</b>" }] };
+
+  assert.ok(!buildHtml({ scenes: [evil], skipped: [] }, { version: "5.15" }).includes("<b>x</b>"));
+});
+
+
+const at = (beats, act, part) => beats.filter((x) => x.act === act && x.sel.includes(part));
+
+test("answers land rapid-fire, the settled threads close together with nothing dimmed, and the summary comes forward as the payoff", () => {
+  const six = { ...pr, threads: [pr.threads, pr.threads, pr.threads].flat() };
+  const { html } = shownBy(six);
+  const beats = beatsOf(html);
+  const replies = at(beats, "in", "data-reply").map((x) => x.at);
+  const resolves = beats.filter((x) => x.act === "set" && x.value === '"resolved"').map((x) => x.at);
+  const [hero] = at(beats, "in", ".gh-hero");
+
+  assert.ok(replies.every((t, i) => i === 0 || t - replies[i - 1] <= 0.45), "the answers drag");
+  assert.ok(!beats.some((x) => x.act === "focus"), "the page is dimmed");
+  assert.match(html, /<div class="gh-hero"><span class="gh-hero-k">Your review, summed up by AI<\/span>/);
+  assert.equal(new Set(resolves).size, 1, "the settled threads close one by one");
+  assert.ok(hero.at > resolves[0]);
+  assert.match(html, /<div class="gh-hero">.*?<h4>Review comments<\/h4>/);
+});
+
+test("each panel of a sequence comes with its subtitle, shows its items in turn, and leaves when the next comes", () => {
+  const beats = beatsOf(shownBy(panels).html);
+  const shown = at(beats, "in", "data-panel=").map((x) => x.at);
+  const left = at(beats, "to", "data-panel=").map((x) => x.at);
+  const caps = beats.filter((x) => x.act === "cap").map((x) => x.at);
+  const items = at(beats, "in", "data-item='1-");
+
+  assert.deepEqual(shown, caps);
+  assert.deepEqual(left, shown.slice(1));
+  assert.ok(items.length === 3 && items.every((x, i) => x.at >= shown[1] && x.at < shown[2] && (i === 0 || x.at > items[i - 1].at)));
+});
+
+test("panels laid side by side show together and stay, each under its label", () => {
+  const row = { ...panels, layout: "row", captions: [], hold: 6, panels: panels.panels.map((p, i) => ({ ...p, label: `Block ${i + 1}` })) };
+  const { html } = shownBy(row);
+  const beats = beatsOf(html);
+
+  assert.match(html, /<div class="stage ps row">/);
+  assert.match(html, /<div class="ps-panel layers" data-panel="0"><h4>Block 1<\/h4>/);
+  assert.equal(at(beats, "to", "data-panel=").length, 0, "a panel leaves");
+  assert.ok(Math.max(...at(beats, "in", "data-panel=").map((x) => x.at)) < 5 + 2);
+  assert.ok(sceneDuration(row) >= sceneDuration({ ...row, hold: 0 }) + 6);
+});
+
+test("a badge sits beside the fixed title, and the pill lines up with it", () => {
+  const { html } = shownBy(challenge);
+
+  assert.match(html, /<h2 id="s1-h">Every spec challenged, with proof\.<\/h2><span class="badge">Rebuilt lean<\/span><\/div>/);
+  assert.match(html, /\.band-top \.pill \{ align-self: center; flex: none; white-space: nowrap; \}/);
+});
+
+test("each beat leaves its subtitle on screen long enough to read", () => {
+  for (const s of [pr, gate]) {
+    const caps = beatsOf(shownBy(s).html).filter((x) => x.act === "cap").map((x) => x.at);
+    caps.slice(1).forEach((t, i) => assert.ok(t - caps[i] >= 2, `${s.template}: ${t - caps[i]} s between subtitles`));
+  }
+});
+
+test("a panel of an unknown kind fails the render", () => {
+  const bad = { ...panels, panels: [{ kind: "pie", items: [] }] };
+
+  assert.throws(() => buildHtml({ scenes: [bad], skipped: [] }, { version: "5.15" }), /panel-sequence panel 1: kind "pie", one of layers, grid, levels/);
+});
+
+test("new tools come in from the right one after another and snap onto the end of the row with a glow", () => {
+  const { html } = shownBy(logos);
+  const beats = beatsOf(html);
+  const arrivals = at(beats, "fromto", "data-tool").filter((x) => JSON.parse(x.value).from.x >= 800);
+  const glows = at(beats, "from", "data-burst");
+
+  assert.deepEqual(arrivals.map((x) => x.sel), ["#s1 [data-tool='2']", "#s1 [data-tool='3']"]);
+  assert.ok(arrivals[1].at > arrivals[0].at, "the new tools arrive together");
+  assert.ok(glows.length === 2 && glows.every((g, i) => g.at > arrivals[i].at));
+  assert.match(html, /<img class="lr-logo mono" src="assets\/logo-cursor\.svg"/);
+  assert.match(html, /<img class="lr-logo" src="assets\/logo-kiro-color\.svg"/);
+});
+
+test("the checkpoint gives each outcome in turn, and the note leaves once its beat ends", () => {
+  const beats = beatsOf(shownBy(gate).html);
+  const verdicts = at(beats, "set", ".gt-gate").map((x) => x.value).filter((v) => v !== '"idle"');
+  const resets = at(beats, "set", ".gt-gate").filter((x) => x.value === '"idle"').map((x) => x.at);
+  const caps = beats.filter((x) => x.act === "cap").map((x) => x.at);
+
+  assert.deepEqual(resets, caps.slice(1), "the checkpoint still shows the last verdict as the next beat starts");
+  const [noteIn] = at(beats, "fromto", ".gt-note");
+  const [noteOut] = at(beats, "to", ".gt-note");
+  const [require] = beats.filter((x) => x.act === "cap" && x.value === "2");
+
+  assert.deepEqual(verdicts, ['"block"', '"inform"', '"require"', '"pass"']);
+  assert.ok(noteOut && noteOut.at > noteIn.at && noteOut.at <= require.at, "the note lingers into the next beat");
+  assert.deepEqual(at(beats, "set", ".gt-actor").map((x) => x.value), ['"working"', '"fixed"']);
+});
+
+test("a gate outcome of an unknown kind fails the render", () => {
+  const bad = { ...gate, outcomes: [{ kind: "warn", label: "Warn", action: "x" }] };
+
+  assert.throws(() => buildHtml({ scenes: [bad], skipped: [] }, { version: "5.15" }), /gate outcome "warn", one of block, inform, require/);
+});
+
+test("each command is typed, its lines print, then every agent card flips together to its next model", () => {
+  const beats = beatsOf(shownBy(models).html);
+  const typed = at(beats, "type", "data-cmd").map((x) => x.at);
+  const flips = at(beats, "flip", "data-card");
+  const lines = at(beats, "in", "data-line='0-").map((x) => x.at);
+
+  assert.equal(flips.length, 4);
+  assert.deepEqual(beats.filter((x) => x.act === "cap").map((x) => x.at), [flips[0].at, flips[2].at], "a subtitle names a provider before the cards show it");
+  assert.equal(new Set(flips.slice(0, 2).map((x) => x.at)).size, 1, "the cards of a run flip apart");
+  assert.ok(flips[0].at > Math.max(...lines) && flips[2].at > typed[1]);
+});
+
+test("a run that flips a card past its last face fails the render", () => {
+  const bad = { ...models, runs: [...models.runs, models.runs[0]] };
+
+  assert.throws(() => buildHtml({ scenes: [bad], skipped: [] }, { version: "5.15" }), /model-switch card "reviewer" has no face 4/);
+});
+
+test("a short spec is written, its badge turns locked, then an edit is refused with the real message and nothing written", () => {
+  const { html } = shownBy(lock);
+  const beats = beatsOf(html);
+  const sections = at(beats, "in", "data-section").map((x) => x.at);
+  const [locked] = at(beats, "flip", ".dl-status");
+  const bounced = at(beats, "to", ".dl-attempt");
+  const [refusal] = at(beats, "in", ".dl-refusal");
+
+  assert.ok(locked.at > Math.max(...sections));
+  assert.ok(bounced.length === 2 && bounced[0].at > locked.at && refusal.at > bounced[0].at);
+  assert.ok(!beats.some((x) => x.sel.includes("data-section") && x.at > locked.at), "the locked document changes");
+  assert.ok(!html.includes("dl-lock"), "a padlock");
+  assert.match(html, /<span class="dl-face" data-face="1">status: locked<\/span>/);
+});
+
+test("a scanner sweeps the spec, and each line it reaches lights and spawns its finding on the right, in its section colour", () => {
+  const { html } = shownBy(challenge);
+  const beats = beatsOf(html);
+  const [sweep] = at(beats, "to", ".cr-beam");
+  const lit = at(beats, "set", "data-line").filter((x) => x.value === '"lit"');
+  const found = at(beats, "from", "data-finding");
+
+  assert.ok(sweep && JSON.parse(sweep.value).yPercent === 100, "no sweep down the spec");
+  assert.deepEqual(lit.map((x) => x.sel), ["#s1 [data-line='1']", "#s1 [data-line='2']"]);
+  assert.deepEqual(found.map((x) => x.at), lit.map((x) => x.at), "a finding is not spawned by its line");
+  assert.ok(lit[0].at > sweep.at && lit[1].at > lit[0].at);
+  assert.match(html, /<div class="cr-row" data-line="1"[^>]*><p>The theme stays after a reload\.<\/p><div class="cr-finding red" data-finding="1"><b>Deal breaker<\/b><span>Breaks when storage is blocked<\/span><small>theme\.ts:14<\/small><\/div><\/div>/);
+  assert.ok(!html.includes("cr-slide"), "a section slide");
+  const markup = html.split("<script").map((part, i) => (i === 0 ? part : part.slice(part.indexOf("</script>") + 9))).join("");
+  assert.ok(!/attack/i.test(markup), "the word attack on screen");
+});
+
+test("a design chain lights its stylised cards left to right, each with its skill, its keywords and an abstract visual", () => {
+  const { html } = shownBy(chain);
+  const beats = beatsOf(html);
+  const lit = at(beats, "set", "data-card").filter((x) => x.value === '"on"').map((x) => x.at);
+
+  assert.match(html, /<div class="ch-card" data-card="0" data-s="off"><code>aidd-ui:01-journeys<\/code><b>Journeys<\/b><div class="ch-vis wireframe">/);
+  assert.match(html, /<ul class="ch-keys"><li>persona<\/li><li>steps<\/li><li>wireframe<\/li><\/ul>/);
+  assert.ok(lit.length === 2 && lit[1] > lit[0]);
+  assert.deepEqual(beats.filter((x) => x.act === "cap").map((x) => x.at), [beats.find((x) => x.act === "cap").at, lit[1]]);
+  assert.ok(!/<img/.test(html.match(/<div class="stage ch"[\s\S]*?<\/section>/)[0]), "a screenshot in the chain");
+});
+
+test("a design card with an unknown visual fails the render", () => {
+  const bad = { ...chain, steps: [{ ...chain.steps[0], visual: "photo" }] };
+
+  assert.throws(() => buildHtml({ scenes: [bad], skipped: [] }, { version: "5.15" }), /chain-cards step 1: visual "photo", one of wireframe, direction, swatches, components, screens, verdict/);
+});
+
+test("an agent card can start empty, with no model and no logo, until a command fills it", () => {
+  const empty = { ...models, cards: models.cards.map((c) => ({ ...c, faces: [{ model: "no model" }, ...c.faces.slice(1)] })) };
+  const { html } = shownBy(empty);
+
+  assert.match(html, /<div class="ms-face" data-face="0"><span class="ms-slot"><\/span><b>no model<\/b><\/div>/);
+});
+
+test("the story stays readable, its unclear phrases are highlighted, and each question sits on its phrase's line, in story order", () => {
+  const { html } = shownBy(scan);
+  const beats = beatsOf(html);
+  const marked = at(beats, "fill", "data-mark").map((x) => x.at);
+  const asked = at(beats, "from", "data-q");
+  const closed = at(beats, "set", "data-q").filter((x) => x.value === '"closed"').map((x) => x.at);
+
+  assert.ok(marked.length === 2 && marked[1] > marked[0]);
+  assert.deepEqual(asked.map((x) => x.sel), ["#s1 [data-q='1']", "#s1 [data-q='0']"], "the questions come out of story order");
+  assert.ok(asked[0].at > marked[1] && asked[1].at > asked[0].at);
+  assert.ok(closed.length === 2 && closed[0] > asked[1].at);
+  assert.ok(!beats.some((x) => x.act === "focus"), "the story is dimmed");
+  assert.match(html, /<div class="sq-row" data-row="0"><p>.*?data-mark="1".*?<\/p><div class="sq-qs"><div class="sq-q" data-q="1"/);
+  assert.match(html, /<span class="sq-cat">ambiguous term<\/span><p>How fast is quickly\?<\/p>/);
+  assert.ok(!/severity|critical|major|minor/i.test(html.match(/<div class="stage sq"[\s\S]*?<\/section>/)?.[0] ?? ""), "a severity badge");
+});
+
+test("a scan passage that points at no question fails the render", () => {
+  const bad = { ...scan, gaps: [scan.gaps[0]] };
+
+  assert.throws(() => buildHtml({ scenes: [bad], skipped: [] }, { version: "5.15" }), /scan-questions passage "quickly": no question 2/);
+});
+
+test("a plan's logos are listed for the render to bring in", () => {
+  const { mediaOf } = require("../../.claude/skills/release-video/assets/render-release-video.cjs");
+
+  assert.deepEqual(mediaOf({ scenes: [logos, models] }), {
+    logos: ["claudecode-color", "cursor", "kiro-color", "kimi", "anthropic", "mistral-color", "openai"],
+  });
+});
+
+test("contributors arrive in a wave and the count is said under the thanks", () => {
+  const { html } = shownBy(wave);
+  const arrived = at(beatsOf(html), "from", "data-login").map((x) => x.at);
+
+  assert.ok(arrived.length === 3 && arrived.every((t, i) => i === 0 || t > arrived[i - 1]));
+  assert.match(html, /<div class="sub-slot"><p class="sub">3 contributors<\/p>/);
+  assert.match(html, /<img src="assets\/av-alice\.png"/);
+});
+
+test("a tool still to arrive is hidden, not drawn over the row, until it slides in", () => {
+  const { html } = shownBy(logos);
+
+  assert.match(html, /if \(act === "fromto"\) return tl\.fromTo\(sel, value\.from, Object\.assign\(\{ duration: 0\.6, ease \}, value\.to\), at\);/);
+});
+
+test("the review summary comes forward over the page as a large card", () => {
+  const { html } = shownBy(pr);
+
+  assert.match(html, /\.gh-hero \{ position: absolute;[^}]*z-index: 5;/);
+});
+
+test("a write that passes lands on its file inside the project, and the action itself goes", () => {
+  const { html } = shownBy(gate);
+  const beats = beatsOf(html);
+  const landed = at(beats, "set", "data-file").filter((x) => x.value === '"written"').map((x) => x.sel);
+  const refused = at(beats, "set", "data-file").filter((x) => x.value === '"refused"').map((x) => x.sel);
+
+  assert.match(html, /<div class="gt-target" data-s="idle"><b>Your project<\/b><ul class="gt-files"><li data-file="0" data-s="idle">spec\.md<\/li><li data-file="1"/);
+  assert.deepEqual(landed, ["#s1 [data-file='1']", "#s1 [data-file='2']"]);
+  assert.deepEqual(refused, ["#s1 [data-file='0']"]);
+  assert.ok(!at(beats, "set", ".gt-target").length, "the whole project box lights instead of its file");
+});
+
+test("a gate outcome naming a file the project lacks fails the render", () => {
+  const bad = { ...gate, outcomes: [{ ...gate.outcomes[0], file: "README.md" }] };
+
+  assert.throws(() => buildHtml({ scenes: [bad], skipped: [] }, { version: "5.15" }), /gate outcome "Blocked": no file "README\.md" in the project/);
+});
+
+test("each card says whether it is the main session or a subagent, the main one set apart", () => {
+  const withMain = { ...models, cards: [{ ...models.cards[0], role: "session", kind: "main" }, ...models.cards] };
+  const { html } = shownBy(withMain);
+
+  assert.match(html, /<div class="ms-card main" data-card="0" data-s="0"><span class="ms-kind">main<\/span><span class="ms-role">session<\/span>/);
+  assert.match(html, /<div class="ms-card" data-card="1" data-s="0"><span class="ms-kind">subagent<\/span><span class="ms-role">reviewer<\/span>/);
+});
+
+test("the phrases are highlighted under the first subtitle, then each question appears as its phrase lights again", () => {
+  const beats = beatsOf(shownBy(scan).html);
+  const caps = beats.filter((x) => x.act === "cap").map((x) => x.at);
+  const marks = at(beats, "fill", "data-mark");
+
+  assert.ok(marks.every((m) => m.at >= caps[0] && m.at < caps[1]), "a phrase is highlighted outside the first subtitle");
+  for (const m of marks) {
+    const k = m.sel.match(/'(\d+)'/)[1];
+    const [q] = at(beats, "from", `data-q='${k}'`);
+    const [lit] = at(beats, "pulse", `data-gap='${k}'`);
+    assert.ok(lit && lit.at === q.at, `question ${k} comes without its phrase lighting`);
+  }
+});
+
+test("the challenge beam reaches a line about every second", () => {
+  const beats = beatsOf(shownBy(challenge).html);
+  const [sweep] = at(beats, "to", ".cr-beam");
+  assert.ok(JSON.parse(sweep.value).duration / challenge.spec.lines.length <= 1.05, "the beam drags");
+});
+
+test("a design card appears only when its step is reached, with no placeholder before", () => {
+  const beats = beatsOf(shownBy(chain).html);
+  const shown = at(beats, "in", "data-card").map((x) => x.at);
+  const lit = at(beats, "set", "data-card").filter((x) => x.value === '"on"').map((x) => x.at);
+
+  assert.deepEqual(shown, lit);
+});
+
+test("each design card comes about a second after the last", () => {
+  const lit = at(beatsOf(shownBy(chain).html), "set", "data-card").filter((x) => x.value === '"on"').map((x) => x.at);
+
+  lit.slice(1).forEach((t, i) => assert.ok(t - lit[i] <= 1.25, `${t - lit[i]} s between cards`));
+});
+
+test("the first subtitle of a scan stays on screen 3 seconds before the next", () => {
+  const caps = beatsOf(shownBy(scan).html).filter((x) => x.act === "cap").map((x) => x.at);
+
+  assert.ok(caps[1] - caps[0] >= 3, `${caps[1] - caps[0]} s`);
+});
+
+test("the agent cards keep room for their model under the terminal", () => {
+  assert.match(shownBy(models).html, /\.ms-cards \{[^}]*min-height: 210px/);
+});

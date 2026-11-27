@@ -15,6 +15,8 @@ Everything that appears has a sound, at the time the timeline shows it.
 | a pill, the release label or a lead appears | a tick |
 | a title, a window, an item, a note, the outro logo or title appears | a pop |
 | a row appears | a click |
+| a state changes: a thread resolves, a bar starts filling, a counter starts | a tick |
+| a state settles: an answer is posted, a file turns red or green, a tool lights up | a pop |
 | a scene opens | a whoosh |
 
 The sounds take their times from the animation: changing the plan moves them, nothing is placed by hand.

@@ -118,6 +118,235 @@ td { padding: 14px 14px; border-bottom: 2px solid #15153f; vertical-align: top; 
 #outro h2 { font-size: 150px; text-align: center; }
 .cmd { font-family: "JetBrains Mono", monospace; font-size: 34px; padding: 16px 30px; border: 2px solid #26265f; border-radius: 14px; background: #0b0b36; }
 .url { font-family: "JetBrains Mono", monospace; font-size: 28px; color: #8a8fc0; }
+[data-zone] { transition: none; } [data-focus="0"] { filter: brightness(0.42) saturate(0.6); }
+[data-focus="1"] { outline: 3px solid #ffd37a; outline-offset: -3px; box-shadow: 0 0 40px rgba(255, 211, 122, 0.3); }
+.gh { flex: 1; min-height: 0; display: flex; flex-direction: column; background: #0d1117; border: 2px solid #30363d; border-radius: 18px; overflow: hidden; color: #e6edf3; font-size: 26px; box-shadow: 0 30px 80px rgba(0, 0, 20, 0.5); }
+.gh-url { flex: none; display: flex; align-items: center; gap: 12px; padding: 10px 22px; background: #161b22; border-bottom: 1px solid #30363d; font-family: "JetBrains Mono", monospace; font-size: 20px; color: #7d8590; }
+.gh-url i { width: 14px; height: 14px; border-radius: 50%; display: block; } .gh-url span { margin-left: 18px; padding: 4px 18px; background: #0d1117; border-radius: 8px; }
+.gh-run { margin-left: auto !important; color: #5ee6a8; background: rgba(94, 230, 168, 0.1) !important; border: 1px solid #2f7a60; }
+.gh-head { flex: none; padding: 16px 30px 14px; border-bottom: 1px solid #30363d; } .gh-head h3 { font-size: 38px; font-weight: 700; } .gh-num { color: #7d8590; font-weight: 700; }
+.gh-meta { display: flex; align-items: center; gap: 14px; margin-top: 8px; color: #7d8590; font-size: 22px; } .gh-meta b { color: #e6edf3; }
+.gh-open { background: #238636; color: #fff; padding: 3px 16px; border-radius: 20px; font-weight: 700; }
+.gh code, .ide code { font-family: "JetBrains Mono", monospace; font-size: 20px; color: #8aa6ff; background: rgba(56, 139, 253, 0.15); padding: 2px 8px; border-radius: 6px; }
+.gh-cols { flex: 1; min-height: 0; display: grid; grid-template-columns: 1.7fr 1fr; gap: 26px; padding: 16px 28px; }
+.gh-threads, .gh-side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.gh-slot { display: grid; border-radius: 12px; } .gh-slot > div { grid-area: 1 / 1; }
+.gh-full { border: 1px solid #30363d; border-radius: 12px; overflow: hidden; }
+.gh-file, .gh-bar { display: flex; align-items: center; gap: 14px; padding: 8px 18px; background: #161b22; font-family: "JetBrains Mono", monospace; font-size: 20px; }
+.gh-bar { align-self: start; border: 1px solid #8957e5; border-radius: 12px; opacity: 0; } .gh-ln { color: #7d8590; }
+.gh-res { margin-left: auto; color: #a371f7; font-family: "Inter", sans-serif; font-weight: 800; font-size: 24px; }
+.gh-slot[data-s="resolved"] .gh-full { opacity: 0; } .gh-slot[data-s="resolved"] .gh-bar { opacity: 1; }
+.gh-c { display: flex; gap: 16px; padding: 9px 18px; align-items: flex-start; } .gh-c p { color: #c9d1d9; line-height: 1.25; font-size: 23px; } .gh-c b { font-size: 20px; }
+.gh-reply { border-top: 1px solid #21262d; background: rgba(56, 139, 253, 0.07); }
+.gh-av { flex: none; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 20px; color: #fff; }
+.gh-summary { display: flex; gap: 14px; border-radius: 12px; } .gh-sbody { flex: 1; border: 1px solid #30363d; border-radius: 12px; overflow: hidden; }
+.gh-shead { padding: 9px 18px; background: #161b22; color: #7d8590; font-size: 20px; } .gh-shead b { color: #e6edf3; }
+.gh-sbody h4 { font-size: 34px; padding: 12px 18px 4px; } .gh-sbody h5 { font-size: 24px; padding: 8px 18px 2px; } .gh-sbody p, .gh-sbody ol { padding: 4px 18px 16px; color: #c9d1d9; font-size: 27px; }
+.gh-sbody ol { padding-left: 46px; } .gh-link { color: #4493f8; }
+.gh-merge { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 16px 20px; border: 1px solid #30363d; border-radius: 12px; background: #161b22; font-size: 22px; font-weight: 700; }
+.gh-ok { width: 34px; height: 34px; border-radius: 50%; background: #238636; display: grid; place-items: center; color: #fff; }
+.gh-check { font-family: "JetBrains Mono", monospace; font-weight: 500; font-size: 20px; color: #7d8590; } .gh-check::before { content: "✓ "; color: #3fb950; }
+.gh-check[data-s="fail"]::before { content: "✗ "; color: #f85149; } .gh-check[data-s="pending"]::before { content: "● "; color: #d29922; }
+.ide { flex: 1; min-height: 0; display: flex; flex-direction: column; background: #0b0b36; border: 2px solid #26265f; border-radius: 18px; overflow: hidden; box-shadow: 0 30px 80px rgba(0, 0, 20, 0.5); }
+.ide-bar { flex: none; display: flex; align-items: center; gap: 12px; padding: 10px 22px; border-bottom: 2px solid #1c1c4d; font-family: "JetBrains Mono", monospace; font-size: 20px; color: #8a8fc0; }
+.ide-bar i { width: 14px; height: 14px; border-radius: 50%; display: block; }
+.ide-main { flex: 1; min-height: 0; display: flex; }
+.ide-tree { flex: none; width: 300px; list-style: none; padding: 12px 0; border-right: 2px solid #1c1c4d; font-family: "JetBrains Mono", monospace; font-size: 22px; color: #a6abe0; background: #09092e; }
+.ide-tree li { padding: 5px 14px; white-space: nowrap; } .ide-head { color: #5b60a0; font-size: 17px; letter-spacing: 0.1em; } .ide-dir { color: #8a8fc0; }
+.ide-file { border-left: 5px solid transparent; } .ide-file[data-s="red"] { color: #ff9aa8; background: rgba(255, 107, 107, 0.16); border-left-color: #ff6b6b; }
+.ide-file[data-s="red"]::after { content: "  ✗"; } .ide-file[data-s="green"] { color: #5ee6a8; background: rgba(94, 230, 168, 0.14); border-left-color: #5ee6a8; } .ide-file[data-s="green"]::after { content: "  ✓"; }
+.ide-editor { flex: 1; min-width: 0; display: grid; } .ide-editor > .ide-code { grid-area: 1 / 1; }
+.ide-code { visibility: hidden; display: flex; flex-direction: column; min-width: 0; } .ide-code[data-s="open"] { visibility: visible; }
+.ide-tab { align-self: flex-start; padding: 9px 24px; font-family: "JetBrains Mono", monospace; font-size: 21px; color: #eef0ff; background: #0b0b36; border-right: 2px solid #1c1c4d; border-top: 3px solid #8aa6ff; }
+.ide-lines { flex: 1; padding: 12px 0; border-top: 2px solid #1c1c4d; font-family: "JetBrains Mono", monospace; font-size: 22px; line-height: 1.4; color: #c8cbf0; counter-reset: ln; overflow: hidden; }
+.ide-line { display: block; white-space: pre; padding: 0 18px; } .ide-line::before { counter-increment: ln; content: counter(ln); display: inline-block; width: 36px; margin-right: 16px; text-align: right; color: #45497e; }
+.ide-line.add { color: #5ee6a8; background: rgba(94, 230, 168, 0.13); }
+.ide-chat { flex: none; width: 740px; display: flex; flex-direction: column; border-left: 2px solid #1c1c4d; background: #09092e; }
+.ide-chead { padding: 10px 22px; border-bottom: 2px solid #1c1c4d; font-weight: 700; font-size: 21px; color: #ffb38a; }
+.ide-feed { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 12px; padding: 14px 18px; font-family: "JetBrains Mono", monospace; font-size: 21px; line-height: 1.34; }
+.ide-msg { color: #eef0ff; padding: 2px 6px; border-radius: 6px; } .ide-msg.user { padding: 8px 14px; border: 2px solid #26265f; border-radius: 10px; color: #c8cbf0; } .ide-msg.user::before { content: "> "; color: #5ee6a8; }
+.ide-msg.agent::before { content: "● "; color: #eef0ff; } .ide-msg.tool::before { content: "● "; color: #5ee6a8; } .ide-msg.tool { color: #a6abe0; }
+.ide-notice { display: flex; flex-direction: column; gap: 3px; padding: 8px 14px; border-left: 4px solid #5b60a0; background: rgba(138, 166, 255, 0.06); color: #a6abe0; border-radius: 4px; }
+.ide-notice b { font-size: 17px; color: #8a8fc0; } .ide-notice em { font-style: normal; color: #eef0ff; }
+.ide-notice.red { border-left-color: #ff6b6b; background: rgba(255, 107, 107, 0.12); } .ide-notice.red b, .ide-notice.red span { color: #ff9aa8; }
+.ide-notice.amb { border-left-color: #ffd37a; background: rgba(255, 211, 122, 0.1); } .ide-notice.amb b { color: #ffd37a; }
+.ide-notice.grn { border-left-color: #5ee6a8; } .ide-notice.grn b { color: #5ee6a8; }
+.tg { flex: 1; display: grid; gap: 26px; align-content: center; }
+.tg-win { background: #0b0b36; border: 2px solid #26265f; border-radius: 16px; overflow: hidden; }
+.tg-bar { display: flex; gap: 10px; padding: 12px 18px; border-bottom: 2px solid #1c1c4d; } .tg-bar i { width: 14px; height: 14px; border-radius: 50%; display: block; }
+.tg-body { padding: 22px 26px; display: flex; flex-direction: column; gap: 10px; } .tg-body b { font-size: 36px; font-weight: 800; color: #8a8fc0; }
+.tg-body small { font-family: "JetBrains Mono", monospace; font-size: 22px; color: #5b60a0; }
+.tg-fill { display: block; height: 8px; border-radius: 4px; background: #26265f; overflow: hidden; } .tg-fill i { display: block; height: 100%; background: #ffd37a; transform-origin: left; transform: scaleX(var(--fill, 0)); }
+.tg-count { align-self: flex-start; font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 22px; padding: 4px 14px; border-radius: 8px; color: #5b60a0; border: 2px solid #26265f; }
+.tg-win[data-s="on"] { border-color: #2f7a60; box-shadow: 0 0 40px rgba(94, 230, 168, 0.25); } .tg-win[data-s="on"] b { color: #eef0ff; } .tg-win[data-s="on"] small { color: #8a8fc0; }
+.tg-win[data-s="on"] .tg-fill i { background: #5ee6a8; } .tg-win[data-s="on"] .tg-count { color: #07072b; background: #5ee6a8; border-color: #5ee6a8; }
+.ab { flex: 1; position: relative; }
+.ab-links { position: absolute; inset: 0; width: 100%; height: 100%; } .ab-links line { stroke: #3b4c99; stroke-width: 0.3; stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--fill, 0)); }
+.ab-core { position: absolute; left: 50%; top: 50%; width: 300px; height: 300px; margin: -150px 0 0 -150px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  background: radial-gradient(circle at 50% 40%, #1d1d5e, #0b0b36); border: 3px solid #8aa6ff; box-shadow: 0 0 80px rgba(138, 166, 255, 0.35); }
+.ab-core b { font-size: 64px; font-weight: 800; } .ab-count { font-family: "JetBrains Mono", monospace; font-size: 28px; color: #5ee6a8; } .ab-count span { font-size: 44px; font-weight: 700; }
+.ab-block { position: absolute; translate: -50% -50%; }
+.ab-block { min-width: 260px; padding: 18px 26px; background: #0b0b36; border: 2px solid #3b4c99; border-radius: 16px; display: flex; flex-direction: column; gap: 4px; text-align: center; }
+.ab-block b { font-size: 34px; font-weight: 800; } .ab-block small { font-family: "JetBrains Mono", monospace; font-size: 20px; color: #8a8fc0; }
+.inner:has(> .band) { padding: 50px 100px 40px; gap: 26px; }
+.stage { position: relative; flex: 1; min-height: 0; }
+.lr { display: grid; align-content: center; gap: 18px; }
+.lr-tool { position: relative; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+.lr-card { width: 156px; height: 156px; border-radius: 34px; background: linear-gradient(160deg, #1a1a55, #0d0d3c); border: 2px solid #2d2d6e; display: grid; place-items: center; box-shadow: 0 20px 44px rgba(0, 0, 20, 0.5); }
+.lr-logo { width: 96px; height: 96px; } .lr-logo.mono, .ms-logo.mono { filter: brightness(0) invert(1); }
+.lr-tool b { font-size: 26px; font-weight: 700; text-align: center; }
+.lr-new { position: absolute; top: -20px; right: 2px; background: #5ee6a8; color: #07072b; font-size: 22px; font-weight: 800; padding: 4px 14px; border-radius: 12px; }
+.lr-tool.new .lr-card { border-color: #5ee6a8; box-shadow: 0 0 54px rgba(94, 230, 168, 0.5); }
+.lr-burst { position: absolute; left: 50%; top: 78px; width: 340px; height: 340px; margin: -170px 0 0 -170px; border-radius: 50%; background: radial-gradient(circle, rgba(94, 230, 168, 0.6), transparent 65%); opacity: 0; }
+.ms { display: flex; flex-direction: column; gap: 26px; }
+.ms-term { flex: none; background: #0b0b36; border: 2px solid #26265f; border-radius: 18px; overflow: hidden; }
+.ms-body { padding: 16px 28px 20px; font-family: "JetBrains Mono", monospace; font-weight: 500; font-size: 22px; line-height: 1.45; }
+.ms-cmd { font-size: 28px; color: #eef0ff; margin-top: 4px; min-height: 1.45em; } .ms-line { color: #a6abe0; white-space: pre; }
+.ms-cards { flex: 1; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 22px; }
+.ms-card { background: linear-gradient(160deg, #16165a, #0b0b36); border: 2px solid #3b4c99; border-radius: 20px; padding: 20px 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; }
+.ms-role { font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 26px; color: #ffd37a; }
+.ms-face { display: none; flex-direction: column; align-items: center; gap: 12px; } .ms-logo { width: 70px; height: 70px; }
+.ms-face b { font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 22px; color: #eef0ff; overflow-wrap: anywhere; }
+.ms-card[data-s="0"] > [data-face="0"], .ms-card[data-s="1"] > [data-face="1"], .ms-card[data-s="2"] > [data-face="2"], .ms-card[data-s="3"] > [data-face="3"] { display: flex; }
+.cw { display: grid; align-content: center; justify-items: center; gap: 44px 30px; }
+.cw-av { display: flex; flex-direction: column; align-items: center; gap: 14px; } .cw-av img { width: 160px; height: 160px; border-radius: 50%; border: 4px solid #3a3a80; display: block; box-shadow: 0 0 40px rgba(138, 166, 255, 0.3); }
+.cw-av span { font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 24px; }
+.gh-kind { margin-left: 12px; font-family: "JetBrains Mono", monospace; font-size: 18px; font-weight: 700; padding: 2px 10px; border-radius: 10px; border: 1px solid; vertical-align: 2px; }
+.gh-kind[data-kind="done"] { color: #3fb950; } .gh-kind[data-kind="answer"] { color: #4493f8; } .gh-kind[data-kind="user-call"] { color: #d29922; } .gh-kind[data-kind="todo"] { color: #a371f7; }
+.gh-sbody ul { padding: 4px 18px 16px 46px; color: #c9d1d9; font-size: 25px; }
+.band { display: flex; flex-direction: column; gap: 6px; flex: none; }
+.band-top { display: flex; align-items: center; gap: 30px; min-height: 92px; } .band-top h2 { font-size: 74px; white-space: nowrap; }
+.sub-slot { display: grid; min-height: 48px; } .sub-slot > * { grid-area: 1 / 1; }
+.cap, .sub { font-size: 38px; font-weight: 700; color: #a6abe0; } .cap { opacity: 0; }
+.band .note { position: absolute; right: 100px; bottom: 12px; }
+.ps { display: grid; } .ps-panel { grid-area: 1 / 1; height: 100%; display: flex; align-items: center; justify-content: center; }
+.ps-panel.layers { flex-direction: column; gap: 0; }
+.ps-panel.layers .ps-item { width: 1000px; height: 108px; border-radius: 18px; display: flex; align-items: center; justify-content: space-between; padding: 0 40px;
+  background: linear-gradient(90deg, #191960, #0f0f44); border: 2px solid #3b4c99; box-shadow: 0 18px 40px rgba(0, 0, 20, 0.45); }
+.ps-panel.layers .ps-item b { font-family: "JetBrains Mono", monospace; font-size: 38px; } .ps-panel.layers .ps-item span { font-size: 30px; color: #a6abe0; }
+.ps-down { display: block; width: 4px; height: 34px; background: #5ee6a8; position: relative; } .ps-down::after { content: ""; position: absolute; left: -9px; bottom: -6px; border: 11px solid transparent; border-top: 13px solid #5ee6a8; border-bottom: 0; }
+.ps-panel.grid { display: grid; grid-template-columns: repeat(5, 300px); gap: 26px; align-content: center; justify-content: center; }
+.ps-panel.grid .ps-item { height: 150px; border-radius: 20px; display: grid; place-items: center; font-family: "JetBrains Mono", monospace; font-size: 28px;
+  background: linear-gradient(160deg, #1a1a5c, #0d0d3c); border: 2px solid #3b4c99; box-shadow: 0 0 40px rgba(138, 166, 255, 0.25); }
+.ps-panel.levels { flex-direction: column; gap: 18px; }
+.ps-panel.levels .ps-item { width: 1200px; display: grid; grid-template-columns: 300px 1fr; align-items: center; gap: 30px; padding: 22px 36px; border-radius: 18px; background: #0d0d3c; border: 2px solid #2d2d6e; }
+.ps-panel.levels .ps-item b { font-family: "JetBrains Mono", monospace; font-size: 36px; color: #5ee6a8; } .ps-panel.levels .ps-item span { font-size: 32px; color: #eef0ff; }
+.gt-actor, .gt-target { position: absolute; top: 250px; width: 300px; height: 240px; border-radius: 24px; border: 2px solid #3b4c99; background: linear-gradient(160deg, #17175a, #0b0b36);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 24px 60px rgba(0, 0, 20, 0.5); }
+.gt-actor { left: 20px; width: 260px; } .gt-target { left: 1420px; width: 280px; }
+.gt-dot { width: 64px; height: 64px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #d9b3ff, #8a5cff 60%, #4b2aa8); box-shadow: 0 0 40px rgba(138, 92, 255, 0.6); }
+.gt-actor b, .gt-target b { font-size: 42px; font-weight: 800; }
+.gt-work, .gt-ok { font-style: normal; font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 24px; display: none; }
+.gt-actor[data-s="working"] { border-color: #c88bff; } .gt-actor[data-s="working"] .gt-work { display: block; color: #c88bff; }
+.gt-actor[data-s="fixed"] { border-color: #5ee6a8; } .gt-actor[data-s="fixed"] .gt-ok { display: block; color: #5ee6a8; }
+.gt-note { position: absolute; top: -30px; right: -30px; background: #ffd37a; color: #07072b; font-size: 24px; font-weight: 800; padding: 8px 18px; border-radius: 10px; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4); opacity: 0; }
+.gt-target[data-s="got"], .gt-target[data-s="done"] { border-color: #5ee6a8; box-shadow: 0 0 60px rgba(94, 230, 168, 0.35); }
+.gt-gate { position: absolute; left: 640px; top: 150px; width: 440px; height: 440px; border-radius: 28px; background: linear-gradient(180deg, #14144d, #0a0a30); border: 2px solid #3b4c99;
+  box-shadow: 0 30px 80px rgba(0, 0, 20, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06); display: flex; flex-direction: column; align-items: center; padding: 30px; gap: 24px; }
+.gt-head { display: flex; align-items: center; gap: 16px; } .gt-head b { font-size: 34px; font-weight: 800; letter-spacing: 0.04em; }
+.gt-light { width: 26px; height: 26px; border-radius: 50%; background: #5b60a0; box-shadow: 0 0 0 6px rgba(91, 96, 160, 0.2); }
+.gt-scan { width: 100%; height: 6px; border-radius: 3px; background: linear-gradient(90deg, transparent, #3b4c99, transparent); }
+.gt-verdicts { display: grid; width: 100%; flex: 1; } .gt-verdict { grid-area: 1 / 1; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; }
+.gt-verdict b { font-size: 52px; font-weight: 800; } .gt-verdict span { font-family: "JetBrains Mono", monospace; font-size: 24px; color: #a6abe0; }
+.gt-gate[data-s="idle"] .gt-verdict.idle { display: flex; } .gt-verdict.idle b { color: #8a8fc0; }
+.gt-gate[data-s="block"] [data-kind="block"], .gt-gate[data-s="inform"] [data-kind="inform"], .gt-gate[data-s="require"] [data-kind="require"], .gt-gate[data-s="pass"] [data-kind="pass"] { display: flex; }
+.gt-gate[data-s="block"] { border-color: #ff6b6b; } .gt-gate[data-s="block"] .gt-light { background: #ff6b6b; box-shadow: 0 0 30px #ff6b6b; } [data-kind="block"] b { color: #ff8fa8; }
+.gt-gate[data-s="inform"] { border-color: #ffd37a; } .gt-gate[data-s="inform"] .gt-light { background: #ffd37a; box-shadow: 0 0 30px #ffd37a; } [data-kind="inform"] b { color: #ffd37a; }
+.gt-gate[data-s="require"] { border-color: #c88bff; } .gt-gate[data-s="require"] .gt-light { background: #c88bff; box-shadow: 0 0 30px #c88bff; } [data-kind="require"] b { color: #c88bff; }
+.gt-gate[data-s="pass"] { border-color: #5ee6a8; } .gt-gate[data-s="pass"] .gt-light { background: #5ee6a8; box-shadow: 0 0 30px #5ee6a8; } [data-kind="pass"] b { color: #5ee6a8; }
+.gt-action { position: absolute; z-index: 2; left: 300px; top: 335px; height: 70px; padding: 0 28px; border-radius: 35px; background: #8aa6ff; color: #07072b; font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 28px;
+  display: flex; align-items: center; white-space: nowrap; box-shadow: 0 12px 30px rgba(0, 0, 20, 0.5); opacity: 0; }
+.gt-fixed { display: none; } .gt-action[data-s="fixed"] { background: #5ee6a8; } .gt-action[data-s="fixed"] .gt-was { display: none; } .gt-action[data-s="fixed"] .gt-fixed { display: inline; }
+.dl-doc { position: absolute; left: 300px; top: 10px; width: 1000px; height: 700px; background: #0b0b36; border: 2px solid #26265f; border-radius: 20px; overflow: hidden; box-shadow: 0 30px 80px rgba(0, 0, 20, 0.5); }
+.dl-head { display: flex; align-items: center; gap: 24px; padding: 18px 30px; border-bottom: 2px solid #1c1c4d; font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 28px; }
+.dl-status, .sq-status { display: inline-grid; padding: 6px 18px; border-radius: 10px; font-family: "JetBrains Mono", monospace; font-weight: 700; background: rgba(255, 211, 122, 0.12); color: #ffd37a; border: 2px solid #7a6530; }
+.dl-face { grid-area: 1 / 1; visibility: hidden; } [data-s="0"] > .dl-face[data-face="0"], [data-s="1"] > .dl-face[data-face="1"] { visibility: visible; }
+.dl-status[data-s="1"], .sq-status[data-s="1"] { color: #5ee6a8; border-color: #2f7a60; background: rgba(94, 230, 168, 0.12); }
+.dl-new { display: flex; flex-direction: column; gap: 30px; padding: 34px 40px; } .dl-sec h4 { font-size: 30px; color: #8aa6ff; } .dl-sec p { font-size: 32px; color: #eef0ff; margin-top: 6px; }
+.dl-seal { position: absolute; right: 40px; bottom: 40px; width: 190px; height: 190px; border-radius: 50%; border: 6px double #5ee6a8; color: #5ee6a8; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(94, 230, 168, 0.08); opacity: 0; } .dl-seal b { font-size: 32px; font-weight: 800; } .dl-seal span { font-family: "JetBrains Mono", monospace; font-size: 22px; }
+.dl-attempt { position: absolute; left: 1420px; top: 300px; padding: 16px 28px; border-radius: 34px; background: #ff8fa8; color: #07072b; font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 28px; white-space: nowrap; }
+.dl-refusal { position: absolute; left: 300px; top: 728px; width: 1300px; font-family: "JetBrains Mono", monospace; font-size: 24px; color: #ff9aa8; }
+.gh { position: relative; }
+.gh-hero { position: absolute; z-index: 5; left: 50%; top: 54%; translate: -50% -50%; width: 1180px; display: flex; gap: 20px; padding: 28px; border-radius: 22px; background: #161b22; border: 2px solid #3d444d;
+  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.7); }
+.gh-hero .gh-av { width: 56px; height: 56px; font-size: 26px; } .gh-hero .gh-sbody { border: none; } .gh-hero .gh-shead { background: none; padding: 4px 0 10px; font-size: 24px; }
+.gh-hero .gh-sbody h4 { font-size: 46px; padding: 4px 0 12px; } .gh-hero .gh-sbody p { font-size: 32px; padding: 0 0 14px; } .gh-hero .gh-sbody h5 { font-size: 34px; padding: 10px 0 6px; }
+.gh-hero .gh-sbody ol, .gh-hero .gh-sbody ul { font-size: 31px; padding: 0 0 10px 44px; line-height: 1.35; }
+.band-top .pill { align-self: center; flex: none; white-space: nowrap; }
+.badge { align-self: center; font-size: 26px; font-weight: 800; padding: 8px 18px; border-radius: 12px; color: #5ee6a8; border: 2px solid #2f7a60; background: rgba(94, 230, 168, 0.1); white-space: nowrap; }
+.ps.row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 34px; align-items: stretch; }
+.ps.row .ps-panel { grid-area: auto; height: auto; flex-direction: column; justify-content: flex-start; gap: 14px; padding: 30px; border-radius: 22px; background: rgba(11, 11, 54, 0.6); border: 2px solid #26265f; }
+.ps.row .ps-panel > h4 { align-self: stretch; font-size: 36px; font-weight: 800; margin-bottom: 12px; color: #eef0ff; }
+.ps.row .ps-panel.layers .ps-item { width: 100%; height: 86px; padding: 0 24px; } .ps.row .ps-panel.layers .ps-item b { font-size: 28px; } .ps.row .ps-panel.layers .ps-item span { font-size: 20px; }
+.ps.row .ps-panel.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-content: start; } .ps.row .ps-panel.grid > h4 { grid-column: span 2; }
+.ps.row .ps-panel.grid .ps-item { height: 70px; font-size: 22px; }
+.ps.row .ps-panel.levels .ps-item { width: 100%; grid-template-columns: 210px 1fr; padding: 16px 20px; gap: 14px; } .ps.row .ps-panel.levels .ps-item b { font-size: 26px; } .ps.row .ps-panel.levels .ps-item span { font-size: 21px; }
+.sq { display: flex; flex-direction: column; gap: 18px; } .sq-head { display: flex; align-items: center; gap: 20px; opacity: 0; }
+.sq-file { font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 24px; color: #8a8fc0; }
+.sq-status { display: inline-grid; padding: 6px 18px; border-radius: 10px; font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 24px; background: rgba(255, 211, 122, 0.12); color: #ffd37a; border: 2px solid #7a6530; }
+.sq-status[data-s="1"] { color: #5ee6a8; border-color: #2f7a60; background: rgba(94, 230, 168, 0.12); }
+.sq-rows { display: flex; flex-direction: column; gap: 14px; padding: 26px 36px; border-radius: 20px; background: #0b0b36; border: 2px solid #3b4c99; }
+.sq-row { display: grid; grid-template-columns: 860px 1fr; gap: 40px; align-items: center; min-height: 96px; border-bottom: 1px solid #1c1c4d; } .sq-row:last-child { border-bottom: none; }
+.sq-row > p { font-size: 36px; line-height: 1.4; color: #eef0ff; }
+.sq-gap { position: relative; padding: 0 4px; } .sq-gap > span { position: relative; } .sq-fixed { display: none; }
+.sq-mark { position: absolute; left: 0; right: 0; top: 10%; bottom: 6%; border-radius: 6px; background: rgba(255, 211, 122, 0.4); transform-origin: left; transform: scaleX(var(--fill, 0)); }
+.sq-gap[data-s="filled"] .sq-mark { background: rgba(94, 230, 168, 0.3); } .sq-gap[data-s="filled"] .sq-was { display: none; } .sq-gap[data-s="filled"] .sq-fixed { display: inline; color: #5ee6a8; }
+.sq-qs { display: flex; flex-direction: column; gap: 10px; }
+.sq-q { position: relative; padding: 12px 22px; border-radius: 14px; background: #14144a; border: 2px solid #7a6530; }
+.sq-q::before { content: ""; position: absolute; left: -40px; top: 50%; width: 40px; height: 2px; background: #ffd37a; }
+.sq-cat { font-size: 18px; font-weight: 700; color: #ffd37a; text-transform: uppercase; letter-spacing: 0.06em; } .sq-q p { font-size: 28px; font-weight: 700; margin-top: 2px; }
+.sq-q[data-s="closed"] { border-color: #2f7a60; } .sq-q[data-s="closed"]::before { background: #5ee6a8; } .sq-q[data-s="closed"] p { color: #a6abe0; } .sq-q[data-s="closed"] p::after { content: "  ✓"; color: #5ee6a8; }
+.gh-hero { width: 1560px !important; top: 50% !important; padding: 26px 40px !important; } .gh-hero .gh-sbody h4 { font-size: 42px !important; padding: 0 0 8px !important; } .gh-hero .gh-sbody p { font-size: 30px !important; padding: 0 0 8px !important; }
+.gh-hero .gh-sbody h5 { font-size: 30px !important; padding: 6px 0 2px !important; } .gh-hero .gh-sbody ol, .gh-hero .gh-sbody ul { font-size: 28px !important; padding-bottom: 4px !important; } .gh-hero-k { font-size: 28px !important; }
+.ms-slot { width: 70px; height: 70px; border-radius: 16px; border: 3px dashed #3b4c99; display: block; }
+.ms-card[data-s="0"] .ms-face b { color: #5b60a0; }
+.cr { display: flex; flex-direction: column; gap: 14px; } .cr-file { font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 26px; color: #8a8fc0; }
+.cr-rows { position: relative; flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
+.cr-rows::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 820px; border-radius: 20px; background: #0b0b36; border: 2px solid #3b4c99; }
+.cr-beam { position: absolute; left: 0; width: 820px; top: 0; height: 100%; pointer-events: none; z-index: 2; }
+.cr-beam::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: #8aa6ff; box-shadow: 0 0 26px 8px rgba(138, 166, 255, 0.5); }
+.cr-row { position: relative; display: grid; grid-template-columns: 820px 1fr; gap: 70px; align-items: center; min-height: 88px; }
+.cr-row > p { padding: 10px 36px; font-size: 32px; color: #c8cbf0; border-left: 6px solid transparent; }
+.cr-row[data-s="lit"] > p { color: #ffffff; background: rgba(138, 166, 255, 0.14); border-left-color: #8aa6ff; }
+.cr-finding { position: relative; padding: 14px 24px; border-radius: 16px; background: #12123f; border-left: 8px solid; display: grid; grid-template-columns: auto 1fr; gap: 2px 18px; align-items: baseline; }
+.cr-finding::before { content: ""; position: absolute; left: -70px; top: 50%; width: 62px; height: 3px; background: currentColor; }
+.cr-finding b { font-size: 22px; text-transform: uppercase; letter-spacing: 0.05em; } .cr-finding span { font-size: 30px; font-weight: 700; color: #eef0ff; }
+.cr-finding small { grid-column: 2; font-family: "JetBrains Mono", monospace; font-size: 21px; color: #a6abe0; } .cr-finding small::before { content: "evidence: "; }
+.cr-finding.red { border-color: #ff6b6b; color: #ff8fa8; } .cr-finding.amb { border-color: #ffd37a; color: #ffd37a; } .cr-finding.blu { border-color: #8aa6ff; color: #8aa6ff; } .cr-finding.grn { border-color: #5ee6a8; color: #5ee6a8; }
+.ch { display: grid; gap: 22px; align-items: center; position: relative; }
+.ch::before { content: ""; position: absolute; left: 4%; right: 4%; top: 50%; height: 3px; background: #26265f; }
+.ch-card { position: relative; height: 560px; display: flex; flex-direction: column; gap: 14px; padding: 24px 22px; border-radius: 24px; background: linear-gradient(170deg, #17175a, #0b0b36); border: 2px solid #2d2d6e; box-shadow: 0 24px 60px rgba(0, 0, 20, 0.5); }
+.ch-card code { font-family: "JetBrains Mono", monospace; font-size: 18px; color: #5b60a0; } .ch-card > b { font-size: 34px; font-weight: 800; color: #8a8fc0; }
+.ch-card[data-s="on"] { border-color: #ffd37a; box-shadow: 0 0 60px rgba(255, 211, 122, 0.35); } .ch-card[data-s="on"] code { color: #ffd37a; } .ch-card[data-s="on"] > b { color: #eef0ff; }
+.ch-card[data-s="done"] { border-color: #2f7a60; } .ch-card[data-s="done"] > b { color: #eef0ff; } .ch-card[data-s="done"] code { color: #5ee6a8; }
+.ch-vis { height: 190px; border-radius: 16px; background: rgba(255, 255, 255, 0.04); border: 1px solid #26265f; padding: 16px; display: flex; flex-wrap: wrap; gap: 10px; align-content: center; justify-content: center; }
+.ch-keys { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; } .ch-keys li { font-size: 21px; font-weight: 700; padding: 6px 12px; border-radius: 10px; background: rgba(138, 166, 255, 0.12); color: #c8cbf0; }
+.ch-card[data-s="on"] .ch-keys li { background: rgba(255, 211, 122, 0.16); color: #ffd37a; }
+.wireframe { flex-direction: column; align-items: stretch; flex-wrap: nowrap; } .wireframe i { display: block; height: 16px; border-radius: 4px; background: #a9adc4; opacity: 0.55; } .wireframe i.short { width: 55%; } .wireframe i.box { height: 60px; opacity: 0.3; }
+.dir { display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 12px; border: 2px solid #26265f; opacity: 0.45; } .dir.kept { border-color: #5ee6a8; opacity: 1; }
+.dir i { width: 26px; height: 26px; border-radius: 50%; } .dir i:nth-child(1) { background: #336699; } .dir i:nth-child(2) { background: #e8eef5; } .dir i:nth-child(3) { background: #d9480f; }
+.sw { display: flex; gap: 8px; } .sw i { width: 34px; height: 34px; border-radius: 8px; } .sw i:nth-child(1) { background: #1e4f7c; } .sw i:nth-child(2) { background: #3d7ab8; } .sw i:nth-child(3) { background: #e8eef5; } .sw i:nth-child(4) { background: #1f6b43; }
+.ramp { display: flex; align-items: baseline; gap: 10px; color: #eef0ff; } .ramp b:nth-child(1) { font-size: 40px; } .ramp b:nth-child(2) { font-size: 28px; } .ramp b:nth-child(3) { font-size: 18px; }
+.components .btn { width: 140px; height: 34px; border-radius: 10px; background: #3d7ab8; } .components .btn.ghost { background: transparent; border: 3px solid #3d7ab8; } .components .crd { width: 170px; height: 46px; border-radius: 12px; background: #e8eef5; }
+.scr { width: 130px; height: 100px; border-radius: 10px; background: #e8eef5; padding: 8px; display: flex; flex-direction: column; gap: 6px; } .scr.phone { width: 54px; } .screens { flex-wrap: nowrap; } .verdict { flex-direction: column; flex-wrap: nowrap; gap: 8px; } .components { flex-direction: column; flex-wrap: nowrap; }
+.scr i { display: block; height: 14px; border-radius: 4px; background: #c4cfdc; } .scr i.bar { background: #1e4f7c; }
+.vd { font-size: 24px; font-weight: 800; padding: 6px 14px; border-radius: 10px; border: 3px solid; } .vd.ok { color: #5ee6a8; } .vd.rev { color: #ffd37a; }
+.ch-vis .pub { color: #07072b; } .pub { font-size: 20px; font-weight: 800; padding: 6px 16px; line-height: 1.2; white-space: nowrap; border-radius: 10px; background: #5ee6a8; color: #07072b; }
+.ch-card { opacity: 0; }
+.ms-kind { font-size: 16px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: #8a8fc0; padding: 2px 10px; border-radius: 8px; border: 1px solid #3b4c99; }
+.gt-target { justify-content: flex-start !important; padding-top: 26px; gap: 14px !important; height: 300px !important; top: 220px !important; }
+.gt-files { list-style: none; width: 84%; display: flex; flex-direction: column; gap: 8px; }
+.gt-files li { font-family: "JetBrains Mono", monospace; font-size: 22px; padding: 8px 14px; border-radius: 10px; background: #12123f; border: 2px solid #26265f; color: #a6abe0; }
+.gt-files li[data-s="written"] { border-color: #5ee6a8; color: #5ee6a8; background: rgba(94, 230, 168, 0.12); } .gt-files li[data-s="written"]::after { content: "  ✓"; }
+.gt-files li[data-s="refused"] { border-color: #ff6b6b; color: #ff9aa8; } .gt-files li[data-s="refused"]::after { content: "  ✗ locked"; }
+.gh-threads { display: grid !important; grid-template-columns: 1fr 1fr; gap: 12px 14px !important; align-content: start; }
+.gh-cols { grid-template-columns: 1fr !important; } .gh-side { display: none !important; }
+.gh-slot .gh-c { padding: 7px 16px; } .gh-slot .gh-c p { font-size: 22px; } .gh-slot .gh-file, .gh-slot .gh-bar { font-size: 18px; padding: 6px 14px; }
+.gh-hero { flex-wrap: wrap; } .gh-hero-k { flex-basis: 100%; font-size: 30px; font-weight: 800; color: #ffd37a; letter-spacing: 0.02em; }
+.gh-slot[data-s="resolved"] .gh-full { opacity: 0.4 !important; } .gh-slot[data-s="resolved"] .gh-file { visibility: hidden; } .gh-slot[data-s="resolved"] .gh-bar { opacity: 1; align-self: start; background: #1c1630; }
+.ms-card.main { border-color: #5ee6a8; background: linear-gradient(160deg, #123a3a, #0b0b36); } .ms-card.main .ms-kind { color: #5ee6a8; border-color: #2f7a60; }
+.ms-cards { min-height: 210px; } .ms-body { font-size: 19px !important; line-height: 1.35 !important; }
 `;
 
 const esc = (value) =>
@@ -228,6 +457,671 @@ const thenRows = (s) => windowsOf(s).filter((w) => w.afterWork).reduce((n, w) =>
 const laterRows = (s) => thenRows(s) + windowsOf(s).filter((w) => !w.afterWork).reduce((n, w) => n + (w.rows ?? []).filter((r) => r.afterWork).length, 0);
 const hasThen = (s) => windowsOf(s).some((w) => w.afterWork);
 
+// ---- product surfaces: a fixed page that changes in place, beat by beat ----------------------------------
+
+/** A beat is one thing that changes on a product surface, at `at` seconds after the scene opens: `in` fades an
+ * element in where it already stands, `set` changes its state (`data-s`), `fill` fills its bar, `count` counts it
+ * up to `value`, `focus` lights the elements `value` names and dims the rest, `cap` shows caption `value`. Nothing
+ * moves and nothing enters or leaves the layout. Its sound plays at the same time; the scene's length, its sounds
+ * and its animation all read the one list. */
+const BEAT_FROM = 0.63;
+/** Every beat of a product scene is spread by this much, so each screen is read before the next. */
+const PACE = 1;
+const MAX_CAPTIONS = 3;
+const MAX_THREADS = 6;
+const beat = (at, act, sel, sound, value) => ({ at: round2(at), act, sel, sound, ...(value === undefined ? {} : { value }) });
+const focus = (at, sels, sound) => beat(at, "focus", "[data-zone]", sound, sels);
+const caption = (at, k, sound) => beat(at, "cap", `[data-cap='${k}']`, sound, k);
+
+/** The time a step stays on screen: long enough to read what it says. */
+const readTime = (...texts) => {
+  const words = texts.flat().reduce((n, x) => n + wordCount(x), 0);
+  return round2(Math.min(3.4, Math.max(1.4, 1 + 0.1 * words)));
+};
+const wordCount = (text) => String(text ?? "").trim().split(/\s+/).filter(Boolean).length;
+
+/** A person shown by an initial in a coloured disc: the render fetches no picture for a fictional login. */
+const avatarHtml = (login) => {
+  const hue = [...String(login)].reduce((n, c) => (n * 31 + c.charCodeAt(0)) % 360, 7);
+  return `<span class="gh-av" style="background:hsl(${hue} 45% 42%)">${esc(String(login).slice(0, 1).toUpperCase())}</span>`;
+};
+
+const need = (ok, message) => {
+  if (!ok) throw new Error(message);
+};
+
+/** A GitHub pull request page that never moves: its header, two review threads that each get their answer, the
+ * settled ones collapsing to Resolved in their own slot, then the summary comment in its own slot. */
+const githubPr = {
+  captions: (s) => s.captions ?? [],
+  body: (s) => {
+    need(s.pr?.title, "github-pr has no pr.title");
+    need(s.threads?.length, "github-pr has no threads");
+    need(s.threads.length <= MAX_THREADS, `github-pr: ${s.threads.length} threads, ${MAX_THREADS} at most`);
+    s.threads.forEach((th, i) => need(th.reply, `github-pr thread ${i + 1} has no reply`));
+    const { pr } = s;
+    const where = (th) => `<span class="gh-path">${esc(th.file)}</span>${th.line ? `<span class="gh-ln">line ${esc(th.line)}</span>` : ""}`;
+    const thread = (th, i) =>
+      `<div class="gh-slot" data-thread="${i}" data-s="open">` +
+      `<div class="gh-full"><div class="gh-file">${where(th)}</div>` +
+      `<div class="gh-c">${avatarHtml(th.author)}<div><b>${esc(th.author)}</b><p>${esc(th.comment)}</p></div></div>` +
+      `<div class="gh-c gh-reply" data-reply="${i}">${avatarHtml(pr.author)}<div><b>${esc(pr.author)}</b>${th.kind ? `<span class="gh-kind" data-kind="${esc(th.kind)}">${esc(th.kind)}</span>` : ""}<p>${esc(th.reply)}</p></div></div></div>` +
+      `<div class="gh-bar">${where(th)}<span class="gh-res">✓ Resolved</span></div>` +
+      `</div>`;
+    const summary = s.summary
+      ? `<div class="gh-hero">${s.summary.kicker ? `<span class="gh-hero-k">${esc(s.summary.kicker)}</span>` : ""}${avatarHtml(pr.author)}<div class="gh-sbody"><div class="gh-shead"><b>${esc(pr.author)}</b> commented</div>` +
+        `<h4>${esc(s.summary.title)}</h4>${(s.summary.lines ?? []).map((l) => `<p>${esc(l)}</p>`).join("")}` +
+        (s.summary.sections ?? [])
+          .map((sec) =>
+            sec.list === "bullets"
+              ? `<h5>${esc(sec.heading)}</h5><ul>${sec.items.map((x) => `<li>${esc(x)} <span class="gh-link">(thread)</span></li>`).join("")}</ul>`
+              : `<h5>${esc(sec.heading)}</h5><ol>${sec.items.map((x) => `<li><b>${esc(x)}</b> <span class="gh-link">(thread)</span></li>`).join("")}</ol>`
+          )
+          .join("") +
+        `</div></div>`
+      : "";
+    const checks = (pr.checks ?? []).map((c) => `<span class="gh-check" data-s="${esc(c.state ?? "pass")}">${esc(c.name)}</span>`).join("");
+    return (
+      `<div class="gh"><div class="gh-url">${DOTS}<span>github.com/${esc(pr.repo)}/pull/${esc(pr.number)}</span>${s.prompt ? `<span class="gh-run">&gt; ${esc(s.prompt)}</span>` : ""}</div>` +
+      `<div class="gh-head"><h3>${esc(pr.title)} <span class="gh-num">#${esc(pr.number)}</span></h3>` +
+      `<div class="gh-meta"><span class="gh-open">Open</span><span><b>${esc(pr.author)}</b> wants to merge into <code>${esc(pr.base)}</code> from <code>${esc(pr.branch)}</code></span></div></div>` +
+      `<div class="gh-cols"><div class="gh-threads">${s.threads.map(thread).join("")}</div>` +
+      `<div class="gh-side">${checks ? `<div class="gh-merge"><span class="gh-ok">✓</span><span>All checks have passed</span>${checks}</div>` : ""}</div></div>${summary}` +
+      `</div>`
+    );
+  },
+  beats: (s) => {
+    const out = [beat(BEAT_FROM, "in", ".gh", "pop"), caption(BEAT_FROM, 0, "pop")];
+    s.threads.forEach((_, i) => out.push(beat(0.9 + 0.1 * i, "in", `[data-thread='${i}']`, "click")));
+    let at = 0.9 + 0.1 * s.threads.length + 0.7;
+    s.threads.forEach((_, i) => out.push(beat(at + 0.3 * i, "in", `[data-reply='${i}']`, "pop")));
+    at += 0.3 * s.threads.length + 1.6;
+    const settled = s.threads.map((th, i) => (th.resolve ? i : -1)).filter((i) => i > -1);
+    if (settled.length) {
+      out.push(caption(at, 1, "tick"));
+      settled.forEach((i) => out.push(beat(at, "set", `[data-thread='${i}']`, "tick", "resolved")));
+      at += 2.2;
+    }
+    if (s.summary) out.push(beat(at, "in", ".gh-hero", "pop"), caption(at, 2, "pop"));
+    return out.filter((x) => x.act !== "cap" || x.value < githubPr.captions(s).length);
+  },
+};
+
+const IDE_STATES = ["red", "green"];
+
+/** One editor frame that never moves: its file tree, its open file and its agent panel, playing `steps` in turn.
+ * A step shows a message or a notice from the tool where it already stands, opens a file, adds lines in place,
+ * or turns a file of the tree red or green; a step with a `caption` starts a new beat. */
+const ideWindow = {
+  captions: (s) => (s.steps ?? []).filter((st) => st.caption).map((st) => st.caption),
+  body: (s) => {
+    need(s.ide?.files?.length, "ide-window has no ide.files");
+    need(s.steps?.length, "ide-window has no steps");
+    const files = s.ide.files;
+    const at = (p) => files.findIndex((f) => f.path === p);
+    s.steps.forEach((st, i) => {
+      const where = `ide-window step ${i + 1}`;
+      if (st.state !== undefined) need(IDE_STATES.includes(st.state), `${where}: state "${st.state}", one of ${IDE_STATES.join(", ")}`);
+      for (const p of [st.file, st.open].filter((x) => x !== undefined)) need(at(p) > -1, `${where}: no file "${p}"`);
+    });
+    const added = files.map(() => []);
+    let open = -1;
+    s.steps.forEach((st, i) => {
+      if (st.open !== undefined) open = at(st.open);
+      if (st.add) {
+        need(open > -1, `ide-window step ${i + 1}: lines added with no open file`);
+        added[open].push(...st.add.map((text) => ({ text, step: i })));
+      }
+    });
+    const folders = new Set();
+    const tree = files
+      .map((f, k) => {
+        const parts = f.path.split("/");
+        let html = "";
+        parts.slice(0, -1).forEach((dir, d) => {
+          const key = parts.slice(0, d + 1).join("/");
+          if (folders.has(key)) return;
+          folders.add(key);
+          html += `<li class="ide-dir" style="padding-left:${16 + d * 22}px">▾ ${esc(dir)}</li>`;
+        });
+        return html + `<li class="ide-file" data-file="${k}" data-zone data-s="none" style="padding-left:${16 + (parts.length - 1) * 22}px">${esc(parts.at(-1))}</li>`;
+      })
+      .join("");
+    const panes = files
+      .map(
+        (f, k) =>
+          `<div class="ide-code" data-pane="${k}" data-zone data-s="closed"><div class="ide-tab">${esc(f.path.split("/").at(-1))}</div><div class="ide-lines">` +
+          (f.lines ?? []).map((l) => `<span class="ide-line">${esc(l)}</span>`).join("") +
+          added[k].map((l) => `<span class="ide-line add" data-step="${l.step}">${esc(l.text)}</span>`).join("") +
+          `</div></div>`
+      )
+      .join("");
+    const msgs = s.steps
+      .flatMap((st, i) => [
+        st.user ? `<div class="ide-msg user" data-step="${i}" data-zone>${esc(st.user)}</div>` : "",
+        st.tool ? `<div class="ide-msg tool" data-step="${i}" data-zone>${esc(st.tool)}</div>` : "",
+        st.notice
+          ? `<div class="ide-notice ${esc(st.notice.tone ?? "dim")}" data-step="${i}" data-zone><b>${esc(st.notice.label)}</b><span>${esc(st.notice.text)}</span>` +
+            (st.notice.detail ? `<em>${esc(st.notice.detail)}</em>` : "") +
+            `</div>`
+          : "",
+        st.agent ? `<div class="ide-msg agent" data-step="${i}" data-zone>${esc(st.agent)}</div>` : "",
+      ])
+      .join("");
+    return (
+      `<div class="ide"><div class="ide-bar">${DOTS}<span>${esc(s.ide.label)}</span></div><div class="ide-main">` +
+      `<ul class="ide-tree"><li class="ide-head">EXPLORER</li>${tree}</ul>` +
+      `<div class="ide-editor">${panes}</div>` +
+      `<div class="ide-chat"><div class="ide-chead">${esc(s.ide.agent ?? "Claude Code")}</div><div class="ide-feed">${msgs}</div></div>` +
+      `</div></div>`
+    );
+  },
+  beats: (s) => {
+    const files = s.ide.files;
+    const at = (p) => files.findIndex((f) => f.path === p);
+    const out = [beat(BEAT_FROM, "in", ".ide", "pop")];
+    let t = 1.3;
+    let open = -1;
+    let caps = 0;
+    s.steps.forEach((st, i) => {
+      const sound = st.state || st.notice?.tone === "red" ? "pop" : "click";
+      const lit = [];
+      if (st.open !== undefined && at(st.open) !== open) {
+        if (open > -1) out.push(beat(t, "set", `[data-pane='${open}']`, sound, "closed"));
+        open = at(st.open);
+        out.push(beat(t, "set", `[data-pane='${open}']`, sound, "open"));
+      }
+      if (st.user || st.tool || st.notice || st.agent) {
+        out.push(beat(t, "in", `.ide-feed [data-step='${i}']`, sound));
+        lit.push(`.ide-feed [data-step='${i}']`);
+      }
+      if (st.add) {
+        out.push(beat(t, "in", `.ide-line[data-step='${i}']`, sound));
+        lit.push(`[data-pane='${open}']`);
+      }
+      if (st.open !== undefined && !lit.includes(`[data-pane='${open}']`)) lit.push(`[data-pane='${open}']`);
+      if (st.state) {
+        out.push(beat(t, "set", `[data-file='${at(st.file)}']`, sound, st.state));
+        lit.push(`[data-file='${at(st.file)}']`);
+        if (at(st.file) === open && !lit.includes(`[data-pane='${open}']`)) lit.push(`[data-pane='${open}']`);
+      }
+      if (st.caption) out.push(caption(t, caps++, sound));
+      if (lit.length) out.push(focus(t, lit, sound));
+      t += readTime(st.user, st.tool, st.notice?.text, st.notice?.detail, st.agent, st.add ?? []);
+    });
+    return out;
+  },
+};
+
+/** One window per tool, each lighting up in turn as it loads what AIDD installs in it. */
+const toolGrid = {
+  captions: (s) => s.captions ?? [],
+  body: (s) => {
+    need(s.tools?.length, "tool-grid has no tools");
+    const columns = s.tools.length <= 4 ? s.tools.length : Math.ceil(s.tools.length / 2);
+    return (
+      `<div class="tg" style="grid-template-columns:repeat(${columns}, 1fr)">` +
+      s.tools
+        .map(
+          (tool, k) =>
+            `<div class="tg-win" data-tool="${k}" data-zone data-s="off"><div class="tg-bar">${DOTS}</div>` +
+            `<div class="tg-body"><b>${esc(tool.name)}</b><small>${esc(tool.dir ?? "")}</small>` +
+            `<span class="tg-fill"><i data-fill="${k}"></i></span><span class="tg-count">${esc(tool.count ?? "")}</span></div></div>`
+        )
+        .join("") +
+      `</div>`
+    );
+  },
+  beats: (s) => {
+    const out = s.tools.map((_, k) => beat(BEAT_FROM + 0.12 * k, "in", `[data-tool='${k}']`, "click"));
+    let t = BEAT_FROM + 0.12 * s.tools.length + 0.6;
+    if (toolGrid.captions(s).length) out.push(caption(t, 0, "tick"));
+    s.tools.forEach((_, k) => {
+      out.push(beat(t, "fill", `[data-fill='${k}']`, "tick"));
+      out.push(beat(t + 0.45, "set", `[data-tool='${k}']`, "pop", "on"));
+      t += 0.55;
+    });
+    return out;
+  },
+};
+
+/** Blocks that appear in place around a core, each tied to it, then a counter that counts up. */
+const architectureBlocks = {
+  captions: (s) => s.captions ?? [],
+  body: (s) => {
+    need(s.core, "architecture-blocks has no core");
+    need(s.blocks?.length, "architecture-blocks has no blocks");
+    need(Number.isFinite(s.counter?.to), "architecture-blocks has no counter.to");
+    const spot = (k) => {
+      const angle = -Math.PI / 2 + (2 * Math.PI * k) / s.blocks.length;
+      return { x: round2(50 + 38 * Math.cos(angle)), y: round2(50 + 40 * Math.sin(angle)) };
+    };
+    const links = s.blocks.map((_, k) => `<line data-link="${k}" x1="50" y1="50" x2="${spot(k).x}" y2="${spot(k).y}" pathLength="1" />`).join("");
+    return (
+      `<div class="ab"><svg class="ab-links" viewBox="0 0 100 100" preserveAspectRatio="none">${links}</svg>` +
+      `<div class="ab-core" data-zone><b>${esc(s.core)}</b><div class="ab-count"><span data-count>${esc(s.counter.from ?? 0)}</span> ${esc(s.counter.label ?? "")}</div></div>` +
+      s.blocks
+        .map(
+          (b, k) =>
+            `<div class="ab-block" data-block="${k}" data-zone style="left:${spot(k).x}%;top:${spot(k).y}%"><b>${esc(b.label)}</b>${b.detail ? `<small>${esc(b.detail)}</small>` : ""}</div>`
+        )
+        .join("") +
+      `</div>`
+    );
+  },
+  beats: (s) => {
+    const out = [beat(BEAT_FROM, "in", ".ab-core", "pop")];
+    if (architectureBlocks.captions(s).length) out.push(caption(1.3, 0, "pop"));
+    s.blocks.forEach((_, k) => {
+      const at = 1.3 + 0.4 * k;
+      out.push(beat(at, "in", `[data-block='${k}']`, "pop"), beat(at, "fill", `[data-link='${k}']`, "pop"));
+    });
+    const counted = 1.3 + 0.4 * s.blocks.length + 0.4;
+    out.push(beat(counted, "count", "[data-count]", "tick", s.counter.to), focus(counted, [".ab-core"], "tick"));
+    if (architectureBlocks.captions(s).length > 1) out.push(caption(counted, 1, "tick"));
+    return out;
+  },
+};
+
+/** A logo from the pinned brand icon set, fetched at render: a name without `-color` is a one-colour mark, drawn white. */
+const LOGO_SET = "https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@1.106.0/icons";
+const logoHtml = (name, cls) => `<img class="${cls}${name.endsWith("-color") ? "" : " mono"}" src="assets/logo-${esc(name)}.svg" alt="" />`;
+
+/** The logos a plan shows, which the render fetches from the icon set. */
+function mediaOf(plan) {
+  const logos = [];
+  const add = (list, value) => value && !list.includes(value) && list.push(value);
+  for (const s of plan.scenes ?? []) {
+    (s.tools ?? []).forEach((tool) => add(logos, tool.logo));
+    (s.cards ?? []).forEach((card) => (card.faces ?? []).forEach((face) => add(logos, face.logo)));
+  }
+  return { logos };
+}
+
+const PANEL_KINDS = ["layers", "grid", "levels"];
+
+/** Panels shown one at a time in the centre, each with its subtitle: its items appear in turn, and it leaves when the
+ * next one comes. A panel draws layers stacked, a grid of names, or levels each with what it proves. */
+const panelSequence = {
+  captions: (s) => s.captions ?? [],
+  body: (s) => {
+    need(s.panels?.length, "panel-sequence has no panels");
+    s.panels.forEach((p, i) => need(PANEL_KINDS.includes(p.kind), `panel-sequence panel ${i + 1}: kind "${p.kind}", one of ${PANEL_KINDS.join(", ")}`));
+    const item = (p, i, it, k) =>
+      `<div class="ps-item" data-item="${i}-${k}"><b>${esc(it.label)}</b>${it.detail ? `<span>${esc(it.detail)}</span>` : ""}</div>` +
+      (p.kind === "layers" && k < p.items.length - 1 ? `<i class="ps-down" data-item="${i}-${k}"></i>` : "");
+    return (
+      `<div class="stage ps${s.layout === "row" ? " row" : ""}">` +
+      s.panels
+        .map((p, i) => `<div class="ps-panel ${esc(p.kind)}" data-panel="${i}">${p.label ? `<h4>${esc(p.label)}</h4>` : ""}${p.items.map((it, k) => item(p, i, it, k)).join("")}</div>`)
+        .join("") +
+      `</div>`
+    );
+  },
+  beats: (s) => {
+    const out = [];
+    let t = BEAT_FROM;
+    if (s.layout === "row") {
+      s.panels.forEach((_, i) => out.push(beat(BEAT_FROM + 0.25 * i, "in", `[data-panel='${i}']`, "pop")));
+      return out;
+    }
+    s.panels.forEach((p, i) => {
+      if (i) out.push(beat(t, "to", `[data-panel='${i - 1}']`, "tick", { opacity: 0, duration: 0.2 }));
+      out.push(beat(t, "in", `[data-panel='${i}']`, "pop"), caption(t, i, "pop"));
+      p.items.forEach((_, k) => out.push(beat(t + 0.3 + 0.22 * k, "in", `[data-item='${i}-${k}']`, "click")));
+      t += 0.3 + 0.22 * p.items.length + 1.6;
+    });
+    return out;
+  },
+};
+
+/** Tools shown by their logos in a row; each new one comes in from the right, one after another, and snaps onto the
+ * end of the row with a click and a glow, the row closing up to stay centred. */
+const logoRow = {
+  captions: (s) => s.captions ?? [],
+  body: (s) => {
+    need(s.tools?.length, "logo-row has no tools");
+    s.tools.forEach((tool) => need(tool.logo, `logo-row tool "${tool.name}" has no logo`));
+    return (
+      `<div class="stage lr" style="grid-template-columns:repeat(${s.tools.length}, 1fr)">` +
+      s.tools
+        .map(
+          (tool, k) =>
+            `<div class="lr-tool${tool.new ? " new" : ""}" data-tool="${k}" data-zone>${tool.new ? `<span class="lr-burst" data-burst="${k}"></span>` : ""}` +
+            `<div class="lr-card">${logoHtml(tool.logo, "lr-logo")}</div><b>${esc(tool.name)}</b>${tool.new ? `<span class="lr-new">New</span>` : ""}</div>`
+        )
+        .join("") +
+      `</div>`
+    );
+  },
+  beats: (s) => {
+    const slot = 1720 / s.tools.length;
+    const fresh = s.tools.map((tool, k) => (tool.new ? k : -1)).filter((k) => k > -1);
+    const old = s.tools.map((tool, k) => (tool.new ? -1 : k)).filter((k) => k > -1);
+    // Until a new tool lands, the row is centred on the tools already there: shifted right by half a slot per tool to come.
+    const shift = (left) => Math.round((left * slot) / 2);
+    const out = [beat(BEAT_FROM, "in", ".lr", "pop"), caption(BEAT_FROM, 0, "pop")];
+    old.forEach((k, i) => out.push(beat(BEAT_FROM + 0.12 * i, "fromto", `[data-tool='${k}']`, "click", { from: { x: shift(fresh.length), opacity: 0 }, to: { x: shift(fresh.length), opacity: 1, duration: 0.35 } })));
+    let t = BEAT_FROM + 0.12 * old.length + 0.8;
+    fresh.forEach((k, n) => {
+      const left = fresh.length - n - 1;
+      old.concat(fresh.slice(0, n)).forEach((o) => out.push(beat(t, "to", `[data-tool='${o}']`, "tick", { x: shift(left), duration: 0.6, ease: "power3.inOut" })));
+      out.push(beat(t, "fromto", `[data-tool='${k}']`, "tick", { from: { x: 900, opacity: 0 }, to: { x: shift(left), opacity: 1, duration: 0.6, ease: "back.out(1.6)" } }));
+      out.push(beat(t + 0.6, "from", `[data-burst='${k}']`, "pop", { scale: 0.2, opacity: 1, duration: 0.6 }), beat(t + 0.6, "pulse", `[data-tool='${k}']`, "pop"));
+      t += 1.3;
+    });
+    s.tools.forEach((_, k) => out.push(beat(t + 0.2, "pulse", `[data-tool='${k}']`, "pop")));
+    return out;
+  },
+};
+
+const GATE_KINDS = ["block", "inform", "require"];
+
+/** An AI and the project with a checkpoint panel between them. Each outcome is one beat: the action reaches the
+ * checkpoint, its status light gives the verdict, and the action is refused, passes with a note the AI keeps for that
+ * beat only, or is sent back until the AI fixes it and it passes. */
+const gateScene = {
+  captions: (s) => s.captions ?? [],
+  body: (s) => {
+    need(s.outcomes?.length, "gate has no outcomes");
+    s.outcomes.forEach((o) => need(GATE_KINDS.includes(o.kind), `gate outcome "${o.kind}", one of ${GATE_KINDS.join(", ")}`));
+    s.outcomes.forEach((o) => need(!o.file || (s.files ?? []).includes(o.file), `gate outcome "${o.label}": no file "${o.file}" in the project`));
+    const verdicts = s.outcomes
+      .map((o) => `<div class="gt-verdict" data-kind="${esc(o.kind)}"><b>${esc(o.label)}</b><span>${esc(o.detail ?? "")}</span></div>`)
+      .join("");
+    const actions = s.outcomes
+      .map((o, k) => `<div class="gt-action" data-action="${k}" data-s="idle"><span class="gt-was">${esc(o.action)}</span><span class="gt-fixed">${esc(o.fixed ?? o.action)}</span></div>`)
+      .join("");
+    const note = s.outcomes.find((o) => o.kind === "inform")?.note;
+    return (
+      `<div class="stage gt"><div class="gt-actor" data-s="idle"><span class="gt-dot"></span><b>${esc(s.actor)}</b><em class="gt-work">working…</em><em class="gt-ok">✓ fixed</em>` +
+      (note ? `<span class="gt-note">${esc(note)}</span>` : "") +
+      `</div><div class="gt-gate" data-s="idle"><div class="gt-head"><span class="gt-light"></span><b>${esc(s.gate)}</b></div><div class="gt-scan"></div>` +
+      `<div class="gt-verdicts"><div class="gt-verdict idle"><b>Watching</b><span>every action</span></div>${verdicts}<div class="gt-verdict" data-kind="pass"><b>Passed</b><span>all checks</span></div></div></div>` +
+      `<div class="gt-target" data-s="idle"><b>${esc(s.target)}</b>` +
+      ((s.files ?? []).length ? `<ul class="gt-files">${s.files.map((f, k) => `<li data-file="${k}" data-s="idle">${esc(f)}</li>`).join("")}</ul>` : "") +
+      `</div>${actions}</div>`
+    );
+  },
+  beats: (s) => {
+    const GATE = 60;
+    const TARGET = 820;
+    const file = (o) => `[data-file='${(s.files ?? []).indexOf(o.file)}']`;
+    const land = (o, a, at) =>
+      o.file
+        ? [beat(at, "to", a, "click", { x: TARGET, opacity: 0, duration: 0.5 }), beat(at + 0.5, "set", file(o), "pop", "written")]
+        : [beat(at, "to", a, "click", { x: TARGET, duration: 0.5 })];
+    const out = [beat(BEAT_FROM, "in", ".gt", "pop")];
+    let t = 1.0;
+    s.outcomes.forEach((o, k) => {
+      const a = `[data-action='${k}']`;
+      if (k) out.push(beat(t, "set", ".gt-gate", "tick", "idle"));
+      out.push(caption(t, k, "pop"), beat(t, "in", a, "click"), beat(t + 0.3, "to", a, "click", { x: GATE, duration: 0.6 }), beat(t + 0.9, "set", ".gt-gate", "pop", o.kind));
+      if (o.kind === "block") {
+        out.push(beat(t + 1.1, "to", a, "tick", { x: 0, duration: 0.6, ease: "back.out(2)" }), beat(t + 1.1, "shake", ".gt-gate", "tick"));
+        if (o.file) out.push(beat(t + 1.1, "set", file(o), "tick", "refused"));
+      }
+      if (o.kind === "inform") out.push(beat(t + 1.1, "fromto", ".gt-note", "tick", { from: { x: 480, opacity: 0 }, to: { x: 0, opacity: 1, duration: 0.5 } }), ...land(o, a, t + 1.1));
+      if (o.kind === "require") {
+        out.push(beat(t + 1.1, "to", a, "tick", { x: 0, duration: 0.6 }), beat(t + 1.7, "set", ".gt-actor", "pop", "working"));
+        out.push(beat(t + 2.5, "set", ".gt-actor", "pop", "fixed"), beat(t + 2.5, "set", a, "pop", "fixed"));
+        out.push(beat(t + 2.8, "to", a, "click", { x: GATE, duration: 0.5 }), beat(t + 3.3, "set", ".gt-gate", "pop", "pass"), ...land(o, a, t + 3.5));
+        t += 2.0;
+      }
+      t += 2.6;
+      if (o.kind === "inform") out.push(beat(t - 0.2, "to", ".gt-note", "tick", { opacity: 0, duration: 0.2 }));
+      if (o.kind === "block") out.push(beat(t - 0.2, "to", a, "tick", { opacity: 0, duration: 0.2 }));
+    });
+    return out;
+  },
+};
+
+/** A terminal that types each command and prints its real output, then every agent card flips together to the
+ * provider's model, with the provider's logo. */
+const modelSwitch = {
+  captions: (s) => s.captions ?? [],
+  body: (s) => {
+    need(s.cards?.length, "model-switch has no cards");
+    need(s.runs?.length, "model-switch has no runs");
+    let face = 0;
+    s.runs.forEach((run) => {
+      if (!run.flip) return;
+      face += 1;
+      s.cards.forEach((card) => need(card.faces[face], `model-switch card "${card.role}" has no face ${face + 1}`));
+    });
+    const term = s.runs
+      .map(
+        (run, r) =>
+          `<div class="ms-cmd" data-prompt="${r}"><span class="grn">$</span> <span data-cmd="${r}"></span></div>` +
+          run.lines.map((line, k) => `<div class="ms-line" data-line="${r}-${k}">${esc(line.text)}</div>`).join("")
+      )
+      .join("");
+    const cards = s.cards
+      .map(
+        (card, c) =>
+          `<div class="ms-card${card.kind === "main" ? " main" : ""}" data-card="${c}" data-s="0"><span class="ms-kind">${esc(card.kind ?? "subagent")}</span><span class="ms-role">${esc(card.role)}</span>` +
+          card.faces.map((f, k) => `<div class="ms-face" data-face="${k}">${f.logo ? logoHtml(f.logo, "ms-logo") : `<span class="ms-slot"></span>`}<b>${esc(f.model)}</b></div>`).join("") +
+          `</div>`
+      )
+      .join("");
+    return `<div class="stage ms"><div class="ms-term"><div class="bar">${DOTS}<span>${esc(s.terminal ?? "Terminal")}</span></div><div class="ms-body">${term}</div></div><div class="ms-cards">${cards}</div></div>`;
+  },
+  beats: (s) => {
+    const out = [beat(BEAT_FROM, "in", ".ms", "pop")];
+    s.cards.forEach((_, c) => out.push(beat(0.8 + 0.1 * c, "in", `[data-card='${c}']`, "click")));
+    let t = 0.8 + 0.1 * s.cards.length + 0.4;
+    let face = 0;
+    s.runs.forEach((run, r) => {
+      out.push(beat(t, "in", `[data-prompt='${r}']`, "tick"), beat(t, "type", `[data-cmd='${r}']`, "tick", run.command));
+      t += round2(0.03 * run.command.length + 0.4);
+      run.lines.forEach((_, k) => out.push(beat(t + 0.25 * k, "in", `[data-line='${r}-${k}']`, "click")));
+      t += 0.25 * run.lines.length + 0.2;
+      out.push(caption(t, r, "pop"));
+      if (run.flip) {
+        face += 1;
+        s.cards.forEach((_, c) => out.push(beat(t, "flip", `[data-card='${c}']`, "pop", String(face))));
+      }
+      t += 1.6;
+    });
+    return out;
+  },
+};
+
+/** A short document written section by section, whose status badge turns locked, then an edit that bounces off it
+ * with the refusal, and nothing written. */
+const docLock = {
+  captions: (s) => s.captions ?? [],
+  body: (s) => {
+    need(s.sections?.length, "doc-lock has no sections");
+    need(s.status?.length === 2, "doc-lock status is [before, after]");
+    return (
+      `<div class="stage dl"><div class="dl-doc" data-zone><div class="dl-head"><span class="dl-file">${esc(s.file)}</span>` +
+      `<span class="dl-status" data-s="0">${s.status.map((x, f) => `<span class="dl-face" data-face="${f}">${esc(x)}</span>`).join("")}</span></div>` +
+      `<div class="dl-new">${s.sections.map((sec, k) => `<div class="dl-sec" data-section="${k}"><h4>${esc(sec.heading)}</h4><p>${esc(sec.text)}</p></div>`).join("")}</div>` +
+      `<div class="dl-seal"><b>Approved</b><span>locked</span></div></div>` +
+      (s.attempt ? `<div class="dl-attempt">${esc(s.attempt.action)}</div><p class="dl-refusal">${esc(s.attempt.refusal)}</p>` : "") +
+      `</div>`
+    );
+  },
+  beats: (s) => {
+    const out = [beat(BEAT_FROM, "in", ".dl-doc", "pop"), caption(BEAT_FROM, 0, "pop")];
+    let t = 1.0;
+    s.sections.forEach((_, k) => out.push(beat(t + 0.35 * k, "in", `[data-section='${k}']`, "click")));
+    t += 0.35 * s.sections.length + 1.0;
+    out.push(caption(t, 1, "pop"), beat(t, "flip", ".dl-status", "pop", "1"), beat(t + 0.3, "fromto", ".dl-seal", "pop", { from: { scale: 2.2, opacity: 0 }, to: { scale: 1, opacity: 1, duration: 0.45, ease: "back.out(2)" } }));
+    t += 1.9;
+    if (s.attempt) {
+      out.push(caption(t, 2, "click"), beat(t, "in", ".dl-attempt", "click"), beat(t + 0.4, "to", ".dl-attempt", "tick", { x: -330, duration: 0.45, ease: "power2.in" }));
+      out.push(beat(t + 0.85, "to", ".dl-attempt", "pop", { x: 0, duration: 0.5, ease: "back.out(3)" }), beat(t + 0.85, "shake", ".dl-doc", "pop"));
+      out.push(beat(t + 1.1, "in", ".dl-refusal", "pop"));
+    }
+    return out;
+  },
+};
+
+/** A spec on the left, swept by a scanner: each line it reaches lights up and spawns its finding on the right, linked
+ * to it, in the colour of its report section, with its proof. */
+const challengeReport = {
+  captions: (s) => s.captions ?? [],
+  body: (s) => {
+    need(s.spec?.lines?.length, "challenge-report has no spec.lines");
+    need(s.spec.lines.some((l) => l.finding), "challenge-report has no finding");
+    return (
+      `<div class="stage cr"><div class="cr-file">${esc(s.spec.file ?? "spec.md")}</div><div class="cr-rows"><span class="cr-beam"></span>` +
+      s.spec.lines
+        .map(
+          (l, k) =>
+            `<div class="cr-row" data-line="${k}" data-s="idle"><p>${esc(l.text)}</p>` +
+            (l.finding
+              ? `<div class="cr-finding ${esc(l.finding.tone ?? "red")}" data-finding="${k}"><b>${esc(l.finding.label ?? "")}</b><span>${esc(l.finding.text)}</span>${l.finding.evidence ? `<small>${esc(l.finding.evidence)}</small>` : ""}</div>`
+              : "") +
+            `</div>`
+        )
+        .join("") +
+      `</div></div>`
+    );
+  },
+  beats: (s) => {
+    const SWEEP = 0.8 * s.spec.lines.length;
+    const t = 1.2;
+    const out = [beat(BEAT_FROM, "in", ".cr-rows", "pop"), caption(BEAT_FROM, 0, "pop"), beat(t, "to", ".cr-beam", "tick", { yPercent: 100, duration: SWEEP * PACE, ease: "none" })];
+    let first = true;
+    s.spec.lines.forEach((l, k) => {
+      if (!l.finding) return;
+      const at = round2(t + (SWEEP * (k + 0.5)) / s.spec.lines.length);
+      out.push(beat(at, "set", `[data-line='${k}']`, "pop", "lit"), beat(at, "from", `[data-finding='${k}']`, "pop", { x: -40, opacity: 0, duration: 0.45 }));
+      if (first) out.push(caption(at, 1, "pop"));
+      first = false;
+    });
+    return out;
+  },
+};
+
+const CHAIN_VISUALS = ["wireframe", "direction", "swatches", "components", "screens", "verdict"];
+const VISUALS = {
+  wireframe: `<i></i><i></i><i class="short"></i><i class="box"></i>`,
+  direction: `<span class="dir"><i></i><i></i><i></i></span><span class="dir kept"><i></i><i></i><i></i></span><span class="dir"><i></i><i></i><i></i></span>`,
+  swatches: `<span class="sw"><i></i><i></i><i></i><i></i></span><span class="ramp"><b>Aa</b><b>Aa</b><b>Aa</b></span>`,
+  components: `<span class="btn"></span><span class="btn ghost"></span><span class="crd"></span>`,
+  screens: `<span class="scr"><i class="bar"></i><i></i><i></i><i></i></span><span class="scr phone"><i class="bar"></i><i></i></span>`,
+  verdict: `<span class="vd ok">OK</span><span class="vd rev">Revise</span><span class="pub">publish</span>`,
+};
+
+/** The steps of a design as a chain of stylised cards, left to right: each lights in turn with its skill, its design
+ * keywords and a small abstract picture of what it makes. */
+const chainCards = {
+  captions: (s) => s.captions ?? [],
+  body: (s) => {
+    need(s.steps?.length, "chain-cards has no steps");
+    s.steps.forEach((st, i) => need(CHAIN_VISUALS.includes(st.visual), `chain-cards step ${i + 1}: visual "${st.visual}", one of ${CHAIN_VISUALS.join(", ")}`));
+    return (
+      `<div class="stage ch" style="grid-template-columns:repeat(${s.steps.length}, 1fr)">` +
+      s.steps
+        .map(
+          (st, k) =>
+            `<div class="ch-card" data-card="${k}" data-s="off"><code>${esc(st.skill ?? "")}</code><b>${esc(st.label)}</b><div class="ch-vis ${esc(st.visual)}">${VISUALS[st.visual]}</div>` +
+            `<ul class="ch-keys">${(st.keywords ?? []).map((w) => `<li>${esc(w)}</li>`).join("")}</ul></div>`
+        )
+        .join("") +
+      `</div>`
+    );
+  },
+  beats: (s) => {
+    const out = [caption(BEAT_FROM, 0, "pop")];
+    let t = BEAT_FROM + 0.3;
+    s.steps.forEach((st, k) => {
+      if (k) out.push(beat(t, "set", `[data-card='${k - 1}']`, "tick", "done"));
+      out.push(beat(t, "in", `[data-card='${k}']`, "pop"), beat(t, "set", `[data-card='${k}']`, "pop", "on"));
+      if (st.caption) out.push(caption(t, st.caption, "pop"));
+      t += 1.2;
+    });
+    return out;
+  },
+};
+
+/** A story that stays readable while its unclear phrases are highlighted; each question then appears on its phrase's
+ * line, in story order, and closes once the author answers it. */
+const scanQuestions = {
+  captions: (s) => s.captions ?? [],
+  body: (s) => {
+    need(s.story?.length, "scan-questions has no story");
+    need(s.gaps?.length, "scan-questions has no gaps");
+    s.story.flat().forEach((seg) => {
+      if (typeof seg === "object") need(s.gaps[seg.gap], `scan-questions passage "${seg.text}": no question ${seg.gap + 1}`);
+    });
+    const row = (segs, r) =>
+      `<div class="sq-row" data-row="${r}"><p>${segs
+        .map((seg) =>
+          typeof seg === "string"
+            ? esc(seg)
+            : `<span class="sq-gap" data-gap="${seg.gap}" data-s="plain"><i class="sq-mark" data-mark="${seg.gap}"></i><span class="sq-was">${esc(seg.text)}</span><span class="sq-fixed">${esc(seg.fixed ?? seg.text)}</span></span>`
+        )
+        .join("")}</p><div class="sq-qs">${segs
+        .filter((seg) => typeof seg === "object")
+        .map((seg) => {
+          const g = s.gaps[seg.gap];
+          return `<div class="sq-q" data-q="${seg.gap}" data-s="open"><span class="sq-cat">${esc(g.category)}</span><p>${esc(g.question)}</p></div>`;
+        })
+        .join("")}</div></div>`;
+    return (
+      `<div class="stage sq"><div class="sq-head"><span class="sq-file">${esc(s.file ?? "story.md")}</span>` +
+      `<span class="sq-status" data-s="0">${(s.status ?? []).map((x, f) => `<span class="dl-face" data-face="${f}">${esc(x)}</span>`).join("")}</span></div>` +
+      `<div class="sq-rows">${s.story.map(row).join("")}</div></div>`
+    );
+  },
+  beats: (s) => {
+    const out = [beat(BEAT_FROM, "in", ".sq-rows", "pop"), caption(BEAT_FROM, 0, "pop")];
+    const passages = s.story.flatMap((segs) => segs.filter((seg) => typeof seg === "object"));
+    let t = 1.0;
+    passages.forEach((seg, i) => out.push(beat(t + 0.45 * i, "fill", `[data-mark='${seg.gap}']`, "pop")));
+    t = 3.7;
+    out.push(beat(t, "in", ".sq-head", "pop"), caption(t, 1, "pop"));
+    passages.forEach((seg, i) => {
+      const at = t + 0.6 * i;
+      out.push(beat(at, "pulse", `[data-gap='${seg.gap}']`, "pop"), beat(at, "from", `[data-q='${seg.gap}']`, "pop", { x: -40, opacity: 0, duration: 0.4 }));
+    });
+    t += 0.6 * passages.length + 1.2;
+    out.push(caption(t, 2, "pop"));
+    passages.forEach((seg, i) => out.push(beat(t + 0.3 * i, "set", `[data-gap='${seg.gap}']`, "pop", "filled"), beat(t + 0.3 * i, "set", `[data-q='${seg.gap}']`, "pop", "closed")));
+    out.push(beat(t + 0.3 * passages.length, "flip", ".sq-status", "pop", "1"));
+    return out;
+  },
+};
+
+
+/** The people who shipped the release: their avatars arrive in a wave and settle into a mosaic, with their count. */
+const contributorWave = {
+  captions: (s) => s.captions ?? [],
+  lead: (s) => `${(s.logins ?? []).length} contributors`,
+  body: (s) => {
+    need(s.logins?.length, "contributor-wave has no logins");
+    const columns = Math.min(s.logins.length, s.logins.length > 10 ? Math.ceil(s.logins.length / 2) : s.logins.length);
+    return (
+      `<div class="stage cw" style="grid-template-columns:repeat(${columns}, 1fr)">` +
+      s.logins.map((l, k) => `<div class="cw-av" data-login="${k}"><img src="assets/av-${esc(l)}.png" alt="" /><span>@${esc(l)}</span></div>`).join("") +
+      `</div>`
+    );
+  },
+  beats: (s) => {
+    const out = [beat(BEAT_FROM, "in", ".cw", "pop"), caption(0.8, 0, "pop")];
+    s.logins.forEach((_, k) => out.push(beat(1.0 + 0.16 * k, "from", `[data-login='${k}']`, "click", { y: 160, scale: 0.3, opacity: 0, duration: 0.7, ease: "back.out(1.8)" })));
+    const t = 1.0 + 0.16 * s.logins.length + 0.8;
+    s.logins.forEach((_, k) => out.push(beat(t + 0.06 * k, "pulse", `[data-login='${k}']`, k ? "click" : "pop")));
+    return out;
+  },
+};
+
+/** The beats of a scene drawn as a product surface, at the video's time. */
+function sceneBeats(s, t) {
+  const count = scene[s.template].captions(s).length;
+  need(count <= MAX_CAPTIONS, `${s.template}: ${count} captions, ${MAX_CAPTIONS} at most`);
+  return scene[s.template]
+    .beats(s)
+    .map((b) => ({ ...b, at: round2(t + b.at * PACE) }))
+    .sort((x, y) => x.at - y.at);
+}
+const hasBeats = (s) => Boolean(scene[s.template]?.beats);
+
 const scene = {
   "terminal-demo": {
     items: (s) => rowsIn(s.window?.rows) + (s.flow ? 2 : 0),
@@ -272,6 +1166,19 @@ const scene = {
         .join("") +
       `</div>`,
   },
+  "github-pr": githubPr,
+  "ide-window": ideWindow,
+  "tool-grid": toolGrid,
+  "architecture-blocks": architectureBlocks,
+  "panel-sequence": panelSequence,
+  "logo-row": logoRow,
+  gate: gateScene,
+  "model-switch": modelSwitch,
+  "doc-lock": docLock,
+  "challenge-report": challengeReport,
+  "scan-questions": scanQuestions,
+  "chain-cards": chainCards,
+  "contributor-wave": contributorWave,
 };
 
 /** Head (2.5 s), a second to read the lead, a beat per item, and a closing pause. */
@@ -343,8 +1250,11 @@ const laterRowsAt = (s, t) => round2(laterAt(s, t) + (hasThen(s) ? 0.6 : 0));
 
 /** A scene holds for a reading beat once its last item, row, note, run or later row is on screen. */
 const READ = 2.5;
+/** A product scene says less per beat than a terminal scene, so it holds a little less once it is all on screen. */
+const READ_BEATS = 1.6;
 function sceneDuration(s) {
   if (!scene[s.template]) throw new Error(`Unknown template: ${s.template}`);
+  if (hasBeats(s)) return half(Math.max(...sceneBeats(s, 0).map((b) => b.at)) + READ_BEATS + (s.hold ?? 0) + (s.lead ? 0.5 : 0));
   const items = itemsIn(scene[s.template].body(s));
   const rows = rowElements(s);
   const shown = Math.max(
@@ -371,6 +1281,18 @@ const iconHtml = (name) => {
   return `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name]}</svg>`;
 };
 
+/** The band that says a product scene's subject from its first frame to its last: the title, the gain, then one
+ * numbered caption per beat, each shown in the same place while its beat plays. */
+const bandHtml = (s, id) => {
+  const captions = scene[s.template].captions(s);
+  const lead = scene[s.template].lead?.(s) ?? s.lead;
+  const sub = captions.length ? captions.map((c, k) => `<span class="cap" data-cap="${k}">${esc(c)}</span>`).join("") : lead ? `<p class="sub">${esc(lead)}</p>` : "";
+  return (
+    `<div class="band"><div class="band-top"><span class="pill" id="${id}-pill">${esc(s.pill)}</span>` +
+    `<h2 id="${id}-h">${esc(s.title)}${s.accent ? ` <span class="g">${esc(s.accent)}</span>` : ""}</h2>${s.badge ? `<span class="badge">${esc(s.badge)}</span>` : ""}</div>` +
+    `<div class="sub-slot">${sub}</div>${s.note ? `<p class="note">${esc(s.note)}</p>` : ""}</div>`
+  );
+};
 const headHtml = (s, id) =>
   `<span class="pill" id="${id}-pill">${esc(s.pill)}</span>` +
   `<h2 id="${id}-h">${esc(s.title)}${s.accent ? ` <span class="g">${esc(s.accent)}</span>` : ""}</h2>` +
@@ -452,6 +1374,12 @@ function soundCues(plan, { version }) {
     cue("tick", t + 0.14);
     cue("pop", t + 0.28);
     if (s.lead) cue("tick", t + 0.5);
+    if (hasBeats(s)) {
+      const seen = new Set();
+      for (const b of sceneBeats(s, t)) if (!seen.has(b.at)) seen.add(b.at) && cue(b.sound, b.at);
+      t += sceneDuration(s);
+      continue;
+    }
     for (let k = 0; k < itemsIn(scene[s.template].body(s)); k++) cue("pop", t + 0.63 + 0.3 * k);
     for (let k = 0; k < rowElements(s); k++) cue("click", t + 1.3 + 0.45 * k);
     if (s.note) cue("pop", t + 1.3 + 0.45 * rowElements(s) + 0.3);
@@ -583,11 +1511,20 @@ function buildHtml(plan, { version, music, sfx }) {
   plan.scenes.forEach((s, i) => {
     const id = `s${i + 1}`;
     const duration = sceneDuration(s);
-    open(id, duration, headHtml(s, id) + numberWork(scene[s.template].body(s)));
+    open(id, duration, hasBeats(s) ? bandHtml(s, id) + scene[s.template].body(s) : headHtml(s, id) + numberWork(scene[s.template].body(s)));
     script.push(
       `enter("#${id}-pill", ${t} + 0.14, { y: 20 });`,
       `enter("#${id}-h", ${t} + 0.28);`,
       ...(s.lead ? [`enter("#${id}-lead", ${t} + 0.5, { y: 20 });`] : []),
+      ...(hasBeats(s)
+        ? [...sceneBeats(s, t).map((b) => `b(${b.at}, "${b.act}", "#${id} ${b.sel}"${b.value === undefined ? "" : `, ${JSON.stringify(b.value)}`});`), `cut("${id}", ${t + duration});`]
+        : []),
+    );
+    if (hasBeats(s)) {
+      t += duration;
+      return;
+    }
+    script.push(
       `enter("#${id} .it", ${t} + 0.63, { y: 30, duration: 0.7, stagger: 0.3 });`,
       `enter("#${id} .win:not(.then) .row:not(.later)", ${t} + 1.3, { y: 14, duration: 0.5, stagger: 0.45 });`,
       ...(s.note ? [`enter("#${id} .fin", ${Math.round((t + 1.3 + 0.45 * rowElements(s) + 0.3) * 100) / 100}, { y: 10 });`] : []),
@@ -666,6 +1603,44 @@ const work = (scene, k, at, fill, run, fail) => {
   else if (all(unit + " .wres")) tl.fromTo(unit + " .wres", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease, immediateRender: false }, at + fill);
 };
 const enter = (sel, at, extra = {}) => tl.from(sel, Object.assign({ opacity: 0, y: 40, duration: 0.6, ease }, extra), at);
+const b = (at, act, sel, value) => {
+  if (act === "in") return tl.fromTo(sel, { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration: 0.35, ease }, at);
+  if (act === "set") {
+    tl.set(sel, { attr: { "data-s": value } }, at);
+    return tl.fromTo(sel, { scale: 1.02 }, { scale: 1, duration: 0.35, ease, immediateRender: false }, at);
+  }
+  if (act === "fill") return tl.fromTo(sel, { "--fill": 0 }, { "--fill": 1, duration: 0.45, ease: "power1.inOut" }, at);
+  if (act === "count") {
+    const node = document.querySelector(sel);
+    const n = { v: Number(node.textContent) };
+    return tl.to(n, { v: value, duration: 1.2, ease: "power2.out", onUpdate: () => { node.textContent = String(Math.round(n.v)); } }, at);
+  }
+  if (act === "focus") {
+    const scene = sel.split(" ")[0];
+    tl.set(scene + " [data-zone]", { attr: { "data-focus": value.length ? "0" : "" } }, at);
+    return value.forEach((one) => tl.set(scene + " " + one, { attr: { "data-focus": "1" } }, at));
+  }
+  if (act === "from") return tl.from(sel, Object.assign({ duration: 0.7, ease }, value), at);
+  if (act === "fromto") return tl.fromTo(sel, value.from, Object.assign({ duration: 0.6, ease }, value.to), at);
+  if (act === "to") return tl.to(sel, Object.assign({ duration: 0.6, ease }, value), at);
+  if (act === "pulse") return tl.fromTo(sel, { scale: 1 }, { scale: 1.12, duration: 0.22, yoyo: true, repeat: 1, ease: "sine.inOut", immediateRender: false }, at);
+  if (act === "shake") return tl.fromTo(sel, { x: 0 }, { x: -12, duration: 0.07, yoyo: true, repeat: 5, ease: "sine.inOut", immediateRender: false }, at);
+  if (act === "flip") {
+    tl.to(sel, { scaleX: 0, duration: 0.18, ease: "power1.in" }, at);
+    tl.set(sel, { attr: { "data-s": value } }, at + 0.18);
+    return tl.to(sel, { scaleX: 1, duration: 0.22, ease: "power1.out" }, at + 0.18);
+  }
+  if (act === "type") {
+    const node = document.querySelector(sel);
+    const typed = { n: 0 };
+    return tl.to(typed, { n: value.length, duration: 0.035 * value.length, ease: "none", onUpdate: () => { node.textContent = value.slice(0, Math.round(typed.n)); } }, at);
+  }
+  if (act === "cap") {
+    const scene = sel.split(" ")[0];
+    if (value > 0) tl.fromTo(scene + ' [data-cap="' + (value - 1) + '"]', { opacity: 1 }, { opacity: 0, duration: 0.15, immediateRender: false }, at);
+    return tl.fromTo(sel, { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration: 0.25, ease, immediateRender: false }, at);
+  }
+};
 ${script.join("\n")}
 window.__timelines = window.__timelines || {};
 window.__timelines["main"] = tl;
@@ -787,6 +1762,16 @@ async function fetchAvatars(dir, plan) {
   }
 }
 
+/** The logos a plan names from the pinned icon set. */
+async function fetchMedia(dir, plan) {
+  const { logos } = mediaOf(plan);
+  for (const logo of logos) {
+    const response = await fetch(`${LOGO_SET}/${encodeURIComponent(logo)}.svg`);
+    if (!response.ok) throw new Error(`Logo ${logo}: HTTP ${response.status}`);
+    fs.writeFileSync(path.join(dir, "assets", `logo-${logo}.svg`), Buffer.from(await response.arrayBuffer()));
+  }
+}
+
 function argument(name) {
   const at = process.argv.indexOf(`--${name}`);
   return at > -1 ? process.argv[at + 1] : undefined;
@@ -802,6 +1787,7 @@ async function main() {
   const musicSource = argument("music") ?? (fs.existsSync(kitMusic) ? kitMusic : undefined);
   writeProject(dir, plan, version, musicSource);
   await fetchAvatars(dir, plan);
+  await fetchMedia(dir, plan);
 
   const render = spawnSync("npx", ["--yes", HYPERFRAMES, "render", "--output", "release-video.mp4"], {
     cwd: dir,
@@ -829,7 +1815,7 @@ async function main() {
   const bitrate = Number(probe.stdout.trim());
   if (!bitrate) throw new Error("The bitrate of the video could not be read");
   const posted = out.replace(/\.mp4$/, ".poster.mp4");
-  const withPoster = spawnSync("ffmpeg", posterArgs({ video: out, poster: thumbnail, out: posted, bitrate }), { stdio: "inherit" });
+  const withPoster = spawnSync("ffmpeg", posterArgs({ video: out, poster: thumbnail, out: posted, bitrate, duration: totalDuration(plan) }), { stdio: "inherit" });
   if (withPoster.status !== 0) throw new Error(`The thumbnail could not be put first (${withPoster.status})`);
   fs.renameSync(posted, out);
 }
@@ -859,25 +1845,34 @@ window.__timelines["main"] = gsap.timeline({ paused: true });
 `;
 }
 
+/** Discord refuses a bot upload over 10 MiB on a guild without boosts: the video stays under 9 MiB, sound included. */
+const SIZE_BUDGET_BYTES = 9 * 1024 * 1024;
+const AUDIO_KBPS = 128;
+
 /** The video opens on its thumbnail for one frame: a chat shows a video's first frame as its preview, and the
- * intro starts on the bare background. The video is encoded again at its own bitrate, and its sound is delayed
- * by that frame. */
-function posterArgs({ video, poster, out, bitrate }) {
-  const kbps = Math.round(bitrate / 1000);
+ * intro starts on the bare background. The video is encoded again at its own bitrate, lowered when that would take
+ * it over the size budget, and its sound is delayed by that frame. */
+function posterArgs({ video, poster, out, bitrate, duration }) {
+  const budget = duration ? Math.floor((SIZE_BUDGET_BYTES * 8) / duration / 1000) - AUDIO_KBPS : Infinity;
+  const kbps = Math.min(Math.round(bitrate / 1000), budget);
   return [
     "-y", "-v", "error",
     "-loop", "1", "-framerate", "30", "-t", "0.0334", "-i", poster,
     "-i", video,
     "-filter_complex",
-    "[0:v]scale=1920:1080,setsar=1,fps=30,format=yuv420p[p];[1:v]setsar=1,fps=30,format=yuv420p[v];[p][v]concat=n=2:v=1:a=0[vo];[1:a]adelay=34|34[ao]",
+    "[0:v]scale=1920:1080:out_color_matrix=bt709:out_range=tv,setsar=1,fps=30,format=yuv420p[p];[1:v]setsar=1,fps=30,format=yuv420p[v];[p][v]concat=n=2:v=1:a=0[vo];[1:a]adelay=34|34[ao]",
     "-map", "[vo]", "-map", "[ao]",
     "-c:v", "libx264", "-profile:v", "high", "-b:v", `${kbps}k`, "-maxrate", `${Math.round(kbps * 1.25)}k`, "-bufsize", `${kbps * 2}k`, "-preset", "slow",
-    "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart",
+    // At the video's mean bitrate x264 starves the poster and the intro's fade, and the opening looks blocky: the first
+    // second and a half gets a quality of its own.
+    "-x264-params", "zones=0,45,q=12",
+    "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709",
+    "-c:a", "aac", "-b:a", `${AUDIO_KBPS}k`, "-movflags", "+faststart",
     out,
   ];
 }
 
-module.exports = { buildHtml, measureRms, musicSections, musicSegments, sceneDuration, soundCues, posterArgs, soundTrack, thumbnailHtml, totalDuration };
+module.exports = { buildHtml, sceneBeats, mediaOf, measureRms, musicSections, musicSegments, sceneDuration, soundCues, posterArgs, soundTrack, thumbnailHtml, totalDuration };
 
 if (require.main === module) {
   main().catch((error) => {
