@@ -16,6 +16,7 @@ import type {
 import type { FlatArtifactLayout } from "../../../../../shared/domain/materialization/flat-paths.js";
 import type { PluginPresence } from "../../../../../shared/domain/materialization/plugin-presence.js";
 import { rewritePluginRootInJson } from "../../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
+import { toolWarning } from "../../../../../shared/domain/plugin/plugin-translation-skip.js";
 import { portableAgentFrontmatter } from "../../formats/agents/portable-agent.js";
 import { AGENTS_FILE, agentsIndexFiles } from "../../formats/agents-rules-index.js";
 import type { HookEventMap, HooksRouting } from "../../formats/hooks/descriptor.js";
@@ -23,7 +24,7 @@ import { pluginTreeHooksArtifact } from "../../formats/hooks/routes.js";
 import { hostToolNames } from "../../formats/host-tool-names.js";
 import { shapeEntries } from "../../hooks/hooks-entry-shape.js";
 import { routeEvents } from "../../hooks/hooks-route.js";
-import { toolWarning, unmappedEventWarning } from "../../hooks/hooks-warnings.js";
+import { unmappedEventWarning } from "../../hooks/hooks-warnings.js";
 import { matcherGroupsByEvent } from "../../hooks/plugin-hooks-shape.js";
 import { identityFields } from "../../marketplace-catalog.js";
 

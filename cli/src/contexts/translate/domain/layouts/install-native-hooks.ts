@@ -7,6 +7,11 @@ import type {
   PluginComponentFile,
   PluginDistribution,
 } from "../../../../shared/domain/plugin/plugin-distribution.js";
+import {
+  hooksSkip,
+  type PluginTranslationSkip,
+  type ReadonlySkipList,
+} from "../../../../shared/domain/plugin/plugin-translation-skip.js";
 import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 import { PLUGIN_HOOKS_RELATIVE } from "../canon-format.js";
 import { isProse, PLUGIN_HOOKS_DIR, parentDirOf, pathBelowHooks } from "../plugin-paths.js";
@@ -20,26 +25,44 @@ interface HooksTarget {
   readonly plugins: TranslatedNativePlugin;
 }
 
-/** A file below `hooks/` as a native install keeps it: the manifest at the tool's own path, every
- * other file a script the host runs, beside it. */
-export function nativeHooksPlan(
+type HooksAt = HooksTarget & {
+  readonly pluginRoot: string;
+  readonly pluginName: string;
+  readonly carriesRelease: boolean;
+};
+
+/** The files below `hooks/` as a native install keeps them, and what converting the manifest left
+ * out, as the skips the install reports. */
+export function nativeHooksPlans(
+  files: readonly PluginComponentFile[],
+  at: HooksAt
+): { plans: ComponentPlan[]; skipped: ReadonlySkipList } {
+  if (!at.plugins.hooksAcceptance().accepts) return { plans: [], skipped: [] };
+  const skipped: PluginTranslationSkip[] = [];
+  const warn = (reason: string) => skipped.push(hooksSkip(at.pluginName, at.tool.toolId, reason));
+  const plans = files
+    .filter((file) => file.relativePath.startsWith(`${PLUGIN_HOOKS_DIR}/`))
+    .map((file) => nativeHooksPlan(file, at, warn));
+  return { plans, skipped };
+}
+
+/** A file below `hooks/`: the manifest at the tool's own path, every other file a script the host
+ * runs, beside it. */
+function nativeHooksPlan(
   file: PluginComponentFile,
-  at: HooksTarget & {
-    readonly pluginRoot: string;
-    readonly pluginName: string;
-    readonly carriesRelease: boolean;
-  }
-): ComponentPlan | null {
+  at: HooksAt,
+  warn: (warning: string) => void
+): ComponentPlan {
   const { tool, plugins, pluginRoot } = at;
-  if (!plugins.hooksAcceptance().accepts) return null;
   const { relativePath: source, content } = file;
   if (source === PLUGIN_HOOKS_RELATIVE) {
-    const path = `${pluginRoot}${plugins.hooksFilePath()}`;
+    const manifest = hooksManifest(tool, content, at);
+    for (const warning of manifest.warnings) warn(warning);
     return {
       source,
-      path,
-      content,
-      shape: hooksManifestShape(tool, at.pluginName, at.carriesRelease),
+      path: `${pluginRoot}${plugins.hooksFilePath()}`,
+      content: manifest.content,
+      shape: manifest.shape,
       rootToken: plugins.rootToken(),
     };
   }
@@ -56,22 +79,25 @@ export function nativeHooksPlan(
   };
 }
 
-// The manifest as the tool's marketplace build writes it, so both route the same bytes to a tool
-// that reads it in a form of its own.
-function hooksManifestShape(
+// The manifest as the tool's marketplace build writes it, with what that build warns of, so both
+// route the same bytes and the same warnings to a tool that reads it in a form of its own.
+function hooksManifest(
   tool: TranslatedAiTool,
-  pluginName: string,
-  carriesRelease: boolean
-): ComponentPlan["shape"] | undefined {
+  content: string,
+  { pluginName, carriesRelease }: { readonly pluginName: string; readonly carriesRelease: boolean }
+): Pick<ComponentPlan, "content" | "shape"> & { readonly warnings: readonly string[] } {
   const hooks = tool.buildContract("marketplace")?.artifacts.hooks;
-  if (!hooks?.supported) return undefined;
+  if (!hooks?.supported) return { content, warnings: [] };
   const { convertHooks, transform } = hooks;
-  if (convertHooks !== undefined) {
-    return (text) => convertHooks(text, pluginName, carriesRelease).content;
-  }
-  return transform === undefined
-    ? undefined
-    : (text) => transform(text, pluginName, basename(PLUGIN_HOOKS_RELATIVE));
+  if (convertHooks !== undefined) return convertHooks(content, pluginName, carriesRelease);
+  return {
+    content,
+    warnings: [],
+    shape:
+      transform === undefined
+        ? undefined
+        : (text) => transform(text, pluginName, basename(PLUGIN_HOOKS_RELATIVE)),
+  };
 }
 
 /** The plugin's own manifest, at the place the tool reads one, synthesized as the tool's
