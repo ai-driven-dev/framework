@@ -7,7 +7,11 @@ import type { ProjectHooksFormat } from "../../../tools/contract/tool-vocabulary
 import { ProjectHooksEditedError } from "../../contract/installation.error.js";
 import { driftOf } from "../../domain/drift.js";
 import type { ProjectHooksProvenance } from "../../domain/plugins/plugin-entry.js";
-import { digestEntry, recordedHooksLocation } from "../../domain/project-hooks.model.js";
+import {
+  projectHookEntriesEdited,
+  recordedHooksLocation,
+  recordedProjectHookEntries,
+} from "../../domain/project-hooks.model.js";
 import type { ProjectHooksSection } from "../../ports/tool-sections.js";
 import type { AssertProjectPathWithinRoot } from "../ownership/assert-project-path-within-root.use-case.js";
 import { assertScriptPath } from "../ownership/assert-script-path.js";
@@ -43,7 +47,8 @@ export class AssertProjectHooksUnchanged {
     if (existing !== null) assertParsableJson(existing, delivery.relativePath);
     const scriptDir = join(projectRoot, format.scriptDir(pluginName));
     await this.withinRoot.execute(projectRoot, scriptDir);
-    const currentEntries = existing === null ? [] : format.contributedEntries(existing, pluginName);
+    const currentEntries =
+      existing === null ? [] : recordedProjectHookEntries(format, existing, pluginName);
     if (provenance === undefined) {
       const scriptsPresent = (await this.fs.fileExists(scriptDir))
         ? await this.fs.listDirectory(scriptDir)
@@ -87,24 +92,18 @@ function assertNothingContributed(count: number, toolName: string, pluginName: s
 
 function assertEntriesUnchanged(check: {
   provenance: ProjectHooksProvenance;
-  currentEntries: ReturnType<ProjectHooksFormat["contributedEntries"]>;
+  currentEntries: ProjectHooksProvenance["entries"];
   toolName: string;
   pluginName: string;
   overwriteEdited: boolean;
 }): void {
   const { provenance, currentEntries, toolName, pluginName, overwriteEdited } = check;
-  const recorded = provenance.entries.map(
-    ({ event, command, digest }) => `${event}\u0000${command}\u0000${digest}`
-  );
-  const current = currentEntries.map(
-    ({ event, entry }) => `${event}\u0000${entry.command}\u0000${digestEntry(entry)}`
-  );
   if (provenance.entries.some(({ digest }) => !FileHash.isDigest(digest))) {
     throw new Error(
       `${toolName} project hooks for '${pluginName}' have an unproven install digest; detach refused.`
     );
   }
-  if (!overwriteEdited && recorded.sort().join("\n") !== current.sort().join("\n")) {
+  if (!overwriteEdited && projectHookEntriesEdited(provenance.entries, currentEntries)) {
     throw new ProjectHooksEditedError(
       `${toolName} project hooks for '${pluginName}' were edited after install; detach refused.`
     );

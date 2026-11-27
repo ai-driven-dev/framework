@@ -24,6 +24,19 @@ export function recordedProjectHookEntries(
   }));
 }
 
+/** Whether a plugin's entries in the hooks file are no longer the ones its install recorded. */
+export function projectHookEntriesEdited(
+  recorded: ProjectHooksProvenance["entries"],
+  current: ProjectHooksProvenance["entries"]
+): boolean {
+  const keyed = (entries: ProjectHooksProvenance["entries"]): string =>
+    entries
+      .map(({ event, command, digest }) => `${event}\u0000${command}\u0000${digest}`)
+      .sort()
+      .join("\n");
+  return keyed(recorded) !== keyed(current);
+}
+
 /** The project hooks file a plugin's recorded entries are read back from: the one the tool
  * delivers to, else the one an earlier release delivered to. */
 export function recordedHooksLocation(tool: {
