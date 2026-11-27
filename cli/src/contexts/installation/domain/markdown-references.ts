@@ -25,3 +25,9 @@ export function isFileReference(ref: string): boolean {
   const lastSegment = ref.split("/").at(-1) ?? "";
   return lastSegment.includes(".") && !ref.endsWith("/");
 }
+
+/** A skill's `*-template.md` asset links to siblings its copy creates, so a dot-relative target
+ * is a placeholder until then. */
+export function isTemplatePlaceholder(relativePath: string, ref: string): boolean {
+  return /\/assets\/(?:.+\/)?[^/]+-template\.md$/u.test(relativePath) && /^\.\.?\//u.test(ref);
+}

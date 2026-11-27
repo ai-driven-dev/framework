@@ -7,6 +7,7 @@ import {
   extractAtReferences,
   extractMarkdownLinkTargets,
   isFileReference,
+  isTemplatePlaceholder,
 } from "../../domain/markdown-references.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import { requireManifest } from "../shared/require-manifest.js";
@@ -72,6 +73,7 @@ export class CheckFileReferences {
     const issues: DoctorIssue[] = [];
     for (const { ref, resolvedPath } of refs) {
       if (!this.isWithinProjectRoot(resolvedPath, projectRoot)) continue;
+      if (isTemplatePlaceholder(relativePath, ref)) continue;
       if (!(await this.fs.fileExists(resolvedPath))) {
         issues.push({
           severity: "warning",
