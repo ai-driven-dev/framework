@@ -87,12 +87,11 @@ const reclaim = (parts: ReturnType<typeof setup>) =>
 describe("reclaiming or reporting a dead registration", () => {
   it("leaves the host alone, naming the foreign ref, when ownership is unproven", async () => {
     const parts = setup({
-      claims: KNOWN,
       plugins: { location: "p", refs: new Map([["x@aidd", { enabled: true }]]) },
     });
     expect(await reclaim(parts)).toBe(false);
     expect(parts.warnings).toEqual([
-      "Native plugin activation — catalogue 'aidd' collides with unproven AIDD ownership and foreign ref 'x@aidd'; host registration left untouched. already added",
+      "Native plugin activation: catalogue 'aidd' collides with unproven AIDD ownership and foreign ref 'x@aidd'; host registration left untouched. already added",
     ]);
   });
 
@@ -100,7 +99,7 @@ describe("reclaiming or reporting a dead registration", () => {
     const parts = setup();
     expect(await reclaim(parts)).toBe(false);
     expect(parts.warnings).toEqual([
-      "Native plugin activation — catalogue 'aidd' collides with unproven AIDD ownership; host registration left untouched. already added",
+      "Native plugin activation: catalogue 'aidd' collides with unproven AIDD ownership; host registration left untouched. already added",
     ]);
   });
 
@@ -108,7 +107,7 @@ describe("reclaiming or reporting a dead registration", () => {
     const parts = setup({ claims: KNOWN, registered: "/elsewhere/aidd/claude" });
     expect(await reclaim(parts)).toBe(false);
     expect(parts.warnings).toEqual([
-      "Native plugin activation — catalogue 'aidd' host catalogue source is unproven; host registration left untouched. already added",
+      "Native plugin activation: catalogue 'aidd' host catalogue source is unproven; host registration left untouched. already added",
     ]);
   });
 
@@ -136,7 +135,7 @@ describe("reclaiming or reporting a dead registration", () => {
     expect(await reclaim(parts)).toBe(false);
     expect(parts.activator.removedMarketplaces).toEqual([]);
     expect(parts.warnings).toEqual([
-      "Native plugin activation — register marketplace 'aidd' skipped: already added",
+      "Native plugin activation: register marketplace 'aidd' skipped: already added",
     ]);
   });
 
@@ -179,7 +178,7 @@ describe("reclaiming or reporting a dead registration", () => {
     expect(await reclaim(parts)).toBe(false);
     expect(parts.activator.addedMarketplaces).toEqual([]);
     expect(parts.warnings.at(-1)).toBe(
-      "Native plugin activation — unregister stale marketplace 'aidd' skipped: marketplace remove aidd failed: 'aidd' is not configured or installed"
+      "Native plugin activation: unregister stale marketplace 'aidd' skipped: marketplace remove aidd failed: 'aidd' is not configured or installed"
     );
   });
 });

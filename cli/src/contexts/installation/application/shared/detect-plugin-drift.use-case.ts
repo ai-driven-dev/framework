@@ -1,10 +1,16 @@
 import { join } from "node:path";
+import { whenAbsent } from "../../../../shared/domain/reading/json-file.js";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { driftOf } from "../../domain/drift.js";
 import type { Manifest } from "../../domain/manifest.js";
-import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import type { RecordedPlugin } from "../../domain/plugins/recorded-plugin.js";
+import {
+  projectHookEntriesEdited,
+  recordedHooksLocation,
+  recordedProjectHookEntries,
+} from "../../domain/project-hooks.model.js";
 import { scopeBaseOf } from "../plugin/plugin-target-resolution.js";
 
 export type PluginFileDriftKind = "missing" | "hash-mismatch";
@@ -61,30 +67,53 @@ export class DetectPluginDrift {
     manifest: DetectPluginDriftRequest["manifest"],
     toolId: AiToolId,
     pluginName: string | undefined
-  ): readonly InstalledPlugin[] {
-    const plugins = manifest.getPlugins(toolId);
-    return pluginName ? plugins.filter((p) => p.name === pluginName) : plugins;
+  ): readonly RecordedPlugin[] {
+    const plugins = manifest.getRecordedPlugins(toolId);
+    return pluginName ? plugins.filter((p) => p.plugin.name === pluginName) : plugins;
   }
 
   private async driftOfPlugin(
-    plugin: InstalledPlugin,
+    recorded: RecordedPlugin,
     toolId: AiToolId,
     projectRoot: string
   ): Promise<PluginDrift | null> {
+    const { plugin } = recorded;
     const profile = this.tools.aiProfile(toolId);
     const baseDir = scopeBaseOf(profile, {
       scope: plugin.scope,
       projectRoot,
       homedir: this.homedir,
     });
-    const files = await this.driftedFiles(plugin.files, baseDir);
+    const files = [
+      ...(await this.driftedFiles(plugin.files, baseDir)),
+      ...(await this.editedHookEntries(recorded, profile, projectRoot)),
+    ];
     if (files.length === 0) return null;
+    // Limit: a missing user plugin whose hook entries also drifted reads as drift; never observed.
     const allMissing =
       files.length === plugin.files.size && files.every((f) => f.kind === "missing");
     if (allMissing && plugin.scope === "user") {
       return { toolId, pluginName: plugin.name, files: [], notInstalledOnMachine: true };
     }
     return { toolId, pluginName: plugin.name, files, notInstalledOnMachine: false };
+  }
+
+  /** The project hooks file, once the entries the install recorded for this plugin changed. */
+  private async editedHookEntries(
+    recorded: RecordedPlugin,
+    profile: Parameters<typeof recordedHooksLocation>[0],
+    projectRoot: string
+  ): Promise<PluginFileDrift[]> {
+    const entries = recorded.provenance.projectHooks?.entries ?? [];
+    const location = recordedHooksLocation(profile);
+    if (entries.length === 0 || location === null) return [];
+    const { relativePath, format } = location;
+    const content = await whenAbsent(() => this.fs.readFile(join(projectRoot, relativePath)), null);
+    if (content === null) return [{ relativePath, kind: "missing" }];
+    const current = recordedProjectHookEntries(format, content, recorded.plugin.name);
+    return projectHookEntriesEdited(entries, current)
+      ? [{ relativePath, kind: "hash-mismatch" }]
+      : [];
   }
 
   private async driftedFiles(

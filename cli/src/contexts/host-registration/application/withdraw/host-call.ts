@@ -91,9 +91,8 @@ export function hostNameFor(
   return registrations?.marketplaces.find((m) => m.alias === alias)?.hostName;
 }
 
-/** What the host carries of `hostName`: its refs, or the refusal when a ref neither this project nor
- * a machine claim owns is there. */
-export async function inspectForeignRefs(
+/** The host's refs on `hostName` and the first no project or machine claim owns, or why they cannot be read. */
+export async function inspectProjectRefs(
   deps: WithdrawalDeps,
   held: {
     readonly withdrawal: ProjectRegistrationWithdrawal;
@@ -115,12 +114,12 @@ export async function inspectForeignRefs(
   );
 }
 
-/** `inspectForeignRefs`, its refusal thrown. */
-export async function assertNoForeignRefs(
+/** `inspectProjectRefs`, its refusal thrown. */
+export async function assertProjectRefsReadable(
   deps: WithdrawalDeps,
-  held: Parameters<typeof inspectForeignRefs>[1],
+  held: Parameters<typeof inspectProjectRefs>[1],
   hostName: string
 ): Promise<void> {
-  const verdict = await inspectForeignRefs(deps, held, hostName);
+  const verdict = await inspectProjectRefs(deps, held, hostName);
   if ("refusal" in verdict) throw verdict.refusal;
 }

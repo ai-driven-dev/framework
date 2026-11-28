@@ -99,20 +99,26 @@ function driftIssue(
   found: MarketplaceSourceDriftFound
 ): Pick<RegistrationIssue, "message" | "fix"> {
   const { drift } = found;
-  if (drift.kind === "version-behind") {
-    return {
-      message: `${toolId}'s marketplace registry (${found.location}) already carries a newer aidd-framework build, ${drift.registeredVersion}, than this run's own ${drift.requestedVersion}`,
-      fix: { code: "update-cli" },
-    };
+  switch (drift.kind) {
+    case "version-behind":
+      return {
+        message: `${toolId}'s marketplace registry (${found.location}) already carries a newer aidd-framework build, ${drift.registeredVersion}, than this run's own ${drift.requestedVersion}`,
+        fix: { code: "update-cli" },
+      };
+    case "version-ahead":
+      return {
+        message: `${toolId}'s marketplace registry (${found.location}) still carries an older aidd-framework build, ${drift.registeredVersion}, than this run's own ${drift.requestedVersion}`,
+        fix: { code: "sync-reregister" },
+      };
+    case "unmigrated-foreign-project-source":
+      return {
+        message: `${toolId}'s marketplace registry (${found.location}) still carries '${found.name}' from another project's pre-migration cache (${found.registeredSource})`,
+        fix: { code: "sync-migrate-source" },
+      };
+    case "unmigrated-project-source":
+      return {
+        message: `${toolId}'s marketplace registry (${found.location}) still carries '${found.name}' from this project's own pre-migration cache (${found.registeredSource})`,
+        fix: { code: "sync-migrate-source" },
+      };
   }
-  if (drift.kind === "unmigrated-foreign-project-source") {
-    return {
-      message: `${toolId}'s marketplace registry (${found.location}) still carries '${found.name}' from another project's pre-migration cache (${found.registeredSource})`,
-      fix: { code: "sync-migrate-source" },
-    };
-  }
-  return {
-    message: `${toolId}'s marketplace registry (${found.location}) still carries '${found.name}' from this project's own pre-migration cache (${found.registeredSource})`,
-    fix: { code: "sync-migrate-source" },
-  };
 }

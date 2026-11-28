@@ -3,6 +3,8 @@ import type { ClaimsView } from "../../../../src/contexts/host-registration/cont
 import type { HostMarketplaceRegistryReading } from "../../../../src/contexts/host-registration/domain/reading/marketplace-registry-reading.js";
 import type { HostPluginRegistryReading } from "../../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { NativeMarketplaceSource } from "../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
+import { userBuiltMarketplaceDir } from "../../../../src/shared/domain/layout/aidd-layout.js";
+import type { AiToolId } from "../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../shared/testing/capturing-logger.fake.js";
 import { catalogReadersOver } from "../../../shared/testing/catalog-readers.builder.js";
 import { FakeHostActions } from "../../../shared/testing/fake-host-actions.fake.js";
@@ -31,6 +33,25 @@ export const enabled = (...refs: string[]) => ({
   refs: new Map(refs.map((ref) => [ref, { enabled: true }])),
 });
 
+/** Codex's shared build of `aidd` per CLI version, its listed source and its catalog seed. */
+export const USER_CACHE_ROOT = "/home/.config/aidd";
+export const codexBuild = (cliVersion: string): string =>
+  userBuiltMarketplaceDir({
+    userConfigDir: USER_CACHE_ROOT,
+    cliVersion,
+    marketplaceName: "aidd",
+    target: TOOL.codex,
+  });
+export const listedAt = (dir: string): NativeMarketplaceSource => ({
+  kind: "effective-list",
+  root: dir,
+  sourceType: "local",
+  source: dir,
+});
+export const codexCatalogAt = (dir: string) => ({
+  [`${dir}/.agents/plugins/marketplace.json`]: JSON.stringify({ name: "aidd", plugins: [] }),
+});
+
 export function setup(
   options: {
     sources?: Map<string, NativeMarketplaceSource | null>;
@@ -39,9 +60,12 @@ export function setup(
     claims?: Partial<ClaimsView>;
     files?: Record<string, string>;
     userCacheRoot?: string;
+    tool?: AiToolId;
+    activator?: FakeHostActions;
   } = {}
 ) {
-  const activator = new FakeHostActions({ available: true });
+  const tool = options.tool ?? TOOL.claude;
+  const activator = options.activator ?? new FakeHostActions({ available: true });
   const logger = new CapturingLogger();
   const warnings: string[] = [];
   const hosts = {
@@ -53,16 +77,16 @@ export function setup(
     ),
     sources: new FakeHostMarketplaceSources(
       activator,
-      "registry",
+      tool === TOOL.claude ? "registry" : "effective-list",
       () => "aidd",
       options.sources ?? new Map()
     ),
   };
-  const profile = registeredTools().aiProfileIfAny(TOOL.claude);
-  if (profile === null) throw new Error("claude is an AI tool");
+  const profile = registeredTools().aiProfileIfAny(tool);
+  if (profile === null) throw new Error(`${tool} is an AI tool`);
   const fs = new InMemoryFileAdapter(options.files ?? {});
   const run: RegistrationRun = {
-    toolId: TOOL.claude,
+    toolId: tool,
     profile,
     activator,
     fs,

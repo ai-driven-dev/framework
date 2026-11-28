@@ -63,6 +63,9 @@ describe("settings migration: legacy host entries", () => {
       upgradeMarketplaces(): HostRefusal {
         return undefined;
       }
+      refsInstalledFrom(): readonly string[] {
+        return [];
+      }
       enablePlugin(): HostRefusal {
         return undefined;
       }

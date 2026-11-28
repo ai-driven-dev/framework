@@ -49,12 +49,7 @@ describe("HostCliAdapter (codex)", () => {
     const env = pathWithExecutable("codex");
     restorePath = env.restore;
 
-    expect(
-      new HostCliAdapter("codex", {
-        upgradeVerb: "upgrade",
-        enableVerb: "add",
-      }).isAvailable()
-    ).toBe(true);
+    expect(new HostCliAdapter("codex", { enableVerb: "add" }).isAvailable()).toBe(true);
     expect(mockSpawnSync).not.toHaveBeenCalled();
   });
 
@@ -67,40 +62,17 @@ describe("HostCliAdapter (codex)", () => {
       rmSync(emptyDir, { recursive: true, force: true });
     };
 
-    expect(
-      new HostCliAdapter("codex", {
-        upgradeVerb: "upgrade",
-        enableVerb: "add",
-      }).isAvailable()
-    ).toBe(false);
+    expect(new HostCliAdapter("codex", { enableVerb: "add" }).isAvailable()).toBe(false);
   });
 
   it("registers a marketplace via `codex plugin marketplace add <source>`", () => {
     mockSpawnSync.mockReturnValue(makeResult({}));
 
-    new HostCliAdapter("codex", {
-      upgradeVerb: "upgrade",
-      enableVerb: "add",
-    }).addMarketplace("/abs/mkt", "project");
+    new HostCliAdapter("codex", { enableVerb: "add" }).addMarketplace("/abs/mkt", "project");
 
     expect(mockSpawnSync).toHaveBeenCalledWith(
       "codex",
       ["plugin", "marketplace", "add", "/abs/mkt"],
-      expect.anything()
-    );
-  });
-
-  it("upgrades only the named marketplace via `codex plugin marketplace upgrade <name>`", () => {
-    mockSpawnSync.mockReturnValue(makeResult({}));
-
-    new HostCliAdapter("codex", {
-      upgradeVerb: "upgrade",
-      enableVerb: "add",
-    }).upgradeMarketplaces("owned-catalog");
-
-    expect(mockSpawnSync).toHaveBeenCalledWith(
-      "codex",
-      ["plugin", "marketplace", "upgrade", "owned-catalog"],
       expect.anything()
     );
   });
@@ -116,9 +88,7 @@ describe("HostCliAdapter (codex)", () => {
   it("enables a plugin via `codex plugin add <ref>`", () => {
     mockSpawnSync.mockReturnValue(makeResult({}));
 
-    new HostCliAdapter("codex", { upgradeVerb: "upgrade", enableVerb: "add" }).enablePlugin(
-      "aidd-context@aidd-framework"
-    );
+    new HostCliAdapter("codex", { enableVerb: "add" }).enablePlugin("aidd-context@aidd-framework");
 
     expect(mockSpawnSync).toHaveBeenCalledWith(
       "codex",
@@ -133,17 +103,9 @@ describe("HostCliAdapter (codex)", () => {
     );
 
     expect(
-      new HostCliAdapter("codex", {
-        upgradeVerb: "upgrade",
-        enableVerb: "add",
-      }).enablePlugin("ghost@m1")
+      new HostCliAdapter("codex", { enableVerb: "add" }).enablePlugin("ghost@m1")
     ).toMatchObject({ detail: expect.any(String) });
-    expect(
-      new HostCliAdapter("codex", {
-        upgradeVerb: "upgrade",
-        enableVerb: "add",
-      }).enablePlugin("ghost@m1")
-    ).toEqual(
+    expect(new HostCliAdapter("codex", { enableVerb: "add" }).enablePlugin("ghost@m1")).toEqual(
       expect.objectContaining({ detail: expect.stringContaining("plugin `ghost` was not found") })
     );
   });
@@ -174,10 +136,7 @@ describe("HostCliAdapter (codex)", () => {
     mockSpawnSync.mockReturnValue(makeResult({ error: new Error("spawn EACCES"), status: null }));
 
     expect(
-      new HostCliAdapter("codex", {
-        upgradeVerb: "upgrade",
-        enableVerb: "add",
-      }).addMarketplace("/abs/mkt", "project")
+      new HostCliAdapter("codex", { enableVerb: "add" }).addMarketplace("/abs/mkt", "project")
     ).toMatchObject({ detail: expect.any(String) });
   });
 });

@@ -26,7 +26,7 @@ export async function inspectHostSource(
   return inspectSourceReading(await reader.read(projectRoot), registration);
 }
 
-/** A source may be AIDD-owned while the host still carries somebody else's plugin from it. */
+/** A source may be AIDD-owned while the host still carries the person's own plugin from it. */
 export async function inspectNativeRefs(
   host: {
     readonly reader: HostPluginRegistry | undefined;
@@ -47,21 +47,20 @@ export async function inspectNativeRefs(
     ownedRefs,
     inUse: (enabled) => tool?.hostRefInUse(enabled) ?? true,
   });
-  if (foreign === undefined) return read;
-  return {
-    refusal: new RegistrationRefusedError(
-      `Catalogue '${hostName}' includes foreign host ref '${foreign}'; no host mutation made.`
-    ),
-  };
+  return foreign === undefined ? read : { ...read, foreignRef: foreign };
 }
 
-/** `inspectNativeRefs`, its refusal thrown. */
+/** `inspectNativeRefs`, refusing a removal that would take a ref no claim names with it. */
 export async function assertNoForeignNativeRefs(
   host: Parameters<typeof inspectNativeRefs>[0],
   claim: Parameters<typeof inspectNativeRefs>[1]
 ): Promise<HostPluginRefs> {
   const verdict = await inspectNativeRefs(host, claim);
   if ("refusal" in verdict) throw verdict.refusal;
+  if (verdict.foreignRef !== undefined)
+    throw new RegistrationRefusedError(
+      `Catalogue '${claim.hostName}' includes foreign host ref '${verdict.foreignRef}'; no host mutation made.`
+    );
   return verdict.refs;
 }
 

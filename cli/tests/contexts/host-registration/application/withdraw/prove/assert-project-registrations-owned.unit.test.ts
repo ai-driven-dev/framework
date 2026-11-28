@@ -81,15 +81,15 @@ describe("proving a project clean only touches what the host shows this project'
     );
   });
 
-  it("refuses a catalogue that holds a ref another owner enabled", async () => {
+  it("accepts an owned catalogue that also holds the person's own ref", async () => {
     const refs = new Map([
       [REF, { enabled: true, scope: "project" as const }],
-      [`foreign@${HOST_NAME}`, { enabled: true, scope: "project" as const }],
+      [`personal@${HOST_NAME}`, { enabled: true, scope: "project" as const }],
     ]);
 
     await expect(
       assertProjectRegistrationsOwned(depsOf({ refs }), [withdrawal], factsAt("project"))
-    ).rejects.toThrow(`Catalogue '${HOST_NAME}' includes foreign host ref 'foreign@${HOST_NAME}'`);
+    ).resolves.toBeUndefined();
   });
 
   it("leaves a machine-scope catalogue alone", async () => {

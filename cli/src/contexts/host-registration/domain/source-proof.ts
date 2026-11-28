@@ -78,7 +78,7 @@ export function judgeCatalogueWithdrawal(source: SourceProof, unenabledClaim?: s
   return judgeRegistration({ intent: "withdraw-catalog", source, unenabledClaim });
 }
 
-/** What the host's plugin registry lets a mutation do: its refs, or the refusal naming why not. */
+/** What the host's plugin registry lets a mutation do: its refs and the first one no claim names, or why not. */
 export type HostRefsVerdict =
-  | { readonly refs: ReadonlyMap<string, HostPluginRegistryEntry> }
+  | { readonly refs: ReadonlyMap<string, HostPluginRegistryEntry>; readonly foreignRef?: string }
   | { readonly refusal: RegistrationRefusedError };

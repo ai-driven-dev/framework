@@ -7,7 +7,7 @@ import type { ClaimsView } from "../../../../../src/contexts/host-registration/c
 import type { HostMarketplaceRegistryReading } from "../../../../../src/contexts/host-registration/domain/reading/marketplace-registry-reading.js";
 import type { HostPluginRegistryReading } from "../../../../../src/contexts/host-registration/domain/reading/plugin-registry-reading.js";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/domain/record/native-marketplace-source.js";
-import type { ToolId } from "../../../../../src/shared/domain/tool.js";
+import type { AiToolId, ToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../shared/testing/capturing-logger.fake.js";
 import { catalogReadersOver } from "../../../../shared/testing/catalog-readers.builder.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.fake.js";
@@ -16,6 +16,13 @@ import { registeredTools, TOOL } from "../../../../shared/testing/registered-too
 import { FakeHostMarketplaceRegistry } from "../../testing/fake-host-marketplace-registry.fake.js";
 import { FakeHostMarketplaceSources } from "../../testing/fake-host-marketplace-sources.fake.js";
 import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.fake.js";
+import {
+  codexBuild,
+  codexCatalogAt,
+  enabled,
+  listedAt,
+  USER_CACHE_ROOT,
+} from "../../testing/registration-run.builder.js";
 
 const PLATFORM = "linux";
 const DIR = "/built/aidd";
@@ -36,42 +43,46 @@ function setup(
     plugins?: HostPluginRegistryReading;
     claims?: Partial<ClaimsView>;
     refs?: string[];
-    build?: null;
+    build?: null | string;
+    tool?: AiToolId;
+    files?: Record<string, string>;
+    userCacheRoot?: string;
   } = {}
 ) {
+  const tool = options.tool ?? TOOL.claude;
   const activator = options.activator ?? new FakeHostActions({ available: true });
   const logger = new CapturingLogger();
   const warnings: string[] = [];
-  const fs = new InMemoryFileAdapter({ [CATALOG]: JSON.stringify({ name: "aidd", plugins: [] }) });
+  const fs = new InMemoryFileAdapter({
+    [CATALOG]: JSON.stringify({ name: "aidd", plugins: [] }),
+    ...options.files,
+  });
   const command = new RegisterPluginWithHost({
     fs,
     catalogs: catalogReadersOver(fs),
     nativeHosts: new ResolveNativeHost(
       hostPortsOver({
-        activators: new Map([["claude", activator]]),
+        activators: new Map([[tool, activator]]),
         marketplaceRegistries: new Map([
           [
-            TOOL.claude,
+            tool,
             new FakeHostMarketplaceRegistry(
               options.registry ?? { location: "r", entries: new Map() }
             ),
           ],
         ]),
         pluginRegistries: new Map([
-          [
-            TOOL.claude,
-            new FakeHostPluginRegistry(options.plugins ?? { location: "p", refs: new Map() }),
-          ],
+          [tool, new FakeHostPluginRegistry(options.plugins ?? { location: "p", refs: new Map() })],
         ]),
         sources:
           options.sources === "absent"
             ? new Map()
             : new Map([
                 [
-                  TOOL.claude,
+                  tool,
                   new FakeHostMarketplaceSources(
                     activator,
-                    "registry",
+                    tool === TOOL.claude ? "registry" : "effective-list",
                     () => "aidd",
                     options.sources ?? new Map()
                   ),
@@ -82,16 +93,16 @@ function setup(
     ),
     platform: PLATFORM,
   });
-  const run = (toolId: ToolId = TOOL.claude) =>
+  const run = (toolId: ToolId = tool) =>
     command.execute({
       toolId,
       projectRoot: "/p",
       scope: "project",
       marketplaces: [{ name: "aidd", scope: "project" }],
       claims: { ...NONE, ...options.claims },
-      build: async () => (options.build === null ? null : DIR),
+      build: async () => (options.build === undefined ? DIR : options.build),
       refsToEnable: (known) => (known.has("aidd") ? (options.refs ?? []) : []),
-      userCacheRoot: () => "",
+      userCacheRoot: () => options.userCacheRoot ?? "",
       sink: { logger, warnings },
     });
   return { activator, logger, warnings, run };
@@ -101,10 +112,6 @@ const EARLIER = { alias: "aidd", hostName: "aidd", provenance: OWN };
 const CLAIMED = { marketplaces: [EARLIER], claimedRefs: [] };
 const REF = "p@aidd";
 const RECORD = { marketplaces: [], pluginRefs: [REF], binary: "claude" };
-const enabled = (...refs: string[]) => ({
-  location: "p",
-  refs: new Map(refs.map((ref) => [ref, { enabled: true }])),
-});
 
 describe("register plugin with host", () => {
   it.each([TOOL.vscode, TOOL.cursor])(
@@ -236,8 +243,35 @@ describe("register plugin with host", () => {
     });
     expect(await run()).toMatchObject({ outcome: { pluginRefs: [] } });
     expect(warnings).toEqual([
-      "Native plugin activation \u2014 enable plugin 'p@aidd' skipped: plugin `p@aidd` was not found in marketplace",
+      "Native plugin activation: enable plugin 'p@aidd' skipped: plugin `p@aidd` was not found in marketplace",
     ]);
+  });
+
+  it("moves codex off an older build that holds a plugin no project claims, and enables the refs it is asked for", async () => {
+    const older = listedAt(codexBuild("1.0.0"));
+    const { activator, warnings, run } = setup({
+      tool: TOOL.codex,
+      activator: new FakeHostActions({
+        available: true,
+        conflictOnAdd: true,
+        installed: ["hand@aidd"],
+      }),
+      sources: new Map([["aidd", older]]),
+      plugins: enabled("hand@aidd"),
+      claims: {
+        machine: async () => ({
+          marketplaces: [{ alias: "aidd", hostName: "aidd", provenance: older }],
+          claimedRefs: [],
+        }),
+      },
+      files: codexCatalogAt(codexBuild("2.0.0")),
+      userCacheRoot: USER_CACHE_ROOT,
+      build: codexBuild("2.0.0"),
+      refs: [REF],
+    });
+    await run();
+    expect(warnings).toEqual([]);
+    expect(activator.enabledPlugins).toEqual(["hand@aidd", REF]);
   });
 
   describe("a ref the host already lists enabled", () => {

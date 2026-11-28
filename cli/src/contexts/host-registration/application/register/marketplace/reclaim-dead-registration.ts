@@ -1,4 +1,5 @@
 import { samePathSegment } from "../../../../../shared/domain/paths.model.js";
+import { nativeActivationWarning } from "../../../contract/native-activation-warning.js";
 import { bestEffortNativeCall, skippedWarning } from "../../../domain/confirmation.js";
 import type { NativeRefusal } from "../../../domain/native-refusal.js";
 import { judgeRegistration } from "../../../domain/policy/registration-policy.js";
@@ -6,6 +7,7 @@ import {
   parseBuiltMarketplaceDir,
   parseUserBuiltMarketplaceDir,
 } from "../../../domain/source/built-marketplace-location.js";
+import { resolvedOrSelf } from "../../check-marketplace-source.use-case.js";
 import { nativeCatalogProof } from "../native-catalog-proof.js";
 import {
   type RegistrationRun,
@@ -21,14 +23,14 @@ export interface DeadRegistration {
   readonly builtDir: string;
 }
 
-// Reclaim only a dead Claude registration whose current source is recognisably AIDD-owned.
+// Reclaim only a dead registration (a host declaring `sourceCheckVerb`) whose current source is recognisably AIDD-owned.
 // `hostName`, never the project's alias, names every host-facing call.
 export async function reclaimOrReport(
   run: RegistrationRun,
   registration: DeadRegistration,
   addError: NativeRefusal
 ): Promise<boolean> {
-  const { marketplace, hostName } = registration;
+  const { hostName } = registration;
   const warn = (message: string): void => warnRegistration(run, message);
   const refusal = await refusalToReclaim(run, registration, addError);
   if (refusal !== undefined) {
@@ -38,18 +40,44 @@ export async function reclaimOrReport(
   warn(
     `Marketplace '${hostName}' was registered to a directory that no longer exists; re-registering it for this project. Plugins installed from it are removed and the ones this CLI manages are put back.`
   );
+  return replaceRegistration(run, registration);
+}
+
+/** Forced out, re-added, then every ref listed from it put back: Copilot's forced remove uninstalls them, Codex keeps them on the old build (probed 1.0.114, 0.172.0). */
+export function replaceRegistration(
+  run: RegistrationRun,
+  { marketplace, hostName, builtDir }: DeadRegistration
+): boolean {
+  const warn = (message: string): void => warnRegistration(run, message);
   const { activator } = run;
+  const installed = activator.refsInstalledFrom(hostName);
+  if (installed === undefined) {
+    warn(
+      nativeActivationWarning(
+        `marketplace '${hostName}' not moved to this build: the plugins installed from it could not be listed.`
+      )
+    );
+    return false;
+  }
   const removed = bestEffortNativeCall(
     () => activator.removeMarketplace(hostName, marketplace.scope, { force: true }),
     skippedWarning(`unregister stale marketplace '${hostName}'`),
     warn
   ).confirmed;
   if (!removed) return false;
-  return bestEffortNativeCall(
-    () => activator.addMarketplace(registration.builtDir, marketplace.scope),
+  const added = bestEffortNativeCall(
+    () => activator.addMarketplace(builtDir, marketplace.scope),
     skippedWarning(`register marketplace '${hostName}'`),
     warn
   ).confirmed;
+  if (!added) return false;
+  for (const ref of installed)
+    bestEffortNativeCall(
+      () => activator.enablePlugin(ref, marketplace.scope),
+      skippedWarning(`enable plugin '${ref}'`),
+      warn
+    );
+  return true;
 }
 
 /** Why a dead registration is not reclaimed, or `undefined` when it is ours to take back. */
@@ -64,18 +92,17 @@ async function refusalToReclaim(
   });
   if (judged.outcome === "refuse") {
     const foreignRef = judged.reconcile;
-    return (
-      `Native plugin activation — catalogue '${hostName}' collides with unproven AIDD ownership` +
-      `${foreignRef === undefined ? "" : ` and foreign ref '${foreignRef}'`}; host registration left untouched. ${addError.detail}`
+    return nativeActivationWarning(
+      `catalogue '${hostName}' collides with unproven AIDD ownership` +
+        `${foreignRef === undefined ? "" : ` and foreign ref '${foreignRef}'`}; host registration left untouched. ${addError.detail}`
     );
   }
   if (!(await builtByThisCli(run, marketplace, hostName)))
-    return (
-      `Native plugin activation — catalogue '${hostName}' host catalogue source is unproven; ` +
-      `host registration left untouched. ${addError.detail}`
+    return nativeActivationWarning(
+      `catalogue '${hostName}' host catalogue source is unproven; host registration left untouched. ${addError.detail}`
     );
   if (run.activator.registrationState(hostName) !== "dead")
-    return `Native plugin activation — register marketplace '${hostName}' skipped: ${addError.detail}`;
+    return skippedWarning(`register marketplace '${hostName}'`)(addError.detail);
   return undefined;
 }
 
@@ -89,21 +116,13 @@ async function builtByThisCli(
   const { fs, platform, projectRoot } = run;
   const registeredSource = (await run.hosts.marketplaceRegistry?.read())?.entries?.get(hostName);
   if (registeredSource === undefined) return false;
-  const source = (await fs.realpathIfResolvable(registeredSource)) ?? registeredSource;
+  const source = await resolvedOrSelf(fs, registeredSource);
   const userRoot = run.userCacheRoot();
   const locations = [
-    parseBuiltMarketplaceDir(
-      (await fs.realpathIfResolvable(projectRoot)) ?? projectRoot,
-      source,
-      platform
-    ),
+    parseBuiltMarketplaceDir(await resolvedOrSelf(fs, projectRoot), source, platform),
     userRoot === ""
       ? undefined
-      : parseUserBuiltMarketplaceDir(
-          (await fs.realpathIfResolvable(userRoot)) ?? userRoot,
-          source,
-          platform
-        ),
+      : parseUserBuiltMarketplaceDir(await resolvedOrSelf(fs, userRoot), source, platform),
   ];
   return locations.some(
     (location) =>

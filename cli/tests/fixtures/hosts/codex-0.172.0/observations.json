@@ -1,6 +1,6 @@
 {
   "host": "codex",
-  "version": "0.171.0",
+  "version": "0.172.0",
   "steps": [
     {
       "id": "add-first-source",
@@ -75,6 +75,30 @@
       ],
       "status": 0,
       "stdout": "Added plugin `p` from marketplace `cx-one`.\nInstalled plugin root: <home>/.codex/plugins/cache/cx-one/p/1.0.0\n",
+      "stderr": "",
+      "files": {
+        ".codex/config.toml": "[marketplaces.cx-one]\nsource_type = \"local\"\nsource = \"<markets>/a\"\n\n[plugins.\"p@cx-one\"]\nenabled = true\n"
+      },
+      "tree": [
+        "cx-one",
+        "cx-one/p",
+        "cx-one/p/1.0.0",
+        "cx-one/p/1.0.0/.codex-plugin",
+        "cx-one/p/1.0.0/.codex-plugin/plugin.json",
+        "cx-one/p/1.0.0/skills",
+        "cx-one/p/1.0.0/skills/s",
+        "cx-one/p/1.0.0/skills/s/SKILL.md"
+      ]
+    },
+    {
+      "id": "plugin-list",
+      "args": [
+        "plugin",
+        "list",
+        "--json"
+      ],
+      "status": 0,
+      "stdout": "{\n  \"installed\": [\n    {\n      \"pluginId\": \"p@cx-one\",\n      \"name\": \"p\",\n      \"marketplaceName\": \"cx-one\",\n      \"version\": \"1.0.0\",\n      \"installed\": true,\n      \"enabled\": true,\n      \"source\": {\n        \"source\": \"local\",\n        \"path\": \"<markets>/a/plugins/p\"\n      },\n      \"marketplaceSource\": {\n        \"sourceType\": \"local\",\n        \"source\": \"<markets>/a\"\n      },\n      \"installPolicy\": \"AVAILABLE\",\n      \"authPolicy\": \"ON_USE\"\n    }\n  ],\n  \"available\": []\n}\n",
       "stderr": "",
       "files": {
         ".codex/config.toml": "[marketplaces.cx-one]\nsource_type = \"local\"\nsource = \"<markets>/a\"\n\n[plugins.\"p@cx-one\"]\nenabled = true\n"

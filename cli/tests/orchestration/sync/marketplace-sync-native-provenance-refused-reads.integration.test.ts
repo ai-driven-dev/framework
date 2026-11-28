@@ -25,7 +25,7 @@ const RECOVERIES = [
   "recovered proof with a shared host alias",
   "foreign source",
   "missing source",
-  "foreign ref",
+  "recovered proof with the person's own ref",
   "unreadable refs",
 ] as const;
 type Recovery = (typeof RECOVERIES)[number];
@@ -65,7 +65,8 @@ function pluginRegistryChangingAfterFirstRead(
         [PLUGIN_REF, { enabled: true }],
         [otherRef, { enabled: true }],
       ]);
-      if (reads > 1 && change === "foreign ref") refs.set(FOREIGN_REF, { enabled: true });
+      if (reads > 1 && change === "recovered proof with the person's own ref")
+        refs.set(FOREIGN_REF, { enabled: true });
       return { location: "host plugin registry", refs };
     },
   };
@@ -188,7 +189,7 @@ describe.each([SYNTHETIC_TOOL, SECOND_SYNTHETIC_TOOL] as const)(
       }
     );
 
-    it.each(["foreign source", "unreadable source", "foreign ref", "unreadable refs"] as const)(
+    it.each(["foreign source", "unreadable source", "unreadable refs"] as const)(
       "does not refresh or enable after the host changes to %s during sync",
       async (change) => {
         let sourceReads = 0;
@@ -225,11 +226,7 @@ describe.each([SYNTHETIC_TOOL, SECOND_SYNTHETIC_TOOL] as const)(
               return { location: "host plugin registry", unreadable: "permission denied" };
             return {
               location: "host plugin registry",
-              refs: new Map(
-                registryReads > 1 && change === "foreign ref"
-                  ? [[FOREIGN_REF, { enabled: true }]]
-                  : []
-              ),
+              refs: new Map(),
             };
           },
         };

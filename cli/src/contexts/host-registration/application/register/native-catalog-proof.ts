@@ -1,9 +1,10 @@
-import { isRefOnHost } from "../../domain/record/host-ref.js";
 import type {
   NativeMarketplaceRegistration,
   NativeMarketplaceSource,
 } from "../../domain/record/native-marketplace-source.js";
 import { pluginRefsOf, recordedMarketplaces } from "../../domain/record/registration-record.js";
+import { findForeignRef } from "../../domain/source-proof.js";
+import { resolvedOrSelf } from "../check-marketplace-source.use-case.js";
 import { inspectHostSource } from "../read-host.js";
 import { type RegistrationRun, warnRegistration } from "./registration-run.js";
 
@@ -39,11 +40,11 @@ export async function nativeCatalogProof(
   if (reading.absent === true) return { ...base, hostReadable: true };
   if (reading.refs === undefined)
     return { ...base, hostReadable: false, unreadable: reading.unreadable ?? reading.location };
-  const claimed = claimedRefs(run, { machine, persisted });
-  const foreignRef = [...reading.refs].find(
-    ([ref, entry]) =>
-      profile.hostRefInUse(entry.enabled) && isRefOnHost(ref, hostName) && !claimed.has(ref)
-  )?.[0];
+  const foreignRef = findForeignRef(reading.refs, {
+    hostName,
+    ownedRefs: claimedRefs(run, { machine, persisted }),
+    inUse: (enabled) => profile.hostRefInUse(enabled),
+  });
   return { ...base, hostReadable: true, ...(foreignRef === undefined ? {} : { foreignRef }) };
 }
 
@@ -86,7 +87,7 @@ export async function proveAddedSource(
   const { toolId } = run;
   const reading = await run.hosts.sources?.read(run.projectRoot);
   const current = reading?.entries?.get(hostName);
-  const expected = (await run.fs.realpathIfResolvable(builtDir)) ?? builtDir;
+  const expected = await resolvedOrSelf(run.fs, builtDir);
   const sourceMatches =
     current?.source === expected &&
     (current.kind === "registry" ||

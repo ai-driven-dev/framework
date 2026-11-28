@@ -1,4 +1,5 @@
 import type { HostRefusal } from "../../../src/contexts/host-registration/domain/native-refusal.js";
+import { isRefOnHost } from "../../../src/contexts/host-registration/domain/record/host-ref.js";
 import type { HostActions } from "../../../src/contexts/host-registration/ports/host-actions.js";
 import type { Scope } from "../../../src/shared/domain/scope.js";
 
@@ -27,6 +28,7 @@ export class FakeHostActions implements HostActions {
   private readonly crashOnAddMarketplace: boolean;
   private readonly crashOnUninstall: boolean;
   private readonly installedAtScope: ReadonlyMap<string, Scope>;
+  private readonly installed: readonly string[] | "unlistable";
 
   constructor(
     options: {
@@ -41,6 +43,8 @@ export class FakeHostActions implements HostActions {
       crashOnAddMarketplace?: boolean;
       crashOnUninstall?: boolean;
       installedAtScope?: ReadonlyMap<string, Scope>;
+      /** What the host lists as installed; gone from a marketplace once it is removed. */
+      installed?: readonly string[] | "unlistable";
     } = {}
   ) {
     const {
@@ -54,6 +58,7 @@ export class FakeHostActions implements HostActions {
       crashOnAddMarketplace = false,
       crashOnUninstall = false,
       installedAtScope = new Map(),
+      installed = [],
     } = options;
     this.available = available;
     this.failOnPlugins = new Set(failOnPlugins);
@@ -65,6 +70,13 @@ export class FakeHostActions implements HostActions {
     this.crashOnAddMarketplace = crashOnAddMarketplace;
     this.crashOnUninstall = crashOnUninstall;
     this.installedAtScope = installedAtScope;
+    this.installed = installed;
+  }
+
+  refsInstalledFrom(name: string): readonly string[] | undefined {
+    if (this.installed === "unlistable") return undefined;
+    if (this.removedMarketplaces.includes(name)) return [];
+    return this.installed.filter((ref) => isRefOnHost(ref, name));
   }
 
   registrationState(): "live" | "dead" | "unknown" {

@@ -253,7 +253,7 @@ describe("native activation: reclaim", () => {
 
       expect(result.warnings).toStrictEqual([
         RECLAIM,
-        "Native plugin activation — unregister stale marketplace 'aidd-framework-catalog' skipped: marketplace remove aidd-framework-catalog failed: 'aidd-framework-catalog' is not configured or installed",
+        "Native plugin activation: unregister stale marketplace 'aidd-framework-catalog' skipped: marketplace remove aidd-framework-catalog failed: 'aidd-framework-catalog' is not configured or installed",
       ]);
       expect(activator.addedMarketplaces).toEqual([]);
       expect(result.errors).toStrictEqual([]);

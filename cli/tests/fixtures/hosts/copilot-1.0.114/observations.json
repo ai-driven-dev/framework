@@ -106,6 +106,20 @@
       }
     },
     {
+      "id": "plugin-list",
+      "args": [
+        "plugin",
+        "list",
+        "--json"
+      ],
+      "status": 0,
+      "stdout": "[\n  {\n    \"name\": \"p\",\n    \"marketplace\": \"mk-one\",\n    \"version\": \"1.0.0\",\n    \"enabled\": true,\n    \"source\": \"live\",\n    \"installedFrom\": \"<markets>/a\"\n  },\n  {\n    \"name\": \"computer-use\",\n    \"marketplace\": \"\",\n    \"version\": \"0.1.97\",\n    \"enabled\": false,\n    \"source\": \"builtin\"\n  },\n  {\n    \"name\": \"browser-use\",\n    \"marketplace\": \"\",\n    \"version\": \"0.1.0\",\n    \"enabled\": false,\n    \"source\": \"builtin\"\n  }\n]\n",
+      "stderr": "",
+      "files": {
+        ".copilot/settings.json": "{\n  \"extraKnownMarketplaces\": {\n    \"mk-one\": {\n      \"source\": {\n        \"source\": \"directory\",\n        \"path\": \"<markets>/a\"\n      }\n    }\n  },\n  \"enabledPlugins\": {\n    \"p@mk-one\": true\n  }\n}\n"
+      }
+    },
+    {
       "id": "uninstall",
       "args": [
         "plugin",
@@ -114,6 +128,20 @@
       ],
       "status": 0,
       "stdout": "Plugin \"p@mk-one\" disabled. It is still on disk at <markets>/a — nothing was removed.\n",
+      "stderr": "",
+      "files": {
+        ".copilot/settings.json": "{\n  \"extraKnownMarketplaces\": {\n    \"mk-one\": {\n      \"source\": {\n        \"source\": \"directory\",\n        \"path\": \"<markets>/a\"\n      }\n    }\n  },\n  \"enabledPlugins\": {\n    \"p@mk-one\": false\n  }\n}\n"
+      }
+    },
+    {
+      "id": "plugin-list-after-uninstall",
+      "args": [
+        "plugin",
+        "list",
+        "--json"
+      ],
+      "status": 0,
+      "stdout": "[\n  {\n    \"name\": \"p\",\n    \"marketplace\": \"mk-one\",\n    \"version\": \"1.0.0\",\n    \"enabled\": false,\n    \"source\": \"live\",\n    \"installedFrom\": \"<markets>/a\"\n  },\n  {\n    \"name\": \"computer-use\",\n    \"marketplace\": \"\",\n    \"version\": \"0.1.97\",\n    \"enabled\": false,\n    \"source\": \"builtin\"\n  },\n  {\n    \"name\": \"browser-use\",\n    \"marketplace\": \"\",\n    \"version\": \"0.1.0\",\n    \"enabled\": false,\n    \"source\": \"builtin\"\n  }\n]\n",
       "stderr": "",
       "files": {
         ".copilot/settings.json": "{\n  \"extraKnownMarketplaces\": {\n    \"mk-one\": {\n      \"source\": {\n        \"source\": \"directory\",\n        \"path\": \"<markets>/a\"\n      }\n    }\n  },\n  \"enabledPlugins\": {\n    \"p@mk-one\": false\n  }\n}\n"

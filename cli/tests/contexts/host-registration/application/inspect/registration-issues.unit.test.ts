@@ -70,16 +70,26 @@ describe("registration issues", () => {
       { kind: "version-behind", registeredVersion: "2", requestedVersion: "1" },
       { kind: "unmigrated-foreign-project-source", projectRoot: "/other" },
       { kind: "unmigrated-project-source" },
+      { kind: "version-ahead", registeredVersion: "1", requestedVersion: "2" },
     ] as const;
 
     const issues = drifts.map((drift) =>
       registrationIssueOf({ kind: "source-drift", tool, found: { ...found, drift } })
     );
 
-    expect(issues.map((issue) => issue.severity)).toEqual(["warning", "warning", "warning"]);
+    expect(issues.map((issue) => issue.severity)).toEqual([
+      "warning",
+      "warning",
+      "warning",
+      "warning",
+    ]);
     expect(issues[0].message).toContain("newer aidd-framework build, 2");
     expect(issues[1].message).toContain("another project's");
     expect(issues[2].message).toContain("this project's own");
+    expect(issues[3]).toMatchObject({
+      message: expect.stringContaining("older aidd-framework build, 1"),
+      fix: { code: "sync-reregister" },
+    });
   });
 
   it("words a settings file that cannot be read as a warning that asks for a hand repair", () => {

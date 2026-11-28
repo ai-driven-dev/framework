@@ -8,8 +8,11 @@ import {
 import {
   isDriftFound,
   judgeDrift,
-  type MarketplaceSourceDriftFound,
+  type MarketplaceSourceDrift,
+  type MarketplaceSourceDriftContext,
 } from "../../../domain/source/marketplace-source-drift.js";
+import { resolvedDrift, resolvedOrSelf } from "../../check-marketplace-source.use-case.js";
+import type { NativeCatalogProof } from "../native-catalog-proof.js";
 import {
   marketplaceRegistryOf,
   type RegistrationRun,
@@ -31,32 +34,30 @@ export interface CatalogRequest {
  * and re-adds over it with no prompt and no error. A local alias differing from the catalog's
  * declared name is supported and never compared here, and the same catalog reached through a
  * differently resolved path is no conflict. A drift decides first: a host on a newer shared build
- * returns `"skip"` and is never written backward, one on a pre-migration cache proceeds.
+ * returns `"skip"` and is never written backward, one on a pre-migration cache proceeds, and a
+ * host with no registry on an older build returns `"repoint"`.
  */
 export async function guardAgainstConflict(
   run: RegistrationRun,
-  request: CatalogRequest
-): Promise<"skip" | undefined> {
+  request: CatalogRequest,
+  proof: NativeCatalogProof
+): Promise<"skip" | "repoint" | undefined> {
   const { builtDir, identity: requestedIdentity, marketplace } = request;
   const { profile } = run;
+  const requestedSource = await resolvedOrSelf(run.fs, builtDir);
+  const driftContext = driftContextOf(run, marketplace);
   const reader = marketplaceRegistryOf(run);
-  if (reader === undefined) return undefined;
-  const requestedSource = (await run.fs.realpathIfResolvable(builtDir)) ?? builtDir;
+  if (reader === undefined) return decideWithoutRegistry(run, request, proof);
   const check = await run.catalogs.checkSource.execute(
     { tool: profile, reader },
-    {
-      requestedSource,
-      requestedIdentity,
-      driftContext: {
-        userCacheRoot: run.userCacheRoot(),
-        projectRoot: run.projectRoot,
-        marketplaceName: marketplace.name,
-        target: profile.toolId,
-        platform: run.platform,
-      },
-    }
+    { requestedSource, requestedIdentity, driftContext }
   );
-  if (check !== undefined && isDriftFound(check)) return decideOnDrift(run, check);
+  if (check !== undefined && isDriftFound(check))
+    return decideOnDrift(
+      run,
+      check.drift,
+      `${run.toolId}'s marketplace registry (${check.location})`
+    );
   const verdict = judgeConflict(check);
   if (verdict.outcome === "proceed") return undefined;
   const { conflict } = verdict;
@@ -69,6 +70,52 @@ export async function guardAgainstConflict(
   );
 }
 
+function driftContextOf(
+  run: RegistrationRun,
+  marketplace: RegistrationSubject
+): MarketplaceSourceDriftContext {
+  return {
+    userCacheRoot: run.userCacheRoot(),
+    projectRoot: run.projectRoot,
+    marketplaceName: marketplace.name,
+    target: run.profile.toolId,
+    platform: run.platform,
+  };
+}
+
+const isOlderBuild = (drift: MarketplaceSourceDrift): boolean => drift.kind === "version-ahead";
+
+/** Codex and Copilot refuse a re-add from another source (probed 0.172.0, 1.0.114), so an older build is moved. */
+async function decideWithoutRegistry(
+  run: RegistrationRun,
+  request: CatalogRequest,
+  proof: NativeCatalogProof
+): Promise<"skip" | "repoint" | undefined> {
+  const drift = await registryLessDrift(run, request, proof);
+  if (drift === undefined) return undefined;
+  if (isOlderBuild(drift)) return "repoint";
+  return decideOnDrift(
+    run,
+    drift,
+    `${run.toolId}'s marketplace '${request.identity.name}' (${proof.source?.source})`
+  );
+}
+
+async function registryLessDrift(
+  run: RegistrationRun,
+  { builtDir, marketplace }: CatalogRequest,
+  proof: NativeCatalogProof
+): Promise<MarketplaceSourceDrift | undefined> {
+  const registeredSource = proof.source?.source;
+  if (registeredSource === undefined) return undefined;
+  const requestedSource = await resolvedOrSelf(run.fs, builtDir);
+  return resolvedDrift(
+    run.fs,
+    { registeredSource, requestedSource },
+    driftContextOf(run, marketplace)
+  );
+}
+
 /**
  * A host already following a newer build is never written backward: warned, not thrown, so a
  * caller iterating several tools still proceeds. A host tracking *another* project's
@@ -77,14 +124,15 @@ export async function guardAgainstConflict(
  */
 function decideOnDrift(
   run: RegistrationRun,
-  found: MarketplaceSourceDriftFound
+  drift: MarketplaceSourceDrift,
+  where: string
 ): "skip" | undefined {
-  const verdict = judgeDrift(found.drift);
+  const verdict = judgeDrift(drift);
   if (verdict.outcome !== "skip") return undefined;
   const { registeredVersion, requestedVersion } = verdict.reason;
   warnRegistration(run, {
     text:
-      `${run.toolId}'s marketplace registry (${found.location}) already carries a newer ` +
+      `${where} already carries a newer ` +
       `aidd-framework build, ${registeredVersion}, than this run's own ${requestedVersion} — ` +
       "not registering this run's build over it.",
     hint: "update-cli",

@@ -94,6 +94,9 @@ export class RecordingActivator implements HostActions {
   upgradeMarketplaces(): HostRefusal {
     return undefined;
   }
+  refsInstalledFrom(): readonly string[] {
+    return [];
+  }
   enablePlugin(): HostRefusal {
     return undefined;
   }

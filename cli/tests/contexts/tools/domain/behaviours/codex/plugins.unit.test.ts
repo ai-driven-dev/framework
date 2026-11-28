@@ -13,9 +13,9 @@ describe("codex plugins", () => {
       // Exhaustive, not `toMatchObject`: a verb added by mistake must fail here rather than escape.
       expect(activation?.hostBinary()).toBe("codex");
       expect(activation?.cliShape()).toEqual({
-        upgradeVerb: "upgrade",
         enableVerb: "add",
         disableVerb: "remove",
+        pluginListLayout: "installed-plugin-ids",
       });
       expect(activation?.pluginRegistryAt("/home/tester")?.layout).toBe("toml-plugin-tables");
       expect(activation?.marketplaceSourcesDeclaration()).toEqual(

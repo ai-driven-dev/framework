@@ -131,7 +131,7 @@ describe.each([SYNTHETIC_TOOL, SECOND_SYNTHETIC_TOOL] as const)(
       expect(fixture.fs.getFile(HOST_CATALOG_WITNESS)).toBe(fixture.hostCatalogBytes);
     });
 
-    it("refuses refresh when a foreign ref shares an AIDD-owned catalogue name", async () => {
+    it("refreshes an AIDD-owned catalogue silently over the person's own ref, never adopting it", async () => {
       const fixture = makeSync(toolId, {
         machine: canonicallyOwned(toolId),
         hostRefs: new Map([[FOREIGN_REF, { enabled: true }]]),
@@ -141,29 +141,29 @@ describe.each([SYNTHETIC_TOOL, SECOND_SYNTHETIC_TOOL] as const)(
         projectRoot: PROJECT_ROOT,
       });
 
-      expect(fixture.activator.refreshedCatalogs).toEqual([]);
+      expect(result.warnings).toStrictEqual([]);
+      expect(fixture.activator.refreshedCatalogs).toEqual([CATALOG]);
+      expect(fixture.activator.removedMarketplaces).toEqual([]);
+      expect(fixture.machineRepo.records.get(toolId)?.pluginClaims).toStrictEqual([
+        { ref: PLUGIN_REF, dependents: [PROJECT_ROOT] },
+      ]);
       expect(await fixture.fs.readFile(CACHE_WITNESS)).toBe("foreign bytes stay byte-for-byte");
-      expect(result.warnings.join("\n")).toContain(FOREIGN_REF);
     });
 
-    it("does not treat a project-only native ref as machine ownership", async () => {
+    it("does not adopt a project-only native ref into the machine's claims", async () => {
       const fixture = makeSync(toolId, {
         machine: canonicallyOwned(toolId),
         projectNativePluginRefs: [FOREIGN_REF],
         hostRefs: new Map([[FOREIGN_REF, { enabled: true }]]),
       });
 
-      const result = await fixture.useCase.execute({
-        projectRoot: PROJECT_ROOT,
-      });
+      await fixture.useCase.execute({ projectRoot: PROJECT_ROOT });
 
-      expect(fixture.activator.refreshedCatalogs).toEqual([]);
-      expect(fixture.activator.addedMarketplaces).toEqual([]);
-      expect(fixture.activator.enabledPlugins).toEqual([]);
+      expect(fixture.activator.enabledPlugins).not.toContain(FOREIGN_REF);
       expect(fixture.activator.removedMarketplaces).toEqual([]);
-      expect(await fixture.fs.readFile(CACHE_WITNESS)).toBe("foreign bytes stay byte-for-byte");
-      expect(await fixture.fs.readFile(HOST_CATALOG_WITNESS)).toBe(fixture.hostCatalogBytes);
-      expect(result.warnings.join("\n")).toContain(FOREIGN_REF);
+      expect(fixture.machineRepo.records.get(toolId)?.pluginClaims).toStrictEqual([
+        { ref: PLUGIN_REF, dependents: [PROJECT_ROOT] },
+      ]);
     });
 
     it("activates a freshly added AIDD ref without a redundant refresh", async () => {

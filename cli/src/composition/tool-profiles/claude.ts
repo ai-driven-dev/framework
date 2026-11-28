@@ -95,6 +95,7 @@ const CLAUDE_ACTIVATION: NativeActivationSpec = {
   // `--yes` gates a prune confirmation these calls never request, but a headless
   // stdin has no terminal to answer any prompt at all.
   pluginArgs: ["--yes"],
+  pluginListLayout: "id-scope-rows",
   // Root of claude's own marketplace registry, read by the sync guard that refuses a
   // name-stealing re-add before driving `marketplace add` at all. Declared here alone,
   // which is what keeps that guard claude-only by declaration.

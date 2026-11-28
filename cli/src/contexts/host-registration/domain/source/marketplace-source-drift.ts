@@ -17,6 +17,12 @@ export type MarketplaceSourceDrift =
       readonly requestedVersion: string;
     }
   | {
+      /** The host still follows an older build of aidd's own shared source than this run requests. */
+      readonly kind: "version-ahead";
+      readonly registeredVersion: string;
+      readonly requestedVersion: string;
+    }
+  | {
       /** The host still points at this project's own pre-migration, per-project
        * cache rather than the shared, machine-scope one `requestedSource` names. */
       readonly kind: "unmigrated-project-source";
@@ -75,7 +81,7 @@ export function marketplaceSourceDrift(
   if (requested === undefined || !isOurs(requested)) return undefined;
   const shared = parseUserBuiltMarketplaceDir(userCacheRoot, registeredSource, platform);
   if (shared !== undefined)
-    return isOurs(shared) ? versionBehind(shared.version, requested.version) : undefined;
+    return isOurs(shared) ? versionDrift(shared.version, requested.version) : undefined;
   return unmigratedSource(registeredSource, context);
 }
 
@@ -104,13 +110,16 @@ function unmigratedSource(
   return undefined;
 }
 
-function versionBehind(
+/** A version that is not semver is never ordered, so it is no drift. */
+function versionDrift(
   registeredVersion: string,
   requestedVersion: string
 ): MarketplaceSourceDrift | undefined {
   if (!isSemver(registeredVersion) || !isSemver(requestedVersion)) return undefined;
-  if (compareSemver(registeredVersion, requestedVersion) <= 0) return undefined;
-  return { kind: "version-behind", registeredVersion, requestedVersion };
+  const order = compareSemver(registeredVersion, requestedVersion);
+  if (order === 0) return undefined;
+  const kind = order > 0 ? "version-behind" : "version-ahead";
+  return { kind, registeredVersion, requestedVersion };
 }
 
 /** The versions a skipped registration names: the host already follows `registeredVersion`, newer
@@ -126,7 +135,7 @@ export type DriftVerdict =
   | { readonly outcome: "skip"; readonly reason: NewerBuildFollowed };
 
 /** A host already following a newer build is never written backward, so the registration is
- * skipped; a pre-migration source is moved forward, so it proceeds. */
+ * skipped; an older build or a pre-migration source is moved forward, so it proceeds. */
 export function judgeDrift(drift: MarketplaceSourceDrift): DriftVerdict {
   if (drift.kind !== "version-behind") return { outcome: "proceed", evidence: drift };
   const { registeredVersion, requestedVersion } = drift;

@@ -100,7 +100,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
       expect(activator.forcedRemovals).toEqual([]);
       expect(activator.addedMarketplaces).toEqual([]);
       expect(result.warnings).toEqual([
-        `Native plugin activation — register marketplace '${HOST}' skipped: marketplace is already added from a different source; remove it before adding this source`,
+        `Native plugin activation: register marketplace '${HOST}' skipped: marketplace is already added from a different source; remove it before adding this source`,
       ]);
       expect(result.errors).toEqual([]);
     }
@@ -123,7 +123,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
       expect(activator.removedMarketplaces).toEqual([]);
       expect(activator.enabledPlugins).toEqual([REF]);
       expect(result.warnings).toEqual([
-        `Native plugin activation — catalogue '${HOST}' host catalogue source is unproven; host registration left untouched. ${ADD_ERROR}`,
+        `Native plugin activation: catalogue '${HOST}' host catalogue source is unproven; host registration left untouched. ${ADD_ERROR}`,
       ]);
       expect(firstSourceOf(repo.records.get(tool))).toEqual({
         kind: "registry",
@@ -138,7 +138,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
     expect(activator.addedMarketplaces).toEqual([]);
     expect(result.warnings).toEqual([
       RECLAIM,
-      `Native plugin activation — unregister stale marketplace '${HOST}' skipped: remove denied`,
+      `Native plugin activation: unregister stale marketplace '${HOST}' skipped: remove denied`,
     ]);
     expect(logger.warnMessages).toEqual(result.warnings);
     expect(result.errors).toEqual([]);
@@ -155,7 +155,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
     expect(activator.enabledPlugins).toEqual([]);
     expect(result.warnings).toEqual([
       RECLAIM,
-      `Native plugin activation — register marketplace '${HOST}' skipped: retry denied`,
+      `Native plugin activation: register marketplace '${HOST}' skipped: retry denied`,
     ]);
     expect(logger.warnMessages).toEqual(result.warnings);
     expect(result.errors).toEqual([]);
@@ -185,7 +185,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
       expect(activator.removedMarketplaces).toEqual([]);
       expect(activator.enabledPlugins).toEqual([]);
       expect(result.warnings).toEqual([
-        `Native plugin activation — catalogue '${HOST}' collides with unproven AIDD ownership; host registration left untouched. ${ADD_ERROR}`,
+        `Native plugin activation: catalogue '${HOST}' collides with unproven AIDD ownership; host registration left untouched. ${ADD_ERROR}`,
       ]);
       expect(repo.records.get(tool)?.marketplaces).toEqual([
         { alias: ALIAS, hostName: HOST, provenance: { kind: "registry", source: OLD } },
@@ -194,20 +194,17 @@ describe("marketplace sync recovery preserves public ownership and failure outco
     }
   );
 
-  it("reports the foreign plugin that appeared after add failed and leaves the host untouched", async () => {
-    const foreign = `other@${HOST}`;
+  it("reclaims an owned dead catalogue over the person's own plugin that appeared after add failed", async () => {
+    const personal = `other@${HOST}`;
     const { activator, result } = await recovery({
       ...REAL,
       plugins: [
         { location: "host plugins", refs: new Map() },
-        { location: "host plugins", refs: new Map([[foreign, { enabled: true }]]) },
+        { location: "host plugins", refs: new Map([[personal, { enabled: true }]]) },
       ],
     });
-    expect(activator.removedMarketplaces).toEqual([]);
-    expect(activator.enabledPlugins).toEqual([]);
-    expect(result.warnings).toEqual([
-      `Native plugin activation — catalogue '${HOST}' collides with unproven AIDD ownership and foreign ref '${foreign}'; host registration left untouched. ${ADD_ERROR}`,
-    ]);
+    expect(activator.removedMarketplaces).toEqual([HOST]);
+    expect(result.warnings).toEqual([RECLAIM]);
     expect(result.errors).toEqual([]);
   });
 
@@ -222,7 +219,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
     });
     expect(activator.removedMarketplaces).toEqual([]);
     expect(result.warnings).toEqual([
-      `Native plugin activation — catalogue '${HOST}' host catalogue source is unproven; host registration left untouched. ${ADD_ERROR}`,
+      `Native plugin activation: catalogue '${HOST}' host catalogue source is unproven; host registration left untouched. ${ADD_ERROR}`,
     ]);
     expect(result.errors).toEqual([]);
   });

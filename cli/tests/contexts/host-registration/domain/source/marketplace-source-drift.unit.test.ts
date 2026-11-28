@@ -57,10 +57,14 @@ describe("marketplaceSourceDrift - deciding purely from the path's own segments,
     });
   });
 
-  it("is undefined - a legitimate update, not a drift - when the requested version is ahead of the registered one", () => {
-    expect(
-      marketplaceSourceDrift(sharedPath("1.0.0"), sharedPath("2.0.0"), DRIFT_CONTEXT)
-    ).toBeUndefined();
+  it("is a version-ahead drift when the requested version is ahead of the registered one", () => {
+    expect(marketplaceSourceDrift(sharedPath("1.0.0"), sharedPath("2.0.0"), DRIFT_CONTEXT)).toEqual(
+      {
+        kind: "version-ahead",
+        registeredVersion: "1.0.0",
+        requestedVersion: "2.0.0",
+      }
+    );
   });
 
   it("is an unmigrated-project-source drift when the registered path is this project's own pre-migration cache", () => {

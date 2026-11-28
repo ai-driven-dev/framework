@@ -21,7 +21,7 @@
 - A project clean never removes the shared `aidd-framework` registration; it warns with its entry and cache path.
 - A ref with an exact `<plugin>@<catalogue>` claim in the user manifest is machine-owned: project clean never uninstalls it.
 - A catalogue a machine ref claims stays registered; one no user manifest proves unshared is left for manual cleanup.
-- An unclaimed preexisting host ref is foreign, never adopted.
+- A host ref no claim names, on a catalogue aidd owns, is the person's own: never adopted or uninstalled, and its catalogue stays registered. User clean and `marketplace remove` refuse rather than take it; on a catalogue aidd does not own, it still refuses the registration.
 
 ## Cache purge
 

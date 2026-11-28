@@ -61,7 +61,6 @@ export type Refusal =
   | "not-canonical"
   | "host-unreadable"
   | "source-not-owned"
-  | "foreign-ref"
   | "ref-not-enabled"
   | "no-canonical-source"
   | "claim-not-enabled";
@@ -112,12 +111,19 @@ function firstRefusal(readings: Exclude<Readings, EnableReadings>): Found {
   }
 }
 
+/** On an owned source a ref no claim names is the person's own, so only an unowned source refuses for it. */
+export function refusingForeignRef(
+  readings: Pick<RegisterReadings, "sourceStatus" | "foreignRef">
+): string | undefined {
+  return readings.sourceStatus === "owned" ? undefined : readings.foreignRef;
+}
+
 function registerRefusal(readings: RegisterReadings): Found {
-  const { foreignRef } = readings;
+  const foreignRef = refusingForeignRef(readings);
   if (!readings.canonical) return found("not-canonical", foreignRef);
   if (!readings.hostReadable) return found("host-unreadable", foreignRef);
   if (readings.sourceStatus !== "owned") return found("source-not-owned", foreignRef);
-  return foreignRef === undefined ? undefined : found("foreign-ref", foreignRef);
+  return undefined;
 }
 
 function refProofRefusal(readings: RefProofReadings): Found {

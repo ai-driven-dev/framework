@@ -128,7 +128,7 @@ describe("what a step that could not complete leaves in warnings and errors", ()
     });
 
     expect(result.warnings).toStrictEqual([
-      "Native plugin activation — enable plugin 'aidd-context@aidd-framework' skipped: plugin `aidd-context@aidd-framework` was not found in marketplace",
+      "Native plugin activation: enable plugin 'aidd-context@aidd-framework' skipped: plugin `aidd-context@aidd-framework` was not found in marketplace",
     ]);
   });
 
@@ -138,7 +138,7 @@ describe("what a step that could not complete leaves in warnings and errors", ()
     const { result } = await sync({ activator, ownedCatalog: true });
 
     expect(result.warnings).toStrictEqual([
-      "Native plugin activation — upgrade marketplace 'aidd-framework' skipped: registry locked",
+      "Native plugin activation: upgrade marketplace 'aidd-framework' skipped: registry locked",
     ]);
     expect(result.errors).toStrictEqual([]);
     expect(activator.enabledPlugins).toStrictEqual(["aidd-context@aidd-framework"]);

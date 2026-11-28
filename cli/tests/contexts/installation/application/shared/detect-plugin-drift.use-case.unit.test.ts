@@ -188,3 +188,90 @@ describe("DetectPluginDrift - the manifest's recorded scope wins over the profil
     expect(drifts[0].files).toHaveLength(2);
   });
 });
+
+describe("DetectPluginDrift - a plugin's entries in the project hooks file", () => {
+  const pristineHooks = JSON.stringify({
+    version: 1,
+    hooks: {
+      sessionStart: [{ command: "node ./.cursor/hooks/aidd-context/memory.cjs load", timeout: 5 }],
+      stop: [{ command: "node ./.cursor/hooks/aidd-context/memory.cjs sync", timeout: 5 }],
+      sessionEnd: [{ command: "node ./.cursor/hooks/aidd-context/memory.cjs sync", timeout: 5 }],
+    },
+  });
+  const editedHooks = pristineHooks.replace("memory.cjs load", "memory.cjs load --tampered");
+
+  function cursorManifestWithRecordedHooks(): Manifest {
+    return aManifest()
+      .withTool(TOOL.cursor, [])
+      .withPlugin(
+        TOOL.cursor,
+        RecordedPlugin.fromJSON({
+          name: "aidd-context",
+          source: { kind: "local", path: "/some/path" },
+          version: "1.0.0",
+          strict: false,
+          files: {},
+          scope: "user",
+          projectHooks: {
+            entries: [
+              {
+                event: "sessionStart",
+                command: "node ./.cursor/hooks/aidd-context/memory.cjs load",
+                digest: "fa58cef07bb127e2fdf83bf433462395",
+              },
+              {
+                event: "stop",
+                command: "node ./.cursor/hooks/aidd-context/memory.cjs sync",
+                digest: "8854ed7708a15016cb1713219a3d1101",
+              },
+              {
+                event: "sessionEnd",
+                command: "node ./.cursor/hooks/aidd-context/memory.cjs sync",
+                digest: "8854ed7708a15016cb1713219a3d1101",
+              },
+            ],
+            scripts: {},
+          },
+        })
+      )
+      .build();
+  }
+
+  function fsWithHooks(content: string | null): FileReader {
+    const readFile = async () => {
+      if (content !== null) return content;
+      throw Object.assign(new Error("absent"), { code: "ENOENT" });
+    };
+    return { ...makeFs(new Set()), readFile };
+  }
+
+  const detect = (content: string | null) =>
+    new DetectPluginDrift(fsWithHooks(content), registeredTools(), () => "/home/dev").execute({
+      manifest: cursorManifestWithRecordedHooks(),
+      projectRoot: "/proj",
+      toolIds: [TOOL.cursor],
+    });
+
+  it("reports the hooks file once an entry the install recorded was edited", async () => {
+    expect(await detect(pristineHooks)).toEqual([]);
+    expect(await detect(editedHooks)).toEqual([
+      {
+        toolId: TOOL.cursor,
+        pluginName: "aidd-context",
+        files: [{ relativePath: ".cursor/hooks.json", kind: "hash-mismatch" }],
+        notInstalledOnMachine: false,
+      },
+    ]);
+  });
+
+  it("reports the hooks file as missing once it was deleted", async () => {
+    expect(await detect(null)).toEqual([
+      {
+        toolId: TOOL.cursor,
+        pluginName: "aidd-context",
+        files: [{ relativePath: ".cursor/hooks.json", kind: "missing" }],
+        notInstalledOnMachine: false,
+      },
+    ]);
+  });
+});

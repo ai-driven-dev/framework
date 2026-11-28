@@ -15,7 +15,7 @@ import type { CatalogProbeTool } from "../ports/host-tool.js";
 
 /** `fs.realpath`, falling back to the path itself when it cannot resolve: a dead registration must
  * not cost every other comparison its answer. */
-async function resolvedOrSelf(fs: FileReader, path: string): Promise<string> {
+export async function resolvedOrSelf(fs: FileReader, path: string): Promise<string> {
   return (await fs.realpathIfResolvable(path)) ?? path;
 }
 
@@ -78,7 +78,8 @@ export class CheckMarketplaceSource {
   }
 }
 
-async function resolvedDrift(
+/** The drift between two sources, each path resolved first: the drift parsers compare spelling. */
+export async function resolvedDrift(
   fs: FileReader,
   sources: { readonly registeredSource: string; readonly requestedSource: string },
   context: MarketplaceSourceDriftContext

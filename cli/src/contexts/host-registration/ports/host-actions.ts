@@ -21,6 +21,8 @@ export interface HostActions {
    * that might belong to a live project elsewhere is not one to take over. */
   registrationState(name: string): "live" | "dead" | "unknown";
   upgradeMarketplaces(name: string): HostRefusal;
+  /** The enabled refs the host lists from this marketplace; `undefined` when its list cannot be read. */
+  refsInstalledFrom(name: string): readonly string[] | undefined;
   /**
    * Installs and enables a plugin referenced as `<plugin>@<marketplace>`. Idempotent.
    *

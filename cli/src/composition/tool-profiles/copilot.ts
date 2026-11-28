@@ -110,6 +110,7 @@ const COPILOT_ACTIVATION: NativeActivationSpec = {
   disableVerb: "uninstall",
   sourceCheckVerb: "update",
   forceRemoveArgs: ["--force"],
+  pluginListLayout: "name-marketplace-rows",
   // Measured on 1.0.98: `plugin uninstall` sets the ref to `false` in enabledPlugins
   // rather than deleting it.
   uninstallLeavesRefDisabled: true,
