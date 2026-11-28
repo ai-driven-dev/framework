@@ -111,8 +111,7 @@ function firstRefusal(readings: Exclude<Readings, EnableReadings>): Found {
   }
 }
 
-/** The ref no claim names that refuses a registration: on an owned source it is the person's own,
- * tolerated, never adopted and never removed, so only a source aidd does not own names one. */
+/** On an owned source a ref no claim names is the person's own, so only an unowned source refuses for it. */
 export function refusingForeignRef(
   readings: Pick<RegisterReadings, "sourceStatus" | "foreignRef">
 ): string | undefined {

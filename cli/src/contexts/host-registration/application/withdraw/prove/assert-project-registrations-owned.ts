@@ -9,8 +9,7 @@ import type {
   WithdrawalDeps,
 } from "../withdrawal.js";
 
-/** Refuses, before any change, a project clean whose registrations the host no longer proves
- * this project's own: a catalogue gone or foreign, or a plugin registry it cannot read. */
+/** Refuses a project clean, before any change, whose catalogue the host no longer proves owned or readable. */
 export async function assertProjectRegistrationsOwned(
   deps: WithdrawalDeps,
   withdrawals: readonly ProjectRegistrationWithdrawal[],

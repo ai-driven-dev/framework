@@ -91,8 +91,7 @@ export function hostNameFor(
   return registrations?.marketplaces.find((m) => m.alias === alias)?.hostName;
 }
 
-/** What the host carries of `hostName`: its refs and the first one neither this project nor a
- * machine claim owns, or the refusal when its registry cannot be read. */
+/** The host's refs on `hostName` and the first no project or machine claim owns, or why they cannot be read. */
 export async function inspectProjectRefs(
   deps: WithdrawalDeps,
   held: {

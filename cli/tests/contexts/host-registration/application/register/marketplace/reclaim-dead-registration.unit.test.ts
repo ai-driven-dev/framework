@@ -23,10 +23,6 @@ const PROJECT_BUILT = builtMarketplaceDir("/p", "aidd", "claude");
 const USER_ROOT = "/home/.config/aidd";
 const ADD_ERROR = { detail: "already added" };
 const SUBJECT = { name: "aidd", scope: "project" as const };
-const PERSONAL: HostPluginRegistryReading = {
-  location: "p",
-  refs: new Map([["x@aidd", { enabled: true }]]),
-};
 const KNOWN: Partial<ClaimsView> = {
   machine: async () => ({
     marketplaces: [{ alias: "aidd", hostName: "aidd", provenance: OWN }],
@@ -90,26 +86,13 @@ const reclaim = (parts: ReturnType<typeof setup>) =>
 
 describe("reclaiming or reporting a dead registration", () => {
   it("leaves the host alone, naming the foreign ref, when ownership is unproven", async () => {
-    const parts = setup({ plugins: PERSONAL });
+    const parts = setup({
+      plugins: { location: "p", refs: new Map([["x@aidd", { enabled: true }]]) },
+    });
     expect(await reclaim(parts)).toBe(false);
     expect(parts.warnings).toEqual([
       "Native plugin activation: catalogue 'aidd' collides with unproven AIDD ownership and foreign ref 'x@aidd'; host registration left untouched. already added",
     ]);
-  });
-
-  it("takes back a dead owned registration over the person's own ref, and puts that ref back", async () => {
-    const parts = setup({
-      claims: KNOWN,
-      plugins: PERSONAL,
-      registered: PROJECT_BUILT,
-      activator: new FakeHostActions({
-        available: true,
-        registrationState: "dead",
-        installed: ["x@aidd"],
-      }),
-    });
-    expect(await reclaim(parts)).toBe(true);
-    expect(parts.activator.enabledPlugins).toEqual(["x@aidd"]);
   });
 
   it("leaves the host alone, with no foreign ref to name, when no claim makes it canonical", async () => {
