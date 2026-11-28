@@ -25,4 +25,14 @@ describe("command contract", () => {
     const request = { name: "review", description: "Review the diff.", "argument-hint": "path", model: "sonnet", body };
     assert.deepEqual(writeThenValidate(writer, SCRIPT, request, "claude", ".claude/commands/review.md"), { code: 0, out: "" });
   });
+
+  it("validates host-native generated command frontmatter and keeps canonical commands strict", () => {
+    const writer = path.join(SKILL, "scripts/write-command.cjs");
+    const body = "# Review\n\nReview the diff.\n\n1. Read it.\n2. Report.\n";
+    const request = { name: "review", description: "Review the diff.", body, nativeOptions: { kilo: { variant: "high", subtask: true } } };
+    assert.deepEqual(writeThenValidate(writer, SCRIPT, request, "kilo", ".kilo/commands/review.md"), { code: 0, out: "" });
+    const canonical = validate(SCRIPT, "commands/review.md", fill(TEMPLATE).replace("\n---\n", '\nvariant: "high"\nsubtask: true\n---\n'));
+    assert.equal(canonical.code, 1);
+    assert.match(canonical.out, /front matter key "variant" is not in the template/u);
+  });
 });

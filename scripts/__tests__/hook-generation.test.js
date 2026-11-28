@@ -59,6 +59,59 @@ function fixture(t) {
   return { dir, project, exec, run, remove, read, exists, write };
 }
 
+test("writes typed native options only to each owned handler", (t) => {
+  const { run, read, write, exists, remove } = fixture(t);
+  const request = {
+    ...hook,
+    nativeOptions: {
+      claude: { statusMessage: "Checking files", onFailure: "block" },
+      codex: { statusMessage: "Reviewing the call" },
+      cursor: { failClosed: true },
+      copilot: { env: { AIDD_CHECK_MODE: "project" } },
+      kiro: { enabled: false },
+    },
+  };
+  const unrelated = { type: "command", command: "node .claude/hooks/existing.cjs" };
+  const initial = asFile({ hooks: { PreToolUse: [{ hooks: [unrelated] }] } });
+  write(CLAUDE, initial);
+  const preview = run(request, ["--plan"]);
+  assert.equal(preview.status, 0, preview.stdout);
+  assert.deepEqual(json(preview).changes.find(({ path }) => path === CLAUDE).nativeOptions, request.nativeOptions.claude);
+  assert.equal(read(CLAUDE), initial);
+  assert.equal(exists(COPILOT), false);
+  assert.equal(run(request).status, 0);
+  assert.deepEqual(JSON.parse(read(CLAUDE)).hooks.PreToolUse[0].hooks, [unrelated]);
+  assert.equal(JSON.parse(read(CLAUDE)).hooks.PreToolUse[1].hooks[0].statusMessage, "Checking files");
+  assert.equal(JSON.parse(read(CLAUDE)).hooks.PreToolUse[1].hooks[0].onFailure, "block");
+  assert.equal(JSON.parse(read(CODEX)).hooks.PreToolUse[0].hooks[0].statusMessage, "Reviewing the call");
+  assert.equal(JSON.parse(read(CURSOR)).hooks.preToolUse[0].failClosed, true);
+  assert.deepEqual(JSON.parse(read(COPILOT)).hooks.preToolUse[0].env, { AIDD_CHECK_MODE: "project" });
+  assert.equal(JSON.parse(read(KIRO)).hooks[0].enabled, false);
+  assert.equal(read(ANTIGRAVITY).includes("statusMessage"), false);
+  assert.ok(json(run(request, ["--plan"])).changes.every(({ operation }) => operation === "unchanged"));
+  assert.equal(remove(hook.name).status, 0);
+  assert.equal(read(CLAUDE), initial);
+});
+
+test("refuses a malformed or conflicting native hook request before writing", (t) => {
+  const { run, exists } = fixture(t);
+  const cases = [
+    [{ antigravity: { args: ["alternate.cjs"] } }, /antigravity.*args/u],
+    [{ cursor: [] }, /cursor.*object/u],
+    [{ codex: { command: "node alternate.cjs" } }, /codex.*command/u],
+    [{ kilo: { async: true } }, /kilo.*selected/u],
+  ];
+  for (const [nativeOptions, error] of cases) {
+    const result = run({ ...hook, nativeOptions });
+    assert.equal(result.status, 1, result.stdout);
+    assert.match(json(result).error.message, error);
+    assert.equal(exists(CLAUDE), false);
+  }
+  const module = run({ ...withHost("kilo", { plugin: PLUGIN }), nativeOptions: { kilo: { async: true } } });
+  assert.equal(module.status, 1, module.stdout);
+  assert.match(json(module).error.message, /kilo.*plugin/u);
+});
+
 const json = (r) => JSON.parse(r.stdout);
 const operations = (r) => json(r).changes.map((change) => `${change.operation} ${change.path}`);
 

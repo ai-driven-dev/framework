@@ -10,7 +10,7 @@ Where each host AI tool keeps a project's agents, and how to tell it is installe
 | Antigravity / `antigravity` | `.agents/agents/`, `.agents/rules/`, `.agent/rules/` or `.agents/hooks.json` | `.agents/agents/<name>/agent.md` |
 | Codex CLI / `codex` | `.codex/` | `.codex/agents/<name>.toml` |
 | OpenCode / `opencode` | `.opencode/`, `opencode.json` or `opencode.jsonc` | `.opencode/agents/<name>.md` |
-| Kilo Code / `kilo` | `.kilo/`, `kilo.json` or `kilo.jsonc` | `.kilo/agents/<name>.md` |
+| Kilo Code / `kilo` | `.kilo/`, `.kilocode/`, `kilo.json` or `kilo.jsonc` | `.kilo/agents/<name>.md` |
 | Kiro / `kiro` | `.kiro/` | `.kiro/agents/<name>.md` |
 | Kimi Code CLI / `kimi` | `.kimi-code/` | `.kimi-code/agents/<name>.md` |
 

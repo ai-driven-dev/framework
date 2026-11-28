@@ -23,10 +23,14 @@ node "$writer" --project "$project_root" --remove "$name"
 | `timeout` | seconds before the host stops the script, 30 when absent |
 | `plugin` | a plugin host's full module text, in place of every field above |
 
+Use the official handler documentation surfaced by `--describe` to pass requested native option keys and types in `nativeOptions` under the selected host ID, for example `{ "cursor": { "failClosed": true } }`.
+Pass only fields that apply at the generated handler's level, keeping the writer's event, matcher and command execution fields under its control.
+For module hooks, put the options in the module source supplied as `plugin`.
+
 | Option | Effect |
 | --- | --- |
 | `--describe` | Writes nothing; prints per host its doc, moments, effects, shell tool and its command argument, cwd, trust and the other hosts' hooks it also runs, each fact with its source. |
-| `--plan` | Writes nothing; lists each path with `create`, `update`, `unchanged` or `delete`. |
+| `--plan` | Writes nothing; lists each path with `create`, `update`, `unchanged` or `delete` and its requested native options. |
 | `--force` | Overwrites each path the plan lists as `update`; without it, the writer refuses. |
 
 The result is JSON: `hosts` the description, `changes` each path and its operation, `error` a `{code, message}`. Exit 0 means done, 1 a refusal, 2 a usage error, 3 a filesystem error.

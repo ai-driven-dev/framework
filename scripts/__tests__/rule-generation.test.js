@@ -70,6 +70,40 @@ test("scoped native copies are pure and byte exact", (t) => {
   assert.deepEqual(f.snapshot(), before);
 });
 
+test("native rule metadata belongs to its selected target and survives edits and republishing", (t) => {
+  const f = fixture(t);
+  const request = { ...rule, nativeOptions: { copilot: { excludeAgent: "code-review" } } };
+  const result = f.run(request, "copilot,cursor");
+  assert.equal(result.status, 0, result.stdout);
+  assert.match(f.read(COPILOT), /^excludeAgent: "code-review"$/m);
+  assert.doesNotMatch(f.read(CURSOR), /excludeAgent/);
+  assert.match(f.read(SRC), /^nativeOptions: \{"copilot":\{"excludeAgent":"code-review"\}\}$/m);
+  assert.equal(f.run({ ...rule, description: "Updated naming" }, "cursor").status, 0);
+  const copy = f.read(COPILOT);
+  fs.unlinkSync(path.join(f.project, COPILOT));
+  assert.equal(f.run(null, null, ["--publish"]).status, 0);
+  assert.equal(f.read(COPILOT), copy);
+  assert.deepEqual(json(f.run(null, null, ["--publish"])).files, []);
+});
+
+test("protected rule fields and targets without metadata refuse before writing", (t) => {
+  const f = fixture(t);
+  for (const [targets, options] of [
+    ["copilot", { copilot: { applyTo: "**" } }],
+    ["copilot", { copilot: [] }],
+    ["cursor", { copilot: { excludeAgent: "code-review" } }],
+    ["codex", { codex: { description: "Scope" } }],
+    ["kimi", { kimi: { description: "Scope" } }],
+    ["kilo,opencode", { kilo: { description: "Scope" } }],
+  ]) {
+    const result = f.run({ ...rule, nativeOptions: options }, targets);
+    assert.equal(result.status, 1, result.stdout);
+    assert.equal(json(result).error.code, "REFUSED");
+    for (const host of Object.keys(options)) assert.match(result.stdout, new RegExp(host));
+    assert.deepEqual(f.snapshot(), {});
+  }
+});
+
 test("all-files native copies are pure and byte exact", (t) => {
   const f = fixture(t);
   assert.equal(f.run({ ...rule, paths: undefined }).status, 0);
@@ -367,15 +401,12 @@ test("an entry already in a commented config leaves it byte identical", (t) => {
   assert.ok(!f.has("opencode.json"));
 });
 
-test("a commented config without the entry refuses and names the text to add", (t) => {
+test("a glob appearing only in a comment does not count as an instruction", (t) => {
   const f = fixture(t);
-  f.put("opencode.jsonc", "// c\n{}\n");
-  const before = f.snapshot();
-  const r = f.run(rule, "opencode");
-  assert.equal(r.status, 1);
-  assert.equal(json(r).error.code, "REFUSED");
-  assert.ok(json(r).error.message.includes(".opencode/rules/*.md"));
-  assert.deepEqual(f.snapshot(), before);
+  const original = '// "opencode" should use ".opencode/rules/*.md"\n{}\n';
+  f.put("opencode.jsonc", original);
+  assert.equal(f.run(rule, "opencode").status, 0);
+  assert.equal(f.read("opencode.jsonc"), original.replace("{}", '{"instructions": [".opencode/rules/*.md"]}'));
 });
 
 test("several opencode configs without the entry refuse and write nothing", (t) => {
@@ -387,6 +418,56 @@ test("several opencode configs without the entry refuse and write nothing", (t) 
   assert.equal(r.status, 1);
   assert.ok(json(r).error.message.includes("opencode.json and opencode.jsonc"));
   assert.deepEqual(f.snapshot(), before);
+});
+
+test("a Kilo config can be selected explicitly without changing the other file", (t) => {
+  const f = fixture(t);
+  f.put("kilo.jsonc", "// global\n{}\n");
+  f.put(".kilo/kilo.jsonc", '{\n  "instructions": []\n}\n');
+  const before = f.snapshot();
+  assert.equal(f.run(rule, "kilo").status, 1);
+  assert.deepEqual(f.snapshot(), before);
+  const result = f.run(rule, "kilo", [...input(f), "--kilo-config", ".kilo/kilo.jsonc"]);
+  assert.equal(result.status, 0, result.stdout);
+  assert.equal(f.read("kilo.jsonc"), before["kilo.jsonc"]);
+  assert.equal(f.read(".kilo/kilo.jsonc"), '{\n  "instructions": [".kilo/rules/*.md"]\n}\n');
+  assert.deepEqual(json(f.run(rule, "kilo")).files, []);
+});
+
+test("JSONC instructions retain comments, trailing commas, duplicates and CRLF verbatim", (t) => {
+  const f = fixture(t);
+  const before = [
+    "{", "\t// before", '\t"instructions": [', '\t\t"first.md", // comment on first',
+    '\t\t"first.md",', "\t\t// before closing", "\t],", '\t"other": { "enabled": true, },', "}", "",
+  ].join("\r\n");
+  f.put("kilo.jsonc", before);
+  assert.equal(f.run(rule, "kilo").status, 0);
+  const after = before.replace("\t],", '\t\t".kilo/rules/*.md",\r\n\t],');
+  assert.equal(f.read("kilo.jsonc"), after);
+  assert.deepEqual(json(f.run(rule, "kilo")).files, []);
+});
+
+test("JSONC adds an array separator before a comment on the last instruction", (t) => {
+  const f = fixture(t);
+  const before = '{\n  "instructions": [\n    "first.md" // keep comment\n  ]\n}\n';
+  f.put("kilo.jsonc", before);
+  assert.equal(f.run(rule, "kilo").status, 0);
+  assert.equal(f.read("kilo.jsonc"), before
+    .replace('"first.md" //', '"first.md", //')
+    .replace("  ]", '    ".kilo/rules/*.md"\n  ]'));
+});
+
+test("malformed JSONC and invalid selections refuse before changing the project", (t) => {
+  const f = fixture(t);
+  f.put("kilo.jsonc", '// a decoy ".kilo/rules/*.md"\n{"instructions": [ }\n');
+  const original = f.snapshot();
+  assert.equal(f.run(rule, "kilo").status, 1);
+  assert.deepEqual(f.snapshot(), original);
+  f.put("kilo.jsonc", "{}\n");
+  const repaired = f.snapshot();
+  assert.equal(f.run(rule, "kilo", [...input(f), "--kilo-config", "../kilo.jsonc"]).status, 1);
+  assert.equal(f.run(rule, "kilo", [...input(f), "--kilo-config", ".kilo/kilo.jsonc"]).status, 1);
+  assert.deepEqual(f.snapshot(), repaired);
 });
 
 test("an instructions value that is not an array refuses", (t) => {

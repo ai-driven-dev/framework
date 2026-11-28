@@ -19,6 +19,8 @@ const TOML_DELIMITER = "'''";
 const PLAIN_SCALAR = /^[A-Za-z0-9][A-Za-z0-9 ._/,'()-]*$/;
 const YAML_KEYWORD = /^(true|false|null|yes|no|on|off)$/i;
 const MISSING = ["ENOENT", "ENOTDIR"];
+const NATIVE_KEY = /^[A-Za-z][A-Za-z0-9_-]*$/u;
+const IDENTITY_KEYS = ["name", "description", BODY, "nativeOptions", "prompt", "system", "developer_instructions"];
 
 // A host that spells effort inside the model value loses an effort given without a model.
 const withEffort = (open, close = "") => (agent) =>
@@ -140,6 +142,30 @@ function readAgent(file) {
 const isSingleLine = (value) => typeof value === "string" && !LINE_BREAK.test(value);
 const isFilled = (value) => typeof value === "string" && value.trim() !== "";
 const isStringList = (value) => Array.isArray(value) && value.every((item) => typeof item === "string");
+const isObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+function serializable(value, toml) {
+  if (value === null) return !toml;
+  if (typeof value === "number") return Number.isFinite(value);
+  if (Array.isArray(value)) return value.every((item) => serializable(item, toml));
+  if (isObject(value)) return Object.entries(value).every(([key, item]) => key !== "__proto__" && serializable(item, toml));
+  return true;
+}
+
+function validateNativeOptions(agent, tools) {
+  if (agent.nativeOptions === undefined) return;
+  if (!isObject(agent.nativeOptions)) refuse("nativeOptions must be an object keyed by selected target.");
+  for (const [tool, options] of Object.entries(agent.nativeOptions)) {
+    if (!tools.includes(tool)) refuse(`${tool}: native options require a selected target.`);
+    if (!isObject(options)) refuse(`${tool}: native options must be an object.`);
+    const host = HOSTS[tool];
+    const reserved = [...IDENTITY_KEYS, ...Object.keys(host.fields(agent))];
+    for (const [key, value] of Object.entries(options)) {
+      if (!NATIVE_KEY.test(key) || key === "constructor" || key === "prototype") refuse(`${tool}: invalid native field ${JSON.stringify(key)}.`);
+      if (reserved.includes(key)) refuse(`${tool}: native field ${key} is managed by the writer.`);
+      if (!serializable(value, host.toml)) refuse(`${tool}: native field ${key} has an unsupported value.`);
+    }
+  }
+}
 
 function valueAccepted(key, value) {
   if (key === "tools" && isStringList(value)) return true;
@@ -147,15 +173,16 @@ function valueAccepted(key, value) {
   return typeof value === "string";
 }
 
-function validate(agent) {
+function validate(agent, tools) {
   if (!agent || typeof agent !== "object" || Array.isArray(agent)) refuse("Input must be a JSON object.");
   if (typeof agent.name !== "string" || !KEBAB_CASE.test(agent.name)) refuse("Name must be kebab-case.");
   if (!isFilled(agent.description) || !isSingleLine(agent.description)) refuse("Description must be a non-empty single line.");
   if (!isFilled(agent.body)) refuse("Body must be non-empty.");
   if (agent.body.includes(TOML_DELIMITER)) refuse(`Body must not contain ${TOML_DELIMITER} (the Codex delimiter).`);
   for (const [key, value] of Object.entries(agent)) {
-    if (!valueAccepted(key, value)) refuse(`Field ${key} has an unsupported value.`);
+    if (key !== "nativeOptions" && !valueAccepted(key, value)) refuse(`Field ${key} has an unsupported value.`);
   }
+  validateNativeOptions(agent, tools);
 }
 
 function toolList(tools) {
@@ -203,19 +230,37 @@ function yamlLine([key, value]) {
   return `${key}:\n${value.map((item) => `  - ${yamlScalar(item)}`).join("\n")}`;
 }
 
-function render(host, agent) {
+function nativeValue(value) {
+  return JSON.stringify(value).replace(/[\u007f\u0085\u2028\u2029]/gu, (character) =>
+    `\\u${character.charCodeAt(0).toString(16).padStart(4, "0")}`);
+}
+
+function tomlValue(value) {
+  if (Array.isArray(value)) return `[${value.map(tomlValue).join(", ")}]`;
+  if (isObject(value)) {
+    const fields = Object.entries(value).map(([key, item]) => `${nativeValue(key)} = ${tomlValue(item)}`);
+    return fields.length ? `{ ${fields.join(", ")} }` : "{}";
+  }
+  return nativeValue(value);
+}
+
+function render(tool, agent) {
+  const host = HOSTS[tool];
   const fields = Object.entries(host.fields(agent)).filter(([, value]) => value !== undefined);
+  const native = Object.entries(agent.nativeOptions?.[tool] ?? {});
   if (host.toml) {
-    const keys = fields.map(([key, value]) => `${key} = ${JSON.stringify(value)}`).join("\n");
-    return `${keys}\ndeveloper_instructions = ${TOML_DELIMITER}\n${agent.body}${TOML_DELIMITER}\n`;
+    const keys = [...fields.map(([key, value]) => `${key} = ${JSON.stringify(value)}`),
+      ...native.map(([key, value]) => `${key} = ${tomlValue(value)}`)];
+    return `${keys.join("\n")}\ndeveloper_instructions = ${TOML_DELIMITER}\n${agent.body}${TOML_DELIMITER}\n`;
   }
   const body = agent.body.endsWith("\n") ? agent.body : `${agent.body}\n`;
-  return `---\n${fields.map(yamlLine).join("\n")}\n---\n\n${body}`;
+  const lines = [...fields.map(yamlLine), ...native.map(([key, value]) => `${key}: ${nativeValue(value)}`)];
+  return `---\n${lines.join("\n")}\n---\n\n${body}`;
 }
 
 function droppedFields(tool, agent) {
   const host = HOSTS[tool];
-  const kept = ["name", "description", BODY, ...host.uses];
+  const kept = ["name", "description", BODY, "nativeOptions", ...host.uses];
   const lost = (key) => !kept.includes(key) || (key === "effort" && host.effortNeedsModel && !agent.model);
   return Object.keys(agent).filter(lost).map((field) => ({ tool, field }));
 }
@@ -255,7 +300,7 @@ function planFiles(project, tools, agent) {
   return tools.map((tool) => {
     const relative = HOSTS[tool].path(agent.name);
     assertNoSymlink(project, relative);
-    const content = render(HOSTS[tool], agent);
+    const content = render(tool, agent);
     const operation = operationOf(readOrNull(path.join(project, relative)), content);
     return { tool, path: relative, content, operation };
   });
@@ -275,7 +320,7 @@ function main(argv) {
   const project = realProject(options["--project"]);
   const tools = selectedTools(options["--tools"]);
   const agent = readAgent(options["--input"]);
-  validate(agent);
+  validate(agent, tools);
   const plan = planFiles(project, tools, agent);
   if (!options["--plan"]) applyPlan(project, plan, options["--force"]);
   return {

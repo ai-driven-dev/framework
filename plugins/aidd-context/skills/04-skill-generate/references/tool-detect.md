@@ -9,7 +9,7 @@ Which hosts a project has installed.
 | OpenCode       | `.opencode/`, `opencode.json` or `opencode.jsonc` |
 | GitHub Copilot | `.github/copilot-instructions.md` or `.github/{instructions,agents,skills,prompts}/` |
 | Codex CLI      | `.codex/`                         |
-| Kilo Code      | `.kilo/`, `kilo.json` or `kilo.jsonc` |
+| Kilo Code      | `.kilo/`, `.kilocode/`, `kilo.json` or `kilo.jsonc` |
 | Kiro           | `.kiro/`                          |
 | Kimi Code CLI  | `.kimi-code/`                     |
 | Antigravity    | `.agents/agents/`, `.agents/rules/`, `.agent/rules/` or `.agents/hooks.json` |

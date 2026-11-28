@@ -19,6 +19,8 @@ const BOOLEAN_KEYS = ["disable-model-invocation"];
 const PLAIN_SCALAR = /^[A-Za-z0-9][A-Za-z0-9 ._/,'()-]*$/;
 const YAML_KEYWORD = /^(true|false|null|yes|no|on|off)$/i;
 const MISSING = ["ENOENT", "ENOTDIR"];
+const NATIVE_KEY = /^[A-Za-z][A-Za-z0-9_-]*$/u;
+const IDENTITY_KEYS = ["name", "description", BODY, "nativeOptions", "template"];
 
 // Each host keeps the keys it documents, in this order. Cursor documents no frontmatter for a command.
 // Claude's own `agent` names a forked subagent, not the primary agent the other hosts mean.
@@ -80,6 +82,29 @@ function readCommand(file) {
 
 const isSingleLine = (value) => typeof value === "string" && !LINE_BREAK.test(value);
 const isFilled = (value) => typeof value === "string" && value.trim() !== "";
+const isObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+function serializable(value) {
+  if (typeof value === "number") return Number.isFinite(value);
+  if (Array.isArray(value)) return value.every(serializable);
+  if (isObject(value)) return Object.entries(value).every(([key, item]) => key !== "__proto__" && serializable(item));
+  return true;
+}
+
+function validateNativeOptions(command, tools) {
+  if (command.nativeOptions === undefined) return;
+  if (!isObject(command.nativeOptions)) refuse("nativeOptions must be an object keyed by selected target.");
+  for (const [tool, options] of Object.entries(command.nativeOptions)) {
+    if (!tools.includes(tool)) refuse(`${tool}: native options require a selected target.`);
+    if (!isObject(options)) refuse(`${tool}: native options must be an object.`);
+    const { keys } = HOSTS[tool];
+    if (!keys.length && Object.keys(options).length) refuse(`${tool}: commands have no native option surface.`);
+    for (const [key, value] of Object.entries(options)) {
+      if (!NATIVE_KEY.test(key) || key === "constructor" || key === "prototype") refuse(`${tool}: invalid native field ${JSON.stringify(key)}.`);
+      if (IDENTITY_KEYS.includes(key) || keys.includes(key)) refuse(`${tool}: native field ${key} is managed by the writer.`);
+      if (!serializable(value)) refuse(`${tool}: native field ${key} has an unsupported value.`);
+    }
+  }
+}
 
 function valueAccepted(key, value) {
   if (key === BODY) return true;
@@ -87,14 +112,15 @@ function valueAccepted(key, value) {
   return isSingleLine(value);
 }
 
-function validate(command) {
+function validate(command, tools) {
   if (!command || typeof command !== "object" || Array.isArray(command)) refuse("Input must be a JSON object.");
   if (typeof command.name !== "string" || !KEBAB_CASE.test(command.name)) refuse("Name must be kebab-case.");
   if (!isFilled(command.description) || !isSingleLine(command.description)) refuse("Description must be a non-empty single line.");
   if (!isFilled(command.body)) refuse("Body must be non-empty.");
   for (const [key, value] of Object.entries(command)) {
-    if (!valueAccepted(key, value)) refuse(`Field ${key} has an unsupported value.`);
+    if (key !== "nativeOptions" && !valueAccepted(key, value)) refuse(`Field ${key} has an unsupported value.`);
   }
+  validateNativeOptions(command, tools);
 }
 
 function yamlScalar(value) {
@@ -103,14 +129,20 @@ function yamlScalar(value) {
   return plain ? value : JSON.stringify(value);
 }
 
-function render(host, command) {
+function nativeValue(value) {
+  return JSON.stringify(value).replace(/[\u007f\u0085\u2028\u2029]/gu, (character) =>
+    `\\u${character.charCodeAt(0).toString(16).padStart(4, "0")}`);
+}
+
+function render(tool, command) {
   const body = command.body.endsWith("\n") ? command.body : `${command.body}\n`;
-  const lines = host.keys.filter((key) => command[key] !== undefined).map((key) => `${key}: ${yamlScalar(command[key])}`);
+  const lines = HOSTS[tool].keys.filter((key) => command[key] !== undefined).map((key) => `${key}: ${yamlScalar(command[key])}`);
+  for (const [key, value] of Object.entries(command.nativeOptions?.[tool] ?? {})) lines.push(`${key}: ${nativeValue(value)}`);
   return lines.length ? `---\n${lines.join("\n")}\n---\n\n${body}` : body;
 }
 
 function droppedFields(tool, command) {
-  const kept = ["name", BODY, ...HOSTS[tool].keys];
+  const kept = ["name", BODY, "nativeOptions", ...HOSTS[tool].keys];
   return Object.keys(command).filter((key) => !kept.includes(key)).map((field) => ({ tool, field }));
 }
 
@@ -149,7 +181,7 @@ function planFiles(project, tools, command) {
   return tools.map((tool) => {
     const relative = HOSTS[tool].path(command.name);
     assertNoSymlink(project, relative);
-    const content = render(HOSTS[tool], command);
+    const content = render(tool, command);
     const operation = operationOf(readOrNull(path.join(project, relative)), content);
     return { tool, path: relative, content, operation };
   });
@@ -169,7 +201,7 @@ function main(argv) {
   const project = realProject(options["--project"]);
   const tools = selectedTools(options["--tools"]);
   const command = readCommand(options["--input"]);
-  validate(command);
+  validate(command, tools);
   const plan = planFiles(project, tools, command);
   if (!options["--plan"]) applyPlan(project, plan, options["--force"]);
   return {

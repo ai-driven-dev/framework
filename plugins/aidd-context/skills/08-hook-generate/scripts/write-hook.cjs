@@ -27,6 +27,10 @@ const CONFIG_VERSION = 1;
 const SCRIPTS_FOLDER = "hooks";
 const NOTHING_OWNED = JSON.stringify([]);
 const COMMAND_FIELDS = ["event", "matcher", "runner", "extension", "script", "timeout"];
+const MANAGED_FIELDS = new Set([
+  ...COMMAND_FIELDS, "name", "trigger", "action", "type", "command", "args", "shell",
+  "bash", "cwd", "timeoutSec", "hooks", "version", "plugin", "__proto__", "constructor", "prototype",
+]);
 
 class Refusal extends Error {}
 class UsageError extends Error {}
@@ -34,7 +38,7 @@ const refuse = (message) => { throw new Refusal(message); };
 
 const isObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
 const isFilled = (value) => typeof value === "string" && value.trim() !== "";
-const commandHandler = (hook) => ({ type: "command", command: hook.command, timeout: hook.timeout });
+const commandHandler = (hook) => ({ type: "command", command: hook.command, timeout: hook.timeout, ...hook.nativeOptions });
 const withMatcher = (hook) => (hook.matcher === undefined ? {} : { matcher: hook.matcher });
 const isEventMap = (hooks, isItem) => hooks === undefined
   || (isObject(hooks) && Object.values(hooks).every((items) => Array.isArray(items) && items.every(isItem)));
@@ -81,7 +85,7 @@ const FLAT = {
   add(doc, hook) {
     doc.version ??= CONFIG_VERSION;
     doc.hooks ??= {};
-    (doc.hooks[hook.event] ??= []).push({ command: hook.command, timeout: hook.timeout, ...withMatcher(hook) });
+    (doc.hooks[hook.event] ??= []).push({ command: hook.command, timeout: hook.timeout, ...withMatcher(hook), ...hook.nativeOptions });
   },
   isEmpty: (doc) => Object.keys(doc).every((key) => key === "version"),
 };
@@ -108,11 +112,11 @@ const whole = (build) => ({
 });
 const COPILOT = whole((hook) => ({
   version: CONFIG_VERSION,
-  hooks: { [hook.event]: [{ type: "command", bash: hook.command, cwd: ".", timeoutSec: hook.timeout }] },
+  hooks: { [hook.event]: [{ type: "command", bash: hook.command, cwd: ".", timeoutSec: hook.timeout, ...hook.nativeOptions }] },
 }));
 const KIRO = whole((hook) => ({
   version: "v1",
-  hooks: [{ name: hook.name, trigger: hook.event, ...withMatcher(hook), action: { type: "command", command: hook.command }, timeout: hook.timeout }],
+  hooks: [{ name: hook.name, trigger: hook.event, ...withMatcher(hook), action: { type: "command", command: hook.command }, timeout: hook.timeout, ...hook.nativeOptions }],
 }));
 
 const capture = (file) => `capture:${file}`;
@@ -406,16 +410,37 @@ function validatePluginHost(tool, target) {
   if (!isFilled(target.plugin)) refuse(`${tool}: plugin must be the non-empty plugin text.`);
 }
 
+function serializable(value) {
+  if (typeof value === "number") return Number.isFinite(value);
+  return !value || typeof value !== "object" || Object.values(value).every(serializable);
+}
+
+function validateNativeOptions(hook) {
+  if (hook.nativeOptions === undefined) return;
+  if (!isObject(hook.nativeOptions)) refuse("nativeOptions must be an object keyed by selected host.");
+  for (const [tool, options] of Object.entries(hook.nativeOptions)) {
+    if (!Object.hasOwn(hook.hosts, tool)) refuse(`${tool}: native options require a selected host.`);
+    if (!isObject(options)) refuse(`${tool}: native options must be an object.`);
+    const entries = Object.entries(options);
+    if (entries.length && HOSTS[tool].plugin) refuse(`${tool}: write native options in the plugin module.`);
+    for (const [field, value] of entries) {
+      if (MANAGED_FIELDS.has(field)) refuse(`${tool}: native hook option ${field} is managed by the writer.`);
+      if (!/^[a-z][a-z0-9_-]*$/iu.test(field) || !serializable(value)) refuse(`${tool}: invalid native hook option ${JSON.stringify(field)}.`);
+    }
+  }
+}
+
 function validate(hook) {
   if (!isObject(hook)) refuse("Input must be a JSON object.");
   assertName(hook.name);
   if (!isObject(hook.hosts) || !Object.keys(hook.hosts).length) refuse("Hosts must name at least one host.");
   for (const [tool, target] of Object.entries(hook.hosts)) {
-    if (!HOSTS[tool]) refuse(`Unknown host ${tool}; expected ${TOOLS.join(",")}.`);
+    if (!Object.hasOwn(HOSTS, tool)) refuse(`Unknown host ${tool}; expected ${TOOLS.join(",")}.`);
     if (!isObject(target)) refuse(`${tool}: the target must be an object.`);
     if (HOSTS[tool].plugin) validatePluginHost(tool, target);
     else validateCommandHost(tool, target);
   }
+  validateNativeOptions(hook);
 }
 
 // No symlink from the project to a target, the target included: a link would write outside it.
@@ -478,7 +503,7 @@ function planEntry(project, tool, hook) {
   let operation = "update";
   if (!exists || before === NOTHING_OWNED) operation = "create";
   else if (before === JSON.stringify(format.owned(doc, ours))) operation = "unchanged";
-  return { tool, path: relative, operation, content: serialize(doc) };
+  return { tool, path: relative, operation, content: serialize(doc), nativeOptions: hook.nativeOptions };
 }
 
 function planCopy(project, tool, relative, content) {
@@ -502,6 +527,7 @@ function planWrite(project, hook) {
       takesMatcher: momentOf(tool, target.event).matcher,
       timeout: target.timeout ?? DEFAULT_TIMEOUT_SECONDS,
       command: `${target.runner} ${WRITERS[tool].locate(script)}`,
+      nativeOptions: hook.nativeOptions?.[tool],
     });
     return [entry, planCopy(project, tool, script, target.script)];
   });
@@ -582,7 +608,7 @@ function main(argv) {
     // The input is a temporary file; once written, nothing reads it again.
     if (!removing) fs.unlinkSync(options["--input"]);
   }
-  return { changes: plan.map((change) => ({ tool: change.tool, path: change.path, operation: change.operation })) };
+  return { changes: plan.map(({ tool, path, operation, nativeOptions }) => ({ tool, path, operation, nativeOptions })) };
 }
 
 function failureOf(error) {

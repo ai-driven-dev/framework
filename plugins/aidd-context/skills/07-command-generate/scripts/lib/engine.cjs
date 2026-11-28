@@ -90,6 +90,10 @@ function loadContract(file) {
     }
     rule.match = asList(rule.in ?? "**").map(globRegex);
     rule.skip = asList(rule.notIn).map(globRegex);
+    if (rule.additionalFrontmatterIn !== undefined) {
+      if (!Array.isArray(rule.additionalFrontmatterIn) || !rule.additionalFrontmatterIn.every((glob) => typeof glob === "string" && glob.length)) fail(`${id}: additionalFrontmatterIn must be an array of path globs`);
+      rule.additionalFrontmatterMatches = rule.additionalFrontmatterIn.map(globRegex);
+    }
   }
   contract.dir = path.dirname(file);
   return contract;

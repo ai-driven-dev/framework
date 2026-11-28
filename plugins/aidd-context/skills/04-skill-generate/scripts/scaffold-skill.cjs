@@ -8,12 +8,130 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
+const { isDeepStrictEqual } = require("node:util");
 
 const ASSETS = path.join(__dirname, "../assets");
-const USAGE = "usage: scaffold-skill.cjs <plan.json|-> <skill-folder> (- reads JSON from stdin)\n";
+const USAGE = "usage: scaffold-skill.cjs <plan.json|-> <skill-folder> (- reads JSON from stdin)\n"
+  + "       scaffold-skill.cjs --native <options.json|-> <project> [--plan]\n";
 const SKILL_SLOTS = ["{{skill-name}}", "{{description}}", "{{Skill Name}}", "{{diagram from the plan}}"];
 const ACTION_SLOTS = ["{{NN}}", "{{title}}", "{{read-next step}}"];
 const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
+const ROOTS = {
+  claude: ".claude", cursor: ".cursor", opencode: ".opencode", copilot: ".github",
+  codex: ".agents", kilo: ".kilo", antigravity: ".agents", kiro: ".kiro", kimi: ".agents",
+};
+const MANAGED_FIELDS = new Set(["name", "description"]);
+const FIELD = /^(?:([A-Za-z0-9_.-]+)|"([A-Za-z0-9_.-]+)"|'([A-Za-z0-9_.-]+)'):(?:[ \t]|$)/u;
+const OPTION = /^[a-z][a-zA-Z0-9_.-]*$/u;
+const YAML_KEYWORD = /^(?:null|true|false|y|n|yes|no|on|off)$/iu;
+const FRONTMATTER = /^(---\r?\n)([\s\S]*?)(^---(?:\r?\n|$))/mu;
+const isObject = (item) => item !== null && typeof item === "object" && !Array.isArray(item);
+const readInput = (file) => JSON.parse(fs.readFileSync(file === "-" ? 0 : file, "utf8"));
+
+function hasOnlyFiniteNumbers(value) {
+  if (typeof value === "number") return Number.isFinite(value);
+  if (value === null || typeof value !== "object") return true;
+  return Object.values(value).every(hasOnlyFiniteNumbers);
+}
+
+function nativeTargets(input) {
+  if (!isObject(input) || typeof input.name !== "string" || !KEBAB.test(input.name)) throw new Error("name must be kebab-case");
+  if (!Array.isArray(input.targets) || !input.targets.length) throw new Error("targets must list at least one host");
+  const optionsByHost = input.nativeOptions === undefined ? {} : input.nativeOptions;
+  if (!isObject(optionsByHost)) throw new Error("nativeOptions must be an object keyed by selected host");
+  for (const [host, options] of Object.entries(optionsByHost)) {
+    if (!input.targets.includes(host)) throw new Error(`${host}: native options require a selected host`);
+    if (!isObject(options)) throw new Error(`${host}: native options must be an object`);
+    for (const [key, value] of Object.entries(options)) {
+      if (MANAGED_FIELDS.has(key)) throw new Error(`${host}: ${key} is a managed field`);
+      if (!OPTION.test(key) || !hasOnlyFiniteNumbers(value)) throw new Error(`${host}: invalid native option ${key}`);
+    }
+  }
+  const grouped = new Map();
+  for (const host of new Set(input.targets)) {
+    if (typeof host !== "string" || !Object.hasOwn(ROOTS, host)) throw new Error(`unknown skill target ${host}`);
+    const relative = `${ROOTS[host]}/skills/${input.name}/SKILL.md`;
+    const options = optionsByHost[host] ?? {};
+    const existing = grouped.get(relative);
+    if (!existing) grouped.set(relative, { path: relative, hosts: [host], options });
+    else {
+      if (!isDeepStrictEqual(existing.options, options)) {
+        throw new Error(`${relative}: different native options for ${[...existing.hosts, host].join(", ")}`);
+      }
+      existing.hosts.push(host);
+    }
+  }
+  return [...grouped.values()];
+}
+
+function readTarget(project, relative) {
+  const fullPath = path.join(project, relative);
+  let file = project;
+  for (const part of relative.split("/")) {
+    file = path.join(file, part);
+    try {
+      const stat = fs.lstatSync(file);
+      if (stat.isSymbolicLink()) throw new Error(`symlink on the way to ${relative}`);
+      if (file === fullPath && (!stat.isFile() || stat.nlink !== 1)) throw new Error(`expected one regular file at ${relative}`);
+    } catch (error) {
+      if (error.code === "ENOENT") {
+        fs.accessSync(path.dirname(file), fs.constants.W_OK | fs.constants.X_OK);
+        return null;
+      }
+      throw error;
+    }
+  }
+  return fs.readFileSync(file, "utf8");
+}
+
+const yamlField = (key, value) => `${YAML_KEYWORD.test(key) ? JSON.stringify(key) : key}: ${JSON.stringify(value)}`;
+
+function editNativeFields(text, options, relative) {
+  const match = FRONTMATTER.exec(text);
+  if (!match || match.index !== 0) throw new Error(`${relative}: missing YAML frontmatter`);
+  const [frontmatter, opening, body, closing] = match;
+  const eol = opening.endsWith("\r\n") ? "\r\n" : "\n";
+  const seen = new Set();
+  const lines = [];
+  let replacing = false;
+  for (const line of body.slice(0, -eol.length).split(eol)) {
+    const field = FIELD.exec(line);
+    if (field) {
+      const key = field[1] ?? field[2] ?? field[3];
+      replacing = Object.hasOwn(options, key);
+      if (replacing && seen.has(key)) throw new Error(`${relative}: duplicate frontmatter field ${key}`);
+      if (replacing) {
+        lines.push(yamlField(key, options[key]));
+        seen.add(key);
+      } else lines.push(line);
+    } else if (/^\s*(?:#|$)/u.test(line)) lines.push(line);
+    else if (/^(?:[ \t]|-(?:[ \t]|$))/u.test(line)) {
+      if (!replacing) lines.push(line);
+    } else throw new Error(`${relative}: native options require a block frontmatter mapping`);
+  }
+  for (const key of Object.keys(options).sort()) if (!seen.has(key)) lines.push(yamlField(key, options[key]));
+  return opening + lines.join(eol) + eol + closing + text.slice(frontmatter.length);
+}
+
+function writeNative(file, project, preview) {
+  if (!path.isAbsolute(project) || !fs.statSync(project).isDirectory()) throw new Error("project must be an absolute directory");
+  const changes = nativeTargets(readInput(file)).map((target) => {
+    const current = readTarget(project, target.path);
+    if (preview && current === null) return { ...target, operation: "create" };
+    if (!Object.keys(target.options).length) return { ...target, operation: "unchanged" };
+    if (current === null) throw new Error(`${target.path}: scaffold the skill before applying native options`);
+    const content = editNativeFields(current, target.options, target.path);
+    if (current === content) return { ...target, operation: "unchanged" };
+    fs.accessSync(path.join(project, target.path), fs.constants.W_OK);
+    return { ...target, operation: "update", content };
+  });
+  if (!preview) {
+    for (const change of changes) {
+      if (change.operation === "update") fs.writeFileSync(path.join(project, change.path), change.content);
+    }
+  }
+  process.stdout.write(`${JSON.stringify({ changes: changes.map(({ path, hosts, operation, options }) => ({ path, hosts, operation, options })) })}\n`);
+}
 
 function template(name, slots) {
   const text = fs.readFileSync(path.join(ASSETS, name), "utf8").replace(/\r\n?/gu, "\n");
@@ -95,6 +213,15 @@ function createOnly(file, text) {
 }
 
 function main(args) {
+  if (args[0] === "--native" && (args.length === 3 || (args.length === 4 && args[3] === "--plan"))) {
+    try {
+      writeNative(args[1], args[2], args[3] === "--plan");
+      return 0;
+    } catch (error) {
+      process.stderr.write(`scaffold-skill: ${error.message}\n`);
+      return 1;
+    }
+  }
   if (args.length !== 2) {
     process.stderr.write(USAGE);
     return 2;
@@ -104,7 +231,7 @@ function main(args) {
   let skillText;
   let actionText;
   try {
-    plan = JSON.parse(fs.readFileSync(planFile === "-" ? 0 : planFile, "utf8"));
+    plan = readInput(planFile);
     skillText = template("skill-template.md", SKILL_SLOTS);
     actionText = template("action-template.md", ACTION_SLOTS);
   } catch (error) {

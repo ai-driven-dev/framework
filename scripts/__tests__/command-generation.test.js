@@ -37,6 +37,44 @@ function fixture(t) {
 
 const json = (r) => JSON.parse(r.stdout);
 
+test("writes documented native options only to their selected command target", (t) => {
+  const { run, read, project } = fixture(t);
+  const request = { ...command, nativeOptions: {
+    claude: { context: "fork" },
+    copilot: { tools: ["search/codebase"] },
+    opencode: { subagent: true },
+    kilo: { variant: "high", subtask: false },
+  } };
+  const preview = run(request, ALL, ["--plan"]);
+  assert.equal(preview.status, 0, preview.stdout + preview.stderr);
+  assert.deepEqual(fs.readdirSync(project), []);
+  const applied = run(request);
+  assert.equal(applied.status, 0, applied.stdout + applied.stderr);
+  assert.ok(json(applied).dropped.every(({ field }) => field !== "nativeOptions"));
+  assert.match(read(".claude/commands/ship-release.md"), /context: "fork"\n---/u);
+  assert.match(read(".github/prompts/ship-release.prompt.md"), /tools: \["search\/codebase"\]\n---/u);
+  assert.match(read(".opencode/commands/ship-release.md"), /subagent: true\n---/u);
+  assert.match(read(".kilo/commands/ship-release.md"), /variant: "high"\nsubtask: false\n---/u);
+  assert.equal(read(".cursor/commands/ship-release.md"), command.body);
+  assert.ok(json(run(request)).files.every(({ operation }) => operation === "unchanged"));
+});
+
+test("refuses invalid or unsupported native command options before writing any target", (t) => {
+  const { run, project } = fixture(t);
+  for (const [nativeOptions, message] of [
+    [{ copilot: { tools: [] } }, /copilot.*selected/u],
+    [{ cursor: { mode: "fast" } }, /cursor.*native/u],
+    [{ kilo: { model: "foo" } }, /kilo.*model/u],
+    [{ kilo: [] }, /kilo.*object/u],
+    [{ kilo: { template: "duplicate instructions" } }, /kilo.*template/u],
+  ]) {
+    const result = run({ ...command, nativeOptions }, "claude,cursor,kilo");
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.match(json(result).error.message, message);
+    assert.deepEqual(fs.readdirSync(project), []);
+  }
+});
+
 test("renders each host's native command file", (t) => {
   const { run, read } = fixture(t);
   const r = run();

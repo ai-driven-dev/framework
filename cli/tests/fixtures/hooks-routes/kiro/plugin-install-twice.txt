@@ -78,6 +78,7 @@ script, identical to the plugin source
 description: "{{when the rule applies, one line}}"
 paths:
 targets: [{{host tools}}]
+nativeOptions: {{host-keyed JSON object or omit}}
 ---
 
 # {{title}}
@@ -88,7 +89,7 @@ targets: [{{host tools}}]
 
 - {{requirement}}
 
-> Fill every `{{...}}`, add one `  - "glob"` line under `paths:` per file pattern or delete `paths:` for a rule on every file, delete the group section when unused, and delete this line.
+> Fill every `{{...}}`, add one `  - "glob"` line under `paths:` per file pattern or delete `paths:` for a rule on every file, omit `nativeOptions:` when unused, delete the group section when unused, and delete this line.
 
 
 ## project/.kiro/hooks/aidd-context/lib/contracts/05-rule-generate/scripts/contract.json
@@ -101,7 +102,7 @@ targets: [{{host tools}}]
       "op": "template",
       "in": "*.md",
       "template": "../assets/rule-template.md",
-      "optional": ["paths", "{{group}}"],
+      "optional": ["paths", "nativeOptions", "{{group}}"],
       "why": "every host copy is rendered from the source, so its shape must hold",
       "fix": "follow rule-template.md"
     }
@@ -210,6 +211,12 @@ disable-model-invocation:
       "template": "../assets/command-template.md",
       "why": "one shape per command",
       "fix": "follow command-template.md",
+      "additionalFrontmatterIn": [
+        "**/.claude/commands/*.md",
+        "**/.github/prompts/*.prompt.md",
+        "**/.opencode/commands/*.md",
+        "**/.kilo/commands/*.md"
+      ],
       "optional": [
         "argument-hint",
         "model",

@@ -8,12 +8,8 @@ The confirmed plan and target.
 
 ## Process
 
-1. Run [scaffold-skill.cjs](../scripts/scaffold-skill.cjs) with plan JSON on stdin (`-`), without a plan file.
-   - No SKILL.md or action file missing: skip this step.
-2. Write each file the plan lists at its place in [skill-tree.md](../references/skill-tree.md), per [skill-authoring.md](../references/skill-authoring.md).
-   - Existing file: edit it in place.
-3. Copy the tree to each other distinct target root of [tool-write.md](../references/tool-write.md).
-4. Read [validate](04-validate.md).
+1. Apply the approved target writes per [tool-write.md](../references/tool-write.md).
+2. Read [validate](04-validate.md).
 
 ## Output
 

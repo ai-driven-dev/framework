@@ -113,3 +113,24 @@ Applies to authored Markdown: READMEs, `docs/`, `ARCHITECTURE.md`, `CONTRIBUTING
 | Tool list in the README, `COMPATIBILITY.md` | `node scripts/sync-generated-docs.mjs` |
 | Counts, tables and plugin cards in the README, `CATALOG.md` files, `docs/ARCHITECTURE.md` blocks | `node scripts/check/run.cjs --fix` (the pre-commit hook runs it) |
 | `skills/*/scripts/lib/`, `hooks/artifacts.cjs`, `hooks/lib/contracts/` (one engine in `lib/`), `hooks/lib/host.cjs` | `node scripts/check/engine/sync.cjs`, from `scripts/check/engine/`, each `contract.json` and `cli/assets/hooks-runtime/host-claude.cjs` |
+
+### Rule generator JSONC parser
+
+Regenerate the bundled parser from the repository root with CLI dependencies installed.
+
+```sh
+node --input-type=commonjs - <<'NODE'
+const { createRequire } = require("node:module");
+const { readFileSync } = require("node:fs");
+const { buildSync } = createRequire(require.resolve("./cli/node_modules/tsup/package.json"))("esbuild");
+const pkg = "./cli/node_modules/jsonc-parser";
+const { version } = require(pkg + "/package.json");
+const license = readFileSync(pkg + "/LICENSE.md", "utf8").replace(/\r\n/g, "\n").trim();
+buildSync({
+  stdin: { contents: 'export { createScanner, parseTree, SyntaxKind } from "' + pkg + '/lib/esm/main.js";', resolveDir: process.cwd() },
+  bundle: true, format: "cjs", platform: "node", minify: true, legalComments: "none",
+  banner: { js: "/* Generated from https://github.com/microsoft/node-jsonc-parser v" + version + "\n\n" + license + "\n*/" },
+  outfile: "plugins/aidd-context/skills/05-rule-generate/scripts/lib/jsonc-parser.cjs",
+});
+NODE
+```

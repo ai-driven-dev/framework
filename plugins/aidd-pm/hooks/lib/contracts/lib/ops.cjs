@@ -21,7 +21,7 @@ const OPTIONS = {
   oneSentence: ["sections", "skipIndentedIn"],
   flatList: ["sections"],
   links: ["inside"],
-  template: ["template", "optional", "values"],
+  template: ["template", "optional", "values", "additionalFrontmatterIn"],
   json: ["schema"],
   custom: ["check"],
 };
@@ -206,7 +206,12 @@ function frontMatterIssues(ctx, model, rule, say) {
     else if (value !== "" && !SLOT.test(value) && unquote(ctx.fm.fields[key]) !== value) say(line, ctx.fm.fields[key], `front matter "${key}" must be "${value}"`);
     else if (SLOT.test(value) && !unquote(ctx.fm.fields[key]).trim()) say(line, undefined, `front matter "${key}" empty`);
   }
-  for (const key of Object.keys(ctx.fm.fields)) if (!(key in model.fm)) say(ctx.fm.fieldLine[key], key, `front matter key "${key}" is not in the template`);
+  const extraAllowed = rule.additionalFrontmatterMatches?.some((pattern) => pattern.test(ctx.abs.split(path.sep).join("/")));
+  for (const [key, value] of Object.entries(ctx.fm.fields)) {
+    if (Object.hasOwn(model.fm, key)) continue;
+    if (!extraAllowed) say(ctx.fm.fieldLine[key], key, `front matter key "${key}" is not in the template`);
+    else if (SLOT.test(value)) say(ctx.fm.fieldLine[key], value, `front matter "${key}": placeholder left, fill it`);
+  }
 }
 
 const JSON_ANNOTATIONS = ["$schema", "$id", "$comment", "title", "description", "default", "examples", "allowTrailingCommas"];

@@ -34,4 +34,11 @@ describe("rule contract", () => {
     const request = { category: "01-standards", slug: "1-naming", description: "When naming things.", paths: ["src/**/*.ts"], body };
     assert.deepEqual(writeThenValidate(writer, SCRIPT, request, "claude", "aidd_docs/rules/01-standards/1-naming.md"), { code: 0, out: "" });
   });
+
+  it("accepts the canonical source the writer renders with native options", () => {
+    const writer = path.join(SKILL, "scripts/write-rule.cjs");
+    const body = "# Naming\n\n- Name a thing for what it is.\n";
+    const request = { category: "01-standards", slug: "1-naming", description: "When naming things.", body, nativeOptions: { copilot: { excludeAgent: "code-review" } } };
+    assert.deepEqual(writeThenValidate(writer, SCRIPT, request, "copilot", NAME), { code: 0, out: "" });
+  });
 });
