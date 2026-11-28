@@ -7,14 +7,16 @@
 // which is how its test runs it.
 
 import { readFileSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
+
+const { publishableTools, readSupportRecord } = createRequire(import.meta.url)("./marketplace-tools.cjs");
 
 const rootFlag = process.argv.indexOf("--root");
 const ROOT =
   rootFlag === -1 ? fileURLToPath(new URL("..", import.meta.url)) : `${process.argv[rootFlag + 1]}/`;
 const COMPATIBILITY = `${ROOT}docs/COMPATIBILITY.md`;
 const README = `${ROOT}README.md`;
-const SUPPORT_RECORD = `${ROOT}cli/tests/golden/snapshots/tool-support/surface.json`;
 
 const SURFACES = [
   ["skills", "Skills"],
@@ -49,7 +51,7 @@ function marketplaceCell(tool, { mark, withPath }) {
 
 /** One row per tool: how it installs, then what each surface becomes. A surface no tool carries gets no column. */
 function supportTables() {
-  const record = JSON.parse(readFileSync(SUPPORT_RECORD, "utf8"));
+  const record = readSupportRecord(ROOT);
   const icon = (support) => (support === "no" ? "❌" : support === "bridge" ? "Some events" : "✅");
   const methodLabel = { marketplace: "Marketplace", flat: "Flat files" };
 
@@ -65,12 +67,15 @@ function supportTables() {
     return `${carriers.join(" and ")} only`;
   };
 
+  const hosted = new Set(publishableTools(record).map((tool) => tool.id));
+
   return table(
-    ["Tool", "Directory", "Marketplace", "Flat files", ...carried.map(([, label]) => label)],
+    ["Tool", "Directory", "Marketplace", "Hosted catalog", "Flat files", ...carried.map(([, label]) => label)],
     record.map((tool) => [
       tool.name,
       `\`${tool.directory}\``,
       marketplaceCell(tool, { mark: (present) => (present ? "✅" : "❌"), withPath: true }),
+      hosted.has(tool.id) ? "✅" : "❌",
       tool.builds.flat ? "✅" : "❌",
       ...carried.map(([key]) => cell(tool, key)),
     ])
@@ -95,7 +100,7 @@ function wideTable(header, rows, widths) {
 }
 
 function toolsTable() {
-  const record = JSON.parse(readFileSync(SUPPORT_RECORD, "utf8"));
+  const record = readSupportRecord(ROOT);
   const mark = (present) => (present ? "✅" : "—");
   return wideTable(
     ["Tool", "CLI", "Plugin marketplace", "Flat files"],

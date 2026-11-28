@@ -7,7 +7,7 @@ Runs other skills end to end.
 | | |
 | --- | --- |
 | Status | stable |
-| Install | `/plugin install aidd-orchestrator@aidd-framework` |
+| Install | [Add the Claude Code marketplace](../../docs/INSTALL.md#marketplace), then run `/plugin install aidd-orchestrator@aidd-marketplace` |
 | Start with | `/aidd-orchestrator:01-sdlc` |
 | Skills, agents, hooks | [Catalog](../../docs/CATALOG.md#-aidd-orchestrator) |
 

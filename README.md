@@ -73,7 +73,7 @@ npx @ai-driven-dev/cli@latest setup
   <img src="docs/assets/install-demo.svg" alt="Terminal recording: npx @ai-driven-dev/cli setup installs the recommended plugins into a new project" width="720" />
 </p>
 
-Marketplace, flat files, update, remove: [install guide](docs/INSTALL.md).
+For a native plugin install, [choose your tool](docs/INSTALL.md#marketplace). The install guide also covers release ZIPs, updates, and removal.
 
 ## Quick start
 

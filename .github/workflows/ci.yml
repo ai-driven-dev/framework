@@ -386,11 +386,91 @@ jobs:
           TAG="${{ needs.release-please.outputs.tag_name }}"
           gh release edit "${TAG}" --draft=false --latest --repo "${{ github.repository }}"
 
+  # The tools to publish come from the CLI's tool registry, through its stored support record.
+  marketplace-tools:
+    name: List the marketplaces to publish
+    needs: [release-please]
+    if: needs.release-please.outputs.release_created == 'true' && vars.AIDD_PUBLISH_MARKETPLACES == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      matrix: ${{ steps.tools.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      - id: tools
+        run: node scripts/marketplace-tools.cjs >> "$GITHUB_OUTPUT"
+
+  publish-marketplace:
+    name: Publish ${{ matrix.tool }} marketplace
+    needs: [release-please, publish-release, marketplace-tools]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.marketplace-tools.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      - name: Get the release ZIP
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TOOL: ${{ matrix.tool }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+          VERSION: ${{ needs.release-please.outputs.version }}
+        run: |
+          NAME="aidd-framework-${TOOL}-marketplace-${VERSION}"
+          gh release download "$TAG" --pattern "$NAME.zip" --dir "$RUNNER_TEMP"
+          unzip -q "$RUNNER_TEMP/$NAME.zip" -d "$RUNNER_TEMP"
+          printf 'MARKETPLACE_SOURCE=%s\n' "$RUNNER_TEMP/$NAME" >> "$GITHUB_ENV"
+      - uses: ./.github/actions/marketplace-token
+        id: app-token
+        with:
+          app-id: ${{ secrets.AIDD_BOT_APP_ID }}
+          private-key: ${{ secrets.AIDD_BOT_PRIVATE_KEY }}
+      - name: Tag the release
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TOOL: ${{ matrix.tool }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+        run: |
+          gh auth setup-git --hostname github.com
+          node scripts/publish-marketplace.cjs tag "$TOOL" "$TAG" "$MARKETPLACE_SOURCE"
+      - name: Install the marketplace client
+        env:
+          CLIENT: ${{ matrix.clientPackage }}
+        run: |
+          npm install --prefix "$RUNNER_TEMP/marketplace-client" "$CLIENT"
+          echo "$RUNNER_TEMP/marketplace-client/node_modules/.bin" >> "$GITHUB_PATH"
+      - name: Verify the release tag
+        env:
+          TOOL: ${{ matrix.tool }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+        run: node scripts/verify-marketplace.cjs "$TOOL" "$TAG" "$MARKETPLACE_SOURCE"
+      - name: Advance the stable branch
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TOOL: ${{ matrix.tool }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+        run: |
+          gh auth setup-git --hostname github.com
+          node scripts/publish-marketplace.cjs advance "$TOOL" "$TAG"
+
   # A recap of what ran and what broke, whatever the outcome, printed in the log.
   # The Slack message is n8n's.
   release-recap:
     name: Recap the release
-    needs: [release-please, build-and-attach, build-per-tool, build-plugin, build-release-video, publish-cli, publish-release]
+    needs: [release-please, build-and-attach, build-per-tool, build-plugin, build-release-video, publish-cli, publish-release, marketplace-tools, publish-marketplace]
     if: always() && needs.release-please.outputs.release_created == 'true'
     runs-on: ubuntu-latest
     permissions:

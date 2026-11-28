@@ -7,7 +7,7 @@ Design the screens of your app, review them in a showcase, publish what you appr
 | | |
 | --- | --- |
 | Status | beta, off the recommended path |
-| Install | `/plugin install aidd-ui@aidd-framework` |
+| Install | [Add the Claude Code marketplace](../../docs/INSTALL.md#marketplace), then run `/plugin install aidd-ui@aidd-marketplace` |
 | Start with | `/aidd-ui:01-journeys` |
 | Skills, agents, hooks | [Catalog](../../docs/CATALOG.md#-aidd-ui) |
 | Limits | [UI limits](../../aidd_docs/product/ui-limits.md) |

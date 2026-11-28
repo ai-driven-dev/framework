@@ -29,6 +29,7 @@ Only release assets and packages ship.
 | Repository | <https://github.com/ai-driven-dev/framework> |
 | npm | `@ai-driven-dev/cli` |
 | Archives | GitHub Releases |
+| Hosted marketplaces | <https://github.com/ai-driven-dev/marketplaces> |
 | Mirror | GitHub Packages, npm package only, best-effort |
 
 ## Release
@@ -40,6 +41,8 @@ Branch model: `vcs.md`. Cadence and safety rules: [`RELEASE.md`](../../RELEASE.m
 - Tags: umbrella, `cli-v<semver>`, `<plugin>-v<semver>`.
 - `scripts/credit-release-authors.cjs` appends each line's author, human co-authors and the authors of the pull requests its own one supersedes, as `(@login, ...)`.
 - The umbrella stays a draft until every asset is attached; n8n listens for its publication.
+- After publication, each marketplace job reads its own release ZIP and publishes its own tool branch and immutable version tag in the distribution repository. A failed job leaves the release and the other marketplace jobs independent. n8n announces the release on its publication, before the catalogs move. The job pushes the immutable version tag, verifies that tag with the tool's real client, and only then advances the stable branch, so a failed tool keeps serving its previous release on its stable branch.
+- Publication runs only while `AIDD_PUBLISH_MARKETPLACES` is `true` on `framework`, and needs `marketplaces` in the `aidd-bot` GitHub App installation with Contents write access. `docs/INSTALL.md` switches Copilot and Codex to `aidd-marketplace` in the same change that flips it.
 - A failed video build keeps the release a draft: nothing is announced without its video.
 - A failed YouTube upload still lets Discord and Skool post, without the video link.
 - Their text is the video's programme, one section per theme.
@@ -49,6 +52,7 @@ Branch model: `vcs.md`. Cadence and safety rules: [`RELEASE.md`](../../RELEASE.m
 ## Gotchas
 
 - `build-per-tool` builds the CLI from the run's own checkout, never a published version: nothing to bump or go stale.
+- Each hosted catalog comes from the same ZIP used for local marketplace installs, renamed `aidd-marketplace` for every tool because the CLI reserves `aidd-framework`. The tools published are the ones the CLI's tool registry says have a catalog (`scripts/marketplace-tools.cjs`). Client versions are pinned in `scripts/marketplace-distribution.json` where Dependabot does not look: bumping them is manual.
 
 ## Local reload
 

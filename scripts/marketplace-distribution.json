@@ -1,0 +1,10 @@
+{
+  "repository": "https://github.com/ai-driven-dev/marketplaces.git",
+  "catalogName": "aidd-marketplace",
+  "clients": {
+    "claude": "@anthropic-ai/claude-code@2.1.331",
+    "codex": "@openai/codex@0.172.0",
+    "copilot": "@github/copilot@1.0.114"
+  },
+  "notHosted": ["cursor", "antigravity", "kimi"]
+}

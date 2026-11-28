@@ -1,0 +1,70 @@
+name: Marketplace distribution dry run
+
+on:
+  pull_request:
+    branches: [next, main]
+    paths:
+      - ".claude-plugin/marketplace.json"
+      - ".github/workflows/ci.yml"
+      - ".github/workflows/marketplace-dry-run.yml"
+      - "cli/src/**"
+      - "cli/package.json"
+      - "cli/pnpm-lock.yaml"
+      - "scripts/*marketplace*"
+      - "scripts/lib/host-plugins.cjs"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  simulate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      - name: Build the release CLI
+        run: |
+          corepack enable
+          pnpm --dir cli install --frozen-lockfile
+          pnpm --dir cli build
+      - uses: ./.github/actions/marketplace-token
+        id: app-token
+        if: github.event_name == 'workflow_dispatch'
+        with:
+          app-id: ${{ secrets.AIDD_BOT_APP_ID }}
+          private-key: ${{ secrets.AIDD_BOT_PRIVATE_KEY }}
+      - name: List the published tools
+        id: tools
+        run: node scripts/marketplace-tools.cjs >> "$GITHUB_OUTPUT"
+      - name: Check the token can write to the distribution repository
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          OWNER: ${{ steps.app-token.outputs.owner }}
+          REPO: ${{ steps.app-token.outputs.repo }}
+        run: |
+          gh auth setup-git --hostname github.com
+          git push --dry-run "https://github.com/$OWNER/$REPO.git" HEAD:refs/heads/dry-run-write-check
+      - name: Publish and install from an isolated Git remote
+        env:
+          MATRIX: ${{ steps.tools.outputs.matrix }}
+        run: |
+          REMOTE="$RUNNER_TEMP/marketplace.git"
+          git init --bare "$REMOTE"
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0="url.file://$REMOTE.insteadOf"
+          GIT_CONFIG_VALUE_0=$(node -p "require('./scripts/marketplace-distribution.json').repository")
+          export GIT_CONFIG_VALUE_0
+          while read -r TOOL CLIENT; do
+            OUT="$RUNNER_TEMP/marketplaces/$TOOL"
+            node cli/dist/cli.js translate . --to "$TOOL" --out "$OUT" --as marketplace
+            node scripts/publish-marketplace.cjs tag "$TOOL" v0.0.1 "$OUT" "$REMOTE"
+            npm install --prefix "$RUNNER_TEMP/marketplace-client-$TOOL" "$CLIENT"
+            PATH="$RUNNER_TEMP/marketplace-client-$TOOL/node_modules/.bin:$PATH" node scripts/verify-marketplace.cjs "$TOOL" v0.0.1 "$OUT"
+            node scripts/publish-marketplace.cjs advance "$TOOL" v0.0.1 "$REMOTE"
+          done < <(jq -r '.include[] | "\(.tool) \(.clientPackage)"' <<<"$MATRIX")

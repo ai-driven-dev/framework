@@ -7,7 +7,7 @@ Project knowledge: memory, context files and generators.
 | | |
 | --- | --- |
 | Status | stable |
-| Install | `/plugin install aidd-context@aidd-framework` |
+| Install | [Add the Claude Code marketplace](../../docs/INSTALL.md#marketplace), then run `/plugin install aidd-context@aidd-marketplace` |
 | Start with | `/aidd-context:00-onboard` |
 | Skills, agents, hooks | [Catalog](../../docs/CATALOG.md#-aidd-context) |
 

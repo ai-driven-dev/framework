@@ -58,6 +58,10 @@ An admin:
 
 Release rules: [Release](../RELEASE.md#rules).
 
+## Marketplace releases
+
+After the GitHub release goes live, the CI publishes each tool’s marketplace ZIP to its branch and version tag in the [AIDD distribution repository](https://github.com/ai-driven-dev/marketplaces). Check the release recap for failures. A failed tool’s stable branch is not advanced: see [deployment memory](../aidd_docs/memory/deployment.md). Compare its branch and version tag before sharing the install link as up to date.
+
 ## Add to the framework
 
 | I want to add | Run |

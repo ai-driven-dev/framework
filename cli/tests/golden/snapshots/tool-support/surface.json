@@ -6,6 +6,10 @@
     "pluginMode": "native",
     "nativeCli": "claude",
     "pluginTree": null,
+    "marketplace": {
+      "catalog": ".claude-plugin/marketplace.json",
+      "manifest": ".claude-plugin/plugin.json"
+    },
     "builds": {
       "marketplace": {
         "skills": "yes",
@@ -32,6 +36,10 @@
     "pluginMode": "native",
     "nativeCli": null,
     "pluginTree": null,
+    "marketplace": {
+      "catalog": ".cursor-plugin/marketplace.json",
+      "manifest": ".cursor-plugin/plugin.json"
+    },
     "builds": {
       "marketplace": {
         "skills": "yes",
@@ -58,6 +66,10 @@
     "pluginMode": "native",
     "nativeCli": "copilot",
     "pluginTree": null,
+    "marketplace": {
+      "catalog": ".plugin/marketplace.json",
+      "manifest": ".plugin/plugin.json"
+    },
     "builds": {
       "marketplace": {
         "skills": "yes",
@@ -84,6 +96,7 @@
     "pluginMode": "flat",
     "nativeCli": null,
     "pluginTree": null,
+    "marketplace": null,
     "builds": {
       "flat": {
         "skills": "yes",
@@ -102,6 +115,7 @@
     "pluginMode": "flat",
     "nativeCli": null,
     "pluginTree": null,
+    "marketplace": null,
     "builds": {
       "flat": {
         "skills": "yes",
@@ -120,6 +134,10 @@
     "pluginMode": "native",
     "nativeCli": "codex",
     "pluginTree": null,
+    "marketplace": {
+      "catalog": ".agents/plugins/marketplace.json",
+      "manifest": ".codex-plugin/plugin.json"
+    },
     "builds": {
       "marketplace": {
         "skills": "yes",
@@ -146,6 +164,10 @@
     "pluginMode": "native",
     "nativeCli": null,
     "pluginTree": ".agents/plugins/",
+    "marketplace": {
+      "catalog": ".antigravity-plugin/marketplace.json",
+      "manifest": "plugin.json"
+    },
     "builds": {
       "marketplace": {
         "skills": "yes",
@@ -172,6 +194,7 @@
     "pluginMode": "flat",
     "nativeCli": null,
     "pluginTree": null,
+    "marketplace": null,
     "builds": {
       "flat": {
         "skills": "yes",
@@ -190,6 +213,7 @@
     "pluginMode": "flat",
     "nativeCli": null,
     "pluginTree": null,
+    "marketplace": null,
     "builds": {
       "marketplace": {
         "skills": "yes",
