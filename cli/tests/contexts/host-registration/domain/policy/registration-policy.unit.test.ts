@@ -45,14 +45,19 @@ describe("judgeRegistration, register", () => {
     ).toMatchObject({ reason: "source-not-owned" });
   });
 
+  it("tolerates a ref no claim names on an owned source: it is the person's own", () => {
+    const readings = { ...PROVEN, foreignRef: "other@catalog" };
+    expect(judgeRegistration(readings)).toStrictEqual({ outcome: "proceed", evidence: readings });
+  });
+
   it("hands back the foreign ref to reconcile, whatever refused first", () => {
-    expect(judgeRegistration({ ...PROVEN, foreignRef: "other@catalog" })).toStrictEqual({
-      outcome: "refuse",
-      reason: "foreign-ref",
-      reconcile: "other@catalog",
-    });
     expect(
-      judgeRegistration({ ...PROVEN, canonical: false, foreignRef: "other@catalog" })
+      judgeRegistration({
+        ...PROVEN,
+        canonical: false,
+        sourceStatus: "absent",
+        foreignRef: "other@catalog",
+      })
     ).toMatchObject({ reconcile: "other@catalog" });
     expect(judgeRegistration({ ...PROVEN, canonical: false })).toMatchObject({
       reconcile: undefined,

@@ -1,3 +1,4 @@
+import { nativeActivationWarning } from "../../../contexts/host-registration/contract/native-activation-warning.js";
 import type {
   BuiltMarketplaceEnsurer,
   MarketplaceToBuild,
@@ -35,7 +36,7 @@ export class BuildMarketplaceForTool {
       return builtDir;
     } catch (error) {
       this.logger.warn(
-        `Native plugin activation — build '${marketplace.name}' for ${toolId} skipped: `,
+        nativeActivationWarning(`build '${marketplace.name}' for ${toolId} skipped: `),
         error
       );
       return null;

@@ -101,11 +101,16 @@ describe("deciding whether a registration is left untouched", () => {
     expect(await untouchedReason(runWith(absent), request, CLEAN)).toBeUndefined();
   });
 
-  it("names the foreign ref the proof found", async () => {
-    const proof = { ...CLEAN, foreignRef: "x@aidd" };
+  it("names the foreign ref the proof found on a source it does not own", async () => {
+    const proof = { ...CLEAN, sourceStatus: "absent" as const, foreignRef: "x@aidd" };
     expect(await untouchedReason(runWith(EMPTY), request, proof)).toMatch(
       /foreign host ref 'x@aidd'/
     );
+  });
+
+  it("lets the registration go on over the person's own ref on an owned source", async () => {
+    const proof = { ...CLEAN, foreignRef: "x@aidd" };
+    expect(await untouchedReason(runWith(EMPTY), request, proof)).toBeUndefined();
   });
 
   it("names the unreadable plugin registry the proof carries", async () => {

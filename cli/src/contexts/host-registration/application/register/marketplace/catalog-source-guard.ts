@@ -11,7 +11,7 @@ import {
   type MarketplaceSourceDrift,
   type MarketplaceSourceDriftContext,
 } from "../../../domain/source/marketplace-source-drift.js";
-import { resolvedDrift } from "../../check-marketplace-source.use-case.js";
+import { resolvedDrift, resolvedOrSelf } from "../../check-marketplace-source.use-case.js";
 import type { NativeCatalogProof } from "../native-catalog-proof.js";
 import {
   marketplaceRegistryOf,
@@ -44,7 +44,7 @@ export async function guardAgainstConflict(
 ): Promise<"skip" | "repoint" | undefined> {
   const { builtDir, identity: requestedIdentity, marketplace } = request;
   const { profile } = run;
-  const requestedSource = (await run.fs.realpathIfResolvable(builtDir)) ?? builtDir;
+  const requestedSource = await resolvedOrSelf(run.fs, builtDir);
   const driftContext = driftContextOf(run, marketplace);
   const reader = marketplaceRegistryOf(run);
   if (reader === undefined) return decideWithoutRegistry(run, request, proof);
@@ -83,17 +83,6 @@ function driftContextOf(
   };
 }
 
-/** Whether a host with no registry holds an older build of this marketplace, which this run moves to its own. */
-export async function movesOffOlderBuild(
-  run: RegistrationRun,
-  request: CatalogRequest,
-  proof: NativeCatalogProof
-): Promise<boolean> {
-  if (marketplaceRegistryOf(run) !== undefined) return false;
-  const drift = await registryLessDrift(run, request, proof);
-  return drift !== undefined && isOlderBuild(drift);
-}
-
 const isOlderBuild = (drift: MarketplaceSourceDrift): boolean => drift.kind === "version-ahead";
 
 /** Codex and Copilot refuse a re-add from another source (probed 0.172.0, 1.0.114), so an older build is moved. */
@@ -119,7 +108,7 @@ async function registryLessDrift(
 ): Promise<MarketplaceSourceDrift | undefined> {
   const registeredSource = proof.source?.source;
   if (registeredSource === undefined) return undefined;
-  const requestedSource = (await run.fs.realpathIfResolvable(builtDir)) ?? builtDir;
+  const requestedSource = await resolvedOrSelf(run.fs, builtDir);
   return resolvedDrift(
     run.fs,
     { registeredSource, requestedSource },

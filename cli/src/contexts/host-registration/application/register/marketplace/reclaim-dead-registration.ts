@@ -1,4 +1,5 @@
 import { samePathSegment } from "../../../../../shared/domain/paths.model.js";
+import { nativeActivationWarning } from "../../../contract/native-activation-warning.js";
 import { bestEffortNativeCall, skippedWarning } from "../../../domain/confirmation.js";
 import type { NativeRefusal } from "../../../domain/native-refusal.js";
 import { judgeRegistration } from "../../../domain/policy/registration-policy.js";
@@ -6,6 +7,7 @@ import {
   parseBuiltMarketplaceDir,
   parseUserBuiltMarketplaceDir,
 } from "../../../domain/source/built-marketplace-location.js";
+import { resolvedOrSelf } from "../../check-marketplace-source.use-case.js";
 import { nativeCatalogProof } from "../native-catalog-proof.js";
 import {
   type RegistrationRun,
@@ -51,7 +53,9 @@ export function replaceRegistration(
   const installed = activator.refsInstalledFrom(hostName);
   if (installed === undefined) {
     warn(
-      `Native plugin activation — marketplace '${hostName}' not moved to this build: the plugins installed from it could not be listed.`
+      nativeActivationWarning(
+        `marketplace '${hostName}' not moved to this build: the plugins installed from it could not be listed.`
+      )
     );
     return false;
   }
@@ -88,18 +92,17 @@ async function refusalToReclaim(
   });
   if (judged.outcome === "refuse") {
     const foreignRef = judged.reconcile;
-    return (
-      `Native plugin activation — catalogue '${hostName}' collides with unproven AIDD ownership` +
-      `${foreignRef === undefined ? "" : ` and foreign ref '${foreignRef}'`}; host registration left untouched. ${addError.detail}`
+    return nativeActivationWarning(
+      `catalogue '${hostName}' collides with unproven AIDD ownership` +
+        `${foreignRef === undefined ? "" : ` and foreign ref '${foreignRef}'`}; host registration left untouched. ${addError.detail}`
     );
   }
   if (!(await builtByThisCli(run, marketplace, hostName)))
-    return (
-      `Native plugin activation — catalogue '${hostName}' host catalogue source is unproven; ` +
-      `host registration left untouched. ${addError.detail}`
+    return nativeActivationWarning(
+      `catalogue '${hostName}' host catalogue source is unproven; host registration left untouched. ${addError.detail}`
     );
   if (run.activator.registrationState(hostName) !== "dead")
-    return `Native plugin activation — register marketplace '${hostName}' skipped: ${addError.detail}`;
+    return skippedWarning(`register marketplace '${hostName}'`)(addError.detail);
   return undefined;
 }
 
@@ -113,21 +116,13 @@ async function builtByThisCli(
   const { fs, platform, projectRoot } = run;
   const registeredSource = (await run.hosts.marketplaceRegistry?.read())?.entries?.get(hostName);
   if (registeredSource === undefined) return false;
-  const source = (await fs.realpathIfResolvable(registeredSource)) ?? registeredSource;
+  const source = await resolvedOrSelf(fs, registeredSource);
   const userRoot = run.userCacheRoot();
   const locations = [
-    parseBuiltMarketplaceDir(
-      (await fs.realpathIfResolvable(projectRoot)) ?? projectRoot,
-      source,
-      platform
-    ),
+    parseBuiltMarketplaceDir(await resolvedOrSelf(fs, projectRoot), source, platform),
     userRoot === ""
       ? undefined
-      : parseUserBuiltMarketplaceDir(
-          (await fs.realpathIfResolvable(userRoot)) ?? userRoot,
-          source,
-          platform
-        ),
+      : parseUserBuiltMarketplaceDir(await resolvedOrSelf(fs, userRoot), source, platform),
   ];
   return locations.some(
     (location) =>

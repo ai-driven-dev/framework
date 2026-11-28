@@ -3,6 +3,7 @@ import { recordedRegistrations } from "../../domain/record/registration-record.j
 import {
   callHost,
   describeSharedSourceSurvival,
+  inspectProjectRefs,
   stillNeededBy,
   survivingCachePaths,
 } from "./host-call.js";
@@ -100,6 +101,7 @@ async function removeProjectMarketplace(
   }
   return facts.exclusive(async () => {
     if (await heldByMachine(run, alias, hostName)) return false;
+    if (await holdsPersonalRef(run, hostName)) return false;
     return callHost(
       deps,
       () => activator.removeMarketplace(hostName, scope),
@@ -133,4 +135,10 @@ async function heldByMachine(
     `${binary}: '${hostName}' carries AIDD-owned machine plugin refs — left registered for explicit user-scope removal.${stillNeededBy(others)}`
   );
   return true;
+}
+
+/** A catalogue still holding a ref no claim names keeps it for the person, who installed it. */
+async function holdsPersonalRef(run: ProjectToolRun, hostName: string): Promise<boolean> {
+  const verdict = await inspectProjectRefs(run.deps, run, hostName);
+  return "refs" in verdict && verdict.foreignRef !== undefined;
 }

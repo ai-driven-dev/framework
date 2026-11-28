@@ -97,7 +97,7 @@ describe("clean: native registration refusals", () => {
       expect(fs.getFile(join(PROJECT_ROOT, "marker"))).toBe("keep");
     });
 
-    it("refuses a foreign enabled ref inside an otherwise AIDD-owned catalogue", async () => {
+    it("cleans around the person's own ref inside an AIDD-owned catalogue, leaving both in place", async () => {
       const manifest = Manifest.create();
       manifest.addTool(HOST.codex, "1.0.0", []);
       const records: ToolRecords = new Map();
@@ -145,13 +145,11 @@ describe("clean: native registration refusals", () => {
         new Map([[HOST.codex, hostRefs]])
       );
 
-      await expect(useCase.execute({ ...AT_PROJECT, force: true })).rejects.toThrow("foreign");
+      await useCase.execute({ ...AT_PROJECT, force: true });
 
-      expect(await references.listAllReferencingProjects()).toContain(PROJECT_ROOT);
-      expect(await references.listAllReferencingProjects()).toContain("/other-project");
-      expect(activator.uninstalledPlugins).toEqual([]);
+      expect(activator.uninstalledPlugins).not.toContain("foreign@aidd-framework");
       expect(activator.removedMarketplaces).toEqual([]);
-      expect(fs.getFile(join(PROJECT_ROOT, "marker"))).toBe("keep");
+      expect(await references.listAllReferencingProjects()).toContain("/other-project");
     });
 
     it("leaves an unclaimed machine-global ref enabled while removing its empty project catalogue", async () => {

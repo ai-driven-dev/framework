@@ -79,6 +79,26 @@ describe("withdrawing what a project registered through the host's own CLI", () 
     expect(activator.removedMarketplaces).toStrictEqual([HOST_NAME]);
   });
 
+  it("leaves a project-scope marketplace registered, silently, while it holds the person's own ref", async () => {
+    const activator = new FakeHostActions({ available: true });
+    const logger = new CapturingLogger();
+    const personal = new Map([[`personal@${HOST_NAME}`, { enabled: true }]]);
+
+    const removed = await withdrawProjectRegistrations(
+      depsOf(activator, logger, {
+        pluginRegistries: new Map([
+          [TOOL.claude, { read: async () => ({ location: "host plugins", refs: personal }) }],
+        ]),
+      }),
+      [withdrawalFor([])],
+      factsAt("project")
+    );
+
+    expect(activator.removedMarketplaces).toStrictEqual([]);
+    expect(logger.warnMessages).toStrictEqual([]);
+    expect(removed.flatMap(({ removedHostNames }) => [...removedHostNames])).toStrictEqual([]);
+  });
+
   it("leaves a machine-scope marketplace registered and says what survives", async () => {
     const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();

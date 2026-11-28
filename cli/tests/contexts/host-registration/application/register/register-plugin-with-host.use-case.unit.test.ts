@@ -243,7 +243,7 @@ describe("register plugin with host", () => {
     });
     expect(await run()).toMatchObject({ outcome: { pluginRefs: [] } });
     expect(warnings).toEqual([
-      "Native plugin activation \u2014 enable plugin 'p@aidd' skipped: plugin `p@aidd` was not found in marketplace",
+      "Native plugin activation: enable plugin 'p@aidd' skipped: plugin `p@aidd` was not found in marketplace",
     ]);
   });
 

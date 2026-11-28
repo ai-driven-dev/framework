@@ -58,21 +58,6 @@ async function referencesFromProjects(
   return references;
 }
 
-const FOREIGN_REF_CASES: {
-  claimed: boolean;
-  uninstalled: string[];
-  leadingWarnings: string[];
-}[] = [
-  {
-    claimed: false,
-    uninstalled: [],
-    leadingWarnings: [
-      `${HOST.claude}: '${REF}' left enabled; Error: Catalogue '${MARKETPLACE}' includes foreign host ref 'machine-plugin@aidd-framework'; no host mutation made.`,
-    ],
-  },
-  { claimed: true, uninstalled: [REF], leadingWarnings: [] },
-];
-
 describe("clean: shared source machine claims", () => {
   describe("undoing a host's own native registration", () => {
     describe("machine claims survive project cleanup", () => {
@@ -281,9 +266,9 @@ describe("clean: shared source machine claims", () => {
         );
       });
 
-      it.each(FOREIGN_REF_CASES)(
-        "only uninstalls when all other host refs have canonical machine claims: $claimed",
-        async ({ claimed, uninstalled, leadingWarnings }) => {
+      it.each([false, true])(
+        "uninstalls this project's ref beside another ref on its catalogue, claimed by a machine: %s",
+        async (claimed) => {
           const extraRef = "machine-plugin@aidd-framework";
           const fs = new InMemoryFileAdapter({}, [PROJECT_ROOT]);
           fs.setFile(join(PROJECT_ROOT, "marker"), "project");
@@ -323,11 +308,10 @@ describe("clean: shared source machine claims", () => {
 
           await useCase.execute({ ...AT_PROJECT, force: true });
 
-          expect(activator.uninstalledPlugins).toEqual(uninstalled);
+          expect(activator.uninstalledPlugins).toEqual([REF]);
           expect(activator.removedMarketplaces).toEqual([]);
-          expect(logger.warnMessages.slice(0, leadingWarnings.length)).toEqual(leadingWarnings);
           expect(logger.warnMessages.some((message) => message.includes("foreign host ref"))).toBe(
-            leadingWarnings.length > 0
+            false
           );
         }
       );

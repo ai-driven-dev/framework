@@ -177,8 +177,8 @@ describe("SyncSettings - when the stale cache is purged and what it says", () =>
     });
 
     expect(logger.warnMessages).toStrictEqual([
-      `Native plugin activation — build 'aidd-framework' for ${SYNTHETIC_NATIVE_TOOL} skipped: translator refused the source`,
-      `Native plugin activation — build 'aidd-framework' for ${SYNTHETIC_NATIVE_TOOL} skipped: translator refused the source`,
+      `Native plugin activation: build 'aidd-framework' for ${SYNTHETIC_NATIVE_TOOL} skipped: translator refused the source`,
+      `Native plugin activation: build 'aidd-framework' for ${SYNTHETIC_NATIVE_TOOL} skipped: translator refused the source`,
       "This project's own pre-migration framework cache kept: a requested tool's build failed this run, so its own registration may still point at it — fix the build warning above, then run `aidd sync` again.",
     ]);
   });

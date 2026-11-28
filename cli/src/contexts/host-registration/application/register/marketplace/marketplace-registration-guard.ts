@@ -1,4 +1,5 @@
 import { samePath } from "../../../../../shared/domain/paths.model.js";
+import { refusingForeignRef } from "../../../domain/policy/registration-policy.js";
 import type { HostMarketplaceRegistryReading } from "../../../domain/reading/marketplace-registry-reading.js";
 import type { NativeCatalogProof } from "../native-catalog-proof.js";
 import { marketplaceRegistryOf, type RegistrationRun } from "../registration-run.js";
@@ -31,7 +32,7 @@ export async function untouchedReason(
 const sourceUnproven = (proof: NativeCatalogProof): boolean =>
   proof.sourceStatus === "unproven" || (proof.sourceStatus === "owned" && !proof.source);
 
-/** Why a registry that cannot answer, or a ref that is not ours, leaves the registration alone. */
+/** Why a registry that cannot answer, or a ref on a source not ours, leaves the registration alone. */
 function unreadableRegistryReason(
   lead: string,
   reading: HostMarketplaceRegistryReading | undefined,
@@ -39,11 +40,12 @@ function unreadableRegistryReason(
 ): string | undefined {
   if (reading !== undefined && reading.entries === undefined && reading.absent !== true)
     return `${lead} host registry is unreadable; ownership unproven and registration left untouched.`;
-  if (proof.hostReadable && proof.foreignRef === undefined && proof.unreadable === undefined)
+  const foreignRef = refusingForeignRef(proof);
+  if (proof.hostReadable && foreignRef === undefined && proof.unreadable === undefined)
     return undefined;
-  return proof.foreignRef === undefined
+  return foreignRef === undefined
     ? `${lead} collides with unreadable host plugin registry (${proof.unreadable}); registration left untouched.`
-    : `${lead} carries foreign host ref '${proof.foreignRef}'; registration left untouched.`;
+    : `${lead} carries foreign host ref '${foreignRef}'; registration left untouched.`;
 }
 
 /** True when the host already follows exactly the catalog this run built. */

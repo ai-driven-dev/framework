@@ -15,7 +15,7 @@ import {
   codexBuild,
   codexCatalogAt,
   DIR,
-  enabled,
+  type enabled,
   listedAt,
   OWN,
   setup,
@@ -129,19 +129,8 @@ describe("registering on a host that refuses a re-add from another source", () =
     expect(await registerMarketplace(run, codexTarget)).toBeUndefined();
     expect(activator.removedMarketplaces).toEqual([]);
     expect(warnings).toEqual([
-      `Native plugin activation — marketplace '${NAME}' not moved to this build: the plugins installed from it could not be listed.`,
+      `Native plugin activation: marketplace '${NAME}' not moved to this build: the plugins installed from it could not be listed.`,
     ]);
-  });
-
-  it("moves an older build that holds a plugin no project claims, and puts that plugin back", async () => {
-    const { run, activator, warnings } = codexHoldingRecorded(codexBuild("1.0.0"), {
-      installed: ["hand@aidd"],
-      plugins: enabled("hand@aidd"),
-    });
-    expect(await registerMarketplace(run, codexTarget)).toBeDefined();
-    expect(warnings).toEqual([]);
-    expect(activator.addedMarketplaces).toEqual([thisBuild]);
-    expect(activator.enabledPlugins).toEqual(["hand@aidd"]);
   });
 
   it("leaves a registration on a newer build in place, warns, and counts it as registered", async () => {

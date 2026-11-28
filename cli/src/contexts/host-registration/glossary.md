@@ -21,7 +21,7 @@ The language of the `host-registration` context. A name in the code means what t
 | Provenance | The source the host had when aidd registered: `registry` or `effective-list`. Absent on a legacy record, so ownership is never inferred from the name | `NativeMarketplaceRegistration.provenance` |
 | Source proof | What a host's source reading proves about one catalog: `absent`, `owned` or `unproven` with the reason | `NativeMarketplaceSourceInspection` |
 | Claim | A ref some project needs enabled. Owned by `machine-claims`: this context reads a view, never the store | `ClaimsView`, `WithdrawalClaimsView` |
-| Foreign ref | A ref on the host under our host name that none of our claims names | `assertNoForeignNativeRefs` |
+| Foreign ref | A ref on the host under our host name that none of our claims names. On an owned source it is the person's own, tolerated and put back on a move | `findForeignRef`, `refusingForeignRef` |
 | Activation | Enabling a plugin through the host's own CLI, at the same scope it is later removed at | `HostActions.enablePlugin` |
 | Source drift | The host follows a newer build (`version-behind`), an older one (`version-ahead`), or a pre-migration project cache (`unmigrated-project-source`, `unmigrated-foreign-project-source`). Never a different catalog | `MarketplaceSourceDrift` |
 | Dead, live | Whether the source a registration points at still exists. `unknown` means leave it alone | `HostActions.registrationState` |
