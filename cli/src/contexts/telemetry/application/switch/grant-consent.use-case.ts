@@ -1,7 +1,7 @@
 import type { CloneIdentity } from "../../domain/consent/clone-identity.js";
 import { closeEvent, openEvent } from "../../domain/consent/consent-history.js";
 import { ConsentLog } from "../../domain/consent/consent-log.js";
-import { consentValue, tokenOfKey } from "../../domain/telemetry-consent.js";
+import { consentValue, tokenOf } from "../../domain/telemetry-consent.js";
 import type { ConsentHistory } from "../../ports/consent-history.js";
 import type { ConsentSource } from "../../ports/consent-source.js";
 import type { ConsentWriter } from "../../ports/switch/consent-writer.js";
@@ -55,8 +55,7 @@ export class GrantConsent {
     root: string,
     open: ReturnType<ConsentLog["openFor"]>
   ): Promise<boolean> {
-    const reading = await this.deps.consents.read(root);
-    const held = reading.kind === "value" ? tokenOfKey(reading.value) : null;
-    return held !== null && open.some((interval) => interval.token === held);
+    const held = tokenOf(await this.deps.consents.read(root));
+    return open.some((interval) => interval.token === held);
   }
 }

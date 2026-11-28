@@ -1,4 +1,5 @@
 import { spawn, spawnSync } from "node:child_process";
+import { rmSync } from "node:fs";
 import { mkdtemp, readFile, rm, stat, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -6,7 +7,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("node:fs/promises", async (importOriginal) => {
   const actual = await importOriginal<typeof import("node:fs/promises")>();
-  return { ...actual, writeFile: vi.fn(actual.writeFile) };
+  return {
+    ...actual,
+    readFile: vi.fn(actual.readFile),
+    stat: vi.fn(actual.stat),
+    writeFile: vi.fn(actual.writeFile),
+  };
 });
 
 import { LedgerLock } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/ledger-lock.js";
@@ -249,9 +255,71 @@ describe("the ledger lock's waiting", () => {
   });
 
   it("fails, rather than waits, when the lock cannot be created at all", async () => {
-    await expect(new LedgerLock(join(dir, "missing", ".lock"), quick).acquire()).rejects.toThrow(
-      /ENOENT/
+    const time = fakeTime();
+    const lock = new LedgerLock(join(dir, "missing", ".lock"), { ...quick, ...time.options });
+    await expect(lock.acquire()).rejects.toThrow(/ENOENT/);
+    expect(time.sleeps).toEqual([]);
+  });
+
+  it("takes at once a lock released while it looked at who held it", async () => {
+    const time = fakeTime();
+    await writeFile(
+      path,
+      JSON.stringify({ pid: 4242, created_at: new Date(time.options.now()).toISOString() })
     );
+    const actual = await vi.importActual<typeof import("node:fs/promises")>("node:fs/promises");
+    vi.mocked(readFile).mockImplementationOnce(async (...args) => {
+      await rm(path);
+      return actual.readFile(...args);
+    });
+    const lock = new LedgerLock(path, {
+      ...time.options,
+      isAlive: () => true,
+      waitMs: 0,
+      staleAfterMs: Number.POSITIVE_INFINITY,
+    });
+    const release = await lock.acquire();
+    expect((await holder()).pid).toBe(process.pid);
+    expect(time.sleeps).toEqual([]);
+    await release();
+  });
+
+  it("never clears the lock another process took after the one it looked at was released", async () => {
+    const time = fakeTime();
+    const created_at = new Date(time.options.now()).toISOString();
+    await writeFile(path, JSON.stringify({ pid: 4242, created_at }));
+    const actual = await vi.importActual<typeof import("node:fs/promises")>("node:fs/promises");
+    vi.mocked(readFile).mockImplementationOnce(async (...args) => {
+      await rm(path);
+      return actual.readFile(...args);
+    });
+    vi.mocked(stat).mockImplementationOnce(async (...args) => {
+      const gone = await actual.stat(...args).catch((error: unknown) => error);
+      await actual.writeFile(path, JSON.stringify({ pid: 777, created_at }));
+      throw gone;
+    });
+    const lock = new LedgerLock(path, { ...time.options, isAlive: () => true, waitMs: 0 });
+    await expect(lock.acquire()).rejects.toThrow(/locked by process 777/);
+  });
+
+  it("takes a dead owner's lock that another process cleared first", async () => {
+    const time = fakeTime();
+    await writeFile(
+      path,
+      JSON.stringify({ pid: 4242, created_at: new Date(time.options.now()).toISOString() })
+    );
+    const lock = new LedgerLock(path, {
+      ...time.options,
+      isAlive: () => {
+        rmSync(path);
+        return false;
+      },
+      waitMs: 0,
+    });
+    const release = await lock.acquire();
+    expect((await holder()).pid).toBe(process.pid);
+    expect(time.sleeps).toEqual([]);
+    await release();
   });
 
   it("releases quietly when the lock file is already gone", async () => {

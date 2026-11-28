@@ -90,7 +90,6 @@ function fieldOf(key: string) {
 }
 
 function record(branches: Map<string, DeclaredFields>, entry: string): void {
-  if (!entry.startsWith(PREFIX)) return;
   const { key, value } = splitEntry(entry);
   const named = fieldOf(key);
   if (named === null) return;

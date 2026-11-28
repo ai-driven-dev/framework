@@ -1,5 +1,5 @@
-import { tryParseJson } from "../../../../shared/domain/reading/json-file.js";
-import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
+import { plainObjectIn } from "../../../../shared/domain/reading/plain-object.js";
+import { hasOnly, isInstant } from "../read-back.js";
 import { type CloneIdentity, cloneKey, parseCloneIdentity } from "./clone-identity.js";
 
 /** A line of `consents.jsonl`: an interval opened for a clone by `on`, or closed, by `off`, by
@@ -45,35 +45,25 @@ export function renderConsentEvent(event: ConsentEvent): string {
     : JSON.stringify({ token: event.token, close: event.at });
 }
 
-function sameKeys(object: Record<string, unknown>, keys: readonly string[]): boolean {
-  const held = Object.keys(object);
-  return held.length === keys.length && keys.every((key) => held.includes(key));
-}
-
-function instantText(value: unknown): string | null {
-  return typeof value === "string" && !Number.isNaN(Date.parse(value)) ? value : null;
-}
-
 function openEventOf(object: Record<string, unknown>, token: string): ConsentEvent | null {
   const clone = parseCloneIdentity(object.clone);
-  const at = instantText(object.open);
-  return clone === null || at === null ? null : { kind: "open", token, clone, at };
+  const at = object.open;
+  return clone === null || !isInstant(at) ? null : { kind: "open", token, clone, at };
 }
 
 function closeEventOf(object: Record<string, unknown>, token: string): ConsentEvent | null {
-  const at = instantText(object.close);
-  return at === null ? null : { kind: "close", token, at };
+  const at = object.close;
+  return isInstant(at) ? { kind: "close", token, at } : null;
 }
 
 /** A line that is not exactly an event is `null`, never guessed at. */
 export function parseConsentEvent(line: string): ConsentEvent | null {
-  const parsed = tryParseJson(line);
-  const object = parsed.ok ? asPlainObject(parsed.value) : null;
+  const object = plainObjectIn(line);
   if (object === null) return null;
   const { token } = object;
   if (typeof token !== "string" || !/^\S+$/u.test(token)) return null;
-  if (sameKeys(object, ["token", "clone", "open"])) return openEventOf(object, token);
-  if (sameKeys(object, ["token", "close"])) return closeEventOf(object, token);
+  if (hasOnly(object, ["token", "clone", "open"])) return openEventOf(object, token);
+  if (hasOnly(object, ["token", "close"])) return closeEventOf(object, token);
   return null;
 }
 
@@ -84,8 +74,7 @@ export function parseConsentEvent(line: string): ConsentEvent | null {
 export function parseConsentRecords(text: string | null): ConsentRecords {
   const events: ConsentEvent[] = [];
   let damaged = false;
-  const terminated = (text ?? "").split("\n");
-  terminated.pop();
+  const terminated = text?.split("\n").slice(0, -1) ?? [];
   for (const line of terminated) {
     if (line.trim() === "") continue;
     const event = parseConsentEvent(line);

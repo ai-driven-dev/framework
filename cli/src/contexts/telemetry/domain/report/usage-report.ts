@@ -7,11 +7,13 @@ import {
   type ReportRow,
   type Tally,
   UNATTRIBUTED_REASONS,
+  type UnattributedReason,
   type UsageReport,
 } from "../../contract/usage-report.js";
 import type { StoredUsage } from "../stored-usage.js";
 import { compareText } from "../text-order.js";
 import { type Attribution, type AttributionFacts, attribute } from "./attribution.js";
+import { dayOf } from "./period.js";
 
 const ABSENT: AxisValue = { kind: "absent" };
 
@@ -43,10 +45,8 @@ function tally(held: Tally, record: StoredUsage): Tally {
   };
 }
 
-function unattributedValue(
-  attribution: Extract<Attribution, { state: "unattributed" }>
-): AxisValue {
-  return { kind: "unattributed", reason: attribution.reason };
+function unattributedValue(reason: UnattributedReason): AxisValue {
+  return { kind: "unattributed", reason };
 }
 
 /** What a call is on one axis: the row it lands on, and what a filter on that axis compares. */
@@ -77,37 +77,49 @@ export function axisValueOf({
     case "tool":
       return value(record.tool);
     case "day":
-      return value(new Date(record.at).toISOString().slice(0, 10));
+      return value(dayOf(record.at));
     case "repository":
       return value(record.repository_id);
     case "task":
       return attribution.state === "attributed"
         ? value(attribution.task)
-        : unattributedValue(attribution);
+        : unattributedValue(attribution.reason);
     case "ticket":
       return attribution.state === "attributed"
         ? value(attribution.ticket)
-        : unattributedValue(attribution);
+        : unattributedValue(attribution.reason);
   }
 }
 
-/** Where a row stands among the others: values first, then calls the axis has no value for,
- * then work with no task, by reason. */
-function rank(value: AxisValue): number {
-  if (value.kind === "value") return 0;
-  return value.kind === "absent" ? 1 : 2 + UNATTRIBUTED_REASONS.indexOf(value.reason);
+/** The row a value lands on: one per value, and what a filter is compared through. */
+export function rowKeyOf(value: AxisValue): string {
+  return JSON.stringify(value);
 }
 
-function textOf(value: AxisValue): string {
-  return value.kind === "value" ? value.value : "";
+type ValueRow = ReportRow & { readonly value: Extract<AxisValue, { kind: "value" }> };
+type OtherRow = ReportRow & { readonly value: Exclude<AxisValue, { kind: "value" }> };
+
+const isValueRow = (row: ReportRow): row is ValueRow => row.value.kind === "value";
+const isOtherRow = (row: ReportRow): row is OtherRow => row.value.kind !== "value";
+
+/** Calls the axis has no value for, then work with no task, by reason. */
+const OTHER_ORDER = [ABSENT, ...UNATTRIBUTED_REASONS.map(unattributedValue)].map(rowKeyOf);
+
+function rank({ value }: OtherRow): number {
+  return OTHER_ORDER.indexOf(rowKeyOf(value));
 }
 
-/** Only value rows tie on rank. Days read in order; every other axis reads largest first. */
-function compareRows(axis: ReportAxis, a: ReportRow, b: ReportRow): number {
-  const byRank = rank(a.value) - rank(b.value);
-  if (byRank !== 0) return byRank;
-  const byText = compareText(textOf(a.value), textOf(b.value));
+/** Days read in order; every other axis reads largest first. */
+function compareValueRows(axis: ReportAxis, a: ValueRow, b: ValueRow): number {
+  const byText = compareText(a.value.value, b.value.value);
   return axis === "day" ? byText : b.total.known - a.total.known || byText;
+}
+
+function ordered(axis: ReportAxis, rows: readonly ReportRow[]): ReportRow[] {
+  return [
+    ...rows.filter(isValueRow).sort((a, b) => compareValueRows(axis, a, b)),
+    ...rows.filter(isOtherRow).sort((a, b) => rank(a) - rank(b)),
+  ];
 }
 
 /** What the calls cost, split along one axis. Every axis is a partition of the same calls, so
@@ -127,9 +139,9 @@ export function buildReport({
   let totals = EMPTY_TALLY;
   for (const record of records) {
     const value = axisValueOf({ axis, record, attribution: attribute(record, facts), person });
-    const key = JSON.stringify(value);
+    const key = rowKeyOf(value);
     rows.set(key, { value, ...tally(rows.get(key) ?? EMPTY_TALLY, record) });
     totals = tally(totals, record);
   }
-  return { axis, rows: [...rows.values()].sort((a, b) => compareRows(axis, a, b)), totals };
+  return { axis, rows: ordered(axis, [...rows.values()]), totals };
 }

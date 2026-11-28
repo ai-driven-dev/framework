@@ -51,7 +51,7 @@ describe("reading Claude usage from the fixture transcripts", () => {
       since: new Map(),
     });
 
-    const summary = reading.records.map((r) => ({
+    const summary = reading.calls.map(({ record: r }) => ({
       key: r.key,
       agent: r.agent,
       session: r.session_id,
@@ -106,16 +106,16 @@ describe("reading Claude usage from the fixture transcripts", () => {
     const backward = await new ReadUsage(reversed(source)).execute({
       since: new Map(),
     });
-    expect(backward.records).toEqual(forward.records);
+    expect(backward.calls).toEqual(forward.calls);
   });
 
   it("folds a key across files: the resumed copy never beats the larger original", async () => {
     const reading = await new ReadUsage(new ClaudeUsageSourceAdapter(projects)).execute({
       since: new Map(),
     });
-    const a = reading.records.find((r) => r.key === "msg_A:req_A");
+    const a = reading.calls.find(({ record }) => record.key === "msg_A:req_A")?.record;
     expect([a?.session_id, a?.output]).toEqual(["s-1", 250]);
-    expect(reading.records.filter((r) => r.key === "msg_A:req_A")).toHaveLength(1);
+    expect(reading.calls.filter(({ record }) => record.key === "msg_A:req_A")).toHaveLength(1);
   });
 
   it("reports an unrecognised line and does not turn it into a record", async () => {
@@ -127,7 +127,7 @@ describe("reading Claude usage from the fixture transcripts", () => {
       since: new Map(),
     });
     expect(reading.unrecognised).toHaveLength(1);
-    expect(reading.records).toHaveLength(5);
+    expect(reading.calls).toHaveLength(5);
   });
 
   it("hands back, of the lines that give no call, only those naming a directory, with their time", async () => {
@@ -189,7 +189,7 @@ describe("reading Claude usage from the fixture transcripts", () => {
       })}\n`
     );
     const second = await useCase.execute({ since: first.positions });
-    expect(second.records.map((r) => r.key)).toEqual(["msg_E:req_E"]);
+    expect(second.calls.map(({ record }) => record.key)).toEqual(["msg_E:req_E"]);
   });
 });
 
@@ -267,9 +267,8 @@ describe("reading a transcript that changes under the read", () => {
       })
     ).execute({ since: new Map() });
     expect(seen).toBe(2);
-    expect(reading.records).toEqual([]);
+    expect(reading.calls).toEqual([]);
     expect(reading.unrecognised).toEqual([]);
-    expect(reading.fileOf.size).toBe(0);
     expect(reading.positions.has(path)).toBe(false);
   });
 });
@@ -308,7 +307,7 @@ describe("reading Codex usage", () => {
     const first = await useCase.execute({ since: new Map() });
     await appendFile(path, call("resp_2") + turn("gpt-5.6", "/work/two") + call("resp_3"));
     const second = await useCase.execute({ since: first.positions });
-    expect(second.records.map((r) => [r.key, r.model, r.cwd])).toEqual([
+    expect(second.calls.map(({ record: r }) => [r.key, r.model, r.cwd])).toEqual([
       ["resp_2", "gpt-5.5", "/work/one"],
       ["resp_3", "gpt-5.6", "/work/two"],
     ]);
@@ -326,6 +325,6 @@ describe("reading Codex usage", () => {
     expect(reading.unrecognised).toEqual([
       `${path}: a compressed session file is not read: this Node has no zstd`,
     ]);
-    expect(reading.records).toEqual([]);
+    expect(reading.calls).toEqual([]);
   });
 });

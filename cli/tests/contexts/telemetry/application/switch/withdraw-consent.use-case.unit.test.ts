@@ -27,6 +27,15 @@ describe("withdrawing a clone's consent", () => {
     expect(s.history.written).toEqual([OPEN]);
   });
 
+  it("leaves open the interval of a clone once at its path, its key naming another token", async () => {
+    const s = setup();
+    const theirs = { ...OPEN, token: "theirs", clone: cloneOf("/w/main/.git", { ino: "9" }) };
+    s.history.written.push(OPEN, theirs);
+    s.clock.now = new Date(T2);
+    await withdraw(s);
+    expect(s.history.written.slice(2)).toEqual([{ kind: "close", token: "tok-1", at: T2 }]);
+  });
+
   it("writes the key under the ledger's lock with the interval, and nothing when there is no consent", async () => {
     const s = setup();
     s.history.written.push(OPEN);

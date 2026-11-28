@@ -2,9 +2,9 @@ export type ParsedJson =
   | { readonly ok: true; readonly value: unknown }
   | { readonly ok: false; readonly error: unknown };
 
-/** `JSON.parse` that says whether it parsed, and why not, so a caller holding text it may not
- * trust has no `try` of its own to get wrong. */
-export function tryParseJson(text: string): ParsedJson {
+/** `JSON.parse` that says whether it parsed and why not; no text, an absent file, is no JSON. */
+export function tryParseJson(text: string | null): ParsedJson {
+  if (text === null) return { ok: false, error: null };
   try {
     return { ok: true, value: JSON.parse(text) };
   } catch (error) {

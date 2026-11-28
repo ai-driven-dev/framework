@@ -14,6 +14,7 @@ export function runGit(env: NodeJS.ProcessEnv, cwd: string, args: readonly strin
     env,
     encoding: "utf8",
     shell: false,
+    // A limit: only Windows opens the console window this hides (Node `child_process` docs).
     windowsHide: true,
   });
   if (result.error !== undefined) {

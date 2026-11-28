@@ -40,7 +40,7 @@ export class ConsentLog {
   }
 
   /** Whether the clone had an interval named `token` that has since been closed. */
-  hasClosed(clone: CloneIdentity, token: string): boolean {
+  hasClosed(clone: CloneIdentity, token: string | null): boolean {
     return this.intervals.some(
       (interval) =>
         !isOpen(interval) && interval.token === token && sameClone(interval.clone, clone)

@@ -88,7 +88,6 @@ describe("git config output is read into bindings", () => {
 
   it("ignores keys that are not the four, and no output at all", () => {
     expect(parseBranchConfig(listing(entry("branch.x.remote", "origin")))).toEqual([]);
-    expect(parseBranchConfig(listing(entry("core.aiddtask", "x")))).toEqual([]);
     expect(parseBranchConfig("")).toEqual([]);
   });
 });
@@ -135,6 +134,16 @@ describe("only a declaration the command made on the branch counts", () => {
   it("reads nothing from a branch whose task alone is listed twice", () => {
     const out = listing(
       entry("branch.y.aiddtask", "theirs"),
+      entry("branch.y.aiddtask", "ours"),
+      entry("branch.y.aidddeclaredfor", "y"),
+      declaredAt("y")
+    );
+    expect(parseBranchConfig(out)).toEqual([]);
+  });
+
+  it("reads nothing from a branch whose task is listed twice, once with no value", () => {
+    const out = listing(
+      "branch.y.aiddtask",
       entry("branch.y.aiddtask", "ours"),
       entry("branch.y.aidddeclaredfor", "y"),
       declaredAt("y")

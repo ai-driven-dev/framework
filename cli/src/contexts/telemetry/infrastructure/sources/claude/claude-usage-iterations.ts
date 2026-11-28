@@ -1,5 +1,6 @@
 import { asPlainObject } from "../../../../../shared/domain/reading/plain-object.js";
-import { counter, expected, type Json } from "../../../domain/transcript/line-values.js";
+import { counter } from "../../../domain/read-back.js";
+import { expected, type Json } from "../../../domain/transcript/line-values.js";
 
 /** The iterations a message lists, a note kept for each shape that is not one. */
 export function messageIterations(usage: Json, notes: string[]): Json[] {

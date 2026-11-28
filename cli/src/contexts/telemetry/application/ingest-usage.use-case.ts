@@ -45,13 +45,9 @@ export interface IngestOptions {
   readonly environment: Environment;
 }
 
+/** A transcript only grows: one read again at the same size and identity moved nowhere. */
 function moved(before: TranscriptPosition | undefined, now: TranscriptPosition): boolean {
-  return (
-    before === undefined ||
-    before.offset !== now.offset ||
-    before.size !== now.size ||
-    before.identity !== now.identity
-  );
+  return before === undefined || before.size !== now.size || before.identity !== now.identity;
 }
 
 /** What an ingest kept, and what is left to do once the resolutions are. */
@@ -170,10 +166,9 @@ export class IngestUsage {
     );
     const oldest = readings.flatMap((reading) => reading.oldestTranscriptAt ?? []).sort();
     return {
-      records: readings.flatMap((reading) => reading.records),
+      calls: readings.flatMap((reading) => reading.calls),
       positions: new Map([...before, ...readings.flatMap((reading) => [...reading.positions])]),
       unrecognised: readings.flatMap((reading) => reading.unrecognised),
-      fileOf: new Map(readings.flatMap((reading) => [...reading.fileOf])),
       dropped: readings.flatMap((reading) => reading.dropped),
       oldestTranscriptAt: oldest[0] ?? null,
       skipped: new Set(readings.flatMap((reading) => [...reading.skipped])),

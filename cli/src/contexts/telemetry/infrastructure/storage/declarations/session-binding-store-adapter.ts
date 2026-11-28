@@ -8,6 +8,7 @@ import {
   type SessionDeclaration,
   type TaskDeclaration,
 } from "../../../domain/declaration/task-declaration.js";
+import { linesIn } from "../../../domain/read-back.js";
 import type { SessionBindingStore } from "../../../ports/bindings/session-binding-store.js";
 import { readTextIfPresent } from "../../reading/text-file.js";
 
@@ -37,9 +38,7 @@ export class SessionBindingStoreAdapter implements SessionBindingStore {
   }
 
   private async lines<T>(file: string, parse: (line: string) => T | null): Promise<T[]> {
-    const text = (await readTextIfPresent(join(this.dir, file))) ?? "";
-    return text
-      .split("\n")
+    return linesIn(await readTextIfPresent(join(this.dir, file)))
       .map(parse)
       .filter((entry): entry is T => entry !== null);
   }

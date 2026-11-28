@@ -3,7 +3,7 @@ import type { BranchBindingStore, BranchHeads } from "../../ports/branch-binding
 import { runGit } from "./run-git.js";
 
 const NOT_SYMBOLIC = 1;
-/** `git config --unset-all` of a key that is not there. */
+/** `git config --unset-all` of a key that is not there: only an unset answers it. */
 const KEY_ABSENT = 5;
 
 /** Keeps a branch's declaration in the repository's own git config: `branch.<name>.aiddTask`,
@@ -46,7 +46,7 @@ export class GitBranchBindingStoreAdapter implements BranchBindingStore {
         ? ["config", "--local", "--unset-all", "--", key]
         : ["config", "--local", "--replace-all", "--", key, value];
     const run = runGit(this.env, root, args);
-    if (run.status === 0 || (value === null && run.status === KEY_ABSENT)) return;
+    if (run.status === 0 || run.status === KEY_ABSENT) return;
     throw new Error(`git config ${key} failed in ${root}`);
   }
 }

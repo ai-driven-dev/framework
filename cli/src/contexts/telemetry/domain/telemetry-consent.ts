@@ -16,7 +16,7 @@ export function consentValue(token: string): string {
 /** The token a key names, `null` when the key grants nothing: only `2:` and a token does. A
  * bare `2`, `off`, another number, or nothing grants nothing. */
 export function tokenOfKey(value: string | null): string | null {
-  return GRANTING.exec(value ?? "")?.[1] ?? null;
+  return value === null ? null : (value.match(GRANTING)?.[1] ?? null);
 }
 
 export type Consent = "granted" | "absent" | "unreadable";
@@ -47,7 +47,16 @@ export function consentOf(reading: ConsentReading): Consent {
 /** Whether the clone's key says measurement was turned off in it: `off` writes `off`, and a
  * person who writes it by hand turned it off too. Either way `on` measures it again. */
 export function turnedOff(reading: ConsentReading): boolean {
-  return reading.kind === "value" && reading.value === CONSENT_WITHDRAWN;
+  return keyOf(reading) === CONSENT_WITHDRAWN;
+}
+
+/** The token the clone's key grants, `null` when it grants none or was not read. */
+export function tokenOf(reading: CloneConsentReading): string | null {
+  return tokenOfKey(keyOf(reading));
+}
+
+function keyOf(reading: CloneConsentReading): string | null {
+  return reading.kind === "value" ? reading.value : null;
 }
 
 /** The environment variable that refuses measurement. */

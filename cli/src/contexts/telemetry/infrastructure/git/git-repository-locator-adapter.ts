@@ -38,11 +38,12 @@ export class GitRepositoryLocatorAdapter implements RepositoryLocator {
       return { status: "unreadable" };
     }
     const top = runGit(this.env, real, ["rev-parse", "--show-toplevel", "--git-common-dir"]);
-    const [toplevel, commonDir] = top.stdout.split("\n");
-    if (top.status !== 0 || !toplevel || !commonDir) return this.refusedByGit(real);
-    const root = resolve(toplevel);
+    if (top.status !== 0) return this.refusedByGit(real);
+    // Git answers each on its own line, the last one ended too.
+    const end = top.stdout.indexOf("\n");
+    const root = resolve(top.stdout.slice(0, end));
     // `--git-common-dir` is relative to the directory git ran in.
-    const common = resolve(real, commonDir);
+    const common = resolve(real, top.stdout.slice(end + 1, -1));
     let identity: Awaited<ReturnType<CloneIdentityReader>>;
     try {
       identity = await this.identify(await realPath(common));

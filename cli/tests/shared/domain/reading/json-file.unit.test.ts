@@ -32,6 +32,10 @@ describe("parsing JSON text", () => {
     expect(tryParseJson("{nope")).toEqual({ ok: false, error: expect.any(SyntaxError) });
     expect(tryParseJson("")).toEqual({ ok: false, error: expect.any(SyntaxError) });
   });
+
+  it("says so when there is no text at all, which JSON.parse would read as null", () => {
+    expect(tryParseJson(null)).toEqual({ ok: false, error: null });
+  });
 });
 
 describe("falling back when a read finds nothing", () => {

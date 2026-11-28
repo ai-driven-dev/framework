@@ -1,5 +1,4 @@
-import { tryParseJson } from "../../../../shared/domain/reading/json-file.js";
-import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
+import { plainObjectIn } from "../../../../shared/domain/reading/plain-object.js";
 import { MAX_IDENTITY_LENGTH } from "../../contract/identity-limit.js";
 
 // biome-ignore lint/suspicious/noControlCharactersInRegex: a control character is what is refused
@@ -19,8 +18,7 @@ export function renderPersonIdentity(personId: string): string {
 /** The identifier an `identity.json` holds, or `null` when it is not exactly the file this
  * version writes. A file of another shape is never carried over. */
 export function parsePersonIdentity(text: string | null): string | null {
-  const parsed = tryParseJson(text ?? "");
-  const object = parsed.ok ? asPlainObject(parsed.value) : null;
+  const object = plainObjectIn(text);
   if (object === null || Object.keys(object).length !== 1) return null;
   return typeof object.person_id === "string" ? personIdOf(object.person_id) : null;
 }

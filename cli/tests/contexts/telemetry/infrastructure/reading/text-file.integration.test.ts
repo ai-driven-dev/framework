@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   modifiedAtIfPresent,
+  namesIfPresent,
   readTextIfPresent,
 } from "../../../../../src/contexts/telemetry/infrastructure/reading/text-file.js";
 
@@ -33,6 +34,19 @@ describe("reading a file that may not be there", () => {
   it("throws for a failure that is not absence", async () => {
     await mkdir(join(dir, "folder"));
     await expect(readTextIfPresent(join(dir, "folder"))).rejects.toThrow();
+  });
+});
+
+describe("listing a directory that may not be there", () => {
+  it("names what it holds, and nothing when it does not exist", async () => {
+    await writeFile(join(dir, "a.txt"), "x");
+    expect(await namesIfPresent(dir)).toEqual(["a.txt"]);
+    expect(await namesIfPresent(join(dir, "missing"))).toEqual([]);
+  });
+
+  it("throws where a file stands in its place", async () => {
+    await writeFile(join(dir, "plain"), "x");
+    await expect(namesIfPresent(join(dir, "plain"))).rejects.toThrow(/ENOTDIR/);
   });
 });
 

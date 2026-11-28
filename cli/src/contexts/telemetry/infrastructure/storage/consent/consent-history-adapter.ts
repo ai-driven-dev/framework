@@ -37,7 +37,8 @@ export class ConsentHistoryAdapter implements ConsentHistory {
    * event: damage. Cut off, it leaves nothing to refuse. */
   private async dropUnterminatedTail(): Promise<void> {
     const text = await readTextIfPresent(this.path);
-    if (text === null || text === "" || text.endsWith("\n")) return;
-    await this.storage.replace(this.path, text.slice(0, text.lastIndexOf("\n") + 1));
+    if (text === null) return;
+    const terminated = text.slice(0, text.lastIndexOf("\n") + 1);
+    if (terminated !== text) await this.storage.replace(this.path, terminated);
   }
 }

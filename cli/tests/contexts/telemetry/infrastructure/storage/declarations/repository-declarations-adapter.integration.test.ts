@@ -107,6 +107,12 @@ describe("the declarations in a repository's git config", () => {
     ).toBeNull();
   });
 
+  it("answers null where a directory that holds no git config stands at the clone's path", async () => {
+    const emptied = join(root, "emptied", ".git");
+    mkdirSync(emptied, { recursive: true });
+    expect(await new RepositoryDeclarationsAdapter(env).count(emptied)).toBeNull();
+  });
+
   it("clears the keys of a clone from a deleted worktree's point of view: by the clone alone", async () => {
     config("aidd.telemetry", "branch.main.aiddTask");
     const linked = join(root, "linked");

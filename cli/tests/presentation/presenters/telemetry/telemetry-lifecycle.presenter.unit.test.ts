@@ -3,6 +3,7 @@ import type { ForgetTelemetryResult } from "../../../../src/contexts/telemetry/a
 import type { EnableTelemetryResult } from "../../../../src/contexts/telemetry/application/switch/enable-telemetry.use-case.js";
 import {
   printForgetResult,
+  printIdentityRule,
   printOffResult,
   printOnResult,
 } from "../../../../src/presentation/presenters/telemetry/telemetry-lifecycle.presenter.js";
@@ -20,7 +21,7 @@ function on(
   retention = { days: 3650, short: false }
 ): CapturingOutput {
   const output = new CapturingOutput(false);
-  printOnResult(output, { ...ON, ...overrides }, retention);
+  printOnResult(output, { ...ON, ...overrides, retention });
   return output;
 }
 
@@ -81,6 +82,14 @@ describe("printing the result of turning measurement on", () => {
     expect(output.at("error")[0]).toContain("not inside a git repository");
     expect(output.at("error")[1]).toContain("git config cannot be read");
     expect(output.at("error")[1]).toContain("This clone's git config");
+  });
+
+  it("warns of the identity rule when a typed identifier is refused", () => {
+    const output = new CapturingOutput(false);
+    printIdentityRule(output);
+    expect(output.at("warn")).toEqual([
+      "An identity is one non-empty line of at most 128 characters.",
+    ]);
   });
 
   it("refuses an identity it cannot keep, and says nothing changed", () => {
@@ -167,14 +176,21 @@ describe("printing the result of forgetting measured data", () => {
     expect(output.lines.at(-1)).toContain("Nothing was removed. Run `aidd telemetry forget --yes`");
   });
 
-  it("reports what was removed", () => {
+  it("reports what was removed, and what it skipped", () => {
     const output = forgotten({ status: "forgotten", plan: PLAN });
     expect(output.at("success")).toEqual(["Removed:"]);
+    expect(output.lines).toContain("  - the ledger of billed calls: /t/ledger (3 files)");
+    expect(output.at("warn")).toContain("Skipped /w/gone: it is gone, or is no longer that clone.");
     expect(output.lines.join("\n")).not.toContain("Nothing was removed");
   });
 
   it("says when nothing is kept, preview or not", () => {
-    const empty = { entries: [], repositories: [], missing: [], unlocated: 0 };
+    const empty = {
+      entries: [],
+      repositories: [{ clone: "/w/b/.git", taskKeys: 0, consent: false }],
+      missing: [],
+      unlocated: 0,
+    };
     expect(forgotten({ status: "preview", plan: empty }).lines).toEqual([
       "Nothing measured is kept on this machine.",
     ]);
@@ -225,7 +241,17 @@ describe("printing the result of forgetting measured data", () => {
       unlocated: 0,
     } as const;
     expect(forgotten({ status: "preview", plan: keysOnly }).lines[0]).toBe("This would remove:");
+    const consentOnly = {
+      ...keysOnly,
+      repositories: [{ clone: "/w/a/.git", taskKeys: 0, consent: true }],
+    };
+    const oneOfTwo = {
+      ...keysOnly,
+      repositories: [{ clone: "/w/b/.git", taskKeys: 0, consent: false }, ...keysOnly.repositories],
+    };
+    expect(forgotten({ status: "preview", plan: oneOfTwo }).lines[0]).toBe("This would remove:");
     expect(forgotten({ status: "preview", plan: filesOnly }).lines[0]).toBe("This would remove:");
+    expect(forgotten({ status: "preview", plan: consentOnly }).lines[0]).toBe("This would remove:");
     expect(forgotten({ status: "preview", plan: keysOnly }).lines[1]).toBe(
       "  - 1 branch task key in the git config of /w/a/.git"
     );

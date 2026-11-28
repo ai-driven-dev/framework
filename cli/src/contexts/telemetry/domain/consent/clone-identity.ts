@@ -1,4 +1,5 @@
 import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
+import { isCount, isFilledText } from "../read-back.js";
 
 /** A clone, told from every other by its git common dir: where it is, and which directory it
  * really is. The path alone is not enough, because a clone can be deleted and another made at
@@ -41,11 +42,15 @@ export interface StatFacts {
   readonly birthtimeMs: bigint;
 }
 
-/** The identity of the directory at `path`, `null` when the platform gives it none. */
-export function identityFromStat(path: string, stat: StatFacts): CloneIdentity | null {
-  if (stat.ino === 0n) return null;
-  const born = stat.birthtimeMs <= 0n ? 0n : stat.birthtimeMs;
-  return { path, dev: String(stat.dev), ino: String(stat.ino), birthtimeMs: Number(born) };
+/** The identity of the directory at `path`, `unidentified` when the platform gives it none. */
+export function identityFromStat(path: string, stat: StatFacts): CloneIdentity | "unidentified" {
+  if (stat.ino === 0n) return "unidentified";
+  return {
+    path,
+    dev: String(stat.dev),
+    ino: String(stat.ino),
+    birthtimeMs: Math.max(0, Number(stat.birthtimeMs)),
+  };
 }
 
 /** A clone as a map key: two identities have one key exactly when they are the same clone. */
@@ -58,15 +63,17 @@ export function sameClone(a: CloneIdentity, b: CloneIdentity): boolean {
   return cloneKey(a) === cloneKey(b);
 }
 
-const filled = (value: unknown): value is string => typeof value === "string" && value !== "";
-const isBirth = (value: unknown): value is number =>
-  typeof value === "number" && Number.isFinite(value) && value >= 0;
-
 export function parseCloneIdentity(value: unknown): CloneIdentity | null {
   const object = asPlainObject(value);
   if (object === null) return null;
   const { path, dev, ino, birthtimeMs } = object;
-  if (!filled(path) || !filled(dev) || !filled(ino) || ino === "0" || !isBirth(birthtimeMs)) {
+  if (
+    !isFilledText(path) ||
+    !isFilledText(dev) ||
+    !isFilledText(ino) ||
+    ino === "0" ||
+    !isCount(birthtimeMs)
+  ) {
     return null;
   }
   return { path, dev, ino, birthtimeMs };

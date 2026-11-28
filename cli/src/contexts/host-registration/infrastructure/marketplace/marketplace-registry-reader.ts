@@ -1,7 +1,6 @@
 import { readFile, realpath } from "node:fs/promises";
 import { describeError } from "../../../../shared/domain/describe-error.js";
-import { tryParseJson } from "../../../../shared/domain/reading/json-file.js";
-import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
+import { asPlainObject, plainObjectIn } from "../../../../shared/domain/reading/plain-object.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { HostMarketplaceRegistryReading } from "../../domain/reading/marketplace-registry-reading.js";
 import { marketplaceCatalogProbePath } from "../../domain/source/catalog-probe-path.js";
@@ -87,8 +86,7 @@ async function readCatalogIdentity(
   if (path === undefined) return undefined;
   const content = await fs.readFileIfReadable(path);
   if (content === undefined) return undefined;
-  const parsed = tryParseJson(content);
-  const catalog = parsed.ok ? asPlainObject(parsed.value) : null;
+  const catalog = plainObjectIn(content);
   if (catalog === null || typeof catalog.name !== "string") return undefined;
   const pluginNames = Array.isArray(catalog.plugins) ? pluginNamesOf(catalog.plugins) : [];
   return { name: catalog.name, pluginNames };

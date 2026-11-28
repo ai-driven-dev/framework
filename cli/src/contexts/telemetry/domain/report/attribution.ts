@@ -76,17 +76,7 @@ function inForce(
   generation: readonly DeclaredSnapshot[],
   at: number
 ): DeclaredSnapshot | undefined {
-  const first = earliest(generation);
-  if (first === undefined) return undefined;
-  return declaredBy(generation, at) ?? latestOfFirst(generation, first);
-}
-
-function earliest(generation: readonly DeclaredSnapshot[]): DeclaredSnapshot | undefined {
-  let first: DeclaredSnapshot | undefined;
-  for (const snapshot of generation) {
-    if (first === undefined || declaredAt(snapshot) < declaredAt(first)) first = snapshot;
-  }
-  return first;
+  return declaredBy(generation, at) ?? latestOfFirst(generation);
 }
 
 /** The latest declaration made by the instant, the later snapshot winning an equal time. */
@@ -105,11 +95,17 @@ function declaredBy(
 }
 
 /** The latest snapshot of the earliest declaration. */
-function latestOfFirst(
-  generation: readonly DeclaredSnapshot[],
-  first: DeclaredSnapshot
-): DeclaredSnapshot {
-  return generation.filter((s) => declaredAt(s) === declaredAt(first)).at(-1) ?? first;
+function latestOfFirst(generation: readonly DeclaredSnapshot[]): DeclaredSnapshot | undefined {
+  let first: DeclaredSnapshot | undefined;
+  for (const snapshot of generation) {
+    if (first === undefined || declaredAt(snapshot) <= declaredAt(first)) first = snapshot;
+  }
+  return first;
+}
+
+/** When the snapshot's generation took the name, `null` when no creation time dates it. */
+function createdAt(snapshot: BranchSnapshot): number | null {
+  return snapshot.branch_created_at === null ? null : Date.parse(snapshot.branch_created_at);
 }
 
 /** The snapshot that speaks for a branch at an instant. A name used again, after its branch was
@@ -122,22 +118,13 @@ function generationAt(
   snapshots: readonly BranchSnapshot[],
   at: number
 ): DeclaredSnapshot | undefined {
-  let chosenCreated = Number.NEGATIVE_INFINITY;
-  let found = false;
-  for (const snapshot of snapshots) {
-    if (snapshot.branch_created_at === null) continue;
-    const created = Date.parse(snapshot.branch_created_at);
-    if (created < at && created >= chosenCreated) {
-      chosenCreated = created;
-      found = true;
-    }
-  }
-  const generation = snapshots.filter((snapshot) =>
-    found
-      ? snapshot.branch_created_at !== null &&
-        Date.parse(snapshot.branch_created_at) === chosenCreated
-      : snapshot.branch_created_at === null
+  const youngest = Math.max(
+    ...snapshots
+      .map(createdAt)
+      .filter((created): created is number => created !== null && created < at)
   );
+  const chosen = Number.isFinite(youngest) ? youngest : null;
+  const generation = snapshots.filter((snapshot) => createdAt(snapshot) === chosen);
   // Chosen over every snapshot, so one no command wrote still marks its generation apart.
   return inForce(generation.filter(isDeclared), at);
 }
